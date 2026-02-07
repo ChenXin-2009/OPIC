@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 4.4.0: 删除了基于Bright Star Catalogue星表添加的更多恒星，删除了字体加载。提高网站加载速度"
+git commit -m "Release 4.6.0: 修复太阳显示"
 git checkout main
 git pull origin main
-git tag v4.4.0
+git tag v4.6.0
 git push origin main
-git push origin v4.4.0
+git push origin v4.6.0

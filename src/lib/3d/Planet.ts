@@ -49,9 +49,9 @@ export interface PlanetConfig {
 }
 
 export class Planet {
-  private mesh: THREE.Mesh;
-  private geometry: THREE.SphereGeometry;
-  private material: THREE.ShaderMaterial | THREE.MeshStandardMaterial;
+  private mesh: THREE.Mesh | THREE.Object3D;
+  private geometry: THREE.SphereGeometry | null;
+  private material: THREE.ShaderMaterial | THREE.MeshStandardMaterial | THREE.MeshBasicMaterial | null;
   private rotationSpeed: number;
   private realRadius: number; // 真实半径（AU）
   private markerDiv: HTMLDivElement | null = null; // 标记圈DOM元素（2D）
@@ -159,31 +159,23 @@ export class Planet {
     // 使用真实半径创建行星
     const radius = this.realRadius;
 
-    // 创建几何体（初始化为基础分段数）
-    this.targetSegments = PLANET_LOD_CONFIG.baseSegments;
-    this.currentSegments = PLANET_LOD_CONFIG.baseSegments;
-    this.geometry = new THREE.SphereGeometry(radius, this.currentSegments, this.currentSegments);
-
-    // 创建材质
+    // 太阳不创建球体几何体，只创建空容器用于承载光晕
     if (this.isSun) {
-      // 太阳使用标准材质（自发光）
-      this.material = new THREE.MeshStandardMaterial({
-        color: bodyInfo.color || 0xffffff,
-        emissive: 0xffffaa,
-        emissiveIntensity: 2.0,
-        transparent: false,
-        opacity: 1.0,
-        depthWrite: true,
-        depthTest: true,
-        side: THREE.FrontSide,
-      });
+      this.geometry = null;
+      this.material = null;
+      this.targetSegments = 0;
+      this.currentSegments = 0;
+      // 创建空的 Object3D 作为光晕容器
+      this.mesh = new THREE.Object3D();
     } else {
-      // 行星使用自定义着色器材质（真实光照）
+      // 行星创建正常的几何体和材质
+      this.targetSegments = PLANET_LOD_CONFIG.baseSegments;
+      this.currentSegments = PLANET_LOD_CONFIG.baseSegments;
+      this.geometry = new THREE.SphereGeometry(radius, this.currentSegments, this.currentSegments);
       this.material = this.createPlanetShaderMaterial(bodyInfo.color || '#ffffff');
+      // 创建网格
+      this.mesh = new THREE.Mesh(this.geometry, this.material);
     }
-
-    // 创建网格
-    this.mesh = new THREE.Mesh(this.geometry, this.material);
 
     // 设置渲染顺序：行星应该在轨道和星空之后渲染（正数表示后渲染，会遮挡先渲染的物体）
     this.mesh.renderOrder = 0; // 默认渲染顺序;
@@ -1285,6 +1277,9 @@ export class Planet {
    * 释放旧几何体，创建新几何体
    */
   private rebuildGeometry(): void {
+    // 太阳没有几何体，跳过
+    if (!this.geometry || this.isSun) return;
+    
     const radius = this.geometry.parameters.radius;
     
     // 释放旧几何体
@@ -1294,10 +1289,12 @@ export class Planet {
     this.geometry = new THREE.SphereGeometry(radius, this.currentSegments, this.currentSegments);
     
     // 更新网格的几何体
-    this.mesh.geometry = this.geometry;
+    if (this.mesh instanceof THREE.Mesh) {
+      this.mesh.geometry = this.geometry;
+    }
   }
 
-  getMesh(): THREE.Mesh {
+  getMesh(): THREE.Mesh | THREE.Object3D {
     return this.mesh;
   }
   
@@ -1450,7 +1447,7 @@ export class Planet {
       this.ringTexture = null;
     }
 
-    this.geometry.dispose();
-    this.material.dispose();
+    this.geometry?.dispose();
+    this.material?.dispose();
   }
 }
