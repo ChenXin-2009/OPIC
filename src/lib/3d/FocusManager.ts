@@ -146,7 +146,7 @@ export class FocusManager {
    * @param deltaTime Time since last update (seconds)
    * @returns Transition progress (0-1), or -1 if not transitioning
    */
-  updateFocusTransition(deltaTime: number): number {
+  updateFocusTransition(_deltaTime: number): number {
     if (!this.isTransitioning) {
       return -1;
     }

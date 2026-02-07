@@ -171,6 +171,11 @@ export class Planet {
         color: bodyInfo.color || 0xffffff,
         emissive: 0xffffaa,
         emissiveIntensity: 2.0,
+        transparent: false,
+        opacity: 1.0,
+        depthWrite: true,
+        depthTest: true,
+        side: THREE.FrontSide,
       });
     } else {
       // 行星使用自定义着色器材质（真实光照）
@@ -488,7 +493,6 @@ export class Planet {
       fragmentShader,
       // 确保完全不透明
       transparent: false,
-      opacity: 1.0,
       depthWrite: true,
       depthTest: true,
       side: THREE.FrontSide,

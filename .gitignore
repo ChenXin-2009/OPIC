@@ -41,6 +41,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# quality reports
+/reports
+
 测试-勿删.bat
 推-勿删.txt
 回滚-勿删.txt

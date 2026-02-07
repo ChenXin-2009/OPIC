@@ -7,7 +7,6 @@
 
 'use client';
 
-import React from 'react';
 import { DISTANCE_DISPLAY_CONFIG } from '@/lib/config/visualConfig';
 
 // 单位转换常量
@@ -84,6 +83,9 @@ export default function DistanceDisplay({ distanceAU }: DistanceDisplayProps) {
   const { value, unit } = formatDistance(distanceAU);
   const cfg = DISTANCE_DISPLAY_CONFIG;
   
+  // 判断是否显示精度警告（距离超过 3000 AU 时）
+  const showPrecisionWarning = distanceAU > 3000;
+  
   return (
     <div
       style={{
@@ -111,6 +113,20 @@ export default function DistanceDisplay({ distanceAU }: DistanceDisplayProps) {
       <div style={{ opacity: cfg.titleOpacity }}>{cfg.titleText}</div>
       <div style={{ fontSize: `${cfg.valueFontSize}px`, fontWeight: cfg.valueFontWeight }}>{value}</div>
       <div style={{ fontSize: `${cfg.unitFontSize}px`, opacity: cfg.unitOpacity }}>{unit}</div>
+      
+      {/* 精度警告 */}
+      {showPrecisionWarning && (
+        <div style={{ 
+          fontSize: '11px', 
+          color: '#999999',
+          opacity: 0.7,
+          marginTop: '4px',
+          maxWidth: '120px',
+          lineHeight: '1.3',
+        }}>
+          该尺度下精度有限
+        </div>
+      )}
     </div>
   );
 }

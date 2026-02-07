@@ -20,6 +20,8 @@ import { NearbyStars } from './NearbyStars';
 import { GalaxyRenderer } from './GalaxyRenderer';
 import { GaiaStars } from './GaiaStars';
 import { SCALE_VIEW_CONFIG, NEARBY_STARS_CONFIG, GALAXY_CONFIG } from '../config/galaxyConfig';
+import { TextureLoadError, RenderError } from '../errors/base';
+import { logError, tryCatch } from '../utils/errors';
 
 // 银河系背景图片路径（圆柱投影/equirectangular）
 const MILKY_WAY_TEXTURE_PATH = '/textures/planets/8k_stars_milky_way.jpg';
@@ -49,6 +51,39 @@ const STARS_ALIGNMENT = {
   eclipticRotation: -98.1,  // 黄道面内旋转（对齐夏至点）
 };
 
+/**
+ * SceneManager - Three.js scene management system
+ * 
+ * Manages the Three.js scene, renderer, camera, and multi-scale universe view.
+ * Handles initialization, rendering, and cleanup of 3D visualization components.
+ * 
+ * Key responsibilities:
+ * - Initialize and configure Three.js renderer with optimal settings
+ * - Create and manage the scene with Milky Way skybox background
+ * - Handle camera setup and dynamic clipping plane adjustments
+ * - Manage multi-scale universe components (nearby stars, Gaia stars, galaxy)
+ * - Coordinate alignment between different coordinate systems
+ * - Handle window resizing and viewport updates
+ * 
+ * The scene uses a logarithmic depth buffer to handle the vast scale differences
+ * in the solar system (from planet surfaces to interstellar distances).
+ * 
+ * @example
+ * ```typescript
+ * const container = document.getElementById('canvas-container');
+ * const sceneManager = new SceneManager(container);
+ * 
+ * // In animation loop
+ * function animate() {
+ *   sceneManager.updateMultiScaleView(cameraDistance, deltaTime);
+ *   sceneManager.render();
+ *   requestAnimationFrame(animate);
+ * }
+ * 
+ * // Cleanup
+ * sceneManager.dispose();
+ * ```
+ */
 export class SceneManager {
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;
@@ -63,6 +98,22 @@ export class SceneManager {
   private skyboxOpacity: number = 1;
   private skyboxTargetOpacity: number = 1;
 
+  /**
+   * Creates a new SceneManager instance.
+   * 
+   * Initializes the Three.js renderer, scene, and camera with optimal settings
+   * for solar system visualization. Sets up the Milky Way skybox background
+   * and multi-scale universe view components.
+   * 
+   * @param container - HTML element to attach the renderer canvas to
+   * @throws {RenderError} If WebGL initialization fails
+   * 
+   * @example
+   * ```typescript
+   * const container = document.getElementById('canvas-container');
+   * const sceneManager = new SceneManager(container);
+   * ```
+   */
   constructor(container: HTMLElement) {
     this.container = container;
 
@@ -115,19 +166,46 @@ export class SceneManager {
   
   /**
    * 初始化多尺度宇宙视图组件
+   * 
+   * Creates and adds nearby stars, Gaia stars, and galaxy renderer
+   * components to the scene based on configuration settings.
    */
   private initializeMultiScaleView(): void {
-    // 初始化近邻恒星
+    this.initializeNearbyStars();
+    this.initializeGaiaStars();
+    this.initializeGalaxyRenderer();
+  }
+  
+  /**
+   * 初始化近邻恒星组件
+   * 
+   * Creates the nearby stars renderer if enabled in configuration
+   * and adds it to the scene.
+   */
+  private initializeNearbyStars(): void {
     if (NEARBY_STARS_CONFIG.enabled) {
       this.nearbyStars = new NearbyStars();
       this.scene.add(this.nearbyStars.getGroup());
     }
-    
-    // 初始化 Gaia 恒星
+  }
+  
+  /**
+   * 初始化 Gaia 恒星组件
+   * 
+   * Creates the Gaia stars renderer and adds it to the scene.
+   */
+  private initializeGaiaStars(): void {
     this.gaiaStars = new GaiaStars();
     this.scene.add(this.gaiaStars.getGroup());
-    
-    // 初始化银河系渲染器
+  }
+  
+  /**
+   * 初始化银河系渲染器组件
+   * 
+   * Creates the galaxy renderer if enabled in configuration
+   * and adds it to the scene.
+   */
+  private initializeGalaxyRenderer(): void {
     if (GALAXY_CONFIG.enabled) {
       this.galaxyRenderer = new GalaxyRenderer();
       this.scene.add(this.galaxyRenderer.getGroup());
@@ -136,124 +214,281 @@ export class SceneManager {
 
   /**
    * 创建银河系天空盒背景（使用圆柱投影图片）
-   * 使用内翻球体 + equirectangular 贴图实现
+   * 
+   * Loads the Milky Way texture and creates a skybox sphere.
+   * Falls back to a simple starfield if texture loading fails.
+   * 
+   * Uses an inverted sphere with equirectangular mapping to create
+   * an immersive background that follows the camera.
    */
   private createMilkyWaySkybox(): void {
     const textureLoader = new THREE.TextureLoader();
     
     textureLoader.load(
       MILKY_WAY_TEXTURE_PATH,
-      (texture) => {
-        // 设置贴图参数
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.mapping = THREE.EquirectangularReflectionMapping;
-        
-        // 创建一个超大球体作为天空盒（确保在任何距离都不会被裁剪）
-        // 使用相对较大但固定的尺寸，避免动态缩放导致的抖动
-        const skyboxGeometry = new THREE.SphereGeometry(5e5, 64, 32);
-        
-        // 创建材质（内翻球体，从内部看）
-        const skyboxMaterial = new THREE.MeshBasicMaterial({
-          map: texture,
-          side: THREE.BackSide, // 从内部渲染
-          depthWrite: false,
-          depthTest: false,
-        });
-        
-        this.skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterial);
-        this.skybox.renderOrder = -1000; // 最先渲染（在最后面）
-        this.skybox.userData.isSkybox = true;
-        this.skybox.userData.fixedToCamera = true; // 标记为跟随相机
-        
-        // 设置银河系方位（将度转换为弧度）
-        const degToRad = Math.PI / 180;
-        this.skybox.rotation.x = MILKY_WAY_ORIENTATION.rotationX * degToRad;
-        this.skybox.rotation.y = MILKY_WAY_ORIENTATION.rotationY * degToRad;
-        this.skybox.rotation.z = MILKY_WAY_ORIENTATION.rotationZ * degToRad;
-        
-        this.scene.add(this.skybox);
-        
-        // 应用星空对齐旋转
-        this.applyStarsAlignment();
-      },
+      (texture) => this.onSkyboxTextureLoaded(texture),
       undefined,
-      (error) => {
-        console.warn('Failed to load Milky Way texture, falling back to starfield:', error);
-        // 加载失败时回退到简单星空
-        this.createFallbackStarfield();
-      }
+      (error) => this.onSkyboxTextureError(error)
     );
+  }
+  
+  /**
+   * 处理天空盒纹理加载成功
+   * 
+   * Creates the skybox mesh with the loaded texture and applies
+   * the Milky Way orientation.
+   * 
+   * @param texture - Loaded texture for the skybox
+   */
+  private onSkyboxTextureLoaded(texture: THREE.Texture): void {
+    this.configureSkyboxTexture(texture);
+    const geometry = this.createSkyboxGeometry();
+    const material = this.createSkyboxMaterial(texture);
+    
+    this.skybox = new THREE.Mesh(geometry, material);
+    this.configureSkyboxMesh(this.skybox);
+    this.applySkyboxOrientation(this.skybox);
+    
+    this.scene.add(this.skybox);
+    this.applyStarsAlignment();
+  }
+  
+  /**
+   * 配置天空盒纹理参数
+   * 
+   * Sets up texture color space and mapping for equirectangular projection.
+   * 
+   * @param texture - Texture to configure
+   */
+  private configureSkyboxTexture(texture: THREE.Texture): void {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+  }
+  
+  /**
+   * 创建天空盒几何体
+   * 
+   * Creates a large sphere geometry for the skybox.
+   * Uses a fixed size to avoid dynamic scaling artifacts.
+   * 
+   * @returns Sphere geometry for skybox
+   */
+  private createSkyboxGeometry(): THREE.SphereGeometry {
+    const radius = 5e5;
+    const widthSegments = 64;
+    const heightSegments = 32;
+    return new THREE.SphereGeometry(radius, widthSegments, heightSegments);
+  }
+  
+  /**
+   * 创建天空盒材质
+   * 
+   * Creates a material for the skybox with inverted rendering
+   * (visible from inside the sphere).
+   * 
+   * @param texture - Texture to apply to the material
+   * @returns Configured material for skybox
+   */
+  private createSkyboxMaterial(texture: THREE.Texture): THREE.MeshBasicMaterial {
+    return new THREE.MeshBasicMaterial({
+      map: texture,
+      side: THREE.BackSide, // 从内部渲染
+      depthWrite: false,
+      depthTest: false,
+    });
+  }
+  
+  /**
+   * 配置天空盒网格属性
+   * 
+   * Sets render order and user data for the skybox mesh.
+   * 
+   * @param skybox - Skybox mesh to configure
+   */
+  private configureSkyboxMesh(skybox: THREE.Mesh): void {
+    skybox.renderOrder = -1000; // 最先渲染（在最后面）
+    skybox.userData.isSkybox = true;
+    skybox.userData.fixedToCamera = true; // 标记为跟随相机
+  }
+  
+  /**
+   * 应用银河系方位旋转
+   * 
+   * Applies the configured Milky Way orientation to the skybox.
+   * Converts degrees to radians for rotation.
+   * 
+   * @param skybox - Skybox mesh to rotate
+   */
+  private applySkyboxOrientation(skybox: THREE.Mesh): void {
+    const degToRad = Math.PI / 180;
+    skybox.rotation.x = MILKY_WAY_ORIENTATION.rotationX * degToRad;
+    skybox.rotation.y = MILKY_WAY_ORIENTATION.rotationY * degToRad;
+    skybox.rotation.z = MILKY_WAY_ORIENTATION.rotationZ * degToRad;
+  }
+  
+  /**
+   * 处理天空盒纹理加载失败
+   * 
+   * Logs a warning and creates a fallback starfield when texture loading fails.
+   * 
+   * @param error - Error that occurred during texture loading
+   * @throws {TextureLoadError} Wrapped error with context
+   */
+  private onSkyboxTextureError(error: unknown): void {
+    const textureError = new TextureLoadError(
+      'Failed to load Milky Way skybox texture',
+      { path: MILKY_WAY_TEXTURE_PATH, originalError: error }
+    );
+    
+    logError(textureError, { component: 'SceneManager', operation: 'createMilkyWaySkybox' });
+    
+    // Create fallback starfield to ensure user still has a background
+    this.createFallbackStarfield();
   }
 
   /**
    * 应用星空对齐旋转
-   * 将天空盒、Gaia、NearbyStars 旋转到与太阳系黄道坐标系对齐
+   * 
+   * Aligns the skybox, Gaia stars, and nearby stars with the solar system's
+   * ecliptic coordinate system. This ensures that the background stars match
+   * the orientation of the solar system.
+   * 
+   * The alignment involves:
+   * 1. Converting from equatorial to ecliptic coordinates
+   * 2. Applying additional rotation to match the solar system orientation
+   * 3. Rotating within the ecliptic plane to align with the vernal equinox
    */
   private applyStarsAlignment(): void {
+    const combinedRotation = this.calculateCombinedRotation();
+    
+    this.applySkyboxRotation(combinedRotation);
+    this.applyGaiaRotation(combinedRotation);
+    this.applyNearbyStarsRotation(combinedRotation);
+  }
+  
+  /**
+   * 计算组合旋转四元数
+   * 
+   * Calculates the combined rotation quaternion that includes:
+   * - Extra rotation to align coordinate systems
+   * - Rotation within the ecliptic plane
+   * 
+   * @returns Combined rotation quaternion
+   */
+  private calculateCombinedRotation(): THREE.Quaternion {
     const degToRad = Math.PI / 180;
+    const obliquity = 23.44 * degToRad; // 黄赤交角
     
-    // 基础旋转（天空盒的初始旋转）
-    const baseRotation = {
-      x: MILKY_WAY_ORIENTATION.rotationX,
-      y: MILKY_WAY_ORIENTATION.rotationY,
-      z: MILKY_WAY_ORIENTATION.rotationZ,
-    };
+    const extraQuat = this.createExtraRotationQuaternion(degToRad);
+    const eclipticNormal = this.calculateEclipticNormal(obliquity);
+    const eclipticQuat = this.createEclipticRotationQuaternion(
+      eclipticNormal,
+      extraQuat,
+      degToRad
+    );
     
-    // 额外旋转（用于对齐太阳系）
-    const extraRotation = { 
-      x: STARS_ALIGNMENT.rotationX, 
-      y: STARS_ALIGNMENT.rotationY, 
-      z: STARS_ALIGNMENT.rotationZ 
-    };
-    
-    // 黄道面内旋转角度
-    const eclipticRotation = STARS_ALIGNMENT.eclipticRotation;
-    
-    // 黄赤交角
-    const obliquity = 23.44 * degToRad;
-    
-    // 计算黄道法线（在赤道坐标系中）
-    const eclipticNormal = new THREE.Vector3(0, Math.cos(obliquity), Math.sin(obliquity)).normalize();
-    
-    // 1. 计算基础的额外旋转四元数
+    // 组合：先 extraRotation，再黄道面内旋转
+    return eclipticQuat.multiply(extraQuat);
+  }
+  
+  /**
+   * 创建额外旋转四元数
+   * 
+   * Creates a quaternion from the extra rotation angles defined in STARS_ALIGNMENT.
+   * 
+   * @param degToRad - Conversion factor from degrees to radians
+   * @returns Quaternion representing the extra rotation
+   */
+  private createExtraRotationQuaternion(degToRad: number): THREE.Quaternion {
     const extraEuler = new THREE.Euler(
-      extraRotation.x * degToRad,
-      extraRotation.y * degToRad,
-      extraRotation.z * degToRad,
+      STARS_ALIGNMENT.rotationX * degToRad,
+      STARS_ALIGNMENT.rotationY * degToRad,
+      STARS_ALIGNMENT.rotationZ * degToRad,
       'XYZ'
     );
-    const extraQuat = new THREE.Quaternion().setFromEuler(extraEuler);
-    
-    // 2. 计算黄道面内旋转（绕黄道法线旋转）
+    return new THREE.Quaternion().setFromEuler(extraEuler);
+  }
+  
+  /**
+   * 计算黄道法线向量
+   * 
+   * Calculates the ecliptic normal vector in equatorial coordinates.
+   * 
+   * @param obliquity - Obliquity of the ecliptic (radians)
+   * @returns Normalized ecliptic normal vector
+   */
+  private calculateEclipticNormal(obliquity: number): THREE.Vector3 {
+    return new THREE.Vector3(0, Math.cos(obliquity), Math.sin(obliquity)).normalize();
+  }
+  
+  /**
+   * 创建黄道面内旋转四元数
+   * 
+   * Creates a quaternion for rotation within the ecliptic plane.
+   * 
+   * @param eclipticNormal - Ecliptic normal vector
+   * @param extraQuat - Extra rotation quaternion to apply first
+   * @param degToRad - Conversion factor from degrees to radians
+   * @returns Quaternion representing rotation within ecliptic plane
+   */
+  private createEclipticRotationQuaternion(
+    eclipticNormal: THREE.Vector3,
+    extraQuat: THREE.Quaternion,
+    degToRad: number
+  ): THREE.Quaternion {
     const transformedNormal = eclipticNormal.clone().applyQuaternion(extraQuat);
-    const eclipticQuat = new THREE.Quaternion().setFromAxisAngle(
+    return new THREE.Quaternion().setFromAxisAngle(
       transformedNormal,
-      eclipticRotation * degToRad
+      STARS_ALIGNMENT.eclipticRotation * degToRad
     );
+  }
+  
+  /**
+   * 应用天空盒旋转
+   * 
+   * Applies the combined rotation to the skybox, including its base orientation.
+   * 
+   * @param combinedRotation - Combined rotation quaternion
+   */
+  private applySkyboxRotation(combinedRotation: THREE.Quaternion): void {
+    if (!this.skybox) return;
     
-    // 3. 组合：先 extraRotation，再黄道面内旋转
-    const combinedExtraQuat = eclipticQuat.multiply(extraQuat);
+    const degToRad = Math.PI / 180;
+    const baseEuler = new THREE.Euler(
+      MILKY_WAY_ORIENTATION.rotationX * degToRad,
+      MILKY_WAY_ORIENTATION.rotationY * degToRad,
+      MILKY_WAY_ORIENTATION.rotationZ * degToRad,
+      'XYZ'
+    );
+    const baseQuat = new THREE.Quaternion().setFromEuler(baseEuler);
+    const finalQuat = combinedRotation.clone().multiply(baseQuat);
     
-    // 天空盒：基础旋转 + 组合旋转
-    if (this.skybox) {
-      const baseEuler = new THREE.Euler(
-        baseRotation.x * degToRad,
-        baseRotation.y * degToRad,
-        baseRotation.z * degToRad,
-        'XYZ'
-      );
-      const baseQuat = new THREE.Quaternion().setFromEuler(baseEuler);
-      const finalQuat = combinedExtraQuat.clone().multiply(baseQuat);
-      
-      this.skybox.quaternion.copy(finalQuat);
-    }
-    
-    // Gaia/NearbyStars：只用组合旋转
+    this.skybox.quaternion.copy(finalQuat);
+  }
+  
+  /**
+   * 应用 Gaia 恒星旋转
+   * 
+   * Applies the combined rotation to the Gaia stars group.
+   * 
+   * @param combinedRotation - Combined rotation quaternion
+   */
+  private applyGaiaRotation(combinedRotation: THREE.Quaternion): void {
     if (this.gaiaStars) {
-      this.gaiaStars.getGroup().quaternion.copy(combinedExtraQuat);
+      this.gaiaStars.getGroup().quaternion.copy(combinedRotation);
     }
+  }
+  
+  /**
+   * 应用近邻恒星旋转
+   * 
+   * Applies the combined rotation to the nearby stars group.
+   * 
+   * @param combinedRotation - Combined rotation quaternion
+   */
+  private applyNearbyStarsRotation(combinedRotation: THREE.Quaternion): void {
     if (this.nearbyStars) {
-      this.nearbyStars.getGroup().quaternion.copy(combinedExtraQuat);
+      this.nearbyStars.getGroup().quaternion.copy(combinedRotation);
     }
   }
 
@@ -299,6 +534,16 @@ export class SceneManager {
 
   /**
    * 更新天空盒位置（跟随相机）
+   * 
+   * Updates the skybox position to follow the camera, ensuring it's always
+   * centered on the camera regardless of camera movement.
+   * 
+   * @param cameraPosition - Current camera position
+   * 
+   * @example
+   * ```typescript
+   * sceneManager.updateSkyboxPosition(camera.position);
+   * ```
    */
   updateSkyboxPosition(cameraPosition: THREE.Vector3): void {
     if (this.skybox) {
@@ -308,9 +553,20 @@ export class SceneManager {
   
   /**
    * 更新多尺度宇宙视图（每帧调用）
-   * @param cameraDistance 相机到太阳系中心的距离（AU）
-   * @param deltaTime 帧间隔时间（秒）
-   * @param starBrightness 恒星亮度系数（0-2，默认1）
+   * 
+   * Updates all multi-scale universe components based on camera distance.
+   * Handles visibility transitions, opacity fading, and component updates
+   * for nearby stars, Gaia stars, and galaxy renderer.
+   * 
+   * @param cameraDistance - Distance from camera to solar system center (AU)
+   * @param deltaTime - Time elapsed since last frame (seconds)
+   * @param starBrightness - Star brightness multiplier (0-2, default: 1.0)
+   * 
+   * @example
+   * ```typescript
+   * const distance = camera.position.length() / AU_TO_METERS;
+   * sceneManager.updateMultiScaleView(distance, deltaTime, 1.5);
+   * ```
    */
   updateMultiScaleView(cameraDistance: number, deltaTime: number, starBrightness: number = 1.0): void {
     // 更新近邻恒星
@@ -363,6 +619,18 @@ export class SceneManager {
   
   /**
    * 获取近邻恒星渲染器
+   * 
+   * Returns the nearby stars renderer instance, or null if not initialized.
+   * 
+   * @returns NearbyStars instance or null
+   * 
+   * @example
+   * ```typescript
+   * const nearbyStars = sceneManager.getNearbyStars();
+   * if (nearbyStars) {
+   *   nearbyStars.setVisibility(true);
+   * }
+   * ```
    */
   getNearbyStars(): NearbyStars | null {
     return this.nearbyStars;
@@ -370,11 +638,36 @@ export class SceneManager {
   
   /**
    * 获取银河系渲染器
+   * 
+   * Returns the galaxy renderer instance, or null if not initialized.
+   * 
+   * @returns GalaxyRenderer instance or null
+   * 
+   * @example
+   * ```typescript
+   * const galaxy = sceneManager.getGalaxyRenderer();
+   * if (galaxy) {
+   *   galaxy.setVisibility(false);
+   * }
+   * ```
    */
   getGalaxyRenderer(): GalaxyRenderer | null {
     return this.galaxyRenderer;
   }
 
+  /**
+   * 更新渲染器和相机尺寸
+   * 
+   * Updates the renderer size and camera aspect ratio to match the container dimensions.
+   * Should be called when the container is resized.
+   * 
+   * @example
+   * ```typescript
+   * window.addEventListener('resize', () => {
+   *   sceneManager.updateSize();
+   * });
+   * ```
+   */
   updateSize(): void {
     const width = this.container.clientWidth || 1;
     const height = this.container.clientHeight || 1;
@@ -389,6 +682,15 @@ export class SceneManager {
   
   /**
    * 更新相机 FOV（视野角度）
+   * 
+   * Updates the camera field of view and recalculates the projection matrix.
+   * 
+   * @param fov - Field of view in degrees (typically 30-120)
+   * 
+   * @example
+   * ```typescript
+   * sceneManager.updateFOV(60); // Set to 60 degrees
+   * ```
    */
   updateFOV(fov: number): void {
     if (this.camera) {
@@ -397,25 +699,95 @@ export class SceneManager {
     }
   }
 
+  /**
+   * 获取 WebGL 渲染器实例
+   * 
+   * Returns the Three.js WebGLRenderer for direct access if needed.
+   * 
+   * @returns WebGLRenderer instance
+   * 
+   * @example
+   * ```typescript
+   * const renderer = sceneManager.getRenderer();
+   * renderer.setPixelRatio(window.devicePixelRatio);
+   * ```
+   */
   getRenderer(): THREE.WebGLRenderer {
     return this.renderer;
   }
 
+  /**
+   * 获取 Three.js 场景实例
+   * 
+   * Returns the Three.js Scene for adding/removing objects.
+   * 
+   * @returns Scene instance
+   * 
+   * @example
+   * ```typescript
+   * const scene = sceneManager.getScene();
+   * scene.add(myMesh);
+   * ```
+   */
   getScene(): THREE.Scene {
     return this.scene;
   }
 
+  /**
+   * 获取透视相机实例
+   * 
+   * Returns the Three.js PerspectiveCamera for direct manipulation.
+   * 
+   * @returns PerspectiveCamera instance
+   * 
+   * @example
+   * ```typescript
+   * const camera = sceneManager.getCamera();
+   * camera.position.set(0, 100, 200);
+   * ```
+   */
   getCamera(): THREE.PerspectiveCamera {
     return this.camera;
   }
 
+  /**
+   * 渲染场景
+   * 
+   * Renders the scene using the current camera. Should be called in the animation loop.
+   * 
+   * @example
+   * ```typescript
+   * function animate() {
+   *   sceneManager.render();
+   *   requestAnimationFrame(animate);
+   * }
+   * ```
+   */
   render(): void {
     this.renderer.render(this.scene, this.camera);
   }
 
   /**
    * 动态调整相机视距裁剪
-   * 根据当前观察对象自动调整 near 和 far，防止裁切问题
+   * 
+   * Dynamically adjusts camera near and far clipping planes based on the current
+   * viewing context. Prevents z-fighting and clipping issues when viewing objects
+   * at vastly different scales.
+   * 
+   * The near plane is adjusted to avoid clipping nearby objects, while the far
+   * plane ensures distant objects remain visible. Works in conjunction with
+   * CameraController's dynamic near plane adjustments.
+   * 
+   * @param currentObjectRadius - Radius of the currently focused object (meters)
+   * @param distanceToSun - Distance from camera to the Sun (meters)
+   * 
+   * @example
+   * ```typescript
+   * sceneManager.updateCameraClipping(
+   *   planetRadius,
+   *   camera.position.distanceTo(sunPosition)
+   * );
+   * ```
    */
   updateCameraClipping(currentObjectRadius: number, distanceToSun: number): void {
     // 兼容 CameraController 的动态 near 调整：
@@ -436,6 +808,29 @@ export class SceneManager {
     this.camera.updateProjectionMatrix();
   }
 
+  /**
+   * 清理资源
+   * 
+   * Disposes of all WebGL resources, removes event listeners, and cleans up
+   * multi-scale universe components. Should be called when the scene is no longer needed.
+   * 
+   * Properly disposes of:
+   * - Nearby stars renderer
+   * - Gaia stars renderer
+   * - Galaxy renderer
+   * - WebGL renderer and context
+   * - Canvas element from DOM
+   * 
+   * @example
+   * ```typescript
+   * // Component unmount
+   * useEffect(() => {
+   *   return () => {
+   *     sceneManager.dispose();
+   *   };
+   * }, []);
+   * ```
+   */
   dispose(): void {
     // 注意：resize 监听器由 SolarSystemCanvas3D 统一管理，这里不需要移除
     

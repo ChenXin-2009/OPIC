@@ -85,6 +85,7 @@ export default function SettingsMenu({ cameraController }: SettingsMenuProps) {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
+    return undefined;
   }, [isOpen]);
 
   // 切换超广角模式

@@ -18,7 +18,7 @@
 
 'use client';
 
-import React, { useRef, useEffect, useLayoutEffect, useState } from 'react';
+import React, { useRef, useLayoutEffect, useState } from 'react';
 import { useSolarSystemStore } from '@/lib/state';
 import { SceneManager } from '@/lib/3d/SceneManager';
 import { CameraController } from '@/lib/3d/CameraController';
@@ -37,6 +37,7 @@ import ScaleRuler from './ScaleRuler';
 import DistanceDisplay from './DistanceDisplay';
 import SettingsMenu from '@/components/SettingsMenu';
 import { ORBIT_COLORS, SUN_LIGHT_CONFIG, ORBIT_CURVE_POINTS, SATELLITE_CONFIG, ORBIT_FADE_CONFIG, FAR_VIEW_CONFIG } from '@/lib/config/visualConfig';
+import { CAMERA_CONFIG } from '@/lib/config/cameraConfig';
 import { TextureManager } from '@/lib/3d/TextureManager';
 
 // ==================== 可调参数配置 ====================
@@ -82,23 +83,6 @@ const LABEL_CONFIG = {
   
   // 🔧 最小缩放级别（低于此值不显示任何标签，除了选中的）
   minZoomToShow: 10,
-};
-
-// 聚焦配置
-const FOCUS_CONFIG = {
-  // 🔧 聚焦距离倍数（相对于行星半径，值越小越接近行星表面）
-  // 设置为 0.5 允许用户缩放到行星表面查看细节（类似地图软件无限放大）
-  distanceMultiplier: 0.5,
-  
-  // 🔧 最小聚焦距离（AU，支持极小值以实现无限放大）
-  minDistance: 0.00001,
-};
-
-// 初始相机位置
-const INITIAL_CAMERA_POSITION = {
-  x: 0,
-  y: 10,
-  z: 30,
 };
 
 // 🔧 相机初始角度配置（度）
@@ -272,7 +256,7 @@ export default function SolarSystemCanvas3D() {
         const sunConfig = CELESTIAL_BODIES.sun;
         const sunPlanet = new Planet({
           body: sunBody,
-          config: sunConfig,
+          ...(sunConfig && { config: sunConfig }),
           rotationSpeed: ROTATION_SPEEDS.sun || 0, // Fallback to old system
         });
         const sunMesh = sunPlanet.getMesh();
@@ -285,7 +269,7 @@ export default function SolarSystemCanvas3D() {
         if (!labelsRef.current.has('sun')) {
           const labelDiv = document.createElement('div');
           labelDiv.className = 'planet-label';
-          labelDiv.textContent = planetNames[lang][sunBody.name] || sunBody.name;
+          labelDiv.textContent = planetNames[lang]?.[sunBody.name] || sunBody.name;
           labelDiv.style.color = '#ffffff';
           labelDiv.style.fontSize = LABEL_CONFIG.fontSize;
           labelDiv.style.fontWeight = LABEL_CONFIG.fontWeight;
@@ -324,7 +308,7 @@ export default function SolarSystemCanvas3D() {
         const celestialConfig = CELESTIAL_BODIES[bodyKey];
         const planet = new Planet({
           body,
-          config: celestialConfig,
+          ...(celestialConfig && { config: celestialConfig }),
           rotationSpeed: ROTATION_SPEEDS[bodyKey] || 0, // Fallback to old system
         });
         planet.updatePosition(body.x, body.y, body.z);
@@ -383,7 +367,7 @@ export default function SolarSystemCanvas3D() {
         if (!labelsRef.current.has(body.name.toLowerCase())) {
           const labelDiv = document.createElement('div');
           labelDiv.className = 'planet-label';
-          labelDiv.textContent = planetNames[lang][body.name] || body.name;
+          labelDiv.textContent = planetNames[lang]?.[body.name] || body.name;
           labelDiv.style.color = '#ffffff';
           labelDiv.style.fontSize = LABEL_CONFIG.fontSize;
           labelDiv.style.fontWeight = LABEL_CONFIG.fontWeight;
@@ -488,12 +472,12 @@ export default function SolarSystemCanvas3D() {
           }
         }
         
-        // 播放时降低阻尼因子获得更敏锐的相机响应，非播放时恢复正常值
+        // 播放时降低阻尼因子获得更敏锐的相机响应，非播放时使用配置值
         if (cameraControllerRef.current) {
           const controls = cameraControllerRef.current.getControls();
-          // 播放时使用较低的阻尼（0.02）以获得敏捷的跟踪，保持缓动但响应更快
-          // 非播放时使用正常阻尼（0.04）以保留平滑的交互感
-          controls.dampingFactor = state.isPlaying ? 0.02 : 0.04;
+          // 播放时使用较低的阻尼以获得敏捷的跟踪
+          // 非播放时使用配置文件中的阻尼值以保留平滑的交互感
+          controls.dampingFactor = state.isPlaying ? 0.02 : CAMERA_CONFIG.dampingFactor;
         }
 
         // 计算相机到最近行星的距离，用于所有轨道的渐隐
@@ -536,7 +520,7 @@ export default function SolarSystemCanvas3D() {
         // 计算远距离时的行星、轨道、标签透明度
         let farViewPlanetOpacity = 1.0;
         let farViewOrbitOpacity = 1.0;
-        let farViewLabelOpacity = 1.0;
+        // let farViewLabelOpacity = 1.0; // TODO: Apply this to labels
         
         if (FAR_VIEW_CONFIG.enabled) {
           // 行星淡出
@@ -555,13 +539,13 @@ export default function SolarSystemCanvas3D() {
             farViewOrbitOpacity = 1 - (distanceToSun - FAR_VIEW_CONFIG.orbitFadeStartDistance) / range;
           }
           
-          // 标签淡出
-          if (distanceToSun >= FAR_VIEW_CONFIG.labelFadeEndDistance) {
-            farViewLabelOpacity = 0;
-          } else if (distanceToSun > FAR_VIEW_CONFIG.labelFadeStartDistance) {
-            const range = FAR_VIEW_CONFIG.labelFadeEndDistance - FAR_VIEW_CONFIG.labelFadeStartDistance;
-            farViewLabelOpacity = 1 - (distanceToSun - FAR_VIEW_CONFIG.labelFadeStartDistance) / range;
-          }
+          // 标签淡出 - TODO: Apply farViewLabelOpacity to labels
+          // if (distanceToSun >= FAR_VIEW_CONFIG.labelFadeEndDistance) {
+          //   farViewLabelOpacity = 0;
+          // } else if (distanceToSun > FAR_VIEW_CONFIG.labelFadeStartDistance) {
+          //   const range = FAR_VIEW_CONFIG.labelFadeEndDistance - FAR_VIEW_CONFIG.labelFadeStartDistance;
+          //   farViewLabelOpacity = 1 - (distanceToSun - FAR_VIEW_CONFIG.labelFadeStartDistance) / range;
+          // }
         }
         
         // 合并远距离透明度到轨道透明度
@@ -575,7 +559,7 @@ export default function SolarSystemCanvas3D() {
           }
         });
         
-        // 应用远距离行星透明度
+        // 应用远距离行星透明度（太阳除外）
         if (FAR_VIEW_CONFIG.enabled && farViewPlanetOpacity < 1) {
           currentBodies.forEach((body: any) => {
             if (body.isSun) return; // 太阳不隐藏
@@ -593,9 +577,9 @@ export default function SolarSystemCanvas3D() {
             }
           });
         } else {
-          // 恢复行星可见性
+          // 恢复行星可见性（太阳除外）
           currentBodies.forEach((body: any) => {
-            if (body.isSun) return;
+            if (body.isSun) return; // 太阳不处理
             const key = body.name.toLowerCase();
             const planet = planetsRef.current.get(key);
             if (planet) {
@@ -605,8 +589,22 @@ export default function SolarSystemCanvas3D() {
           });
         }
 
-        // 更新太阳位置
+        // 太阳始终保持可见和正确的材质状态（不受远距离优化影响）
         const sunPlanet = planetsRef.current.get('sun');
+        if (sunPlanet) {
+          const sunMesh = sunPlanet.getMesh();
+          sunMesh.visible = true;
+          // 确保太阳材质属性始终正确
+          if (sunMesh.material) {
+            const material = sunMesh.material as any;
+            material.transparent = false;
+            material.opacity = 1.0;
+            material.depthWrite = true;
+            material.depthTest = true;
+          }
+        }
+
+        // 更新太阳位置和状态
         if (sunPlanet) {
           sunPlanet.updatePosition(0, 0, 0);
           sunPlanet.updateRotation(deltaTime);
@@ -727,7 +725,7 @@ export default function SolarSystemCanvas3D() {
             
             const selectedPlanet = useSolarSystemStore.getState().selectedPlanet;
             const isSelected = body.name === selectedPlanet;
-            const displayName = planetNames[lang][body.name] || body.name;
+            const displayName = planetNames[lang]?.[body.name] || body.name;
             
             labelInfos.push({
               body,
@@ -747,6 +745,7 @@ export default function SolarSystemCanvas3D() {
         
         for (let i = 0; i < labelInfos.length; i++) {
           const info1 = labelInfos[i];
+          if (!info1) continue;
           const isSelected = info1.body.name === selectedPlanet;
           
           // 太阳标签始终显示，不参与重叠检测
@@ -767,6 +766,7 @@ export default function SolarSystemCanvas3D() {
           for (let j = 0; j < labelInfos.length; j++) {
             if (i === j) continue;
             const info2 = labelInfos[j];
+            if (!info2) continue;
             
             // 简单的重叠检测（基于屏幕坐标和标签大小）
             const labelWidth = info1.text.length * 10; // 估算标签宽度
@@ -1017,7 +1017,7 @@ export default function SolarSystemCanvas3D() {
             // 1. 检测行星网格
             const mesh = planet.getMesh();
             const meshIntersect = raycasterRef.current!.intersectObject(mesh);
-            if (meshIntersect.length > 0) {
+            if (meshIntersect.length > 0 && meshIntersect[0]) {
               intersects.push({
                 planet,
                 body,
@@ -1072,7 +1072,7 @@ export default function SolarSystemCanvas3D() {
               const labelY = screenY + LABEL_CONFIG.offsetY;
               
               // 估算标签大小
-              const displayName = planetNames[lang][body.name] || body.name;
+              const displayName = planetNames[lang]?.[body.name] || body.name;
               const labelWidth = displayName.length * 10;
               const labelHeight = 20;
               
@@ -1274,14 +1274,14 @@ export default function SolarSystemCanvas3D() {
         opacity: opacity,
         transition: 'opacity 1s ease-in-out',
       } as React.CSSProperties}
-      onTouchStart={(e) => {
+      onTouchStart={() => {
         // 让相机控制器完全处理所有触摸事件
         // 不在这里阻止默认行为，避免与相机控制器冲突
       }}
-      onTouchMove={(e) => {
+      onTouchMove={() => {
         // 让相机控制器完全处理所有触摸事件
       }}
-      onTouchEnd={(e) => {
+      onTouchEnd={() => {
         // 让相机控制器完全处理所有触摸事件
       }}
     >

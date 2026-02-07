@@ -5,141 +5,65 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useSolarSystemStore } from '@/lib/state';
 import TimeSlider from './TimeSlider';
 import { TIME_CONTROL_CONFIG, TIME_SLIDER_CONFIG } from '@/lib/config/visualConfig';
+import { useThrottledTime, useRealTime } from './TimeControl.hooks';
+import {
+  calculateTimeControlOpacity,
+  formatTime,
+  formatDate,
+  formatTimeDiff,
+  calculateTimeDiff,
+  shouldShowPrecisionWarning,
+  createDateWithPreservedTime,
+} from './TimeControl.helpers';
 
-// 使用节流来减少时间显示的更新频率
-function useThrottledTime(currentTime: Date, interval: number = 100) {
-  const [throttledTime, setThrottledTime] = useState(currentTime);
-  const lastUpdateRef = useRef<number>(0);
-
-  useEffect(() => {
-    const now = Date.now();
-    if (now - lastUpdateRef.current >= interval) {
-      setThrottledTime(currentTime);
-      lastUpdateRef.current = now;
-    } else {
-      const timeoutId = setTimeout(() => {
-        setThrottledTime(currentTime);
-        lastUpdateRef.current = Date.now();
-      }, interval - (now - lastUpdateRef.current));
-      return () => clearTimeout(timeoutId);
-    }
-  }, [currentTime, interval]);
-
-  return throttledTime;
-}
-
-// 使用 React.memo 和选择器优化性能
+/**
+ * TimeControl component
+ * Displays current time and provides arc slider for time control
+ */
 const TimeControl = React.memo(() => {
-  // 只订阅需要的状态，避免频繁重渲染
+  // State subscriptions
   const currentTime = useSolarSystemStore((state) => state.currentTime);
   const setCurrentTime = useSolarSystemStore((state) => state.setCurrentTime);
   const lang = useSolarSystemStore((state) => state.lang);
   const cameraDistance = useSolarSystemStore((state) => state.cameraDistance);
   
+  // Refs
   const calendarButtonRef = useRef<HTMLButtonElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
   
-  // 使用 useState 和 useEffect 来避免 hydration 错误
-  const [realTime, setRealTime] = useState<Date | null>(null);
-  
-  // 计算时间控件的透明度（3000AU 开始淡出，5000AU 完全隐藏）
-  const TIME_CONTROL_FADE_START = 3000;
-  const TIME_CONTROL_FADE_END = 5000;
-  let timeControlOpacity = 1;
-  if (cameraDistance >= TIME_CONTROL_FADE_END) {
-    timeControlOpacity = 0;
-  } else if (cameraDistance > TIME_CONTROL_FADE_START) {
-    timeControlOpacity = 1 - (cameraDistance - TIME_CONTROL_FADE_START) / (TIME_CONTROL_FADE_END - TIME_CONTROL_FADE_START);
-  }
-  
-  useEffect(() => {
-    // 只在客户端设置真实时间
-    setRealTime(new Date());
-  }, []);
-  
-  // 使用节流的时间，减少重渲染频率（每100ms更新一次，而不是每帧）
+  // Custom hooks
+  const realTime = useRealTime();
   const displayTime = useThrottledTime(currentTime, 100);
   
-  // 计算与当前时间的差值（天）- 使用节流后的时间
-  const timeDiff = realTime 
-    ? (displayTime.getTime() - realTime.getTime()) / (1000 * 60 * 60 * 24)
-    : 0;
+  // Calculations
+  const timeControlOpacity = calculateTimeControlOpacity(cameraDistance);
+  const timeDiff = calculateTimeDiff(displayTime, realTime);
   const absTimeDiff = Math.abs(timeDiff);
-  
-  // 精度阈值：超过100年（约36525天）提示精度问题
-  const PRECISION_THRESHOLD_DAYS = 36525; // 100年
-  const showPrecisionWarning = absTimeDiff > PRECISION_THRESHOLD_DAYS;
+  const showPrecisionWarning = shouldShowPrecisionWarning(timeDiff);
 
-  // 格式化时间（时分秒）
-  const formatTime = (date: Date): string => {
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    return `${hours}:${minutes}:${seconds}`;
-  };
-
-  // 格式化日期（用于日期选择器）
-  const formatDate = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  // 格式化时间差
-  const formatTimeDiff = (days: number): string => {
-    const absDays = Math.abs(days);
-    if (absDays < 1) {
-      const hours = Math.floor(absDays * 24);
-      const minutes = Math.floor((absDays * 24 - hours) * 60);
-      if (hours > 0) {
-        return lang === 'zh' ? `${hours}小时${minutes}分钟` : `${hours}h ${minutes}m`;
-      }
-      return lang === 'zh' ? `${minutes}分钟` : `${minutes}m`;
-    } else if (absDays < 365) {
-      const daysInt = Math.floor(absDays);
-      return lang === 'zh' ? `${daysInt}天` : `${daysInt} days`;
-    } else {
-      const years = Math.floor(absDays / 365.25);
-      const remainingDays = Math.floor(absDays % 365.25);
-      if (remainingDays > 0) {
-        return lang === 'zh' ? `${years}年${remainingDays}天` : `${years}y ${remainingDays}d`;
-      }
-      return lang === 'zh' ? `${years}年` : `${years} years`;
-    }
-  };
-
-  // 处理日期选择
+  // Event handlers
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = new Date(e.target.value);
-    if (!isNaN(newDate.getTime())) {
-      // 保持当前时间的小时、分钟、秒
-      const hours = currentTime.getHours();
-      const minutes = currentTime.getMinutes();
-      const seconds = currentTime.getSeconds();
-      newDate.setHours(hours, minutes, seconds);
+    const newDate = createDateWithPreservedTime(e.target.value, currentTime);
+    if (newDate) {
       setCurrentTime(newDate);
     }
   };
 
-  // 处理日历按钮点击，直接打开日历选择器
   const handleCalendarClick = () => {
     if (dateInputRef.current && 'showPicker' in dateInputRef.current) {
       dateInputRef.current.showPicker();
     }
   };
 
-  // 处理"现在"按钮点击
   const handleNowClick = () => {
-    const now = new Date();
-    setCurrentTime(now);
+    setCurrentTime(new Date());
   };
 
-  // 如果完全透明，不渲染
+  // Early return if fully transparent
   if (timeControlOpacity <= 0) {
     return null;
   }
@@ -206,8 +130,8 @@ const TimeControl = React.memo(() => {
                   }}
                 >
                   {timeDiff > 0 
-                    ? (lang === 'zh' ? `未来 ${formatTimeDiff(timeDiff)}` : `+${formatTimeDiff(timeDiff)}`)
-                    : (lang === 'zh' ? `过去 ${formatTimeDiff(absTimeDiff)}` : `-${formatTimeDiff(absTimeDiff)}`)
+                    ? (lang === 'zh' ? `未来 ${formatTimeDiff(timeDiff, lang)}` : `+${formatTimeDiff(timeDiff, lang)}`)
+                    : (lang === 'zh' ? `过去 ${formatTimeDiff(absTimeDiff, lang)}` : `-${formatTimeDiff(absTimeDiff, lang)}`)
                   }
                 </div>
                 <button
@@ -320,5 +244,7 @@ const TimeControl = React.memo(() => {
     </>  
   );
 });
+
+TimeControl.displayName = 'TimeControl';
 
 export default TimeControl;

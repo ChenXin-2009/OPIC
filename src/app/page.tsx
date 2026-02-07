@@ -1,7 +1,6 @@
 // src/app/page.tsx 或 src/app/solar-system/page.tsx
 'use client';
 
-import React from "react";
 import SolarSystemCanvas3D from "@/components/canvas/3d/SolarSystemCanvas3D";
 import TimeControl from "@/components/TimeControl";
 import StarBrightnessSlider from "@/components/StarBrightnessSlider";

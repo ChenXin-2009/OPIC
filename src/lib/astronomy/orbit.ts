@@ -1,19 +1,33 @@
 /**
- * 轨道计算模块 v2
+ * Orbital Calculations Module v2
  * 
- * 修改内容：
- * 1. 使用 VSOP87 简化模型的轨道参数（更接近 NASA JPL 数据）
- * 2. 增加轨道参数的时间演化（每世纪变化率）
- * 3. 修正坐标系转换（黄道坐标系 → 日心坐标系）
- * 4. 月球使用 ELP2000 简化模型
+ * This module provides planetary position calculations using simplified
+ * VSOP87 orbital elements with time evolution.
  * 
- * 参考：
+ * Features:
+ * 1. VSOP87 simplified model orbital parameters (closer to NASA JPL data)
+ * 2. Time-dependent orbital elements (secular variations per century)
+ * 3. Ecliptic to heliocentric coordinate transformations
+ * 4. Moon position using simplified ELP2000 model
+ * 5. Satellite positions for major moons
+ * 
+ * References:
  * - NASA JPL HORIZONS System
  * - Simon et al. (1994) - Numerical expressions for precession
  * - Meeus, Jean - Astronomical Algorithms (2nd Ed.)
  */
 
 import * as THREE from 'three';
+import {
+  argumentOfPeriapsis,
+  eccentricToTrueAnomaly,
+  heliocentricDistance,
+  julianCenturies,
+  meanAnomaly,
+  orbitalToEcliptic,
+  solveKeplerEquation
+} from './utils';
+import { CELESTIAL_BODIES, calculateRotationAxis } from '@/lib/types/celestialTypes';
 
 export interface OrbitalElements {
   name: string;
@@ -264,9 +278,14 @@ export const SATELLITE_DEFINITIONS: Record<string, Array<{
 };
 
 /**
- * 计算给定时刻的轨道元素
- * @param elements - 基准轨道元素
- * @param T - 从J2000.0起的儒略世纪数
+ * Computes orbital elements at a given time.
+ * 
+ * This function applies secular variations to the base orbital elements
+ * to account for perturbations over time.
+ * 
+ * @param elements - Base orbital elements at J2000.0
+ * @param T - Julian centuries since J2000.0
+ * @returns Orbital elements at the specified time
  */
 function computeElementsAtTime(elements: OrbitalElements, T: number): OrbitalElements {
   return {
@@ -281,85 +300,195 @@ function computeElementsAtTime(elements: OrbitalElements, T: number): OrbitalEle
 }
 
 /**
- * 求解开普勒方程
+ * Calculates satellite position relative to its parent planet.
+ * 
+ * This function computes the position of a satellite using a simplified
+ * circular orbit model. The orbit can be either in the planet's equatorial
+ * plane or relative to the ecliptic plane (for the Moon).
+ * 
+ * @param sat - Satellite definition with orbital parameters
+ * @param daysSinceJ2000 - Days since J2000.0 epoch
+ * @param parentAxisQuaternion - Parent planet's axis orientation
+ * @returns Satellite position relative to parent (AU)
  */
-function solveKepler(M: number, e: number, tolerance: number = 1e-8): number {
-  let E = M;
-  let delta = 1;
-  let iterations = 0;
-  const maxIterations = 50;
-  
-  while (Math.abs(delta) > tolerance && iterations < maxIterations) {
-    delta = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
-    E -= delta;
-    iterations++;
+function calculateSatellitePosition(
+  sat: {
+    a: number;
+    periodDays: number;
+    i: number;
+    Omega: number;
+    phase?: number;
+    eclipticOrbit?: boolean;
+  },
+  daysSinceJ2000: number,
+  parentAxisQuaternion: THREE.Quaternion
+): THREE.Vector3 {
+  // Calculate mean angle based on orbital period
+  const theta = (2 * Math.PI * (daysSinceJ2000 / sat.periodDays + (sat.phase || 0))) % (2 * Math.PI);
+
+  // Satellite position in orbital plane
+  const r_orb = sat.a;
+  const x_orb = r_orb * Math.cos(theta);
+  const y_orb = r_orb * Math.sin(theta);
+  const z_orb = 0;
+
+  let satellitePos: THREE.Vector3;
+
+  if (sat.eclipticOrbit) {
+    // Moon and similar: orbit relative to ecliptic plane
+    // Apply orbital inclination directly in ecliptic coordinates
+    const cos_Om = Math.cos(sat.Omega);
+    const sin_Om = Math.sin(sat.Omega);
+    const x_1 = x_orb * cos_Om - y_orb * sin_Om;
+    const y_1 = x_orb * sin_Om + y_orb * cos_Om;
+    const z_1 = z_orb;
+
+    const cos_i = Math.cos(sat.i);
+    const sin_i = Math.sin(sat.i);
+    const x_final = x_1;
+    const y_final = y_1 * cos_i - z_1 * sin_i;
+    const z_final = y_1 * sin_i + z_1 * cos_i;
+
+    satellitePos = new THREE.Vector3(x_final, y_final, z_final);
+  } else {
+    // Other satellites: orbit in parent planet's equatorial plane
+    // Apply satellite orbital inclination and ascending node
+    const cos_Om = Math.cos(sat.Omega);
+    const sin_Om = Math.sin(sat.Omega);
+    const x_1 = x_orb * cos_Om - y_orb * sin_Om;
+    const y_1 = x_orb * sin_Om + y_orb * cos_Om;
+    const z_1 = z_orb;
+
+    const cos_i = Math.cos(sat.i);
+    const sin_i = Math.sin(sat.i);
+    const x_2 = x_1;
+    const y_2 = y_1 * cos_i - z_1 * sin_i;
+    const z_2 = y_1 * sin_i + z_1 * cos_i;
+
+    // Apply parent planet's axis tilt transformation
+    satellitePos = new THREE.Vector3(x_2, y_2, z_2);
+    satellitePos.applyQuaternion(parentAxisQuaternion);
   }
-  
-  return E;
+
+  return satellitePos;
 }
 
 /**
- * 计算行星日心坐标
- * @param elements - 轨道元素
- * @param julianDay - 儒略日
+ * Gets the parent planet's axis orientation quaternion.
+ * 
+ * This function retrieves the spin axis configuration from the celestial
+ * bodies configuration and converts it to a quaternion for coordinate
+ * transformations.
+ * 
+ * @param parentKey - Parent planet identifier (lowercase)
+ * @returns Quaternion representing the planet's axis orientation
+ */
+function getParentAxisQuaternion(parentKey: string): THREE.Quaternion {
+  const quaternion = new THREE.Quaternion(); // Default: no tilt
+
+  const parentConfig = CELESTIAL_BODIES[parentKey];
+
+  if (parentConfig && parentConfig.northPoleRA !== undefined && parentConfig.northPoleDec !== undefined) {
+    // Calculate rotation axis from north pole coordinates
+    const axis = calculateRotationAxis(parentConfig.northPoleRA, parentConfig.northPoleDec);
+
+    // Convert to Three.js Vector3
+    const spinAxisRender = new THREE.Vector3(axis.x, axis.y, axis.z);
+
+    // Orbital plane is in equatorial plane, normal vector is spin axis
+    const defaultNormal = new THREE.Vector3(0, 0, 1);
+    const targetNormal = spinAxisRender.normalize();
+
+    quaternion.setFromUnitVectors(defaultNormal, targetNormal);
+  }
+
+  return quaternion;
+}
+
+/**
+ * Calculates the heliocentric position of a planet.
+ * 
+ * This function computes the 3D position of a celestial body in the
+ * heliocentric ecliptic coordinate system at a given Julian Day.
+ * 
+ * Algorithm:
+ * 1. Compute Julian centuries since J2000.0
+ * 2. Apply secular variations to orbital elements
+ * 3. Calculate mean anomaly from mean longitude
+ * 4. Solve Kepler's equation for eccentric anomaly
+ * 5. Compute true anomaly and heliocentric distance
+ * 6. Transform from orbital plane to ecliptic coordinates
+ * 
+ * @param elements - Orbital elements of the body
+ * @param julianDay - Julian Day Number
+ * @returns Position in heliocentric ecliptic coordinates (AU) and distance
+ * 
+ * @example
+ * ```typescript
+ * const earthPos = calculatePosition(ORBITAL_ELEMENTS.earth, 2451545.0);
+ * console.log(earthPos); // { x: ..., y: ..., z: ..., r: ... }
+ * ```
  */
 export function calculatePosition(
   elements: OrbitalElements,
   julianDay: number
 ): { x: number; y: number; z: number; r: number } {
-  // 从J2000.0起的儒略世纪数
-  const T = (julianDay - 2451545.0) / 36525.0;
+  // Compute Julian centuries since J2000.0
+  const T = julianCenturies(julianDay);
   
-  // 计算当前时刻的轨道元素
+  // Apply secular variations to orbital elements
   const elem = computeElementsAtTime(elements, T);
   
-  // 计算平近点角
-  const w = elem.w_bar - elem.O; // 近日点幅角
-  const M = (elem.L - elem.w_bar) % (2 * Math.PI);
+  // Calculate argument of periapsis and mean anomaly
+  const w = argumentOfPeriapsis(elem.w_bar, elem.O);
+  const M = meanAnomaly(elem.L, elem.w_bar);
   
-  // 求解偏近点角
-  const E = solveKepler(M, elem.e);
+  // Solve Kepler's equation for eccentric anomaly
+  const E = solveKeplerEquation(M, elem.e);
   
-  // 计算真近点角
-  const nu = 2 * Math.atan2(
-    Math.sqrt(1 + elem.e) * Math.sin(E / 2),
-    Math.sqrt(1 - elem.e) * Math.cos(E / 2)
-  );
+  // Calculate true anomaly
+  const nu = eccentricToTrueAnomaly(E, elem.e);
   
-  // 日心距离
-  const r = elem.a * (1 - elem.e * Math.cos(E));
+  // Calculate heliocentric distance
+  const r = heliocentricDistance(elem.a, elem.e, E);
   
-  // 轨道平面坐标
+  // Compute position in orbital plane
   const x_orb = r * Math.cos(nu);
   const y_orb = r * Math.sin(nu);
   
-  // 转换到黄道坐标系
-  const cos_w = Math.cos(w);
-  const sin_w = Math.sin(w);
-  const cos_O = Math.cos(elem.O);
-  const sin_O = Math.sin(elem.O);
-  const cos_i = Math.cos(elem.i);
-  const sin_i = Math.sin(elem.i);
+  // Transform to ecliptic coordinates
+  const pos = orbitalToEcliptic(x_orb, y_orb, {
+    w,
+    Omega: elem.O,
+    i: elem.i
+  });
   
-  const x = (cos_w * cos_O - sin_w * sin_O * cos_i) * x_orb +
-            (-sin_w * cos_O - cos_w * sin_O * cos_i) * y_orb;
-  
-  const y = (cos_w * sin_O + sin_w * cos_O * cos_i) * x_orb +
-            (-sin_w * sin_O + cos_w * cos_O * cos_i) * y_orb;
-  
-  const z = (sin_w * sin_i) * x_orb +
-            (cos_w * sin_i) * y_orb;
-  
-  return { x, y, z, r };
+  return { ...pos, r };
 }
 
 /**
- * 获取所有天体位置
+ * Gets all celestial body positions at a given time.
+ * 
+ * This function computes the positions of the Sun, all 8 planets, and
+ * their major satellites at the specified Julian Day.
+ * 
+ * The function returns an array of celestial bodies with their 3D positions
+ * in heliocentric ecliptic coordinates (AU).
+ * 
+ * @param julianDay - Julian Day Number
+ * @returns Array of celestial bodies with positions and properties
+ * 
+ * @example
+ * ```typescript
+ * const bodies = getCelestialBodies(2451545.0); // J2000.0
+ * const earth = bodies.find(b => b.name === 'Earth');
+ * console.log(earth?.x, earth?.y, earth?.z);
+ * ```
  */
 export function getCelestialBodies(julianDay: number): CelestialBody[] {
   const bodies: CelestialBody[] = [];
   
-  // 太阳
+  // Add the Sun at origin
   bodies.push({
     name: 'Sun',
     x: 0,
@@ -371,8 +500,27 @@ export function getCelestialBodies(julianDay: number): CelestialBody[] {
     isSun: true
   });
   
-  // 8大行星
-  let earthPos: { x: number; y: number; z: number } | null = null;
+  // Calculate positions for all 8 planets
+  const planetPositions = calculatePlanetPositions(julianDay, bodies);
+  
+  // Calculate positions for all satellites
+  calculateSatellitePositions(julianDay, planetPositions, bodies);
+  
+  return bodies;
+}
+
+/**
+ * Calculates positions for all planets.
+ * 
+ * @param julianDay - Julian Day Number
+ * @param bodies - Array to append planet bodies to
+ * @returns Map of planet positions by lowercase name
+ */
+function calculatePlanetPositions(
+  julianDay: number,
+  bodies: CelestialBody[]
+): Record<string, { x: number; y: number; z: number }> {
+  const planetPosMap: Record<string, { x: number; y: number; z: number }> = {};
   
   for (const [key, elements] of Object.entries(ORBITAL_ELEMENTS)) {
     const pos = calculatePosition(elements, julianDay);
@@ -388,103 +536,49 @@ export function getCelestialBodies(julianDay: number): CelestialBody[] {
       elements: elements
     });
     
-    if (key === 'earth') {
-      earthPos = pos;
-    }
+    planetPosMap[key] = { x: pos.x, y: pos.y, z: pos.z };
   }
+  
+  return planetPosMap;
+}
 
-  // 生成行星的卫星（简化轨道模型）
-  // 使用圆形轨道，轨道中心为母天体当前位置，轨道半径使用 SATELLITE_DEFINITIONS 中的 a
-  // 🔧 关键修复：卫星位置计算考虑母行星轴倾角，确保与轨道平面渲染一致
-  const planetPosMap: Record<string, { x: number; y: number; z: number }> = {};
-  for (const b of bodies) {
-    planetPosMap[b.name.toLowerCase()] = { x: b.x, y: b.y, z: b.z };
-  }
-
+/**
+ * Calculates positions for all satellites.
+ * 
+ * This function computes satellite positions using simplified circular
+ * orbit models. Satellites orbit their parent planets, and their positions
+ * are calculated relative to the parent's current position.
+ * 
+ * @param julianDay - Julian Day Number
+ * @param planetPosMap - Map of planet positions by lowercase name
+ * @param bodies - Array to append satellite bodies to
+ */
+function calculateSatellitePositions(
+  julianDay: number,
+  planetPosMap: Record<string, { x: number; y: number; z: number }>,
+  bodies: CelestialBody[]
+): void {
   const daysSinceJ2000 = julianDay - 2451545.0;
+  
   for (const [parentKey, sats] of Object.entries(SATELLITE_DEFINITIONS)) {
     const parentPos = planetPosMap[parentKey];
-    if (!parentPos) continue;
-
-    // 🔧 获取母行星的轴倾角信息（从 CELESTIAL_BODIES 配置）
-    let parentAxisQuaternion = new THREE.Quaternion(); // 默认无倾角
-    
-    // 动态导入 CELESTIAL_BODIES 以获取母行星轴倾角
-    try {
-      const { CELESTIAL_BODIES } = require('@/lib/types/celestialTypes');
-      const parentConfig = CELESTIAL_BODIES[parentKey];
-      
-      if (parentConfig && parentConfig.orientation && parentConfig.orientation.spinAxis) {
-        const [x, y, z] = parentConfig.orientation.spinAxis;
-        
-        // 母行星自转轴向量（ICRF坐标系）
-        const spinAxisICRF = new THREE.Vector3(x, y, z);
-        
-        // 转换到渲染坐标系（ICRF -> Three.js）
-        const spinAxisRender = new THREE.Vector3(
-          spinAxisICRF.x,  // X 保持不变
-          spinAxisICRF.z,  // ICRF Z -> Render Y
-          -spinAxisICRF.y  // ICRF Y -> Render -Z
-        );
-        
-        // 🔧 修复：轨道平面在赤道面内，法向量是自转轴
-        const defaultNormal = new THREE.Vector3(0, 0, 1);  // 默认轨道平面法向量（Z轴）
-        const targetNormal = spinAxisRender.normalize();   // 目标法向量（自转轴方向）
-        
-        parentAxisQuaternion.setFromUnitVectors(defaultNormal, targetNormal);
-      }
-    } catch (error) {
-      console.warn(`Failed to get parent axis for ${parentKey}:`, error);
+    if (!parentPos) {
+      console.warn(`Parent planet not found: ${parentKey}`);
+      continue;
     }
 
+    // Get parent planet's axis orientation
+    const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
+
     for (const sat of sats) {
-      // 计算平均角度（基于简化的固定周期）
-      const theta = (2 * Math.PI * (daysSinceJ2000 / sat.periodDays + (sat.phase || 0))) % (2 * Math.PI);
+      // Calculate satellite position relative to parent
+      const satellitePos = calculateSatellitePosition(
+        sat,
+        daysSinceJ2000,
+        parentAxisQuaternion
+      );
 
-      // 卫星轨道坐标
-      const r_orb = sat.a;  // 轨道半径
-      const x_orb = r_orb * Math.cos(theta);  // 轨道平面 X 坐标
-      const y_orb = r_orb * Math.sin(theta);  // 轨道平面 Y 坐标
-      const z_orb = 0;                        // 轨道平面内 Z = 0
-
-      let satellitePos: THREE.Vector3;
-
-      if (sat.eclipticOrbit) {
-        // 月球等：轨道相对于黄道面，不跟随母行星赤道面
-        // 直接在黄道坐标系中应用轨道倾角
-        const cos_Om = Math.cos(sat.Omega);
-        const sin_Om = Math.sin(sat.Omega);
-        const x_1 = x_orb * cos_Om - y_orb * sin_Om;
-        const y_1 = x_orb * sin_Om + y_orb * cos_Om;
-        const z_1 = z_orb;
-
-        const cos_i = Math.cos(sat.i);
-        const sin_i = Math.sin(sat.i);
-        const x_final = x_1;
-        const y_final = y_1 * cos_i - z_1 * sin_i;
-        const z_final = y_1 * sin_i + z_1 * cos_i;
-
-        satellitePos = new THREE.Vector3(x_final, y_final, z_final);
-      } else {
-        // 其他卫星：轨道在母行星赤道面内
-        // 应用卫星轨道倾角和升交点黄经（相对于母行星赤道面）
-        const cos_Om = Math.cos(sat.Omega);
-        const sin_Om = Math.sin(sat.Omega);
-        const x_1 = x_orb * cos_Om - y_orb * sin_Om;
-        const y_1 = x_orb * sin_Om + y_orb * cos_Om;
-        const z_1 = z_orb;
-
-        const cos_i = Math.cos(sat.i);
-        const sin_i = Math.sin(sat.i);
-        const x_2 = x_1;
-        const y_2 = y_1 * cos_i - z_1 * sin_i;
-        const z_2 = y_1 * sin_i + z_1 * cos_i;
-
-        // 应用母行星轴倾角变换
-        satellitePos = new THREE.Vector3(x_2, y_2, z_2);
-        satellitePos.applyQuaternion(parentAxisQuaternion);
-      }
-
+      // Add satellite to bodies array
       bodies.push({
         name: sat.name,
         x: parentPos.x + satellitePos.x,
@@ -493,12 +587,9 @@ export function getCelestialBodies(julianDay: number): CelestialBody[] {
         r: 0,
         radius: sat.radius,
         color: sat.color,
-        // 便于渲染逻辑识别这是个卫星
         parent: parentKey,
         isSatellite: true,
       } as unknown as CelestialBody);
     }
   }
-  
-  return bodies;
 }

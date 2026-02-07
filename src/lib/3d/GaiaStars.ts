@@ -60,7 +60,7 @@ export class GaiaStars {
       let brightCount = 0;
       for (let i = 0; i < this.starCount; i++) {
         const mag = stars[i * 6 + 3];
-        if (mag < GAIA_STARS_CONFIG.brightStarMagThreshold) {
+        if (mag !== undefined && mag < GAIA_STARS_CONFIG.brightStarMagThreshold) {
           brightCount++;
         }
       }
@@ -90,6 +90,11 @@ export class GaiaStars {
         const z = stars[idx + 2];
         const mag = stars[idx + 3];
         const bpRp = stars[idx + 4];
+        
+        // Skip if any required value is undefined
+        if (x === undefined || y === undefined || z === undefined || mag === undefined || bpRp === undefined) {
+          continue;
+        }
         
         if (mag < minMag) minMag = mag;
         if (mag > maxMag) maxMag = mag;
@@ -390,15 +395,15 @@ export class GaiaStars {
     if (this.brightStarsCloud) {
       this.brightStarsCloud.visible = this.brightStarsOpacity > 0.01;
       const mat = this.brightStarsCloud.material as THREE.ShaderMaterial;
-      mat.uniforms.uOpacity.value = this.brightStarsOpacity;
-      mat.uniforms.uBrightness.value = starBrightness;
+      if (mat.uniforms.uOpacity) mat.uniforms.uOpacity.value = this.brightStarsOpacity;
+      if (mat.uniforms.uBrightness) mat.uniforms.uBrightness.value = starBrightness;
     }
     
     if (this.normalStarsCloud) {
       this.normalStarsCloud.visible = this.normalStarsOpacity > 0.01;
       const mat = this.normalStarsCloud.material as THREE.ShaderMaterial;
-      mat.uniforms.uOpacity.value = this.normalStarsOpacity;
-      mat.uniforms.uBrightness.value = starBrightness;
+      if (mat.uniforms.uOpacity) mat.uniforms.uOpacity.value = this.normalStarsOpacity;
+      if (mat.uniforms.uBrightness) mat.uniforms.uBrightness.value = starBrightness;
     }
   }
 

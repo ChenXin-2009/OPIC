@@ -33,7 +33,7 @@ interface LanguageDetectorProps {
  * 语言检测组件
  * 在客户端检测浏览器语言并同步到 Zustand store
  */
-export default function LanguageDetector({ initialLang }: LanguageDetectorProps) {
+export default function LanguageDetector({ initialLang: _ }: LanguageDetectorProps) {
   const { setLang } = useSolarSystemStore();
 
   useEffect(() => {
