@@ -32,7 +32,8 @@
 }
 
 body {
-  background: var(--background);
+  /* 加载完成前保持黑色背景 */
+  background: #000;
   color: var(--foreground);
   /* 全站默认使用系统字体 */
   font-family: 'Source Han Serif CN', 'SimSun', serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -43,8 +44,15 @@ body {
   overflow: hidden;
 }
 
+/* 加载完成后恢复正常背景色 */
+body.loaded {
+  background: var(--background);
+}
+
 /* 允许触摸操作但防止页面滚动 */
 html {
+  /* 确保 HTML 元素也是黑色背景 */
+  background: #000;
   touch-action: manipulation;
   -ms-touch-action: manipulation;
   overflow: hidden;
@@ -91,5 +99,62 @@ input[type="date"].date-input-white::-webkit-clear-button {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* 淡出动画 - 用于加载页面过渡 (Requirements 5.1, 5.2, 5.4, 5.5, 9.5) */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+}
+
+/* 进度条动画 - 用于加载进度显示 */
+@keyframes progress {
+  0% {
+    width: 0%;
+    opacity: 0.6;
+  }
+  50% {
+    width: 70%;
+    opacity: 1;
+  }
+  100% {
+    width: 100%;
+    opacity: 0.8;
+  }
+}
+
+/* 淡出动画工具类 */
+.animate-fadeOut {
+  animation: fadeOut 400ms ease-out forwards;
+  will-change: opacity, transform;
+}
+
+/* 进度条动画工具类 */
+.animate-progress {
+  animation: progress 2s ease-in-out infinite;
+}
+
+/* 为偏好减少动画的用户提供简化版本 (Requirement 9.5) */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fadeOut {
+    animation: none;
+    transition: opacity 200ms ease-out;
+  }
+  
+  /* 禁用所有旋转和脉冲动画 */
+  .motion-reduce\:animate-none {
+    animation: none !important;
+  }
+  
+  /* 为减少动画偏好提供即时淡出 */
+  .motion-reduce\:opacity-0 {
+    opacity: 0;
   }
 }

@@ -176,34 +176,5 @@ export function auToKM(au: number): number {
   return au * AU_IN_KM;
 }
 
-/**
- * Converts degrees to radians.
- * 
- * @param degrees - Angle in degrees
- * @returns Angle in radians
- * 
- * @example
- * ```typescript
- * const rad = degreesToRadians(180);
- * console.log(rad); // π
- * ```
- */
-export function degreesToRadians(degrees: number): number {
-  return degrees * DEG_TO_RAD;
-}
-
-/**
- * Converts radians to degrees.
- * 
- * @param radians - Angle in radians
- * @returns Angle in degrees
- * 
- * @example
- * ```typescript
- * const deg = radiansToDegrees(Math.PI);
- * console.log(deg); // 180
- * ```
- */
-export function radiansToDegrees(radians: number): number {
-  return radians * RAD_TO_DEG;
-}
+// Note: degreesToRadians and radiansToDegrees are now imported from @/lib/utils/math
+// to avoid duplication. Use the shared implementation instead.

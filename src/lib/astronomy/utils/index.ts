@@ -47,7 +47,8 @@ export {
   HALF_PI,
   julianCenturies,
   kmToAU,
-  auToKM,
-  degreesToRadians,
-  radiansToDegrees
+  auToKM
 } from './constants';
+
+// Re-export angle conversion functions from shared utils
+export { degreesToRadians, radiansToDegrees } from '@/lib/utils/math';

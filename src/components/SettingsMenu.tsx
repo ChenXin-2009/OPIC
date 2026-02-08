@@ -1,59 +1,44 @@
 /**
- * SettingsMenu.tsx - 设置菜单
+ * SettingsMenu.tsx - 设置菜单（明日方舟风格）
  * 位于右下角，点击按钮弹出设置菜单
+ * 风格：黑色背景 + 黄色/橙色高光 + 菱形元素
  */
 
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSolarSystemStore } from '@/lib/state';
 
-// ==================== 可调参数配置 ====================
-// ⚙️ 以下参数可在文件顶部调整，影响设置菜单的显示效果
+// ==================== 明日方舟风格配置 ====================
+// 🎨 真实明日方舟 UI：黑色背景 + 黄橙色高光 + 简洁线条
 
-// 设置菜单配置
-const SETTINGS_CONFIG = {
-  // 🔧 按钮位置（相对于屏幕）
+const ARKNIGHTS_CONFIG = {
   position: {
     bottom: '2rem',
     right: '2rem',
   },
   
-  // 🔧 按钮样式
   button: {
-    size: '3rem',
-    iconSize: '2rem',
+    size: '3.5rem',
+    iconSize: '1.5rem',
   },
   
-  // 🔧 菜单样式
   menu: {
     width: '18rem',
     maxHeight: '28rem',
     padding: '1rem',
-    gap: '0.75rem',
   },
   
-  // 🔧 切换开关样式
-  toggle: {
-    container: {
-      padding: '0.125rem',
-    },
-    button: {
-      paddingX: '0.5rem',
-      paddingY: '0.375rem',
-      minWidth: '2.5rem',
-    },
-    slider: {
-      positionNormal: '0.125rem',
-      positionWide: '2.625rem',
-      width: '2.5rem',
-      marginTop: '0.125rem',
-      marginBottom: '0.125rem',
-    },
-    animation: {
-      duration: 300,
-      easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-    },
+  // 明日方舟真实配色
+  colors: {
+    primary: '#ffffff',      // 白色主色
+    secondary: '#e0e0e0',    // 浅灰
+    accent: '#f0f0f0',       // 亮白
+    dark: '#0a0a0a',         // 纯黑背景
+    darkLight: '#1a1a1a',    // 深灰
+    border: '#333333',       // 边框灰
+    text: '#ffffff',         // 白色文字
+    textDim: '#999999',      // 暗淡文字
   },
 };
 
@@ -67,7 +52,6 @@ export default function SettingsMenu({ cameraController }: SettingsMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // 从 store 获取状态
   const lang = useSolarSystemStore((state) => state.lang);
   const setLang = useSolarSystemStore((state) => state.setLang);
 
@@ -102,34 +86,70 @@ export default function SettingsMenu({ cameraController }: SettingsMenuProps) {
     }
   };
 
-  const sliderLeftNormal = SETTINGS_CONFIG.toggle.slider.positionNormal;
-  const sliderLeftWide = SETTINGS_CONFIG.toggle.slider.positionWide;
-  const sliderWidth = SETTINGS_CONFIG.toggle.slider.width;
-  const sliderTop = SETTINGS_CONFIG.toggle.slider.marginTop;
-  const sliderBottom = SETTINGS_CONFIG.toggle.slider.marginBottom;
-
   return (
     <>
-      {/* 设置按钮 */}
+      {/* 明日方舟风格设置按钮 */}
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bg-black/90 backdrop-blur-md rounded-full shadow-2xl border border-white/20 hover:bg-black/95 transition-all duration-300 flex items-center justify-center"
+        className="fixed group"
         style={{
-          bottom: SETTINGS_CONFIG.position.bottom,
-          right: SETTINGS_CONFIG.position.right,
-          width: SETTINGS_CONFIG.button.size,
-          height: SETTINGS_CONFIG.button.size,
+          bottom: ARKNIGHTS_CONFIG.position.bottom,
+          right: ARKNIGHTS_CONFIG.position.right,
+          width: ARKNIGHTS_CONFIG.button.size,
+          height: ARKNIGHTS_CONFIG.button.size,
           zIndex: 99999,
+          background: ARKNIGHTS_CONFIG.colors.dark,
+          border: `2px solid ${ARKNIGHTS_CONFIG.colors.border}`,
+          clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
+          transition: 'all 0.3s ease',
         }}
         aria-label={lang === 'zh' ? '设置' : 'Settings'}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = ARKNIGHTS_CONFIG.colors.primary;
+          e.currentTarget.style.boxShadow = `0 0 20px ${ARKNIGHTS_CONFIG.colors.primary}80`;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = ARKNIGHTS_CONFIG.colors.border;
+          e.currentTarget.style.boxShadow = 'none';
+        }}
       >
+        {/* 左上角装饰 */}
+        <div 
+          className="absolute"
+          style={{
+            top: '4px',
+            left: '4px',
+            width: '8px',
+            height: '8px',
+            background: ARKNIGHTS_CONFIG.colors.primary,
+            clipPath: 'polygon(0 0, 100% 0, 0 100%)',
+          }}
+        />
+        
+        {/* 右下角装饰 */}
+        <div 
+          className="absolute"
+          style={{
+            bottom: '4px',
+            right: '4px',
+            width: '8px',
+            height: '8px',
+            background: ARKNIGHTS_CONFIG.colors.primary,
+            clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+          }}
+        />
+        
+        {/* 图标 */}
         <svg
-          className="text-white"
+          className="absolute inset-0 m-auto"
           fill="none"
-          stroke="currentColor"
+          stroke={ARKNIGHTS_CONFIG.colors.primary}
           viewBox="0 0 24 24"
-          style={{ width: SETTINGS_CONFIG.button.iconSize, height: SETTINGS_CONFIG.button.iconSize }}
+          style={{ 
+            width: ARKNIGHTS_CONFIG.button.iconSize, 
+            height: ARKNIGHTS_CONFIG.button.iconSize,
+          }}
         >
           <path
             strokeLinecap="round"
@@ -146,158 +166,207 @@ export default function SettingsMenu({ cameraController }: SettingsMenuProps) {
         </svg>
       </button>
 
-      {/* 设置菜单 */}
+      {/* 明日方舟风格设置菜单 */}
       {isOpen && (
         <div
           ref={menuRef}
-          className="fixed z-50 bg-black/90 backdrop-blur-md rounded-lg shadow-2xl border border-white/20 opacity-0 animate-[fadeIn_0.2s_ease-out_forwards] overflow-y-auto"
+          className="fixed z-50"
           style={{
-            bottom: `calc(${SETTINGS_CONFIG.position.bottom} + ${SETTINGS_CONFIG.button.size} + 0.5rem)`,
-            right: SETTINGS_CONFIG.position.right,
-            width: SETTINGS_CONFIG.menu.width,
-            maxHeight: SETTINGS_CONFIG.menu.maxHeight,
-            padding: SETTINGS_CONFIG.menu.padding,
+            bottom: `calc(${ARKNIGHTS_CONFIG.position.bottom} + ${ARKNIGHTS_CONFIG.button.size} + 0.75rem)`,
+            right: ARKNIGHTS_CONFIG.position.right,
+            width: ARKNIGHTS_CONFIG.menu.width,
+            maxHeight: ARKNIGHTS_CONFIG.menu.maxHeight,
+            background: ARKNIGHTS_CONFIG.colors.dark,
+            border: `2px solid ${ARKNIGHTS_CONFIG.colors.border}`,
+            clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
+            animation: 'slideIn 0.3s ease-out',
           }}
         >
-          <div className="flex flex-col gap-4">
-            {/* 菜单标题 */}
-            <div className="text-white text-base font-semibold border-b border-white/10 pb-2">
-              {lang === 'zh' ? '设置' : 'Settings'}
-            </div>
-
-            {/* 语言切换 */}
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-white/80 text-sm font-medium flex-shrink-0">
-                {lang === 'zh' ? '语言' : 'Language'}
-              </span>
-              <div
-                className="relative bg-white/10 rounded-full flex-shrink-0"
-                style={{ padding: SETTINGS_CONFIG.toggle.container.padding }}
+          {/* 左上角菱形装饰 */}
+          <div 
+            className="absolute"
+            style={{
+              top: '-1px',
+              left: '-1px',
+              width: '12px',
+              height: '12px',
+              background: ARKNIGHTS_CONFIG.colors.primary,
+              clipPath: 'polygon(0 0, 100% 0, 0 100%)',
+            }}
+          />
+          
+          {/* 右下角菱形装饰 */}
+          <div 
+            className="absolute"
+            style={{
+              bottom: '-1px',
+              right: '-1px',
+              width: '12px',
+              height: '12px',
+              background: ARKNIGHTS_CONFIG.colors.primary,
+              clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+            }}
+          />
+          
+          <div 
+            className="overflow-y-auto"
+            style={{ 
+              padding: ARKNIGHTS_CONFIG.menu.padding,
+              maxHeight: ARKNIGHTS_CONFIG.menu.maxHeight,
+            }}
+          >
+            <div className="flex flex-col gap-4">
+              {/* 标题 */}
+              <div 
+                className="flex items-center gap-2 pb-3"
+                style={{
+                  borderBottom: `1px solid ${ARKNIGHTS_CONFIG.colors.border}`,
+                }}
               >
-                <div className="flex relative">
-                  <div
-                    className="absolute rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all ease-out shadow-lg"
-                    style={{
-                      left: lang === 'zh' ? sliderLeftNormal : sliderLeftWide,
-                      width: sliderWidth,
-                      top: sliderTop,
-                      bottom: sliderBottom,
-                      transition: `left ${SETTINGS_CONFIG.toggle.animation.duration}ms ${SETTINGS_CONFIG.toggle.animation.easing}`,
-                    }}
-                  />
+                <div 
+                  style={{
+                    width: '4px',
+                    height: '16px',
+                    background: ARKNIGHTS_CONFIG.colors.primary,
+                  }}
+                />
+                <span 
+                  className="text-sm font-bold uppercase tracking-wider"
+                  style={{ color: ARKNIGHTS_CONFIG.colors.text }}
+                >
+                  {lang === 'zh' ? '设置' : 'SETTINGS'}
+                </span>
+              </div>
+
+              {/* 语言切换 */}
+              <div className="flex flex-col gap-2">
+                <span 
+                  className="text-xs uppercase tracking-wide"
+                  style={{ color: ARKNIGHTS_CONFIG.colors.textDim }}
+                >
+                  {lang === 'zh' ? '语言' : 'LANGUAGE'}
+                </span>
+                <div className="flex gap-2">
                   <button
                     onClick={() => setLang('zh')}
-                    className={`relative z-10 rounded-full text-xs font-semibold transition-all duration-300 ${
-                      lang === 'zh'
-                        ? 'text-white drop-shadow-lg'
-                        : 'text-gray-400 hover:text-gray-200'
-                    }`}
+                    className="flex-1 py-2 text-xs font-bold uppercase tracking-wide transition-all duration-200"
                     style={{
-                      paddingLeft: SETTINGS_CONFIG.toggle.button.paddingX,
-                      paddingRight: SETTINGS_CONFIG.toggle.button.paddingX,
-                      paddingTop: SETTINGS_CONFIG.toggle.button.paddingY,
-                      paddingBottom: SETTINGS_CONFIG.toggle.button.paddingY,
-                      minWidth: SETTINGS_CONFIG.toggle.button.minWidth,
+                      background: lang === 'zh' ? ARKNIGHTS_CONFIG.colors.primary : ARKNIGHTS_CONFIG.colors.darkLight,
+                      color: lang === 'zh' ? ARKNIGHTS_CONFIG.colors.dark : ARKNIGHTS_CONFIG.colors.textDim,
+                      border: `1px solid ${lang === 'zh' ? ARKNIGHTS_CONFIG.colors.primary : ARKNIGHTS_CONFIG.colors.border}`,
+                      clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
                     }}
                   >
                     中文
                   </button>
                   <button
                     onClick={() => setLang('en')}
-                    className={`relative z-10 rounded-full text-xs font-semibold transition-all duration-300 ${
-                      lang === 'en'
-                        ? 'text-white drop-shadow-lg'
-                        : 'text-gray-400 hover:text-gray-200'
-                    }`}
+                    className="flex-1 py-2 text-xs font-bold uppercase tracking-wide transition-all duration-200"
                     style={{
-                      paddingLeft: SETTINGS_CONFIG.toggle.button.paddingX,
-                      paddingRight: SETTINGS_CONFIG.toggle.button.paddingX,
-                      paddingTop: SETTINGS_CONFIG.toggle.button.paddingY,
-                      paddingBottom: SETTINGS_CONFIG.toggle.button.paddingY,
-                      minWidth: SETTINGS_CONFIG.toggle.button.minWidth,
+                      background: lang === 'en' ? ARKNIGHTS_CONFIG.colors.primary : ARKNIGHTS_CONFIG.colors.darkLight,
+                      color: lang === 'en' ? ARKNIGHTS_CONFIG.colors.dark : ARKNIGHTS_CONFIG.colors.textDim,
+                      border: `1px solid ${lang === 'en' ? ARKNIGHTS_CONFIG.colors.primary : ARKNIGHTS_CONFIG.colors.border}`,
+                      clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
                     }}
                   >
                     EN
                   </button>
                 </div>
               </div>
-            </div>
 
-            {/* 相机视野切换 */}
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-white/80 text-sm font-medium flex-shrink-0">
-                {lang === 'zh' ? '相机视野' : 'Camera FOV'}
-              </span>
-              <div
-                className="relative bg-white/10 rounded-full flex-shrink-0"
-                style={{ padding: SETTINGS_CONFIG.toggle.container.padding }}
-              >
-                <div className="flex relative">
-                  <div
-                    className="absolute rounded-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all ease-out shadow-lg"
-                    style={{
-                      left: isWideAngle ? sliderLeftWide : sliderLeftNormal,
-                      width: sliderWidth,
-                      top: sliderTop,
-                      bottom: sliderBottom,
-                      transition: `left ${SETTINGS_CONFIG.toggle.animation.duration}ms ${SETTINGS_CONFIG.toggle.animation.easing}`,
-                    }}
-                  />
+              {/* 相机视野 */}
+              <div className="flex flex-col gap-2">
+                <span 
+                  className="text-xs uppercase tracking-wide"
+                  style={{ color: ARKNIGHTS_CONFIG.colors.textDim }}
+                >
+                  {lang === 'zh' ? '相机视野' : 'CAMERA FOV'}
+                </span>
+                <div className="flex gap-2">
                   <button
                     onClick={() => handleWideAngleToggle(false)}
-                    className={`relative z-10 rounded-full text-xs font-semibold transition-all duration-300 ${
-                      !isWideAngle
-                        ? 'text-white drop-shadow-lg'
-                        : 'text-gray-400 hover:text-gray-200'
-                    }`}
+                    className="flex-1 py-2 text-xs font-bold uppercase tracking-wide transition-all duration-200"
                     style={{
-                      paddingLeft: SETTINGS_CONFIG.toggle.button.paddingX,
-                      paddingRight: SETTINGS_CONFIG.toggle.button.paddingX,
-                      paddingTop: SETTINGS_CONFIG.toggle.button.paddingY,
-                      paddingBottom: SETTINGS_CONFIG.toggle.button.paddingY,
-                      minWidth: SETTINGS_CONFIG.toggle.button.minWidth,
+                      background: !isWideAngle ? ARKNIGHTS_CONFIG.colors.primary : ARKNIGHTS_CONFIG.colors.darkLight,
+                      color: !isWideAngle ? ARKNIGHTS_CONFIG.colors.dark : ARKNIGHTS_CONFIG.colors.textDim,
+                      border: `1px solid ${!isWideAngle ? ARKNIGHTS_CONFIG.colors.primary : ARKNIGHTS_CONFIG.colors.border}`,
+                      clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
                     }}
                   >
-                    {lang === 'zh' ? '正常' : 'Normal'}
+                    {lang === 'zh' ? '正常' : 'NORMAL'}
                   </button>
                   <button
                     onClick={() => handleWideAngleToggle(true)}
-                    className={`relative z-10 rounded-full text-xs font-semibold transition-all duration-300 ${
-                      isWideAngle
-                        ? 'text-white drop-shadow-lg'
-                        : 'text-gray-400 hover:text-gray-200'
-                    }`}
+                    className="flex-1 py-2 text-xs font-bold uppercase tracking-wide transition-all duration-200"
                     style={{
-                      paddingLeft: SETTINGS_CONFIG.toggle.button.paddingX,
-                      paddingRight: SETTINGS_CONFIG.toggle.button.paddingX,
-                      paddingTop: SETTINGS_CONFIG.toggle.button.paddingY,
-                      paddingBottom: SETTINGS_CONFIG.toggle.button.paddingY,
-                      minWidth: SETTINGS_CONFIG.toggle.button.minWidth,
+                      background: isWideAngle ? ARKNIGHTS_CONFIG.colors.primary : ARKNIGHTS_CONFIG.colors.darkLight,
+                      color: isWideAngle ? ARKNIGHTS_CONFIG.colors.dark : ARKNIGHTS_CONFIG.colors.textDim,
+                      border: `1px solid ${isWideAngle ? ARKNIGHTS_CONFIG.colors.primary : ARKNIGHTS_CONFIG.colors.border}`,
+                      clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
                     }}
                   >
-                    {lang === 'zh' ? '超广角' : 'Wide'}
+                    {lang === 'zh' ? '广角' : 'WIDE'}
                   </button>
                 </div>
               </div>
-            </div>
 
-            {/* 分隔线 */}
-            <div className="border-t border-white/10"></div>
+              {/* 分隔线 */}
+              <div 
+                style={{
+                  height: '1px',
+                  background: ARKNIGHTS_CONFIG.colors.border,
+                }}
+              />
 
-            {/* 关于信息 */}
-            <div className="flex flex-col gap-1 text-xs text-white/60">
-              <div className="flex items-center justify-between">
-                <span>{lang === 'zh' ? '版本' : 'Version'}</span>
-                <span className="font-mono">v4.6.0</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>{lang === 'zh' ? '作者' : 'Author'}</span>
-                <span>CXIN</span>
+              {/* 关于信息 */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span 
+                    className="text-xs uppercase"
+                    style={{ color: ARKNIGHTS_CONFIG.colors.textDim }}
+                  >
+                    {lang === 'zh' ? '版本' : 'VERSION'}
+                  </span>
+                  <span 
+                    className="text-xs font-mono font-bold"
+                    style={{ color: ARKNIGHTS_CONFIG.colors.primary }}
+                  >
+                    v4.6.0
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span 
+                    className="text-xs uppercase"
+                    style={{ color: ARKNIGHTS_CONFIG.colors.textDim }}
+                  >
+                    {lang === 'zh' ? '作者' : 'AUTHOR'}
+                  </span>
+                  <span 
+                    className="text-xs font-mono font-bold"
+                    style={{ color: ARKNIGHTS_CONFIG.colors.primary }}
+                  >
+                    CXIN
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
+      
+      {/* 动画样式 */}
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </>
   );
 }

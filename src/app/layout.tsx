@@ -7,6 +7,7 @@ import { Analytics } from "@vercel/analytics/next";          // ← 新增
 import { SpeedInsights } from "@vercel/speed-insights/next"; // ← 新增
 import LanguageDetector from "@/components/LanguageDetector";
 import Header from "@/components/Header";
+import LoadingPage from "@/components/loading/LoadingPage";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,13 +62,38 @@ export default async function RootLayout({
   const lang = await detectLanguage();
   
   return (
-    <html lang={lang}>
+    <html lang={lang} style={{ backgroundColor: '#000' }}>
+      <head>
+        {/* 关键 CSS - 确保黑色背景立即显示 */}
+        <style dangerouslySetInnerHTML={{__html: `
+          html, body {
+            background-color: #000 !important;
+            margin: 0;
+            padding: 0;
+          }
+          
+          #main-content {
+            opacity: 0;
+            transition: opacity 0.3s;
+          }
+          
+          body.loaded #main-content {
+            opacity: 1;
+          }
+        `}} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ backgroundColor: '#000' }}
       >
-        <Header />
-        <LanguageDetector initialLang={lang} />
-        {children}
+        {/* React 加载页面 - 唯一的加载界面 */}
+        <LoadingPage />
+        
+        <div id="main-content">
+          <Header />
+          <LanguageDetector initialLang={lang} />
+          {children}
+        </div>
 
         {/* Vercel Analytics - 网站访问统计 */}
         <Analytics />

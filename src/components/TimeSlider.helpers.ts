@@ -19,26 +19,6 @@ export interface SpeedResult {
 }
 
 /**
- * Calculates Y coordinate on the arc for a given normalized X position
- * Uses parabolic curve for downward arc
- * 
- * @param normalizedX - Position along arc (0-1)
- * @param arcDepth - Depth of the arc
- * @param trackPadding - Padding from edges
- * @returns Y coordinate
- */
-export function getArcY(
-  normalizedX: number,
-  arcDepth: number,
-  trackPadding: number
-): number {
-  // Parabolic curve: y = 4 * depth * x * (1 - x)
-  // Downward arc: center is lowest, edges are highest
-  const y = 4 * arcDepth * normalizedX * (1 - normalizedX);
-  return trackPadding + y;
-}
-
-/**
  * Calculates playback speed based on slider position
  * Applies dead zone and exponential curve
  * 
@@ -82,37 +62,6 @@ export function formatSpeedLabel(speed: number, lang: 'zh' | 'en'): string {
   } else {
     return `${speed.toFixed(0)}${lang === 'zh' ? '天/秒' : 'd/s'}`;
   }
-}
-
-/**
- * Generates SVG path for the arc
- * 
- * @param trackPadding - Padding from edges
- * @param trackWidth - Width of the track
- * @param arcDepth - Depth of the arc
- * @returns SVG path string
- */
-export function generateArcPath(
-  trackPadding: number,
-  trackWidth: number,
-  arcDepth: number
-): string {
-  const points: string[] = [];
-  const segments = 100;
-  
-  for (let i = 0; i <= segments; i++) {
-    const t = i / segments;
-    const x = trackPadding + t * trackWidth;
-    const y = getArcY(t, arcDepth, trackPadding);
-    
-    if (i === 0) {
-      points.push(`M ${x} ${y}`);
-    } else {
-      points.push(`L ${x} ${y}`);
-    }
-  }
-  
-  return points.join(' ');
 }
 
 /**

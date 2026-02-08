@@ -219,57 +219,6 @@ export function getOrbitalVelocityDirection(
 }
 
 /**
- * Transforms orbital coordinates to 3D space coordinates.
- * 
- * Converts 2D orbital plane coordinates (x, y in orbital plane) to 3D space
- * coordinates using orbital elements (inclination, longitude of ascending node,
- * argument of periapsis).
- * 
- * @param xOrb - X coordinate in orbital plane
- * @param yOrb - Y coordinate in orbital plane
- * @param inclination - Orbital inclination (radians)
- * @param longitudeOfAscendingNode - Longitude of ascending node (radians)
- * @param argumentOfPeriapsis - Argument of periapsis (radians)
- * @returns Position vector in 3D space
- * 
- * @example
- * ```typescript
- * const position = orbitalToCartesian(
- *   xInOrbit,
- *   yInOrbit,
- *   orbit.inclination,
- *   orbit.longitudeOfAscendingNode,
- *   orbit.argumentOfPeriapsis
- * );
- * ```
- */
-export function orbitalToCartesian(
-  xOrb: number,
-  yOrb: number,
-  inclination: number,
-  longitudeOfAscendingNode: number,
-  argumentOfPeriapsis: number
-): THREE.Vector3 {
-  const cos_w = Math.cos(argumentOfPeriapsis);
-  const sin_w = Math.sin(argumentOfPeriapsis);
-  const cos_i = Math.cos(inclination);
-  const sin_i = Math.sin(inclination);
-  const cos_Omega = Math.cos(longitudeOfAscendingNode);
-  const sin_Omega = Math.sin(longitudeOfAscendingNode);
-
-  // Transform from orbital plane to 3D space
-  const x = (cos_w * cos_Omega - sin_w * cos_i * sin_Omega) * xOrb +
-            (-sin_w * cos_Omega - cos_w * cos_i * sin_Omega) * yOrb;
-  
-  const y = (cos_w * sin_Omega + sin_w * cos_i * cos_Omega) * xOrb +
-            (-sin_w * sin_Omega + cos_w * cos_i * cos_Omega) * yOrb;
-  
-  const z = (sin_w * sin_i) * xOrb + (cos_w * sin_i) * yOrb;
-
-  return new THREE.Vector3(x, y, z);
-}
-
-/**
  * Applies a rotation quaternion to a vector and returns the result.
  * 
  * Rotates a vector by a quaternion without modifying the original vector.

@@ -109,34 +109,5 @@ export function calculateShortestAnglePath(from: number, to: number): number {
   return diff;
 }
 
-/**
- * Converts degrees to radians
- * 
- * @param degrees - Angle in degrees
- * @returns Angle in radians
- * 
- * @example
- * ```typescript
- * degreesToRadians(180); // Returns Math.PI
- * degreesToRadians(90);  // Returns Math.PI / 2
- * ```
- */
-export function degreesToRadians(degrees: number): number {
-  return degrees * (Math.PI / 180);
-}
-
-/**
- * Converts radians to degrees
- * 
- * @param radians - Angle in radians
- * @returns Angle in degrees
- * 
- * @example
- * ```typescript
- * radiansToDegrees(Math.PI);     // Returns 180
- * radiansToDegrees(Math.PI / 2); // Returns 90
- * ```
- */
-export function radiansToDegrees(radians: number): number {
-  return radians * (180 / Math.PI);
-}
+// Re-export from shared utils to avoid duplication
+export { degreesToRadians, radiansToDegrees } from '@/lib/utils/math';
