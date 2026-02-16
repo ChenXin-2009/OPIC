@@ -138,6 +138,36 @@ export default function InfoModal({ isOpen, onClose }: InfoModalProps) {
               </div>
             </section>
 
+            {/* 宇宙尺度 */}
+            <section className="relative pl-4 border-l border-white/15">
+              <h3 className="text-lg font-light text-white/80 mb-3 tracking-wide">宇宙尺度可视化</h3>
+              <p className="text-sm text-gray-400 leading-relaxed mb-3">
+                通过缩放视图，您可以探索从太阳系到可观测宇宙的多个尺度层次。
+                所有宇宙尺度数据均基于真实天文观测，不使用模拟数据。
+              </p>
+              <div className="space-y-2 text-sm text-gray-400">
+                <div className="flex items-start gap-2">
+                  <span className="text-white/50 mt-1">▸</span>
+                  <span>本星系群（来自 McConnachie 2012 目录）</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-white/50 mt-1">▸</span>
+                  <span>近邻星系群（来自 Karachentsev et al. 2013 目录）</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-white/50 mt-1">▸</span>
+                  <span>室女座超星系团（来自 2MRS 巡天数据）</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-white/50 mt-1">▸</span>
+                  <span>拉尼亚凯亚超星系团（来自 Cosmicflows-3 数据集）</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-3 leading-relaxed">
+                坐标系统：超银道坐标系（Supergalactic Coordinate System）
+              </p>
+            </section>
+
             {/* 操作指南 */}
             <section className="relative pl-4 border-l border-white/15">
               <h3 className="text-lg font-light text-white/80 mb-3 tracking-wide">操作指南</h3>
@@ -197,6 +227,30 @@ export default function InfoModal({ isOpen, onClose }: InfoModalProps) {
                   >
                     ESA Gaia Mission (DR3)
                   </a>
+                </div>
+                <div>
+                  <span className="text-gray-500">本星系群：</span>
+                  <span className="text-white/70 ml-2">
+                    McConnachie (2012) Local Group Catalog
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">近邻星系群：</span>
+                  <span className="text-white/70 ml-2">
+                    Karachentsev et al. (2013) Nearby Galaxies Catalog
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">室女座超星系团：</span>
+                  <span className="text-white/70 ml-2">
+                    2MRS Survey Data
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">拉尼亚凯亚超星系团：</span>
+                  <span className="text-white/70 ml-2">
+                    Cosmicflows-3 Dataset
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-500">行星纹理：</span>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清除缓存 - Clear Cache</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #ffffff;
+        }
+        h1 {
+            color: #ff8844;
+        }
+        .section {
+            background: #1a1a1a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .button {
+            background: #ff8844;
+            color: #000;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #ffaa44;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            background: #2a2a2a;
+        }
+        .success {
+            color: #4ade80;
+        }
+        .error {
+            color: #f87171;
+        }
+        code {
+            background: #2a2a2a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        kbd {
+            background: #333;
+            padding: 3px 8px;
+            border-radius: 3px;
+            border: 1px solid #555;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 清除缓存工具 / Clear Cache Tool</h1>
+    
+    <div class="section">
+        <h2>问题描述 / Problem Description</h2>
+        <p>如果您看到旧的放射状模式（3个橙色圆圈）而不是新的13个超星系团，这是因为浏览器缓存了旧数据。</p>
+        <p>If you see the old radial pattern (3 orange circles) instead of the new 13 superclusters, it's because your browser cached the old data.</p>
+    </div>
+
+    <div class="section">
+        <h2>方法1：自动清除 / Method 1: Automatic Clear</h2>
+        <p>点击下面的按钮清除缓存并重新加载数据：</p>
+        <p>Click the button below to clear cache and reload data:</p>
+        <button class="button" onclick="clearCacheAndReload()">清除缓存并刷新 / Clear Cache & Reload</button>
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <div class="section">
+        <h2>方法2：手动硬刷新 / Method 2: Manual Hard Refresh</h2>
+        <p><strong>Windows/Linux:</strong> <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd> 或 <kbd>Ctrl</kbd> + <kbd>F5</kbd></p>
+        <p><strong>Mac:</strong> <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd></p>
+    </div>
+
+    <div class="section">
+        <h2>方法3：清除浏览器缓存 / Method 3: Clear Browser Cache</h2>
+        <h3>Chrome / Edge:</h3>
+        <ol>
+            <li>按 <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Delete</kbd> (Windows) 或 <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>Delete</kbd> (Mac)</li>
+            <li>选择"缓存的图片和文件" / Select "Cached images and files"</li>
+            <li>时间范围选择"全部时间" / Time range: "All time"</li>
+            <li>点击"清除数据" / Click "Clear data"</li>
+        </ol>
+
+        <h3>Firefox:</h3>
+        <ol>
+            <li>按 <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Delete</kbd> (Windows) 或 <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>Delete</kbd> (Mac)</li>
+            <li>勾选"缓存" / Check "Cache"</li>
+            <li>点击"立即清除" / Click "Clear Now"</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>验证数据已加载 / Verify Data Loaded</h2>
+        <p>打开浏览器控制台（按 <kbd>F12</kbd>），查找以下日志：</p>
+        <p>Open browser console (press <kbd>F12</kbd>), look for these logs:</p>
+        <pre style="background: #000; padding: 15px; border-radius: 4px; overflow-x: auto;">
+<code>[UniverseDataLoader] Loaded /data/universe/laniakea.bin: <span class="success">169984 bytes</span>
+[UniverseDataLoader] Supercluster count: <span class="success">13</span>
+[UniverseDataLoader] Parsed <span class="success">13 superclusters, 14096 total galaxies</span>
+[Laniakea] Loading data: <span class="success">13 superclusters, 14096 galaxies</span></code>
+        </pre>
+        <p>✅ 如果看到这些数字，说明数据已正确加载！</p>
+        <p>✅ If you see these numbers, the data is loaded correctly!</p>
+    </div>
+
+    <div class="section">
+        <h2>返回主页 / Return to Home</h2>
+        <button class="button" onclick="window.location.href='/'">返回主页 / Go to Home</button>
+    </div>
+
+    <script>
+        async function clearCacheAndReload() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '正在清除缓存... / Clearing cache...';
+            
+            try {
+                // Clear cache using Cache API
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                    statusDiv.innerHTML = '<span class="success">✓ 缓存已清除！正在重新加载... / Cache cleared! Reloading...</span>';
+                } else {
+                    statusDiv.innerHTML = '<span class="error">⚠ 您的浏览器不支持 Cache API，请使用手动方法。 / Your browser doesn\'t support Cache API, please use manual method.</span>';
+                    return;
+                }
+                
+                // Wait a moment then reload
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
+                
+            } catch (error) {
+                statusDiv.innerHTML = '<span class="error">✗ 清除失败：' + error.message + ' / Clear failed: ' + error.message + '</span>';
+                console.error('Cache clear error:', error);
+            }
+        }
+
+        // Check if we have the data file info
+        async function checkDataFile() {
+            try {
+                const response = await fetch('/data/universe/laniakea.bin', {
+                    method: 'HEAD',
+                    cache: 'no-store'
+                });
+                
+                const size = response.headers.get('content-length');
+                if (size) {
+                    console.log('Laniakea data file size:', size, 'bytes');
+                    if (parseInt(size) < 10000) {
+                        console.warn('⚠ Data file seems too small! Expected ~170KB, got', size, 'bytes');
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check data file:', error);
+            }
+        }
+
+        // Run check on page load
+        checkDataFile();
+    </script>
+</body>
+</html>
