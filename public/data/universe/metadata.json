@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "date": "2024-01-01",
+  "coordinate_system": "Supergalactic",
+  "data_sources": {
+    "local_group": "McConnachie (2012)",
+    "nearby_groups": "Karachentsev et al. (2013)",
+    "virgo_supercluster": "2MRS Survey",
+    "laniakea": "Cosmicflows-3"
+  },
+  "units": {
+    "distance": "Mpc",
+    "coordinates": "Supergalactic Cartesian"
+  }
+}

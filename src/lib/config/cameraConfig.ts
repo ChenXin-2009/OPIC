@@ -48,8 +48,11 @@ export const ZOOM_LIMITS = {
   /** 最小缩放距离（支持无限放大） */
   minDistance: 0.00001,
   
-  /** 最大缩放距离（AU）- 可以缩小到很远观看整个太阳系 */
-  maxDistance: 500000000000,
+  /** 最大缩放距离（AU）- 可以缩小到可观测宇宙之外
+   * 可观测宇宙半径约 465 亿光年 = 465e8 * 63241.077 AU ≈ 2.94e15 AU
+   * 设置为 1e16 AU 以允许缩放到可观测宇宙半径的 3 倍以上
+   */
+  maxDistance: 1e16,
   
   /** 缩放速度因子（OrbitControls 使用） */
   zoomSpeed: 1.5,

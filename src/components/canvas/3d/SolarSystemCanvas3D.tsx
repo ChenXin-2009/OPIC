@@ -39,6 +39,14 @@ import SettingsMenu from '@/components/SettingsMenu';
 import { ORBIT_COLORS, SUN_LIGHT_CONFIG, ORBIT_CURVE_POINTS, SATELLITE_CONFIG, ORBIT_FADE_CONFIG, FAR_VIEW_CONFIG } from '@/lib/config/visualConfig';
 import { CAMERA_CONFIG } from '@/lib/config/cameraConfig';
 import { TextureManager } from '@/lib/3d/TextureManager';
+import { LocalGroupRenderer } from '@/lib/3d/LocalGroupRenderer';
+import { NearbyGroupsRenderer } from '@/lib/3d/NearbyGroupsRenderer';
+import { VirgoSuperclusterRenderer } from '@/lib/3d/VirgoSuperclusterRenderer';
+import { LaniakeaSuperclusterRenderer } from '@/lib/3d/LaniakeaSuperclusterRenderer';
+import { NearbySuperclusterRenderer } from '@/lib/3d/NearbySuperclusterRenderer';
+import { ObservableUniverseRenderer } from '@/lib/3d/ObservableUniverseRenderer';
+import { UniverseScale } from '@/lib/types/universeTypes';
+import type { LocalGroupGalaxy, GalaxyGroup, SimpleGalaxy, GalaxyCluster, Supercluster, CosmicStructure } from '@/lib/types/universeTypes';
 
 // ==================== 可调参数配置 ====================
 // ⚙️ 以下参数可在文件顶部调整，影响 3D 场景显示效果
@@ -110,7 +118,125 @@ const CAMERA_ANGLE_CONFIG = {
 
 // 太阳光与轨道点数配置已集中到 `src/lib/config/visualConfig.ts`
 
-export default function SolarSystemCanvas3D() {
+/**
+ * 初始化宇宙尺度渲染器
+ * 异步加载真实天文数据并设置到 SceneManager
+ */
+async function initializeUniverseRenderers(sceneManager: SceneManager) {
+  try {
+    const dataLoader = (await import('@/lib/data/UniverseDataLoader')).UniverseDataLoader.getInstance();
+    
+    // 1. 本星系群 - 从真实数据加载
+    try {
+      const localGroupBuffer = await dataLoader.loadDataForScale(UniverseScale.LocalGroup);
+      const localGroupGalaxies = dataLoader.parseLocalGroupData(localGroupBuffer);
+      
+      const localGroupRenderer = new LocalGroupRenderer();
+      await localGroupRenderer.loadData(localGroupGalaxies);
+      sceneManager.setLocalGroupRenderer(localGroupRenderer);
+      console.log('LocalGroupRenderer initialized with', localGroupGalaxies.length, 'galaxies');
+    } catch (error) {
+      console.warn('Failed to load LocalGroup data:', error);
+    }
+    
+    // 2. 近邻星系群 - 从真实数据加载
+    try {
+      const nearbyGroupsBuffer = await dataLoader.loadDataForScale(UniverseScale.NearbyGroups);
+      const { groups, galaxies } = dataLoader.parseNearbyGroupsData(nearbyGroupsBuffer);
+      
+      const nearbyGroupsRenderer = new NearbyGroupsRenderer();
+      await nearbyGroupsRenderer.loadData(groups, galaxies);
+      sceneManager.setNearbyGroupsRenderer(nearbyGroupsRenderer);
+      console.log('NearbyGroupsRenderer initialized with', groups.length, 'groups and', galaxies.length, 'galaxies');
+    } catch (error) {
+      console.warn('Failed to load NearbyGroups data:', error);
+    }
+    
+    // 3. 室女座超星系团 - 从真实数据加载
+    try {
+      const virgoBuffer = await dataLoader.loadDataForScale(UniverseScale.VirgoSupercluster);
+      const { clusters, galaxies } = dataLoader.parseVirgoSuperclusterData(virgoBuffer);
+      
+      const virgoRenderer = new VirgoSuperclusterRenderer();
+      await virgoRenderer.loadData(clusters, galaxies);
+      sceneManager.setVirgoSuperclusterRenderer(virgoRenderer);
+      console.log('VirgoSuperclusterRenderer initialized with', clusters.length, 'clusters and', galaxies.length, 'galaxies');
+    } catch (error) {
+      console.warn('Failed to load VirgoSupercluster data:', error);
+    }
+    
+    // 4. 拉尼亚凯亚超星系团 - 从真实数据加载
+    try {
+      const laniakeaBuffer = await dataLoader.loadDataForScale(UniverseScale.LaniakeaSupercluster);
+      const { superclusters, galaxies } = dataLoader.parseLaniakeaData(laniakeaBuffer);
+      
+      const laniakeaRenderer = new LaniakeaSuperclusterRenderer();
+      await laniakeaRenderer.loadData(superclusters, galaxies);
+      sceneManager.setLaniakeaSuperclusterRenderer(laniakeaRenderer);
+      console.log('LaniakeaSuperclusterRenderer initialized with', superclusters.length, 'superclusters and', galaxies.length, 'galaxies');
+    } catch (error) {
+      console.warn('Failed to load Laniakea data:', error);
+    }
+    
+    // 5. 近邻超星系团 - 暂时禁用，因为 Laniakea 数据已经覆盖了这个尺度
+    // 避免与 Laniakea 的真实数据重叠显示
+    /*
+    try {
+      const nearbySuperclusters: Supercluster[] = [
+        { name: 'Shapley Supercluster', centerX: 200000000, centerY: 50000000, centerZ: 0, radius: 100000000, memberCount: 8000, richness: 2 },
+        { name: 'Hydra-Centaurus', centerX: 150000000, centerY: -30000000, centerZ: 50000000, radius: 80000000, memberCount: 5000, richness: 2 },
+        { name: 'Pavo-Indus', centerX: -180000000, centerY: 40000000, centerZ: -60000000, radius: 70000000, memberCount: 4000, richness: 1 },
+      ];
+      const nearbySupergalaxies: SimpleGalaxy[] = [];
+      
+      const nearbyRenderer = new NearbySuperclusterRenderer();
+      await nearbyRenderer.loadData(nearbySuperclusters, nearbySupergalaxies);
+      sceneManager.setNearbySuperclusterRenderer(nearbyRenderer);
+      console.log('NearbySuperclusterRenderer initialized with', nearbySuperclusters.length, 'superclusters');
+    } catch (error) {
+      console.warn('Failed to initialize NearbySupercluster renderer:', error);
+    }
+    */
+    console.log('NearbySuperclusterRenderer disabled - using Laniakea real data instead');
+    
+    // 6. 可观测宇宙 - 使用程序化生成
+    try {
+      const cosmicStructures: CosmicStructure[] = [];
+      const anchorPoints: THREE.Vector3[] = [];
+      
+      // 生成一些锚点用于宇宙纤维
+      for (let i = 0; i < 50; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(Math.random() * 2 - 1);
+        const r = 800000000 + Math.random() * 400000000;
+        
+        anchorPoints.push(new THREE.Vector3(
+          r * Math.sin(phi) * Math.cos(theta),
+          r * Math.sin(phi) * Math.sin(theta),
+          r * Math.cos(phi)
+        ));
+      }
+      
+      const observableRenderer = new ObservableUniverseRenderer();
+      await observableRenderer.loadData(cosmicStructures, anchorPoints);
+      sceneManager.setObservableUniverseRenderer(observableRenderer);
+      console.log('ObservableUniverseRenderer initialized with', anchorPoints.length, 'anchor points');
+    } catch (error) {
+      console.warn('Failed to initialize ObservableUniverse renderer:', error);
+    }
+    
+    console.log('Universe renderers initialization complete');
+  } catch (error) {
+    console.error('Error initializing universe renderers:', error);
+    throw error;
+  }
+}
+
+interface SolarSystemCanvas3DProps {
+  onCameraDistanceChange?: (distance: number) => void;
+}
+
+export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSystemCanvas3DProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneManagerRef = useRef<SceneManager | null>(null);
   const cameraControllerRef = useRef<CameraController | null>(null);
@@ -157,6 +283,11 @@ export default function SolarSystemCanvas3D() {
       // 容器有尺寸，开始初始化
       const sceneManager = new SceneManager(containerRef.current);
       sceneManagerRef.current = sceneManager;
+
+      // 初始化宇宙尺度渲染器（异步加载数据）
+      initializeUniverseRenderers(sceneManager).catch(error => {
+        console.error('Failed to initialize universe renderers:', error);
+      });
 
       const scene = sceneManager.getScene();
       const camera = sceneManager.getCamera();
@@ -688,6 +819,7 @@ export default function SolarSystemCanvas3D() {
           screenY: number;
           text: string;
           isSelected: boolean;
+          priority: number;
         }> = [];
         
         currentBodies.forEach((body: any) => {
@@ -735,14 +867,95 @@ export default function SolarSystemCanvas3D() {
               screenY,
               text: displayName,
               isSelected,
+              priority: 1, // Planets have highest priority
             });
           }
         });
+
+        // 1.5. 收集宇宙尺度标签（本星系群、近邻星系群、室女座超星系团）
+        const universeLabels: Array<{
+          label: any;
+          screenX: number;
+          screenY: number;
+          text: string;
+          priority: number;
+          targetOpacity: number;
+        }> = [];
+
+        if (containerRef.current) {
+          const containerWidth = containerRef.current.clientWidth;
+          const containerHeight = containerRef.current.clientHeight;
+
+          // 本星系群标签
+          const localGroupRenderer = sceneManager.getLocalGroupRenderer();
+          if (localGroupRenderer && typeof localGroupRenderer.getLabelsForOverlapDetection === 'function') {
+            const localGroupLabels = localGroupRenderer.getLabelsForOverlapDetection(camera, containerWidth, containerHeight);
+            localGroupLabels.forEach((labelInfo: any) => {
+              universeLabels.push({
+                label: labelInfo.label,
+                screenX: labelInfo.screenX,
+                screenY: labelInfo.screenY,
+                text: labelInfo.text,
+                priority: labelInfo.priority,
+                targetOpacity: 1.0,
+              });
+            });
+          }
+
+          // 近邻星系群标签
+          const nearbyGroupsRenderer = sceneManager.getNearbyGroupsRenderer();
+          if (nearbyGroupsRenderer && typeof nearbyGroupsRenderer.getLabelsForOverlapDetection === 'function') {
+            const nearbyGroupsLabels = nearbyGroupsRenderer.getLabelsForOverlapDetection(camera, containerWidth, containerHeight);
+            nearbyGroupsLabels.forEach((labelInfo: any) => {
+              universeLabels.push({
+                label: labelInfo.label,
+                screenX: labelInfo.screenX,
+                screenY: labelInfo.screenY,
+                text: labelInfo.text,
+                priority: labelInfo.priority,
+                targetOpacity: 1.0,
+              });
+            });
+          }
+
+          // 室女座超星系团标签
+          const virgoRenderer = sceneManager.getVirgoSuperclusterRenderer();
+          if (virgoRenderer && typeof virgoRenderer.getLabelsForOverlapDetection === 'function') {
+            const virgoLabels = virgoRenderer.getLabelsForOverlapDetection(camera, containerWidth, containerHeight);
+            virgoLabels.forEach((labelInfo: any) => {
+              universeLabels.push({
+                label: labelInfo.label,
+                screenX: labelInfo.screenX,
+                screenY: labelInfo.screenY,
+                text: labelInfo.text,
+                priority: labelInfo.priority,
+                targetOpacity: 1.0,
+              });
+            });
+          }
+
+          // Laniakea 超星系团标签
+          const laniakeaRenderer = sceneManager.getLaniakeaSuperclusterRenderer();
+          if (laniakeaRenderer && typeof laniakeaRenderer.getLabelsForOverlapDetection === 'function') {
+            const laniakeaLabels = laniakeaRenderer.getLabelsForOverlapDetection(camera, containerWidth, containerHeight);
+            laniakeaLabels.forEach((labelInfo: any) => {
+              universeLabels.push({
+                label: labelInfo.label,
+                screenX: labelInfo.screenX,
+                screenY: labelInfo.screenY,
+                text: labelInfo.text,
+                priority: labelInfo.priority,
+                targetOpacity: 1.0,
+              });
+            });
+          }
+        }
         
         // 2. 检测重叠并设置目标透明度
         // 获取选中状态
         const selectedPlanet = useSolarSystemStore.getState().selectedPlanet;
         
+        // 2.1 处理行星标签重叠
         for (let i = 0; i < labelInfos.length; i++) {
           const info1 = labelInfos[i];
           if (!info1) continue;
@@ -762,7 +975,7 @@ export default function SolarSystemCanvas3D() {
           }
           
           let hasOverlap = false;
-          // 检查与所有其他标签的重叠
+          // 检查与所有其他行星标签的重叠
           for (let j = 0; j < labelInfos.length; j++) {
             if (i === j) continue;
             const info2 = labelInfos[j];
@@ -804,6 +1017,76 @@ export default function SolarSystemCanvas3D() {
           
           info1.planet.setMarkerTargetOpacity(hasOverlap ? 0.0 : 1.0);
         }
+
+        // 2.2 处理宇宙标签重叠（与行星标签和其他宇宙标签）
+        if (containerRef.current) {
+          const centerX = containerRef.current.clientWidth / 2;
+          const centerY = containerRef.current.clientHeight / 2;
+
+          for (let i = 0; i < universeLabels.length; i++) {
+            const uLabel1 = universeLabels[i];
+            if (!uLabel1) continue;
+
+            let hasOverlap = false;
+
+            // 检查与行星标签的重叠（行星标签优先级更高）
+            for (let j = 0; j < labelInfos.length; j++) {
+              const planetLabel = labelInfos[j];
+              if (!planetLabel) continue;
+
+              const labelWidth1 = uLabel1.text.length * 15; // 增加宽度估算
+              const labelWidth2 = planetLabel.text.length * 10;
+              const labelHeight = 30; // 增加高度阈值
+              const distanceX = Math.abs(uLabel1.screenX - planetLabel.screenX);
+              const distanceY = Math.abs(uLabel1.screenY - planetLabel.screenY);
+
+              if (distanceX < (labelWidth1 + labelWidth2) / 2 + 20 && distanceY < labelHeight) {
+                // 行星标签优先级更高，隐藏宇宙标签
+                hasOverlap = true;
+                break;
+              }
+            }
+
+            // 检查与其他宇宙标签的重叠
+            if (!hasOverlap) {
+              for (let j = 0; j < universeLabels.length; j++) {
+                if (i === j) continue;
+                const uLabel2 = universeLabels[j];
+                if (!uLabel2) continue;
+
+                const labelWidth1 = uLabel1.text.length * 15; // 增加宽度估算
+                const labelWidth2 = uLabel2.text.length * 15; // 增加宽度估算
+                const labelHeight = 30; // 增加高度阈值
+                const distanceX = Math.abs(uLabel1.screenX - uLabel2.screenX);
+                const distanceY = Math.abs(uLabel1.screenY - uLabel2.screenY);
+
+                if (distanceX < (labelWidth1 + labelWidth2) / 2 + 30 && distanceY < labelHeight) {
+                  // 优先级高的显示，优先级低的隐藏
+                  // 如果优先级相同，距离中心近的显示
+                  if (uLabel1.priority > uLabel2.priority) {
+                    hasOverlap = true;
+                    break;
+                  } else if (uLabel1.priority === uLabel2.priority) {
+                    const dist1 = Math.sqrt(
+                      Math.pow(uLabel1.screenX - centerX, 2) + 
+                      Math.pow(uLabel1.screenY - centerY, 2)
+                    );
+                    const dist2 = Math.sqrt(
+                      Math.pow(uLabel2.screenX - centerX, 2) + 
+                      Math.pow(uLabel2.screenY - centerY, 2)
+                    );
+                    if (dist1 > dist2 || (Math.abs(dist1 - dist2) < 1 && i > j)) {
+                      hasOverlap = true;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+
+            uLabel1.targetOpacity = hasOverlap ? 0.0 : 1.0;
+          }
+        }
         
         // 3. 更新所有标记圈和标签的透明度（平滑渐隐）
         labelInfos.forEach((info) => {
@@ -828,6 +1111,28 @@ export default function SolarSystemCanvas3D() {
               info.label.element.style.display = 'block';
             } else {
               info.label.element.style.display = 'none';
+            }
+          }
+        });
+
+        // 3.5 更新宇宙标签的透明度
+        universeLabels.forEach((uLabel) => {
+          if (uLabel.label && uLabel.label.element) {
+            const currentOpacity = parseFloat(uLabel.label.element.style.opacity || '1');
+            const targetOpacity = uLabel.targetOpacity;
+            
+            // 平滑过渡透明度
+            const fadeSpeed = 0.1;
+            const newOpacity = currentOpacity + (targetOpacity - currentOpacity) * fadeSpeed;
+            
+            uLabel.label.element.style.opacity = newOpacity.toString();
+            
+            // 确保标签在可见时显示
+            const minOpacity = 0.01;
+            if (newOpacity > minOpacity) {
+              uLabel.label.element.style.display = 'block';
+            } else {
+              uLabel.label.element.style.display = 'none';
             }
           }
         });
@@ -920,6 +1225,11 @@ export default function SolarSystemCanvas3D() {
         // 更新多尺度宇宙视图（近邻恒星、银河系）
         if (sceneManagerRef.current) {
           sceneManagerRef.current.updateMultiScaleView(distanceToSun, deltaTime);
+        }
+
+        // 通知父组件相机距离变化
+        if (onCameraDistanceChange) {
+          onCameraDistanceChange(distanceToSun);
         }
 
         // 渲染顺序：先更新 controls，再渲染场景

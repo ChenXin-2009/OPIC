@@ -1,13 +1,15 @@
 /**
- * DistanceDisplay.tsx - 距离地球显示组件
+ * DistanceDisplay.tsx - 距离和宇宙尺度显示组件
  * 
- * 在左侧垂直居中显示相机距离地球的距离
+ * 在左侧垂直居中显示相机距离和当前宇宙尺度
  * 支持多种单位：AU、公里、光年等
  */
 
 'use client';
 
 import { DISTANCE_DISPLAY_CONFIG } from '@/lib/config/visualConfig';
+import { UniverseScale } from '@/lib/types/universeTypes';
+import { UNIVERSE_SCALE_CONFIG } from '@/lib/config/universeConfig';
 
 // 单位转换常量
 const AU_TO_KM = 149597870.7; // 1 AU = 149,597,870.7 公里
@@ -15,6 +17,46 @@ const AU_TO_LIGHT_YEAR = 1 / 63241.077; // 1 AU = 1/63241.077 光年
 
 interface DistanceDisplayProps {
   distanceAU: number; // 距离（AU单位）
+}
+
+// 尺度名称映射（中文）
+const scaleNames: Record<UniverseScale, string> = {
+  [UniverseScale.SolarSystem]: '太阳系',
+  [UniverseScale.NearbyStars]: '近邻恒星',
+  [UniverseScale.Galaxy]: '银河系',
+  [UniverseScale.LocalGroup]: '本星系群',
+  [UniverseScale.NearbyGroups]: '近邻星系群',
+  [UniverseScale.VirgoSupercluster]: '室女座超星系团',
+  [UniverseScale.LaniakeaSupercluster]: '拉尼亚凯亚超星系团',
+  [UniverseScale.NearbySupercluster]: '近邻超星系团',
+  [UniverseScale.ObservableUniverse]: '可观测宇宙',
+};
+
+/**
+ * 根据相机距离确定当前宇宙尺度
+ */
+function getUniverseScale(distance: number): UniverseScale {
+  const config = UNIVERSE_SCALE_CONFIG;
+  
+  if (distance >= config.observableUniverseShowStart) {
+    return UniverseScale.ObservableUniverse;
+  } else if (distance >= config.nearbySuperclusterShowStart) {
+    return UniverseScale.NearbySupercluster;
+  } else if (distance >= config.laniakeaShowStart) {
+    return UniverseScale.LaniakeaSupercluster;
+  } else if (distance >= config.virgoShowStart) {
+    return UniverseScale.VirgoSupercluster;
+  } else if (distance >= config.nearbyGroupsShowStart) {
+    return UniverseScale.NearbyGroups;
+  } else if (distance >= config.localGroupShowStart) {
+    return UniverseScale.LocalGroup;
+  } else if (distance >= config.galaxyShowStart) {
+    return UniverseScale.Galaxy;
+  } else if (distance >= config.nearbyStarsShowStart) {
+    return UniverseScale.NearbyStars;
+  } else {
+    return UniverseScale.SolarSystem;
+  }
 }
 
 /**
@@ -82,6 +124,8 @@ function formatDistance(distanceAU: number): { value: string; unit: string } {
 export default function DistanceDisplay({ distanceAU }: DistanceDisplayProps) {
   const { value, unit } = formatDistance(distanceAU);
   const cfg = DISTANCE_DISPLAY_CONFIG;
+  const scale = getUniverseScale(distanceAU);
+  const scaleName = scaleNames[scale];
   
   // 判断是否显示精度警告（距离超过 3000 AU 时）
   const showPrecisionWarning = distanceAU > 3000;
@@ -110,6 +154,20 @@ export default function DistanceDisplay({ distanceAU }: DistanceDisplayProps) {
         gap: `${cfg.lineGap}px`,
       }}
     >
+      {/* 宇宙尺度 */}
+      <div style={{ 
+        opacity: 0.6,
+        fontSize: '11px',
+        fontWeight: 400,
+      }}>当前尺度</div>
+      <div style={{ 
+        fontSize: '16px', 
+        fontWeight: 700,
+        fontFamily: '"Novecento Wide", sans-serif',
+        marginBottom: '8px',
+      }}>{scaleName}</div>
+      
+      {/* 距离信息 */}
       <div style={{ opacity: cfg.titleOpacity }}>{cfg.titleText}</div>
       <div style={{ 
         fontSize: `${cfg.valueFontSize}px`, 
