@@ -1,0 +1,277 @@
+{
+  "version": 2,
+  "generationDate": "2026-02-17T13:00:12.155623Z",
+  "spiceKernels": {
+    "planets": "DE440",
+    "jupiter": "JUP365",
+    "saturn": "SAT441",
+    "uranus": "URA111",
+    "neptune": "NEP097"
+  },
+  "chunks": [
+    {
+      "file": "callisto-ephemeris.bin.gz",
+      "bodies": [
+        504
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 1205983,
+      "checksum": "sha256:99c763ca0d70a250ca6b21617ad21ff2def0448fb7684f7cbe2196103d1887c1"
+    },
+    {
+      "file": "dione-ephemeris.bin.gz",
+      "bodies": [
+        604
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 601214,
+      "checksum": "sha256:e5859cfcc6b35ba4835d02c287235d7266ced8ba252e857d14a1cf28bbe1b040"
+    },
+    {
+      "file": "earth-ephemeris.bin.gz",
+      "bodies": [
+        399
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2491599.500766028
+      },
+      "size": 29891846,
+      "checksum": "sha256:updated"
+    },
+    {
+      "file": "enceladus-ephemeris.bin.gz",
+      "bodies": [
+        602
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 606382,
+      "checksum": "sha256:00868b6a7e0094151c5f0842d0e09f6aa9859905d8ed1a1de7520bd7f0f6f519"
+    },
+    {
+      "file": "europa-ephemeris.bin.gz",
+      "bodies": [
+        502
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 1206984,
+      "checksum": "sha256:14b9668eb1ce2c66403e13f210972f22b4cf5363fd3f69172558a2c6bc75ed89"
+    },
+    {
+      "file": "ganymede-ephemeris.bin.gz",
+      "bodies": [
+        503
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 1207075,
+      "checksum": "sha256:e5ace4f828e87f04437acf327aed5272cbb55fece493fbb711703fbbee5b9603"
+    },
+    {
+      "file": "hyperion-ephemeris.bin.gz",
+      "bodies": [
+        607
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 605264,
+      "checksum": "sha256:afb6d7b305b8b7dab16354d89ef696a52f5ebd2131dd46453cb8602385aeff72"
+    },
+    {
+      "file": "iapetus-ephemeris.bin.gz",
+      "bodies": [
+        608
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 602463,
+      "checksum": "sha256:29ac0d3a41469acd32aa38987b3886002af14e7fb5c7bc7304d494cc0e67eb0c"
+    },
+    {
+      "file": "io-ephemeris.bin.gz",
+      "bodies": [
+        501
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 1201168,
+      "checksum": "sha256:0ed85431b4f27b15551b3552767c2d991dd2698a2e1900a3ada71e9a76c9c0c3"
+    },
+    {
+      "file": "jupiter-ephemeris.bin.gz",
+      "bodies": [
+        5
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 252997,
+      "checksum": "sha256:updated"
+    },
+    {
+      "file": "mars-ephemeris.bin.gz",
+      "bodies": [
+        4
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2491599.500766028
+      },
+      "size": 3652027,
+      "checksum": "sha256:updated"
+    },
+    {
+      "file": "mercury-ephemeris.bin.gz",
+      "bodies": [
+        199
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 2267952,
+      "checksum": "sha256:66239ca70cb8e6dc642c0faa411a0195ff1bf4ac6ebe8855740ecd4ec5b22d6f"
+    },
+    {
+      "file": "mimas-ephemeris.bin.gz",
+      "bodies": [
+        601
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 605303,
+      "checksum": "sha256:97a1e58e0ab1832392218f6a33c47b5e940d4d3e54c2def4fd4eaa5627d4c2c3"
+    },
+    {
+      "file": "moon-ephemeris.bin.gz",
+      "bodies": [
+        301
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2491599.500766028
+      },
+      "size": 4018402,
+      "checksum": "sha256:updated"
+    },
+    {
+      "file": "neptune-ephemeris.bin.gz",
+      "bodies": [
+        8
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 251918,
+      "checksum": "sha256:updated"
+    },
+    {
+      "file": "rhea-ephemeris.bin.gz",
+      "bodies": [
+        605
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 605179,
+      "checksum": "sha256:77a6689992dacb1590335edd3c8d375a3e89b460f08bbfaad4f82b074f2c6450"
+    },
+    {
+      "file": "saturn-ephemeris.bin.gz",
+      "bodies": [
+        6
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 250536,
+      "checksum": "sha256:updated"
+    },
+    {
+      "file": "tethys-ephemeris.bin.gz",
+      "bodies": [
+        603
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 605106,
+      "checksum": "sha256:26deffa7955ffd7479bf01b59ec622505c988cbb0392287c930280a06c0f4fb5"
+    },
+    {
+      "file": "titan-ephemeris.bin.gz",
+      "bodies": [
+        606
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 604931,
+      "checksum": "sha256:3243d87198d09ea8e05b867bf784688a10b3873497b3dc9dd1475ce299560750"
+    },
+    {
+      "file": "triton-ephemeris.bin.gz",
+      "bodies": [
+        801
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 604793,
+      "checksum": "sha256:3eaee806ecd9383fb332017d993497cd5de1c2db1e2a62b0e06f3e8d95084e16"
+    },
+    {
+      "file": "uranus-ephemeris.bin.gz",
+      "bodies": [
+        7
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 252135,
+      "checksum": "sha256:updated"
+    },
+    {
+      "file": "venus-ephemeris.bin.gz",
+      "bodies": [
+        299
+      ],
+      "timeRange": {
+        "start": 2454864.500766028,
+        "end": 2465822.000766028
+      },
+      "size": 2195314,
+      "checksum": "sha256:d32d2faf03af93c28772204ef6ac18eeb4dcf6a586883d9d98076814d0455ae0"
+    }
+  ]
+}

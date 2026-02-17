@@ -28,6 +28,30 @@ import {
   solveKeplerEquation
 } from './utils';
 import { CELESTIAL_BODIES, calculateRotationAxis } from '@/lib/types/celestialTypes';
+import { 
+  SatellitePositionCalculator,
+  type PlanetaryPositionProvider,
+  SatelliteId,
+  Vector3 as EphemerisVector3,
+  ObserverMode
+} from './ephemeris';
+import { AllBodiesCalculator } from './ephemeris/all-bodies-calculator';
+import { EphemerisManager } from './ephemeris/manager';
+
+// Position cache to avoid recalculating the same positions
+interface PositionCache {
+  jd: number;
+  bodies: CelestialBody[];
+  timestamp: number;
+}
+
+let positionCache: PositionCache | null = null;
+// Increase cache tolerance to reduce update frequency and avoid sampling aliasing
+// For Enceladus (period 1.37 days = 118,368 seconds), we need at least 10-20 samples per orbit
+// to avoid aliasing patterns (cloverleaf, etc.)
+// 0.0001 JD = 8.6 seconds, which gives ~13,765 samples per orbit - plenty to avoid aliasing
+const CACHE_TOLERANCE = 0.0001; // JD tolerance (about 8.6 seconds)
+const CACHE_MAX_AGE = 2000; // milliseconds - allow longer cache lifetime for stability
 
 export interface OrbitalElements {
   name: string;
@@ -64,6 +88,8 @@ export interface CelestialBody {
   // 标识这是否为卫星
   isSatellite?: boolean;
   elements?: OrbitalElements;
+  // 标识是否使用星历数据（而非解析模型）
+  usingEphemeris?: boolean;
 }
 
 /**
@@ -278,6 +304,130 @@ export const SATELLITE_DEFINITIONS: Record<string, Array<{
 };
 
 /**
+ * Implementation of PlanetaryPositionProvider that wraps the existing orbit system
+ */
+class OrbitSystemPositionProvider implements PlanetaryPositionProvider {
+  getEarthPosition(jd_tdb: number): EphemerisVector3 {
+    const pos = calculatePosition(ORBITAL_ELEMENTS.earth, jd_tdb);
+    return new EphemerisVector3(pos.x, pos.y, pos.z);
+  }
+
+  getJupiterPosition(jd_tdb: number): EphemerisVector3 {
+    const pos = calculatePosition(ORBITAL_ELEMENTS.jupiter, jd_tdb);
+    return new EphemerisVector3(pos.x, pos.y, pos.z);
+  }
+
+  getEarthVelocity(jd_tdb: number): EphemerisVector3 {
+    // Compute Earth's velocity using finite differences
+    // Use a small time step (1 second = 1/86400 days)
+    const dt = 1.0 / 86400.0;
+    const pos1 = calculatePosition(ORBITAL_ELEMENTS.earth, jd_tdb - dt / 2);
+    const pos2 = calculatePosition(ORBITAL_ELEMENTS.earth, jd_tdb + dt / 2);
+    
+    // Velocity in AU/day
+    const vx = (pos2.x - pos1.x) / dt;
+    const vy = (pos2.y - pos1.y) / dt;
+    const vz = (pos2.z - pos1.z) / dt;
+    
+    // Convert to km/s
+    const AU_TO_KM = 149597870.7;
+    const DAYS_TO_SECONDS = 86400.0;
+    const scale = AU_TO_KM / DAYS_TO_SECONDS;
+    
+    return new EphemerisVector3(vx * scale, vy * scale, vz * scale);
+  }
+}
+
+/**
+ * Global satellite position calculator instance (DEPRECATED)
+ * This is no longer used - all satellites are handled by AllBodiesCalculator
+ * Kept for backward compatibility but not initialized
+ */
+let satelliteCalculator: SatellitePositionCalculator | null = null;
+let calculatorInitPromise: Promise<void> | null = null;
+
+/**
+ * Global all-bodies ephemeris calculator instance
+ * Provides high-precision positions for all planets and major satellites
+ */
+let allBodiesCalculator: AllBodiesCalculator | null = null;
+let allBodiesInitPromise: Promise<void> | null = null;
+
+/**
+ * Get the all-bodies ephemeris calculator instance
+ * Returns null if not initialized
+ */
+export function getAllBodiesCalculator(): AllBodiesCalculator | null {
+  return allBodiesCalculator;
+}
+
+/**
+ * Initialize the all-bodies ephemeris calculator
+ * This provides high-precision positions for planets and satellites
+ */
+export async function initializeAllBodiesCalculator(): Promise<void> {
+  if (allBodiesInitPromise) {
+    return allBodiesInitPromise;
+  }
+
+  allBodiesInitPromise = (async () => {
+    try {
+      allBodiesCalculator = new AllBodiesCalculator({
+        baseUrl: '/data/ephemeris'
+      });
+      console.log('All-bodies ephemeris calculator initialized');
+    } catch (error) {
+      console.warn('Failed to initialize all-bodies calculator:', error);
+      allBodiesCalculator = null;
+    }
+  })();
+
+  return allBodiesInitPromise;
+}
+
+/**
+ * Initialize the satellite position calculator (DEPRECATED)
+ * This function is deprecated and does nothing.
+ * All satellites are now handled by the AllBodiesCalculator.
+ * 
+ * @deprecated Use initializeAllBodiesCalculator() instead
+ */
+export async function initializeSatelliteCalculator(
+  ephemerisDataUrl?: string
+): Promise<void> {
+  // No-op: This function is deprecated
+  // All satellites are handled by AllBodiesCalculator now
+  console.log('initializeSatelliteCalculator is deprecated, using AllBodiesCalculator instead');
+  return Promise.resolve();
+}
+
+/**
+ * Get satellite key from SatelliteId enum
+ */
+function getSatelliteKey(satelliteId: SatelliteId): string {
+  switch (satelliteId) {
+    case SatelliteId.IO: return 'Io';
+    case SatelliteId.EUROPA: return 'Europa';
+    case SatelliteId.GANYMEDE: return 'Ganymede';
+    case SatelliteId.CALLISTO: return 'Callisto';
+    default: return '';
+  }
+}
+
+/**
+ * Get SatelliteId from satellite name
+ */
+function getSatelliteId(name: string): SatelliteId | null {
+  switch (name) {
+    case 'Io': return SatelliteId.IO;
+    case 'Europa': return SatelliteId.EUROPA;
+    case 'Ganymede': return SatelliteId.GANYMEDE;
+    case 'Callisto': return SatelliteId.CALLISTO;
+    default: return null;
+  }
+}
+
+/**
  * Computes orbital elements at a given time.
  * 
  * This function applies secular variations to the base orbital elements
@@ -472,20 +622,48 @@ export function calculatePosition(
  * This function computes the positions of the Sun, all 8 planets, and
  * their major satellites at the specified Julian Day.
  * 
- * The function returns an array of celestial bodies with their 3D positions
- * in heliocentric ecliptic coordinates (AU).
+ * Uses caching to avoid recalculating positions for the same time.
+ * Returns cached data immediately if available, and updates cache in background.
  * 
  * @param julianDay - Julian Day Number
  * @returns Array of celestial bodies with positions and properties
- * 
- * @example
- * ```typescript
- * const bodies = getCelestialBodies(2451545.0); // J2000.0
- * const earth = bodies.find(b => b.name === 'Earth');
- * console.log(earth?.x, earth?.y, earth?.z);
- * ```
  */
-export function getCelestialBodies(julianDay: number): CelestialBody[] {
+export async function getCelestialBodies(julianDay: number): Promise<CelestialBody[]> {
+  // Check cache first
+  const now = Date.now();
+  if (positionCache) {
+    const jdDiff = Math.abs(julianDay - positionCache.jd);
+    const age = now - positionCache.timestamp;
+    
+    // Use cached data if:
+    // 1. JD is very close (within tolerance)
+    // 2. Cache is not too old
+    if (jdDiff < CACHE_TOLERANCE && age < CACHE_MAX_AGE) {
+      // Return cached data immediately
+      return positionCache.bodies;
+    }
+    
+    // If cache is slightly stale but not too old, return it anyway
+    // and trigger a background update
+    if (jdDiff < CACHE_TOLERANCE * 10 && age < CACHE_MAX_AGE * 2) {
+      // Return cached data immediately
+      const cachedBodies = positionCache.bodies;
+      
+      // Trigger background update (don't await)
+      calculateBodiesInBackground(julianDay);
+      
+      return cachedBodies;
+    }
+  }
+  
+  // No valid cache, calculate now
+  return await calculateBodiesNow(julianDay);
+}
+
+/**
+ * Calculate bodies immediately and update cache
+ */
+async function calculateBodiesNow(julianDay: number): Promise<CelestialBody[]> {
   const bodies: CelestialBody[] = [];
   
   // Add the Sun at origin
@@ -501,12 +679,31 @@ export function getCelestialBodies(julianDay: number): CelestialBody[] {
   });
   
   // Calculate positions for all 8 planets
-  const planetPositions = calculatePlanetPositions(julianDay, bodies);
+  const planetPositions = await calculatePlanetPositions(julianDay, bodies);
   
   // Calculate positions for all satellites
-  calculateSatellitePositions(julianDay, planetPositions, bodies);
+  await calculateSatellitePositions(julianDay, planetPositions, bodies);
+  
+  console.log(`getCelestialBodies: Loaded ${bodies.length} bodies for JD ${julianDay}`);
+  
+  // Update cache
+  positionCache = {
+    jd: julianDay,
+    bodies: bodies,
+    timestamp: Date.now()
+  };
   
   return bodies;
+}
+
+/**
+ * Calculate bodies in background and update cache
+ * Used for non-blocking updates when cache is slightly stale
+ */
+function calculateBodiesInBackground(julianDay: number): void {
+  calculateBodiesNow(julianDay).catch(error => {
+    console.warn('Background body calculation failed:', error);
+  });
 }
 
 /**
@@ -516,14 +713,53 @@ export function getCelestialBodies(julianDay: number): CelestialBody[] {
  * @param bodies - Array to append planet bodies to
  * @returns Map of planet positions by lowercase name
  */
-function calculatePlanetPositions(
+async function calculatePlanetPositions(
   julianDay: number,
   bodies: CelestialBody[]
-): Record<string, { x: number; y: number; z: number }> {
+): Promise<Record<string, { x: number; y: number; z: number }>> {
   const planetPosMap: Record<string, { x: number; y: number; z: number }> = {};
   
+  // NAIF IDs for planets
+  // Note: Mars and outer planets use barycenter IDs (4-8) because DE440 doesn't include
+  // planet center IDs (499, 599, 699, 799, 899). The difference is negligible for visualization.
+  const planetNaifIds: Record<string, number> = {
+    'mercury': 199,
+    'venus': 299,
+    'earth': 399,
+    'mars': 4,      // Mars Barycenter (not 499)
+    'jupiter': 5,   // Jupiter Barycenter (not 599)
+    'saturn': 6,    // Saturn Barycenter (not 699)
+    'uranus': 7,    // Uranus Barycenter (not 799)
+    'neptune': 8    // Neptune Barycenter (not 899)
+  };
+  
   for (const [key, elements] of Object.entries(ORBITAL_ELEMENTS)) {
-    const pos = calculatePosition(elements, julianDay);
+    let pos: { x: number; y: number; z: number; r: number };
+    
+    // Try to use high-precision ephemeris if available
+    if (allBodiesCalculator && planetNaifIds[key]) {
+      try {
+        const result = await allBodiesCalculator.calculatePosition(planetNaifIds[key], julianDay);
+        if (result.usingEphemeris) {
+          pos = {
+            x: result.position.x,
+            y: result.position.y,
+            z: result.position.z,
+            r: Math.sqrt(result.position.x ** 2 + result.position.y ** 2 + result.position.z ** 2)
+          };
+        } else {
+          // Fall back to analytical model
+          pos = calculatePosition(elements, julianDay);
+        }
+      } catch (error) {
+        // Fall back to analytical model on error
+        pos = calculatePosition(elements, julianDay);
+        console.warn(`${key}: Ephemeris error, using analytical model:`, error);
+      }
+    } else {
+      // Use analytical model if ephemeris not available
+      pos = calculatePosition(elements, julianDay);
+    }
     
     bodies.push({
       name: elements.name,
@@ -545,20 +781,45 @@ function calculatePlanetPositions(
 /**
  * Calculates positions for all satellites.
  * 
- * This function computes satellite positions using simplified circular
- * orbit models. Satellites orbit their parent planets, and their positions
+ * This function computes satellite positions using either:
+ * - High-precision ephemeris data for major satellites (if available)
+ * - Simplified circular orbit models for other satellites
+ * 
+ * Satellites orbit their parent planets, and their positions
  * are calculated relative to the parent's current position.
  * 
  * @param julianDay - Julian Day Number
  * @param planetPosMap - Map of planet positions by lowercase name
  * @param bodies - Array to append satellite bodies to
  */
-function calculateSatellitePositions(
+async function calculateSatellitePositions(
   julianDay: number,
   planetPosMap: Record<string, { x: number; y: number; z: number }>,
   bodies: CelestialBody[]
-): void {
+): Promise<void> {
   const daysSinceJ2000 = julianDay - 2451545.0;
+  
+  // NAIF IDs for satellites
+  const satelliteNaifIds: Record<string, number> = {
+    // Earth
+    'Moon': 301,
+    // Jupiter
+    'Io': 501,
+    'Europa': 502,
+    'Ganymede': 503,
+    'Callisto': 504,
+    // Saturn
+    'Mimas': 601,
+    'Enceladus': 602,
+    'Tethys': 603,
+    'Dione': 604,
+    'Rhea': 605,
+    'Titan': 606,
+    'Hyperion': 607,
+    'Iapetus': 608,
+    // Neptune
+    'Triton': 801
+  };
   
   for (const [parentKey, sats] of Object.entries(SATELLITE_DEFINITIONS)) {
     const parentPos = planetPosMap[parentKey];
@@ -567,29 +828,116 @@ function calculateSatellitePositions(
       continue;
     }
 
-    // Get parent planet's axis orientation
-    const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
+    // Try to use all-bodies ephemeris system first
+    if (allBodiesCalculator) {
+      for (const sat of sats) {
+        const naifId = satelliteNaifIds[sat.name];
+        
+        // Special case: Force Enceladus to use analytical model due to data quality issues
+        if (sat.name === 'Enceladus') {
+          // Get parent planet's axis orientation
+          const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
+          
+          // Calculate satellite position relative to parent using analytical model
+          const satellitePos = calculateSatellitePosition(
+            sat,
+            daysSinceJ2000,
+            parentAxisQuaternion
+          );
 
-    for (const sat of sats) {
-      // Calculate satellite position relative to parent
-      const satellitePos = calculateSatellitePosition(
-        sat,
-        daysSinceJ2000,
-        parentAxisQuaternion
-      );
+          // Add satellite to bodies array
+          bodies.push({
+            name: sat.name,
+            x: parentPos.x + satellitePos.x,
+            y: parentPos.y + satellitePos.y,
+            z: parentPos.z + satellitePos.z,
+            r: 0,
+            radius: sat.radius,
+            color: sat.color,
+            parent: parentKey,
+            isSatellite: true,
+            usingEphemeris: false,  // Force analytical model for Enceladus
+          } as unknown as CelestialBody);
+          continue; // Skip to next satellite
+        }
+        
+        if (naifId) {
+          try {
+            const result = await allBodiesCalculator.calculatePosition(naifId, julianDay);
+            if (result.usingEphemeris) {
+              // Ephemeris returns planetcentric position, convert to heliocentric
+              bodies.push({
+                name: sat.name,
+                x: parentPos.x + result.position.x,
+                y: parentPos.y + result.position.y,
+                z: parentPos.z + result.position.z,
+                r: 0,
+                radius: sat.radius,
+                color: sat.color,
+                parent: parentKey,
+                isSatellite: true,
+                usingEphemeris: true,  // Mark as using ephemeris data
+              } as unknown as CelestialBody);
+              continue; // Skip to next satellite
+            }
+          } catch (error) {
+            // Fall through to analytical model
+            console.warn(`Failed to get ephemeris for ${sat.name}, using analytical model:`, error);
+          }
+        }
+        
+        // If we reach here, use analytical model for this satellite
+        // Get parent planet's axis orientation
+        const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
+        
+        // Calculate satellite position relative to parent
+        const satellitePos = calculateSatellitePosition(
+          sat,
+          daysSinceJ2000,
+          parentAxisQuaternion
+        );
 
-      // Add satellite to bodies array
-      bodies.push({
-        name: sat.name,
-        x: parentPos.x + satellitePos.x,
-        y: parentPos.y + satellitePos.y,
-        z: parentPos.z + satellitePos.z,
-        r: 0,
-        radius: sat.radius,
-        color: sat.color,
-        parent: parentKey,
-        isSatellite: true,
-      } as unknown as CelestialBody);
+        // Add satellite to bodies array
+        bodies.push({
+          name: sat.name,
+          x: parentPos.x + satellitePos.x,
+          y: parentPos.y + satellitePos.y,
+          z: parentPos.z + satellitePos.z,
+          r: 0,
+          radius: sat.radius,
+          color: sat.color,
+          parent: parentKey,
+          isSatellite: true,
+          usingEphemeris: false,  // Using analytical model
+        } as unknown as CelestialBody);
+      }
+    } else {
+      // No ephemeris calculator, use analytical model for all satellites
+      // Get parent planet's axis orientation
+      const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
+
+      for (const sat of sats) {
+        // Calculate satellite position relative to parent
+        const satellitePos = calculateSatellitePosition(
+          sat,
+          daysSinceJ2000,
+          parentAxisQuaternion
+        );
+
+        // Add satellite to bodies array
+        bodies.push({
+          name: sat.name,
+          x: parentPos.x + satellitePos.x,
+          y: parentPos.y + satellitePos.y,
+          z: parentPos.z + satellitePos.z,
+          r: 0,
+          radius: sat.radius,
+          color: sat.color,
+          parent: parentKey,
+          isSatellite: true,
+          usingEphemeris: false,  // Using analytical model
+        } as unknown as CelestialBody);
+      }
     }
   }
 }

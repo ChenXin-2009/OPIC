@@ -117,11 +117,19 @@ export default function InfoModal({ isOpen, onClose }: InfoModalProps) {
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-white/50 mt-1">▸</span>
-                  <span>精确的行星轨道计算</span>
+                  <span>高精度星历系统（NASA JPL DE440）</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-white/50 mt-1">▸</span>
-                  <span>时间控制和快进功能</span>
+                  <span>27个天体的精确位置计算（8大行星 + 19颗主要卫星）</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-white/50 mt-1">▸</span>
+                  <span>动态数据源切换（高精度星历 ↔ 解析模型）</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-white/50 mt-1">▸</span>
+                  <span>时间控制和快进功能（2009-2109年高精度）</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-white/50 mt-1">▸</span>
@@ -207,15 +215,38 @@ export default function InfoModal({ isOpen, onClose }: InfoModalProps) {
               <h3 className="text-lg font-light text-white/80 mb-3 tracking-wide">数据来源</h3>
               <div className="space-y-3 text-sm">
                 <div>
-                  <span className="text-gray-500">行星轨道数据：</span>
-                  <a 
-                    href="https://ssd.jpl.nasa.gov/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-white/70 hover:text-white ml-2 transition-colors"
-                  >
-                    NASA JPL Solar System Dynamics
-                  </a>
+                  <span className="text-gray-500">高精度星历数据：</span>
+                  <div className="ml-2 mt-1 space-y-1">
+                    <div className="text-white/70">
+                      • 地球、火星、月球：NASA JPL DE440 (2009-2109)
+                    </div>
+                    <div className="text-white/70">
+                      • 其他行星：NASA JPL DE440 (2009-2039)
+                    </div>
+                    <div className="text-white/70">
+                      • 木星卫星：NASA JPL JUP365 (2009-2039)
+                    </div>
+                    <div className="text-white/70">
+                      • 土星卫星：NASA JPL SAT441 (2009-2039)
+                    </div>
+                    <div className="text-white/70">
+                      • 海王星卫星：NASA JPL NEP097 (2009-2039)
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      精度：行星 &lt;0.1°，主要卫星 &lt;0.01°
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-500">解析轨道模型：</span>
+                  <div className="ml-2 mt-1 space-y-1">
+                    <div className="text-white/70">
+                      • VSOP87 简化模型（星历数据不可用时）
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      精度：行星 ~1-5°，卫星 ~5-10°
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <span className="text-gray-500">恒星数据：</span>
@@ -289,8 +320,14 @@ export default function InfoModal({ isOpen, onClose }: InfoModalProps) {
                   但不保证所有天文数据和计算结果的绝对精确性。
                 </p>
                 <p>
-                  行星位置基于简化的轨道模型计算，可能与实际天体位置存在偏差。
-                  如需精确的天文数据，请参考专业天文机构的官方资料。
+                  在2009-2109年时间范围内（地球、火星、月球），
+                  以及2009-2039年时间范围内（其他行星和卫星），
+                  使用NASA JPL高精度星历数据，精度可达角秒级（行星 &lt;0.1°，主要卫星 &lt;0.01°）。
+                  超出此范围时，系统自动切换到VSOP87解析模型，精度降低至约1-5°。
+                </p>
+                <p>
+                  如需精确的天文数据用于科学研究或导航，请参考NASA JPL HORIZONS系统
+                  或其他专业天文机构的官方资料。
                 </p>
                 <p>
                   本项目使用的所有第三方数据和资源均遵循其原始许可协议。

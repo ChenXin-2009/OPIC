@@ -15,7 +15,9 @@ export {
   ORBITAL_ELEMENTS,
   SATELLITE_DEFINITIONS,
   calculatePosition,
-  getCelestialBodies
+  getCelestialBodies,
+  initializeSatelliteCalculator,
+  initializeAllBodiesCalculator
 } from './orbit';
 
 // Time conversions

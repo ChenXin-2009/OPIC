@@ -330,6 +330,34 @@ export default function SettingsMenu({ cameraController }: SettingsMenuProps) {
                 </div>
               </div>
 
+              {/* 星历状态按钮 */}
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    // Trigger ephemeris status panel
+                    const event = new CustomEvent('openEphemerisStatus');
+                    window.dispatchEvent(event);
+                  }}
+                  className="w-full py-2 text-xs font-bold uppercase tracking-wide transition-all duration-200"
+                  style={{
+                    background: ARKNIGHTS_CONFIG.colors.darkLight,
+                    color: ARKNIGHTS_CONFIG.colors.text,
+                    border: `1px solid ${ARKNIGHTS_CONFIG.colors.border}`,
+                    clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = ARKNIGHTS_CONFIG.colors.primary;
+                    e.currentTarget.style.color = ARKNIGHTS_CONFIG.colors.primary;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = ARKNIGHTS_CONFIG.colors.border;
+                    e.currentTarget.style.color = ARKNIGHTS_CONFIG.colors.text;
+                  }}
+                >
+                  {lang === 'zh' ? '星历状态' : 'EPHEMERIS STATUS'}
+                </button>
+              </div>
+
               {/* 分隔线 */}
               <div 
                 style={{

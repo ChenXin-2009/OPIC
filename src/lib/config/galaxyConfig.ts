@@ -44,7 +44,7 @@ export const GALAXY_CONFIG = {
   thickness: 1000,
   diskThickness: 300,
   sunDistanceFromCenter: 26000,
-  topViewTexturePath: '/textures/planets/MilkyWayTop_Gaia_compressed.webp',
+  topViewTexturePath: '/textures/planets/Milky_Way_map_by_Gaia_labelled.jpg',
   topViewOpacity: 1.0,
   topViewScale: 1.0,
   // 立体厚度配置

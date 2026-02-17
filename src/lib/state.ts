@@ -4,8 +4,20 @@
  */
 
 import { create } from 'zustand';
-import { CelestialBody, getCelestialBodies } from './astronomy/orbit';
+import { CelestialBody, getCelestialBodies, initializeSatelliteCalculator, initializeAllBodiesCalculator } from './astronomy/orbit';
 import { dateToJulianDay } from './astronomy/time';
+
+// Initialize the ephemeris calculators on module load (client-side only)
+// This runs once when the module is first imported in the browser
+if (typeof window !== 'undefined') {
+  // Initialize all-bodies calculator (provides high-precision data for all bodies)
+  initializeAllBodiesCalculator().catch(error => {
+    console.warn('Failed to initialize all-bodies calculator, will use analytical models:', error);
+  });
+  
+  // Note: Legacy satellite calculator is deprecated and not initialized
+  // The all-bodies calculator handles all satellites now
+}
 
 /**
  * 视图偏移量接口
@@ -73,27 +85,35 @@ export const useSolarSystemStore = create<SolarSystemState>((set, get) => {
   const initialTime = new Date();
   const initialJD = dateToJulianDay(initialTime);
   
-  return {
+  // Initialize with empty bodies, will be populated asynchronously
+  const initialState = {
     // ========== 初始状态 ==========
     currentTime: initialTime,
     isPlaying: true, // 默认开始播放
     timeSpeed: 1 / 86400, // 默认实时播放：每秒前进1秒 = 1/86400天
-    playDirection: 'forward',
-    celestialBodies: getCelestialBodies(initialJD),
+    playDirection: 'forward' as const,
+    celestialBodies: [] as CelestialBody[],
     selectedPlanet: null,
     viewOffset: { x: 0, y: 0 },
     zoom: DEFAULT_ZOOM,
     cameraDistance: 100, // 默认相机距离
     
     // ========== 语言 ==========
-    lang: 'zh', // 默认中文
+    lang: 'zh' as Language, // 默认中文
     setLang: (lang: Language) => set({ lang }),
 
     // ========== 方法 ==========
     setCurrentTime: (date: Date) => {
       const jd = dateToJulianDay(date);
-      const bodies = getCelestialBodies(jd);
-      set({ currentTime: date, celestialBodies: bodies });
+      // Call async function but don't wait for it
+      // The bodies will be updated when the promise resolves
+      getCelestialBodies(jd).then(bodies => {
+        set({ currentTime: date, celestialBodies: bodies });
+      }).catch(error => {
+        console.error('Failed to get celestial bodies:', error);
+        // Keep current bodies on error
+        set({ currentTime: date });
+      });
     },
     
     togglePlayPause: () => {
@@ -119,21 +139,37 @@ export const useSolarSystemStore = create<SolarSystemState>((set, get) => {
     tick: (deltaSeconds: number) => {
       const state = get();
       if (!state.isPlaying) return;
+      
       // timeSpeed 表示每秒前进多少天
-      // 例如 timeSpeed = 1 表示每秒前进 1 天
-      // timeSpeed = 30 表示每秒前进 30 天（约1个月）
-      // timeSpeed = 365 表示每秒前进 365 天（1年）
-      // 计算时间增量：deltaSeconds 是经过的秒数，timeSpeed 是每秒前进多少天
-      // 所以总前进时间 = deltaSeconds * timeSpeed（天）
       const direction = state.playDirection === 'forward' ? 1 : -1;
       const deltaTimeDays = deltaSeconds * state.timeSpeed * direction;
       
-      // 使用毫秒计算，参考 TimeControl.txt 中的方式
-      // 将天数转换为毫秒：1天 = 24 * 60 * 60 * 1000 毫秒
+      // 使用毫秒计算
       const deltaTimeMs = deltaTimeDays * 24 * 60 * 60 * 1000;
       const newTime = new Date(state.currentTime.getTime() + deltaTimeMs);
       
-      state.setCurrentTime(newTime);
+      // CRITICAL FIX for sampling aliasing:
+      // For satellites with short orbital periods (like Enceladus: 1.37 days),
+      // we need to ensure smooth position updates every frame.
+      // 
+      // Strategy: Update positions synchronously if possible, or use the most
+      // recent cached data to avoid gaps in position updates.
+      
+      const jd = dateToJulianDay(newTime);
+      
+      // Update time immediately
+      set({ currentTime: newTime });
+      
+      // Try to get positions synchronously from cache first
+      // This ensures every frame has updated positions
+      getCelestialBodies(jd).then(bodies => {
+        // Always update positions immediately when they're ready
+        // The cache mechanism in getCelestialBodies ensures we don't
+        // recalculate unnecessarily
+        set({ celestialBodies: bodies });
+      }).catch(error => {
+        console.error('Failed to get celestial bodies:', error);
+      });
     },
     
     selectPlanet: (name: string | null) => {
@@ -173,6 +209,19 @@ export const useSolarSystemStore = create<SolarSystemState>((set, get) => {
       });
     }
   };
+  
+  // Load initial celestial bodies asynchronously
+  if (typeof window !== 'undefined') {
+    console.log('Initializing celestial bodies...');
+    getCelestialBodies(initialJD).then(bodies => {
+      console.log(`Loaded ${bodies.length} celestial bodies`);
+      set({ celestialBodies: bodies });
+    }).catch(error => {
+      console.error('Failed to load initial celestial bodies:', error);
+    });
+  }
+  
+  return initialState;
 });
 
 // 文件末尾修改为：

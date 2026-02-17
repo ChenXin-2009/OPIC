@@ -36,6 +36,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRe
 import ScaleRuler from './ScaleRuler';
 import DistanceDisplay from './DistanceDisplay';
 import SettingsMenu from '@/components/SettingsMenu';
+import EphemerisStatusPanel from '@/components/EphemerisStatusPanel';
 import { ORBIT_COLORS, SUN_LIGHT_CONFIG, ORBIT_CURVE_POINTS, SATELLITE_CONFIG, ORBIT_FADE_CONFIG, FAR_VIEW_CONFIG } from '@/lib/config/visualConfig';
 import { CAMERA_CONFIG } from '@/lib/config/cameraConfig';
 import { TextureManager } from '@/lib/3d/TextureManager';
@@ -256,12 +257,41 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
   const [opacity, setOpacity] = useState(0);
   // 距离地球的距离（AU）
   const [distanceToEarth, setDistanceToEarth] = useState(0);
+  // 星历状态面板
+  const [showEphemerisStatus, setShowEphemerisStatus] = useState(false);
+  const [allBodiesCalculator, setAllBodiesCalculator] = useState<any>(null);
 
   // 使用选择器避免不必要的重渲染
   // 3D组件不需要订阅这些状态，因为我们在动画循环中直接使用 getState()
   // 这样可以避免每次状态更新都触发组件重渲染
   // 但初始化时需要获取初始值
   const lang = useSolarSystemStore((state) => state.lang);
+
+  // Initialize all-bodies calculator and listen for ephemeris status panel events
+  useLayoutEffect(() => {
+    console.log('Initializing all-bodies calculator...');
+    // Import and initialize the calculator
+    import('@/lib/astronomy/orbit').then(({ initializeAllBodiesCalculator, getAllBodiesCalculator }) => {
+      initializeAllBodiesCalculator().then(() => {
+        // Get the calculator instance
+        const calculator = getAllBodiesCalculator();
+        console.log('All-bodies calculator initialized:', calculator);
+        setAllBodiesCalculator(calculator);
+      });
+    });
+
+    // Listen for ephemeris status panel open event
+    const handleOpenEphemerisStatus = () => {
+      console.log('Opening ephemeris status panel');
+      setShowEphemerisStatus(true);
+    };
+
+    window.addEventListener('openEphemerisStatus', handleOpenEphemerisStatus);
+
+    return () => {
+      window.removeEventListener('openEphemerisStatus', handleOpenEphemerisStatus);
+    };
+  }, []);
 
   // 初始化场景 - 使用 useLayoutEffect 确保 DOM 准备好
   useLayoutEffect(() => {
@@ -278,6 +308,15 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
         return;
       }
       
+      // Wait for celestial bodies to load
+      const currentState = useSolarSystemStore.getState();
+      if (currentState.celestialBodies.length === 0) {
+        console.log('Waiting for celestial bodies to load...');
+        checkAndInitFrameId = requestAnimationFrame(checkAndInit);
+        return;
+      }
+      
+      console.log(`Initializing scene with ${currentState.celestialBodies.length} celestial bodies`);
       isInitialized = true; // 标记已初始化，防止重复
       
       // 容器有尺寸，开始初始化
@@ -474,6 +513,9 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
           const parentKey = body.parent as string;
           const defs = SATELLITE_DEFINITIONS[parentKey];
           const def = defs ? defs.find((s) => s.name === body.name) : null;
+          
+          // Always render satellite orbit (circular approximation)
+          // Even if using ephemeris data, the circular orbit provides a useful reference
           const orbitRadius = def ? def.a : 0.001;
           const orbitColor = def ? def.color : body.color;
           const inclination = def ? def.i : 0;
@@ -1605,6 +1647,17 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
       {isCameraControllerReady && cameraControllerRef.current && (
         <SettingsMenu 
           cameraController={cameraControllerRef.current} 
+        />
+      )}
+      
+      {/* 星历状态面板 */}
+      {showEphemerisStatus && (
+        <EphemerisStatusPanel
+          calculator={allBodiesCalculator}
+          onClose={() => {
+            console.log('Closing ephemeris status panel');
+            setShowEphemerisStatus(false);
+          }}
         />
       )}
     </div>
