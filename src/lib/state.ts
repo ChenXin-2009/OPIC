@@ -109,10 +109,18 @@ export const useSolarSystemStore = create<SolarSystemState>((set, get) => {
       // The bodies will be updated when the promise resolves
       getCelestialBodies(jd).then(bodies => {
         set({ currentTime: date, celestialBodies: bodies });
+        // Note: ephemeris:bodies:ready event is emitted in calculateBodiesNow()
       }).catch(error => {
         console.error('Failed to get celestial bodies:', error);
         // Keep current bodies on error
         set({ currentTime: date });
+        
+        // Emit error event to unblock loading
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('ephemeris:bodies:ready', {
+            detail: { stage: 'bodies', error: true }
+          }));
+        }
       });
     },
     
@@ -211,13 +219,27 @@ export const useSolarSystemStore = create<SolarSystemState>((set, get) => {
   };
   
   // Load initial celestial bodies asynchronously
+  // CRITICAL: This must complete before the loading page disappears
+  // to avoid black screen on mobile devices
   if (typeof window !== 'undefined') {
     console.log('Initializing celestial bodies...');
+    
+    // Start loading immediately (don't await here to avoid blocking store creation)
     getCelestialBodies(initialJD).then(bodies => {
       console.log(`Loaded ${bodies.length} celestial bodies`);
       set({ celestialBodies: bodies });
+      
+      // Note: The ephemeris:bodies:ready event is already emitted
+      // in calculateBodiesNow() inside getCelestialBodies()
+      // This ensures the EphemerisMonitor knows the bodies are ready
     }).catch(error => {
       console.error('Failed to load initial celestial bodies:', error);
+      
+      // Even on error, emit the bodies:ready event to prevent infinite loading
+      // The scene will use analytical models as fallback
+      window.dispatchEvent(new CustomEvent('ephemeris:bodies:ready', {
+        detail: { stage: 'bodies', error: true }
+      }));
     });
   }
   
