@@ -324,6 +324,13 @@ export class EphemerisManager {
       this.registerBody(config);
     }
     
+    // Emit initialization start event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ephemeris:init:start', {
+        detail: { stage: 'start' }
+      }));
+    }
+    
     // Try to load manifest (non-blocking)
     this.loadManifest();
   }
@@ -578,6 +585,14 @@ export class EphemerisManager {
       const chunk = await promise;
       this.loadedChunks.set(filename, chunk);
       this.loadingPromises.delete(filename);
+      
+      // Emit data loaded event (first chunk loaded)
+      if (typeof window !== 'undefined' && this.loadedChunks.size === 1) {
+        window.dispatchEvent(new CustomEvent('ephemeris:data:loaded', {
+          detail: { stage: 'data' }
+        }));
+      }
+      
       return chunk;
     } catch (error) {
       this.loadingPromises.delete(filename);

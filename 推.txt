@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 5.2.0: 添加了高精度的星历"
+git commit -m "Release 5.2.1: 优化性能"
 git checkout main
 git pull origin main
-git tag v5.2.0
+git tag v5.2.1
 git push origin main
-git push origin v5.2.0
+git push origin v5.2.1

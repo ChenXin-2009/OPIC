@@ -693,6 +693,13 @@ async function calculateBodiesNow(julianDay: number): Promise<CelestialBody[]> {
     timestamp: Date.now()
   };
   
+  // Emit bodies ready event
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('ephemeris:bodies:ready', {
+      detail: { stage: 'bodies' }
+    }));
+  }
+  
   return bodies;
 }
 

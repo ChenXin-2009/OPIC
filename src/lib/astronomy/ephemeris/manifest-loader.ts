@@ -111,6 +111,13 @@ export class ManifestLoader {
         throw new Error('Invalid manifest format: missing chunks array');
       }
       
+      // Emit manifest loaded event
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ephemeris:manifest:loaded', {
+          detail: { stage: 'manifest' }
+        }));
+      }
+      
       return this.manifest;
     } catch (error) {
       if (error instanceof Error) {
