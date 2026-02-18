@@ -303,32 +303,6 @@ function TraditionalHeader({ cfg, isMobile }: TraditionalHeaderProps): React.Rea
  * The component is responsive and adjusts its layout for mobile devices.
  */
 export default function Header(): React.ReactElement | null {
-  const [isHovered, setIsHovered] = useState(false);
-  const isMobile = useMobileDetection();
-
-  // Flexible access: some optional fields may not exist in configuration
-  const cfg: any = HEADER_CONFIG;
-
-  if (!HEADER_CONFIG.enabled) {
-    return null;
-  }
-
-  const handleLogoClick = () => {
-    console.log('Logo clicked');
-  };
-
-  if (cfg.floatingMode) {
-    return (
-      <FloatingHeader
-        cfg={cfg}
-        isMobile={isMobile}
-        isHovered={isHovered}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onClick={handleLogoClick}
-      />
-    );
-  }
-
-  return <TraditionalHeader cfg={cfg} isMobile={isMobile} />;
+  // Header已禁用
+  return null;
 }

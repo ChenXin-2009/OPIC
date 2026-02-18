@@ -44,10 +44,8 @@ import { LocalGroupRenderer } from '@/lib/3d/LocalGroupRenderer';
 import { NearbyGroupsRenderer } from '@/lib/3d/NearbyGroupsRenderer';
 import { VirgoSuperclusterRenderer } from '@/lib/3d/VirgoSuperclusterRenderer';
 import { LaniakeaSuperclusterRenderer } from '@/lib/3d/LaniakeaSuperclusterRenderer';
-import { NearbySuperclusterRenderer } from '@/lib/3d/NearbySuperclusterRenderer';
-import { ObservableUniverseRenderer } from '@/lib/3d/ObservableUniverseRenderer';
 import { UniverseScale } from '@/lib/types/universeTypes';
-import type { LocalGroupGalaxy, GalaxyGroup, SimpleGalaxy, GalaxyCluster, Supercluster, CosmicStructure } from '@/lib/types/universeTypes';
+import type { LocalGroupGalaxy, GalaxyGroup, SimpleGalaxy, GalaxyCluster, Supercluster } from '@/lib/types/universeTypes';
 
 // ==================== 可调参数配置 ====================
 // ⚙️ 以下参数可在文件顶部调整，影响 3D 场景显示效果
@@ -179,52 +177,6 @@ async function initializeUniverseRenderers(sceneManager: SceneManager) {
       console.warn('Failed to load Laniakea data:', error);
     }
     
-    // 5. 近邻超星系团 - 暂时禁用，因为 Laniakea 数据已经覆盖了这个尺度
-    // 避免与 Laniakea 的真实数据重叠显示
-    /*
-    try {
-      const nearbySuperclusters: Supercluster[] = [
-        { name: 'Shapley Supercluster', centerX: 200000000, centerY: 50000000, centerZ: 0, radius: 100000000, memberCount: 8000, richness: 2 },
-        { name: 'Hydra-Centaurus', centerX: 150000000, centerY: -30000000, centerZ: 50000000, radius: 80000000, memberCount: 5000, richness: 2 },
-        { name: 'Pavo-Indus', centerX: -180000000, centerY: 40000000, centerZ: -60000000, radius: 70000000, memberCount: 4000, richness: 1 },
-      ];
-      const nearbySupergalaxies: SimpleGalaxy[] = [];
-      
-      const nearbyRenderer = new NearbySuperclusterRenderer();
-      await nearbyRenderer.loadData(nearbySuperclusters, nearbySupergalaxies);
-      sceneManager.setNearbySuperclusterRenderer(nearbyRenderer);
-      console.log('NearbySuperclusterRenderer initialized with', nearbySuperclusters.length, 'superclusters');
-    } catch (error) {
-      console.warn('Failed to initialize NearbySupercluster renderer:', error);
-    }
-    */
-    console.log('NearbySuperclusterRenderer disabled - using Laniakea real data instead');
-    
-    // 6. 可观测宇宙 - 使用程序化生成
-    try {
-      const cosmicStructures: CosmicStructure[] = [];
-      const anchorPoints: THREE.Vector3[] = [];
-      
-      // 生成一些锚点用于宇宙纤维
-      for (let i = 0; i < 50; i++) {
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos(Math.random() * 2 - 1);
-        const r = 800000000 + Math.random() * 400000000;
-        
-        anchorPoints.push(new THREE.Vector3(
-          r * Math.sin(phi) * Math.cos(theta),
-          r * Math.sin(phi) * Math.sin(theta),
-          r * Math.cos(phi)
-        ));
-      }
-      
-      const observableRenderer = new ObservableUniverseRenderer();
-      await observableRenderer.loadData(cosmicStructures, anchorPoints);
-      sceneManager.setObservableUniverseRenderer(observableRenderer);
-      console.log('ObservableUniverseRenderer initialized with', anchorPoints.length, 'anchor points');
-    } catch (error) {
-      console.warn('Failed to initialize ObservableUniverse renderer:', error);
-    }
     
     console.log('Universe renderers initialization complete');
   } catch (error) {
@@ -250,6 +202,10 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
   const raycasterRef = useRef<Raycaster | null>(null);
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  
+  // 标签重叠检测节流：每3帧执行一次（约20fps），减少CPU占用
+  const labelUpdateFrameCounterRef = useRef<number>(0);
+  const LABEL_UPDATE_INTERVAL = 3;
   
   // 用于触发设置菜单的重新渲染
   const [isCameraControllerReady, setIsCameraControllerReady] = useState(false);
@@ -808,22 +764,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
         }
 
         // 更新天空盒/星空位置（固定在相机空间）
-        // 注意：天空盒大小固定，不需要动态缩放，避免抖动
-        scene.traverse((object) => {
-          if (object.userData.fixedToCamera) {
-            // 将天空盒/星空位置设置为相机位置
-            object.position.copy(camera.position);
-            
-            // 对于旧的星空点系统（备用），需要缩放
-            // 但天空盒（isSkybox）不需要缩放
-            if (object.userData.isStarfield && !object.userData.isSkybox) {
-              const scale = Math.max(100, camera.position.length() * 10);
-              object.scale.set(scale, scale, scale);
-            }
-          }
-        });
-        
-        // 同时调用 SceneManager 的天空盒更新方法（如果存在）
+        // 优化：直接调用 SceneManager 的方法，避免每帧遍历整个场景树
         if (sceneManagerRef.current) {
           sceneManagerRef.current.updateSkyboxPosition(camera.position);
         }
@@ -851,6 +792,13 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
         const maxDistance = Math.max(cameraDistance * 3, 50);
         sceneManager.updateCameraClipping(0.01, maxDistance);
         
+        // 标签重叠检测节流：每N帧执行一次，大幅减少CPU占用
+        labelUpdateFrameCounterRef.current++;
+        const shouldUpdateLabels = labelUpdateFrameCounterRef.current >= LABEL_UPDATE_INTERVAL;
+        if (shouldUpdateLabels) {
+          labelUpdateFrameCounterRef.current = 0;
+        }
+        
         // 重叠检测和标记圈/标签显示逻辑（类似2D版本）
         // 1. 收集所有标签信息（屏幕坐标）
         const labelInfos: Array<{
@@ -864,7 +812,9 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
           priority: number;
         }> = [];
         
-        currentBodies.forEach((body: any) => {
+        // 只在需要更新标签时才收集信息和执行重叠检测
+        if (shouldUpdateLabels) {
+          currentBodies.forEach((body: any) => {
           // 太阳也显示标签
           const key = body.name.toLowerCase();
           const planet = planetsRef.current.get(key);
@@ -914,7 +864,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
           }
         });
 
-        // 1.5. 收集宇宙尺度标签（本星系群、近邻星系群、室女座超星系团）
+        // 1.5. 收集宇宙尺度标签（本星系群）
         const universeLabels: Array<{
           label: any;
           screenX: number;
@@ -933,54 +883,6 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
           if (localGroupRenderer && typeof localGroupRenderer.getLabelsForOverlapDetection === 'function') {
             const localGroupLabels = localGroupRenderer.getLabelsForOverlapDetection(camera, containerWidth, containerHeight);
             localGroupLabels.forEach((labelInfo: any) => {
-              universeLabels.push({
-                label: labelInfo.label,
-                screenX: labelInfo.screenX,
-                screenY: labelInfo.screenY,
-                text: labelInfo.text,
-                priority: labelInfo.priority,
-                targetOpacity: 1.0,
-              });
-            });
-          }
-
-          // 近邻星系群标签
-          const nearbyGroupsRenderer = sceneManager.getNearbyGroupsRenderer();
-          if (nearbyGroupsRenderer && typeof nearbyGroupsRenderer.getLabelsForOverlapDetection === 'function') {
-            const nearbyGroupsLabels = nearbyGroupsRenderer.getLabelsForOverlapDetection(camera, containerWidth, containerHeight);
-            nearbyGroupsLabels.forEach((labelInfo: any) => {
-              universeLabels.push({
-                label: labelInfo.label,
-                screenX: labelInfo.screenX,
-                screenY: labelInfo.screenY,
-                text: labelInfo.text,
-                priority: labelInfo.priority,
-                targetOpacity: 1.0,
-              });
-            });
-          }
-
-          // 室女座超星系团标签
-          const virgoRenderer = sceneManager.getVirgoSuperclusterRenderer();
-          if (virgoRenderer && typeof virgoRenderer.getLabelsForOverlapDetection === 'function') {
-            const virgoLabels = virgoRenderer.getLabelsForOverlapDetection(camera, containerWidth, containerHeight);
-            virgoLabels.forEach((labelInfo: any) => {
-              universeLabels.push({
-                label: labelInfo.label,
-                screenX: labelInfo.screenX,
-                screenY: labelInfo.screenY,
-                text: labelInfo.text,
-                priority: labelInfo.priority,
-                targetOpacity: 1.0,
-              });
-            });
-          }
-
-          // Laniakea 超星系团标签
-          const laniakeaRenderer = sceneManager.getLaniakeaSuperclusterRenderer();
-          if (laniakeaRenderer && typeof laniakeaRenderer.getLabelsForOverlapDetection === 'function') {
-            const laniakeaLabels = laniakeaRenderer.getLabelsForOverlapDetection(camera, containerWidth, containerHeight);
-            laniakeaLabels.forEach((labelInfo: any) => {
               universeLabels.push({
                 label: labelInfo.label,
                 screenX: labelInfo.screenX,
@@ -1195,6 +1097,8 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
             planet.updateMarkerOpacity();
           }
         });
+        
+        } // 结束标签更新节流块
 
         // 5. 更新卫星轨道的中心（使卫星轨道跟随母行星位置）并控制卫星可见性
         currentBodies.forEach((body: any) => {

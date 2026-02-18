@@ -173,21 +173,42 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
   }
 
   update(cameraDistance: number, deltaTime: number): void {
-    this.opacity = this.calculateOpacity(cameraDistance);
+    const newOpacity = this.calculateOpacity(cameraDistance);
+    const opacityChanged = Math.abs(newOpacity - this.opacity) > 0.01;
+    this.opacity = newOpacity;
     this.isVisible = this.opacity > 0.01;
 
-    // Update material opacity for all meshes
-    this.galaxyMeshes.forEach(mesh => {
-      const material = mesh.material as THREE.MeshBasicMaterial;
-      material.opacity = this.opacity * (mesh.userData.galaxy as LocalGroupGalaxy).brightness;
-    });
+    // 只在透明度变化时更新材质，避免每帧都更新
+    if (opacityChanged) {
+      this.galaxyMeshes.forEach(mesh => {
+        const material = mesh.material as THREE.MeshBasicMaterial;
+        material.opacity = this.opacity * (mesh.userData.galaxy as LocalGroupGalaxy).brightness;
+      });
+    }
 
-    // Update label size and opacity based on camera distance
-    this.updateLabels(cameraDistance);
+    // 降低标签更新频率：只在相机距离变化较大时更新
+    // 使用静态变量跟踪上次更新的距离
+    if (!this.lastUpdateDistance || Math.abs(cameraDistance - this.lastUpdateDistance) > cameraDistance * 0.1) {
+      this.updateLabels(cameraDistance);
+      this.lastUpdateDistance = cameraDistance;
+      // 相机距离变化时，标签位置也会变化，需要使缓存失效
+      this.labelCacheValid = false;
+    }
 
     // Update visibility
     this.group.visible = this.isVisible;
   }
+
+  private lastUpdateDistance: number = 0;
+  private labelInfoCache: Array<{
+    label: CSS2DObject;
+    screenX: number;
+    screenY: number;
+    text: string;
+    priority: number;
+    mesh: THREE.Mesh;
+  }> = [];
+  private labelCacheValid: boolean = false;
 
   private updateLabels(cameraDistance: number): void {
     // Calculate font size based on camera distance to maintain readability
@@ -241,6 +262,7 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
   /**
    * Get all labels for overlap detection
    * Returns array of label info with screen positions
+   * 优化：使用缓存减少每帧的计算量
    */
   getLabelsForOverlapDetection(camera: THREE.Camera, containerWidth: number, containerHeight: number): Array<{
     label: CSS2DObject;
@@ -250,18 +272,18 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
     priority: number;
     mesh: THREE.Mesh;
   }> {
-    const labelInfos: Array<{
-      label: CSS2DObject;
-      screenX: number;
-      screenY: number;
-      text: string;
-      priority: number;
-      mesh: THREE.Mesh;
-    }> = [];
-
     if (!this.isVisible || this.opacity < 0.01) {
-      return labelInfos;
+      this.labelCacheValid = false;
+      return [];
     }
+
+    // 使用缓存的结果，避免每帧都重新计算
+    // 注意：这个方法会被Canvas组件的节流机制控制，所以这里的缓存主要是防止同一帧内多次调用
+    if (this.labelCacheValid) {
+      return this.labelInfoCache;
+    }
+
+    this.labelInfoCache = [];
 
     this.galaxyMeshes.forEach(mesh => {
       const galaxy = mesh.userData.galaxy as LocalGroupGalaxy;
@@ -277,7 +299,7 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
       const screenX = (worldPos.x * 0.5 + 0.5) * containerWidth;
       const screenY = (worldPos.y * -0.5 + 0.5) * containerHeight;
 
-      labelInfos.push({
+      this.labelInfoCache.push({
         label,
         screenX,
         screenY,
@@ -287,7 +309,8 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
       });
     });
 
-    return labelInfos;
+    this.labelCacheValid = true;
+    return this.labelInfoCache;
   }
 
   dispose(): void {

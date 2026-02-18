@@ -1,30 +1,23 @@
 import * as THREE from 'three';
-import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import type { UniverseScaleRenderer, Supercluster, SimpleGalaxy } from '../types/universeTypes';
 import { LANIAKEA_SUPERCLUSTER_CONFIG, UNIVERSE_SCALE_CONFIG, MEGAPARSEC_TO_AU } from '../config/universeConfig';
 import { OptimizedParticleSystem } from './OptimizedParticleSystem';
-import { ProceduralGenerator } from './ProceduralGenerator';
 import { LODManager } from './LODManager';
-import { getChineseName } from '../astronomy/universeNames';
 
 export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
   private group: THREE.Group;
   private superclusters: Supercluster[] = [];
   private galaxies: SimpleGalaxy[] = [];
   private particleSystem: OptimizedParticleSystem | null = null;
-  private proceduralGenerator: ProceduralGenerator;
   private lodManager: LODManager;
   private opacity: number = 0;
   private isVisible: boolean = false;
   private velocityArrows: THREE.ArrowHelper[] = [];
   private connectionLines: THREE.LineSegments[] = [];
-  private labels: Map<string, CSS2DObject> = new Map();
-  private superclusterCenters: Map<string, THREE.Object3D> = new Map();
 
   constructor() {
     this.group = new THREE.Group();
     this.group.name = 'LaniakeaSupercluster';
-    this.proceduralGenerator = new ProceduralGenerator();
     this.lodManager = new LODManager();
   }
 
@@ -60,39 +53,11 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
       this.createConnectionLines();
     }
     
-    // 创建标签
-    this.createLabels();
-    
     if (LANIAKEA_SUPERCLUSTER_CONFIG.showVelocityFlow) {
       this.createVelocityArrows();
     }
     
     console.log(`[Laniakea] Loaded: ${this.galaxies.length} galaxies, ${this.connectionLines.length} connection groups`);
-  }
-
-  private async enhanceWithProceduralGalaxies(): Promise<void> {
-    const allGalaxies: SimpleGalaxy[] = [...this.galaxies];
-
-    for (const supercluster of this.superclusters) {
-      const needGenerate = supercluster.memberCount;
-
-      if (needGenerate > 0) {
-        const generated = await this.proceduralGenerator.generateGalaxies(
-          {
-            centerX: supercluster.centerX,
-            centerY: supercluster.centerY,
-            centerZ: supercluster.centerZ,
-            radius: supercluster.radius,
-            memberCount: needGenerate,
-            richness: supercluster.richness,
-          },
-          []
-        );
-        allGalaxies.push(...generated);
-      }
-    }
-
-    this.galaxies = allGalaxies;
   }
 
   private createParticleSystem(): void {
@@ -144,7 +109,7 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
       // Connect each galaxy to its nearest neighbors
       sampleGalaxies.forEach((galaxy, i) => {
         // Find nearest neighbors within linking length
-        const linkingLength = supercluster.radius * 0.3; // 30% of cluster radius
+        const linkingLength = supercluster.radius * 0.4; // 增加到40%的星团半径
         const neighbors: Array<{galaxy: typeof galaxy, distance: number}> = [];
         
         for (const other of sortedByX) {
@@ -162,9 +127,9 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
           }
         }
         
-        // Sort by distance and connect to closest 2-3 neighbors
+        // Sort by distance and connect to closest 4-5 neighbors
         neighbors.sort((a, b) => a.distance - b.distance);
-        const maxConnections = Math.min(3, neighbors.length);
+        const maxConnections = Math.min(5, neighbors.length); // 从3增加到5
         
         for (let k = 0; k < maxConnections; k++) {
           const other = neighbors[k].galaxy;
@@ -215,15 +180,15 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
           const dz = sc1.centerZ - sc2.centerZ;
           const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
           
-          // Only connect if within reasonable distance (< 100 Mpc)
-          if (distance < 100) {
+          // Connect if within filamentary structure distance (< 120 Mpc)
+          if (distance < 120) {
             neighbors.push({ sc: sc2, distance });
           }
         }
         
-        // Connect to 2 nearest neighbors
+        // Sort by distance and connect to closest 3-4 neighbors
         neighbors.sort((a, b) => a.distance - b.distance);
-        const maxConnections = Math.min(2, neighbors.length);
+        const maxConnections = Math.min(4, neighbors.length); // 从2增加到4
         
         for (let k = 0; k < maxConnections; k++) {
           const sc2 = neighbors[k].sc;
@@ -294,42 +259,6 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
     });
   }
 
-  private createLabels(): void {
-    this.superclusters.forEach(supercluster => {
-      // 创建标记点（用于标签定位）
-      const centerMarker = new THREE.Object3D();
-      centerMarker.position.set(
-        supercluster.centerX * MEGAPARSEC_TO_AU,
-        supercluster.centerY * MEGAPARSEC_TO_AU,
-        supercluster.centerZ * MEGAPARSEC_TO_AU
-      );
-      this.group.add(centerMarker);
-      this.superclusterCenters.set(supercluster.name, centerMarker);
-
-      // 创建标签
-      const labelDiv = document.createElement('div');
-      labelDiv.className = 'supercluster-label';
-      const chineseName = getChineseName(supercluster.name, 'laniakea');
-      labelDiv.textContent = chineseName;
-      labelDiv.style.color = '#ffaa44'; // Bright orange for Laniakea
-      labelDiv.style.fontSize = '14px';
-      labelDiv.style.fontWeight = '600';
-      labelDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
-      labelDiv.style.pointerEvents = 'none';
-      labelDiv.style.userSelect = 'none';
-      labelDiv.style.textShadow = '0 0 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6)';
-      labelDiv.style.whiteSpace = 'nowrap';
-      labelDiv.style.opacity = '0';
-      labelDiv.style.transition = 'opacity 0.3s, font-size 0.3s';
-
-      const label = new CSS2DObject(labelDiv);
-      label.position.set(0, 0, 0);
-      
-      centerMarker.add(label);
-      this.labels.set(supercluster.name, label);
-    });
-  }
-
   update(cameraDistance: number, deltaTime: number): void {
     this.opacity = this.calculateOpacity(cameraDistance);
     this.isVisible = this.opacity > 0.01;
@@ -351,9 +280,6 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
       const material = line.material as THREE.LineBasicMaterial;
       material.opacity = this.opacity * (LANIAKEA_SUPERCLUSTER_CONFIG.connectionOpacity || 0.15);
     });
-
-    // 注意：标签透明度由 SolarSystemCanvas3D 的重叠检测系统控制
-    // 不在这里直接设置，以支持智能避让
 
     this.group.visible = this.isVisible;
   }
@@ -385,60 +311,6 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
     }
   }
 
-  /**
-   * Get all labels for overlap detection
-   * Returns array of label info with screen positions
-   */
-  getLabelsForOverlapDetection(camera: THREE.Camera, containerWidth: number, containerHeight: number): Array<{
-    label: CSS2DObject;
-    screenX: number;
-    screenY: number;
-    text: string;
-    priority: number;
-    centerObject: THREE.Object3D;
-  }> {
-    const labelInfos: Array<{
-      label: CSS2DObject;
-      screenX: number;
-      screenY: number;
-      text: string;
-      priority: number;
-      centerObject: THREE.Object3D;
-    }> = [];
-
-    if (!this.isVisible || this.opacity < 0.01) {
-      return labelInfos;
-    }
-
-    this.superclusterCenters.forEach((centerObject, superclusterName) => {
-      const label = this.labels.get(superclusterName);
-      
-      if (!label) return;
-
-      // Get world position and project to screen
-      const worldPos = new THREE.Vector3();
-      centerObject.getWorldPosition(worldPos);
-      worldPos.project(camera);
-
-      const screenX = (worldPos.x * 0.5 + 0.5) * containerWidth;
-      const screenY = (worldPos.y * -0.5 + 0.5) * containerHeight;
-
-      // Get Chinese name for display
-      const chineseName = getChineseName(superclusterName, 'laniakea');
-
-      labelInfos.push({
-        label,
-        screenX,
-        screenY,
-        text: chineseName,
-        priority: 5, // Laniakea has lowest priority (furthest scale)
-        centerObject,
-      });
-    });
-
-    return labelInfos;
-  }
-
   dispose(): void {
     if (this.particleSystem) {
       this.group.remove(this.particleSystem.getPoints());
@@ -456,18 +328,5 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
       (line.material as THREE.Material).dispose();
     });
     this.connectionLines = [];
-    
-    // 清理标签和标记点
-    this.labels.forEach((label, name) => {
-      const center = this.superclusterCenters.get(name);
-      if (center) {
-        center.remove(label);
-        this.group.remove(center);
-      }
-    });
-    this.labels.clear();
-    this.superclusterCenters.clear();
-    
-    this.proceduralGenerator.dispose();
   }
 }

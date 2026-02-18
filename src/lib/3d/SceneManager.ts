@@ -95,7 +95,6 @@ export class SceneManager {
   private nearbyStars: NearbyStars | null = null;
   private gaiaStars: GaiaStars | null = null;
   private galaxyRenderer: GalaxyRenderer | null = null;
-  private galaxyPlaneDebugRenderer: any | null = null; // 银河系平面调试渲染器
   private skyboxOpacity: number = 1;
   private skyboxTargetOpacity: number = 1;
   
@@ -105,8 +104,6 @@ export class SceneManager {
   private nearbyGroupsRenderer: any | null = null;
   private virgoSuperclusterRenderer: any | null = null;
   private laniakeaSuperclusterRenderer: any | null = null;
-  private nearbySuperclusterRenderer: any | null = null;
-  private observableUniverseRenderer: any | null = null;
 
   /**
    * Creates a new SceneManager instance.
@@ -236,27 +233,6 @@ export class SceneManager {
       this.galaxyRenderer = new GalaxyRenderer();
       this.scene.add(this.galaxyRenderer.getGroup());
       this.scene.add(this.galaxyRenderer.getSideViewGroup()); // 添加独立的侧视图组
-    }
-    
-    // 初始化银河系平面调试渲染器
-    this.initializeGalaxyPlaneDebugRenderer();
-  }
-  
-  /**
-   * 初始化银河系平面调试渲染器
-   * 
-   * Creates a semi-transparent disc to visualize the galactic plane
-   * for coordinate system verification.
-   */
-  private async initializeGalaxyPlaneDebugRenderer(): Promise<void> {
-    try {
-      const { GalaxyPlaneDebugRenderer } = await import('./GalaxyPlaneDebugRenderer');
-      this.galaxyPlaneDebugRenderer = new GalaxyPlaneDebugRenderer();
-      // 添加到宇宙组，而不是直接添加到场景
-      this.universeGroup.add(this.galaxyPlaneDebugRenderer.getGroup());
-      console.log('[SceneManager] 银河系平面调试渲染器已初始化（添加到宇宙组）');
-    } catch (error) {
-      console.error('[SceneManager] 无法加载银河系平面调试渲染器:', error);
     }
   }
 
@@ -632,11 +608,6 @@ export class SceneManager {
       this.galaxyRenderer.update(cameraDistance, deltaTime);
     }
     
-    // 更新银河系平面调试渲染器
-    if (this.galaxyPlaneDebugRenderer) {
-      this.galaxyPlaneDebugRenderer.update(cameraDistance);
-    }
-    
     // 更新宇宙尺度渲染器
     if (this.localGroupRenderer) {
       this.localGroupRenderer.update(cameraDistance, deltaTime);
@@ -649,12 +620,6 @@ export class SceneManager {
     }
     if (this.laniakeaSuperclusterRenderer) {
       this.laniakeaSuperclusterRenderer.update(cameraDistance, deltaTime);
-    }
-    if (this.nearbySuperclusterRenderer) {
-      this.nearbySuperclusterRenderer.update(cameraDistance, deltaTime);
-    }
-    if (this.observableUniverseRenderer) {
-      this.observableUniverseRenderer.update(cameraDistance, deltaTime);
     }
     
     // 更新银河系背景透明度（当显示银河系粒子时淡出背景）
@@ -825,13 +790,6 @@ export class SceneManager {
   }
   
   /**
-   * 获取银河系平面调试渲染器
-   */
-  getGalaxyPlaneDebugRenderer(): any | null {
-    return this.galaxyPlaneDebugRenderer;
-  }
-  
-  /**
    * 设置宇宙组旋转偏移（用于调试对齐）
    * 这会同时旋转蓝色圆圈和所有外部星团
    */
@@ -842,36 +800,6 @@ export class SceneManager {
     this.universeGroup.rotation.y = y * degToRad;
     this.universeGroup.rotation.z = z * degToRad;
     console.log('[SceneManager] 宇宙组旋转偏移已更新:', { x, y, z });
-  }
-  
-  /**
-   * 设置近邻超星系团渲染器
-   */
-  setNearbySuperclusterRenderer(renderer: any): void {
-    if (this.nearbySuperclusterRenderer) {
-      this.universeGroup.remove(this.nearbySuperclusterRenderer.getGroup());
-      this.nearbySuperclusterRenderer.dispose();
-    }
-    this.nearbySuperclusterRenderer = renderer;
-    if (renderer) {
-      // 添加到宇宙组，而不是直接添加到场景
-      this.universeGroup.add(renderer.getGroup());
-    }
-  }
-  
-  /**
-   * 设置可观测宇宙渲染器
-   */
-  setObservableUniverseRenderer(renderer: any): void {
-    if (this.observableUniverseRenderer) {
-      this.universeGroup.remove(this.observableUniverseRenderer.getGroup());
-      this.observableUniverseRenderer.dispose();
-    }
-    this.observableUniverseRenderer = renderer;
-    if (renderer) {
-      // 添加到宇宙组，而不是直接添加到场景
-      this.universeGroup.add(renderer.getGroup());
-    }
   }
 
   /**
@@ -1069,11 +997,6 @@ export class SceneManager {
       this.galaxyRenderer = null;
     }
     
-    if (this.galaxyPlaneDebugRenderer) {
-      this.galaxyPlaneDebugRenderer.dispose();
-      this.galaxyPlaneDebugRenderer = null;
-    }
-    
     // 清理宇宙尺度渲染器
     if (this.localGroupRenderer) {
       this.localGroupRenderer.dispose();
@@ -1090,14 +1013,6 @@ export class SceneManager {
     if (this.laniakeaSuperclusterRenderer) {
       this.laniakeaSuperclusterRenderer.dispose();
       this.laniakeaSuperclusterRenderer = null;
-    }
-    if (this.nearbySuperclusterRenderer) {
-      this.nearbySuperclusterRenderer.dispose();
-      this.nearbySuperclusterRenderer = null;
-    }
-    if (this.observableUniverseRenderer) {
-      this.observableUniverseRenderer.dispose();
-      this.observableUniverseRenderer = null;
     }
     
     // 清理 WebGL 资源
