@@ -198,26 +198,32 @@ export default function EphemerisStatusPanel({ calculator, onClose }: EphemerisS
         }}
       />
 
+      {/* 固定的关闭按钮 */}
+      <button
+        onClick={onClose}
+        className="absolute z-10 text-xs hover:opacity-70 transition-opacity"
+        style={{ 
+          top: '1rem',
+          right: '1rem',
+          color: ARKNIGHTS_CONFIG.colors.textDim 
+        }}
+      >
+        ✕
+      </button>
+
       <div className="p-4 overflow-y-auto" style={{ 
         maxHeight: 'calc(100vh - 6rem)',
         scrollbarWidth: 'thin',
         scrollbarColor: 'rgba(255, 255, 255, 0.3) transparent'
       }}>
         {/* 标题栏 */}
-        <div className="flex justify-between items-center mb-4 pb-3" style={{ borderBottom: `1px solid ${ARKNIGHTS_CONFIG.colors.border}` }}>
+        <div className="flex items-center mb-4 pb-3" style={{ borderBottom: `1px solid ${ARKNIGHTS_CONFIG.colors.border}` }}>
           <div className="flex items-center gap-2">
             <div style={{ width: '4px', height: '16px', background: ARKNIGHTS_CONFIG.colors.primary }} />
             <span className="text-xs font-bold uppercase tracking-wider" style={{ color: ARKNIGHTS_CONFIG.colors.text }}>
               {lang === 'zh' ? '星历状态' : 'EPHEMERIS STATUS'}
             </span>
           </div>
-          <button
-            onClick={onClose}
-            className="text-xs hover:opacity-70 transition-opacity"
-            style={{ color: ARKNIGHTS_CONFIG.colors.textDim }}
-          >
-            ✕
-          </button>
         </div>
 
         {/* 当前时间显示 */}

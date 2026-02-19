@@ -2,13 +2,11 @@ import * as THREE from 'three';
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import type { UniverseScaleRenderer, LocalGroupGalaxy, GalaxyType } from '../types/universeTypes';
 import { LOCAL_GROUP_CONFIG, UNIVERSE_SCALE_CONFIG, MEGAPARSEC_TO_AU } from '../config/universeConfig';
-import { InstancedGalaxyRenderer } from './InstancedGalaxyRenderer';
 import { getChineseName } from '../astronomy/universeNames';
 
 export class LocalGroupRenderer implements UniverseScaleRenderer {
   private group: THREE.Group;
   private galaxies: LocalGroupGalaxy[] = [];
-  private instancedRenderer: InstancedGalaxyRenderer | null = null;
   private opacity: number = 0;
   private isVisible: boolean = false;
   private config: typeof LOCAL_GROUP_CONFIG;
@@ -335,8 +333,5 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
       }
     });
     this.labels.clear();
-    
-    this.instancedRenderer?.dispose();
-    this.instancedRenderer = null;
   }
 }

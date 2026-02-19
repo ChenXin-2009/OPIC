@@ -2,10 +2,11 @@
  * galaxyConfig.ts - 银河系和近邻恒星配置
  */
 
-// ==================== 单位转换常量 ====================
-export const LIGHT_YEAR_TO_AU = 63241.077;
-export const PARSEC_TO_LIGHT_YEAR = 3.26156;
-export const PARSEC_TO_AU = 206265;
+// 导入统一的单位转换常量
+import { LIGHT_YEAR_TO_AU, PARSEC_TO_LIGHT_YEAR, PARSEC_TO_AU } from '../constants/units';
+
+// 重新导出以保持向后兼容
+export { LIGHT_YEAR_TO_AU, PARSEC_TO_LIGHT_YEAR, PARSEC_TO_AU };
 
 // ==================== 视图切换阈值配置 ====================
 export const SCALE_VIEW_CONFIG = {

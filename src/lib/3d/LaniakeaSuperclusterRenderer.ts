@@ -1,53 +1,39 @@
 import * as THREE from 'three';
-import type { UniverseScaleRenderer, Supercluster, SimpleGalaxy } from '../types/universeTypes';
+import type { Supercluster, SimpleGalaxy } from '../types/universeTypes';
 import { LANIAKEA_SUPERCLUSTER_CONFIG, UNIVERSE_SCALE_CONFIG, MEGAPARSEC_TO_AU } from '../config/universeConfig';
 import { OptimizedParticleSystem } from './OptimizedParticleSystem';
 import { LODManager } from './LODManager';
+import { BaseUniverseRenderer } from './BaseUniverseRenderer';
+import { createParticleSystemFromGalaxies, createAdvancedConnectionLines, updateConnectionLinesOpacity } from './utils/universeRendererUtils';
 
-export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
-  private group: THREE.Group;
+export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
   private superclusters: Supercluster[] = [];
   private galaxies: SimpleGalaxy[] = [];
   private particleSystem: OptimizedParticleSystem | null = null;
   private lodManager: LODManager;
-  private opacity: number = 0;
-  private isVisible: boolean = false;
   private velocityArrows: THREE.ArrowHelper[] = [];
   private connectionLines: THREE.LineSegments[] = [];
 
   constructor() {
-    this.group = new THREE.Group();
-    this.group.name = 'LaniakeaSupercluster';
+    super('LaniakeaSupercluster', {
+      fadeStart: UNIVERSE_SCALE_CONFIG.laniakeaFadeStart,
+      showStart: UNIVERSE_SCALE_CONFIG.laniakeaShowStart,
+      showFull: UNIVERSE_SCALE_CONFIG.laniakeaShowFull,
+    });
     this.lodManager = new LODManager();
-  }
-
-  getGroup(): THREE.Group {
-    return this.group;
-  }
-
-  getOpacity(): number {
-    return this.opacity;
-  }
-
-  getIsVisible(): boolean {
-    return this.isVisible;
   }
 
   async loadData(superclusters: Supercluster[], galaxies: SimpleGalaxy[]): Promise<void> {
     console.log(`[Laniakea] Loading data: ${superclusters.length} superclusters, ${galaxies.length} galaxies`);
-    console.log(`[Laniakea] First 3 superclusters:`, superclusters.slice(0, 3).map(sc => ({
-      name: sc.name,
-      center: [sc.centerX.toFixed(1), sc.centerY.toFixed(1), sc.centerZ.toFixed(1)],
-      members: sc.memberCount
-    })));
     
     this.superclusters = superclusters;
     this.galaxies = galaxies;
     
-    // 不使用程序化生成，直接使用真实数据
-    // await this.enhanceWithProceduralGalaxies();
-    
-    this.createParticleSystem();
+    this.particleSystem = createParticleSystemFromGalaxies(
+      this.galaxies,
+      LANIAKEA_SUPERCLUSTER_CONFIG.particleSize
+    );
+    this.group.add(this.particleSystem.getPoints());
     
     if (LANIAKEA_SUPERCLUSTER_CONFIG.showConnections) {
       this.createConnectionLines();
@@ -60,36 +46,8 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
     console.log(`[Laniakea] Loaded: ${this.galaxies.length} galaxies, ${this.connectionLines.length} connection groups`);
   }
 
-  private createParticleSystem(): void {
-    const count = this.galaxies.length;
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
-
-    this.galaxies.forEach((galaxy, i) => {
-      // Convert positions from Mpc to AU
-      positions[i * 3] = galaxy.x * MEGAPARSEC_TO_AU;
-      positions[i * 3 + 1] = galaxy.y * MEGAPARSEC_TO_AU;
-      positions[i * 3 + 2] = galaxy.z * MEGAPARSEC_TO_AU;
-
-      const color = new THREE.Color(0xffffff);
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
-
-      // Convert particle size from Mpc to AU
-      sizes[i] = LANIAKEA_SUPERCLUSTER_CONFIG.particleSize * MEGAPARSEC_TO_AU * (galaxy.brightness || 1);
-    });
-
-    this.particleSystem = new OptimizedParticleSystem(positions, colors, sizes);
-    this.group.add(this.particleSystem.getPoints());
-  }
-
   private createConnectionLines(): void {
-    // Create lines connecting superclusters to show large-scale structure
-    // Use a more sophisticated approach based on proximity and density
-    
-    // First, connect galaxies within each supercluster
+    // 为每个超星系团内部创建连接线
     this.superclusters.forEach(supercluster => {
       const sampleGalaxies = this.galaxies.filter(g => {
         const dx = g.x - supercluster.centerX;
@@ -99,126 +57,40 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
         return dist < supercluster.radius;
       });
 
-      if (sampleGalaxies.length < 2) return;
-
-      const positions: number[] = [];
+      const line = createAdvancedConnectionLines(
+        sampleGalaxies,
+        supercluster.radius * 0.4,
+        5,
+        0xff8844
+      );
       
-      // Build a spatial index for efficient nearest neighbor search
-      const sortedByX = [...sampleGalaxies].sort((a, b) => a.x - b.x);
-      
-      // Connect each galaxy to its nearest neighbors
-      sampleGalaxies.forEach((galaxy, i) => {
-        // Find nearest neighbors within linking length
-        const linkingLength = supercluster.radius * 0.4; // 增加到40%的星团半径
-        const neighbors: Array<{galaxy: typeof galaxy, distance: number}> = [];
-        
-        for (const other of sortedByX) {
-          if (other === galaxy) continue;
-          
-          const dx = galaxy.x - other.x;
-          if (Math.abs(dx) > linkingLength) continue; // Skip if too far in x
-          
-          const dy = galaxy.y - other.y;
-          const dz = galaxy.z - other.z;
-          const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-          
-          if (distance < linkingLength) {
-            neighbors.push({ galaxy: other, distance });
-          }
-        }
-        
-        // Sort by distance and connect to closest 4-5 neighbors
-        neighbors.sort((a, b) => a.distance - b.distance);
-        const maxConnections = Math.min(5, neighbors.length); // 从3增加到5
-        
-        for (let k = 0; k < maxConnections; k++) {
-          const other = neighbors[k].galaxy;
-          positions.push(
-            galaxy.x * MEGAPARSEC_TO_AU,
-            galaxy.y * MEGAPARSEC_TO_AU,
-            galaxy.z * MEGAPARSEC_TO_AU,
-            other.x * MEGAPARSEC_TO_AU,
-            other.y * MEGAPARSEC_TO_AU,
-            other.z * MEGAPARSEC_TO_AU
-          );
-        }
-      });
-
-      if (positions.length > 0) {
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-
-        const material = new THREE.LineBasicMaterial({
-          color: 0xff8844, // Orange color for Laniakea
-          transparent: true,
-          opacity: 0,
-          linewidth: 1,
-          depthWrite: true,  // 启用深度写入
-          depthTest: true,   // 启用深度测试
-        });
-
-        const lines = new THREE.LineSegments(geometry, material);
-        this.connectionLines.push(lines);
-        this.group.add(lines);
+      if (line) {
+        this.connectionLines.push(line);
+        this.group.add(line);
       }
     });
     
-    // Second, connect supercluster centers to show filamentary structure
+    // 连接超星系团中心以显示纤维状结构
     if (this.superclusters.length > 1) {
-      const positions: number[] = [];
+      const centerGalaxies: SimpleGalaxy[] = this.superclusters.map(sc => ({
+        x: sc.centerX,
+        y: sc.centerY,
+        z: sc.centerZ,
+        brightness: 1,
+      }));
       
-      // Connect each supercluster to its nearest neighbors
-      this.superclusters.forEach((sc1, i) => {
-        const neighbors: Array<{sc: typeof sc1, distance: number}> = [];
-        
-        for (let j = 0; j < this.superclusters.length; j++) {
-          if (i === j) continue;
-          const sc2 = this.superclusters[j];
-          
-          const dx = sc1.centerX - sc2.centerX;
-          const dy = sc1.centerY - sc2.centerY;
-          const dz = sc1.centerZ - sc2.centerZ;
-          const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-          
-          // Connect if within filamentary structure distance (< 120 Mpc)
-          if (distance < 120) {
-            neighbors.push({ sc: sc2, distance });
-          }
-        }
-        
-        // Sort by distance and connect to closest 3-4 neighbors
-        neighbors.sort((a, b) => a.distance - b.distance);
-        const maxConnections = Math.min(4, neighbors.length); // 从2增加到4
-        
-        for (let k = 0; k < maxConnections; k++) {
-          const sc2 = neighbors[k].sc;
-          positions.push(
-            sc1.centerX * MEGAPARSEC_TO_AU,
-            sc1.centerY * MEGAPARSEC_TO_AU,
-            sc1.centerZ * MEGAPARSEC_TO_AU,
-            sc2.centerX * MEGAPARSEC_TO_AU,
-            sc2.centerY * MEGAPARSEC_TO_AU,
-            sc2.centerZ * MEGAPARSEC_TO_AU
-          );
-        }
-      });
+      const line = createAdvancedConnectionLines(
+        centerGalaxies,
+        120,
+        4,
+        0xffaa44
+      );
       
-      if (positions.length > 0) {
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-
-        const material = new THREE.LineBasicMaterial({
-          color: 0xffaa44, // Brighter orange for inter-cluster connections
-          transparent: true,
-          opacity: 0,
-          linewidth: 2,
-          depthWrite: true,  // 启用深度写入
-          depthTest: true,   // 启用深度测试
-        });
-
-        const lines = new THREE.LineSegments(geometry, material);
-        this.connectionLines.push(lines);
-        this.group.add(lines);
+      if (line) {
+        const material = line.material as THREE.LineBasicMaterial;
+        material.linewidth = 2;
+        this.connectionLines.push(line);
+        this.group.add(line);
       }
     }
   }
@@ -228,7 +100,6 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
       if (supercluster.velocityX !== undefined && 
           supercluster.velocityY !== undefined && 
           supercluster.velocityZ !== undefined) {
-        // Convert positions from Mpc to AU
         const origin = new THREE.Vector3(
           supercluster.centerX * MEGAPARSEC_TO_AU,
           supercluster.centerY * MEGAPARSEC_TO_AU,
@@ -260,8 +131,7 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
   }
 
   update(cameraDistance: number, deltaTime: number): void {
-    this.opacity = this.calculateOpacity(cameraDistance);
-    this.isVisible = this.opacity > 0.01;
+    super.update(cameraDistance, deltaTime);
 
     if (this.particleSystem) {
       this.particleSystem.updateOpacity(this.opacity);
@@ -275,33 +145,17 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
       arrow.visible = this.isVisible && LANIAKEA_SUPERCLUSTER_CONFIG.showVelocityFlow;
     });
 
-    // Update connection lines opacity
-    this.connectionLines.forEach(line => {
-      const material = line.material as THREE.LineBasicMaterial;
-      material.opacity = this.opacity * (LANIAKEA_SUPERCLUSTER_CONFIG.connectionOpacity || 0.15);
-    });
-
-    this.group.visible = this.isVisible;
+    updateConnectionLinesOpacity(
+      this.connectionLines,
+      this.opacity,
+      LANIAKEA_SUPERCLUSTER_CONFIG.connectionOpacity || 0.15
+    );
   }
 
   private updateLOD(cameraDistance: number): void {
     const lod = this.lodManager.getCurrentLOD(cameraDistance);
     if (this.particleSystem) {
       this.particleSystem.setParticleRatio(lod.particleRatio);
-    }
-  }
-
-  private calculateOpacity(cameraDistance: number): number {
-    const { laniakeaFadeStart, laniakeaShowStart, laniakeaShowFull } = UNIVERSE_SCALE_CONFIG;
-
-    if (cameraDistance < laniakeaFadeStart) {
-      return 0;
-    } else if (cameraDistance < laniakeaShowStart) {
-      return (cameraDistance - laniakeaFadeStart) / (laniakeaShowStart - laniakeaFadeStart);
-    } else if (cameraDistance < laniakeaShowFull) {
-      return 1;
-    } else {
-      return 1;
     }
   }
 
@@ -328,5 +182,6 @@ export class LaniakeaSuperclusterRenderer implements UniverseScaleRenderer {
       (line.material as THREE.Material).dispose();
     });
     this.connectionLines = [];
+    super.dispose();
   }
 }

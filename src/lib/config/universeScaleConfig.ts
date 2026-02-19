@@ -5,11 +5,11 @@
  * 所有数据基于真实天文观测，不使用模拟数据
  */
 
-import { PARSEC_TO_AU, LIGHT_YEAR_TO_AU, SCALE_VIEW_CONFIG } from './galaxyConfig';
+import { LIGHT_YEAR_TO_AU, SCALE_VIEW_CONFIG } from './galaxyConfig';
+import { PARSEC_TO_AU, MEGAPARSEC_TO_AU, GIGAPARSEC_TO_AU } from '../constants/units';
 
-// ==================== 单位转换常量 ====================
-export const MEGAPARSEC_TO_AU = PARSEC_TO_AU * 1e6;
-export const GIGAPARSEC_TO_AU = PARSEC_TO_AU * 1e9;
+// 重新导出单位转换常量以保持向后兼容
+export { MEGAPARSEC_TO_AU, GIGAPARSEC_TO_AU };
 
 // ==================== 宇宙尺度视图切换配置 ====================
 export const UNIVERSE_SCALE_CONFIG = {
