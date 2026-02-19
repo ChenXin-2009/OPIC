@@ -138,7 +138,7 @@ export class NearbyGroupsRenderer extends BaseUniverseRenderer {
     };
   }
 
-  dispose(): void {
+  override dispose(): void {
     if (this.particleSystem) {
       this.group.remove(this.particleSystem.getPoints());
       this.particleSystem.dispose();
@@ -158,12 +158,4 @@ export class NearbyGroupsRenderer extends BaseUniverseRenderer {
     
     super.dispose();
   }
-  getObjectData(): { groups: GalaxyGroup[]; galaxies: SimpleGalaxy[] } {
-    return {
-      groups: this.groups,
-      galaxies: this.galaxies,
-    };
-  }
-
-
 }

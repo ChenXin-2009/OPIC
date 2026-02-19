@@ -87,7 +87,7 @@ export class NavigationHandler {
     // 构建 CelestialObject 用于 focusOnTarget
     const celestialObject: CelestialObject = {
       name: body.name,
-      radius: body.realRadius || body.radius, // 使用真实半径
+      radius: body.radius,
       isSun: body.name === 'Sun', // 添加 isSun 字段
       isSatellite: body.parent !== undefined && body.parent !== 'Sun', // 添加 isSatellite 字段
     };

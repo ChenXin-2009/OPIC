@@ -5,7 +5,7 @@
  * 实现结果排序（太阳系天体优先）和数量限制
  */
 
-import Fuse from 'fuse.js';
+import Fuse, { IFuseOptions } from 'fuse.js';
 import type { SearchIndex, IndexedCelestial, CelestialType } from './SearchIndex';
 import { UniverseScale } from '../types/universeTypes';
 import * as THREE from 'three';
@@ -28,7 +28,7 @@ export interface SearchResult {
 /**
  * Fuse.js 配置选项
  */
-const FUSE_OPTIONS: Fuse.IFuseOptions<IndexedCelestial> = {
+const FUSE_OPTIONS: IFuseOptions<IndexedCelestial> = {
   keys: [
     { name: 'nameEn', weight: 0.5 },
     { name: 'nameZh', weight: 0.5 }

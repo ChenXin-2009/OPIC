@@ -102,7 +102,7 @@ export class VirgoSuperclusterRenderer extends BaseUniverseRenderer {
     });
   }
 
-  update(cameraDistance: number, deltaTime: number): void {
+  override update(cameraDistance: number, deltaTime: number): void {
     super.update(cameraDistance, deltaTime);
 
     if (this.particleSystem) {
@@ -133,7 +133,7 @@ export class VirgoSuperclusterRenderer extends BaseUniverseRenderer {
     };
   }
 
-  dispose(): void {
+  override dispose(): void {
     if (this.particleSystem) {
       this.group.remove(this.particleSystem.getPoints());
       this.particleSystem.dispose();
