@@ -28,7 +28,7 @@ export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
 
   initLabelManager(camera: THREE.Camera, canvas: HTMLCanvasElement): void {
     this.labelManager = new UniverseLabelManager(this.group, camera, canvas, {
-      minShowDistance: UNIVERSE_SCALE_CONFIG.laniakeaShowStart,
+      minShowDistance: UNIVERSE_SCALE_CONFIG.virgoShowFull,
       maxShowDistance: UNIVERSE_SCALE_CONFIG.laniakeaShowStart * 100,
     });
     

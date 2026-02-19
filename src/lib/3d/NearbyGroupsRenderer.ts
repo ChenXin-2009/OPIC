@@ -24,8 +24,8 @@ export class NearbyGroupsRenderer extends BaseUniverseRenderer {
 
   initLabelManager(camera: THREE.Camera, canvas: HTMLCanvasElement): void {
     this.labelManager = new UniverseLabelManager(this.group, camera, canvas, {
-      minShowDistance: UNIVERSE_SCALE_CONFIG.nearbyGroupsShowStart,
-      maxShowDistance: UNIVERSE_SCALE_CONFIG.virgoShowStart,
+      minShowDistance: UNIVERSE_SCALE_CONFIG.localGroupShowFull,
+      maxShowDistance: UNIVERSE_SCALE_CONFIG.virgoShowFull,
     });
     
     // 标签管理器创建后，立即创建标签

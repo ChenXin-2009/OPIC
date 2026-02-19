@@ -24,8 +24,8 @@ export class VirgoSuperclusterRenderer extends BaseUniverseRenderer {
 
   initLabelManager(camera: THREE.Camera, canvas: HTMLCanvasElement): void {
     this.labelManager = new UniverseLabelManager(this.group, camera, canvas, {
-      minShowDistance: UNIVERSE_SCALE_CONFIG.virgoShowStart,
-      maxShowDistance: UNIVERSE_SCALE_CONFIG.laniakeaShowStart,
+      minShowDistance: UNIVERSE_SCALE_CONFIG.nearbyGroupsShowFull,
+      maxShowDistance: UNIVERSE_SCALE_CONFIG.laniakeaShowFull,
     });
     
     // 标签管理器创建后，立即创建标签

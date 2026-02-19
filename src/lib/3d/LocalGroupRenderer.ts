@@ -25,7 +25,7 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
   initLabelManager(camera: THREE.Camera, canvas: HTMLCanvasElement): void {
     this.labelManager = new UniverseLabelManager(this.group, camera, canvas, {
       minShowDistance: UNIVERSE_SCALE_CONFIG.localGroupShowStart,
-      maxShowDistance: UNIVERSE_SCALE_CONFIG.nearbyGroupsShowStart,
+      maxShowDistance: UNIVERSE_SCALE_CONFIG.nearbyGroupsShowFull,
     });
     
     // 标签管理器创建后，立即创建标签

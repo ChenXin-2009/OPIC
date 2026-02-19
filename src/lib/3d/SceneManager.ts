@@ -104,6 +104,7 @@ export class SceneManager {
   private nearbyGroupsRenderer: any | null = null;
   private virgoSuperclusterRenderer: any | null = null;
   private laniakeaSuperclusterRenderer: any | null = null;
+  private observableBoundarySphere: THREE.LineSegments | null = null;
 
   /**
    * Creates a new SceneManager instance.
@@ -196,6 +197,7 @@ export class SceneManager {
     this.initializeNearbyStars();
     this.initializeGaiaStars();
     this.initializeGalaxyRenderer();
+    this.createObservableBoundarySphere();
     // Note: Universe scale renderers will be initialized lazily when data is loaded
   }
   
@@ -234,6 +236,45 @@ export class SceneManager {
       this.scene.add(this.galaxyRenderer.getGroup());
       this.scene.add(this.galaxyRenderer.getSideViewGroup()); // 添加独立的侧视图组
     }
+  }
+
+  /**
+   * 创建可观测宇宙边界球体
+   * 
+   * Creates a wireframe sphere representing the observable universe boundary.
+   * The sphere has a radius of 46.5 billion light years.
+   */
+  private createObservableBoundarySphere(): void {
+    const { OBSERVABLE_UNIVERSE_CONFIG } = require('../config/universeConfig');
+    
+    if (!OBSERVABLE_UNIVERSE_CONFIG.showObservableBoundary) return;
+
+    // 创建球体几何体
+    const geometry = new THREE.SphereGeometry(OBSERVABLE_UNIVERSE_CONFIG.boundaryRadius, 64, 32);
+    
+    // 创建边缘几何体（网格线）
+    const edges = new THREE.EdgesGeometry(geometry);
+    
+    // 创建线段材质（加粗线条）
+    const material = new THREE.LineBasicMaterial({
+      color: new THREE.Color(OBSERVABLE_UNIVERSE_CONFIG.boundaryColor),
+      transparent: true,
+      opacity: OBSERVABLE_UNIVERSE_CONFIG.boundaryOpacity,
+      depthWrite: false,
+      linewidth: 2, // 加粗线条（注意：在某些平台上可能不生效）
+    });
+    
+    // 创建线段网格
+    this.observableBoundarySphere = new THREE.LineSegments(edges, material);
+    this.observableBoundarySphere.name = 'ObservableBoundarySphere';
+    this.observableBoundarySphere.renderOrder = -500;
+    this.observableBoundarySphere.visible = false; // 初始隐藏
+    
+    // 添加到场景
+    this.scene.add(this.observableBoundarySphere);
+    
+    // 清理临时几何体
+    geometry.dispose();
   }
 
   /**
@@ -622,8 +663,27 @@ export class SceneManager {
       this.laniakeaSuperclusterRenderer.update(cameraDistance, deltaTime);
     }
     
+    // 更新可观测宇宙边界球体可见性（只在银河系尺度外显示）
+    this.updateObservableBoundaryVisibility(cameraDistance);
+    
     // 更新银河系背景透明度（当显示银河系粒子时淡出背景）
     this.updateSkyboxOpacity(cameraDistance, deltaTime);
+  }
+  
+  /**
+   * 更新可观测宇宙边界球体可见性
+   * 只在银河系尺度外显示
+   */
+  private updateObservableBoundaryVisibility(cameraDistance: number): void {
+    if (!this.observableBoundarySphere) return;
+    
+    const config = SCALE_VIEW_CONFIG;
+    
+    // 在银河系完全显示后才显示边界球体
+    // galaxyShowFull 是银河系完全显示的距离
+    const showDistance = config.galaxyShowFull || 100000 * 63241.077; // 默认 10 万光年
+    
+    this.observableBoundarySphere.visible = cameraDistance >= showDistance;
   }
   
   /**
@@ -1013,6 +1073,14 @@ export class SceneManager {
     if (this.laniakeaSuperclusterRenderer) {
       this.laniakeaSuperclusterRenderer.dispose();
       this.laniakeaSuperclusterRenderer = null;
+    }
+    
+    // 清理可观测宇宙边界球体
+    if (this.observableBoundarySphere) {
+      this.scene.remove(this.observableBoundarySphere);
+      this.observableBoundarySphere.geometry.dispose();
+      (this.observableBoundarySphere.material as THREE.Material).dispose();
+      this.observableBoundarySphere = null;
     }
     
     // 清理 WebGL 资源

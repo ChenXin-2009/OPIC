@@ -382,10 +382,13 @@ export class UniverseLabelManager {
     if (titleSpan) {
       titleSpan.style.fontSize = config.fontSize;
       titleSpan.style.fontWeight = config.fontWeight;
-      titleSpan.style.fontFamily = config.fontFamily;
+      titleSpan.style.fontFamily = "'Novecento Wide', " + config.fontFamily;
       titleSpan.style.color = config.color;
       titleSpan.style.textShadow = config.textShadow;
       titleSpan.style.lineHeight = '1.2';
+      titleSpan.style.textTransform = 'uppercase'; // 全部转为大写
+      titleSpan.style.fontVariant = 'small-caps'; // 小写字母显示为小型大写字母
+      titleSpan.style.letterSpacing = '0.05em'; // 增加字母间距
     }
 
     // 信息行样式
@@ -393,11 +396,13 @@ export class UniverseLabelManager {
     if (infoDiv) {
       infoDiv.style.fontSize = '11px';
       infoDiv.style.fontWeight = '400';
-      infoDiv.style.fontFamily = config.fontFamily;
+      infoDiv.style.fontFamily = "'Novecento Wide', " + config.fontFamily;
       infoDiv.style.color = 'rgba(255, 255, 255, 0.7)';
       infoDiv.style.textShadow = config.textShadow;
       infoDiv.style.marginTop = '2px';
       infoDiv.style.lineHeight = '1.2';
+      infoDiv.style.textTransform = 'uppercase';
+      infoDiv.style.letterSpacing = '0.05em';
     }
   }
 
