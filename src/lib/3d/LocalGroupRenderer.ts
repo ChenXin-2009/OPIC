@@ -3,6 +3,7 @@ import type { UniverseScaleRenderer, LocalGroupGalaxy, GalaxyType } from '../typ
 import { LOCAL_GROUP_CONFIG, UNIVERSE_SCALE_CONFIG, MEGAPARSEC_TO_AU } from '../config/universeConfig';
 import { UniverseLabelManager, type LabelData } from './UniverseLabelManager';
 import { LOCAL_GROUP_LABEL_CONFIG, getNamePriorityBonus } from '../config/universeLabelConfig';
+import { getChineseName } from '../astronomy/universeNames';
 
 export class LocalGroupRenderer implements UniverseScaleRenderer {
   private group: THREE.Group;
@@ -73,8 +74,12 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
         // 计算距离（Mpc）
         const distance = Math.sqrt(galaxy.x ** 2 + galaxy.y ** 2 + galaxy.z ** 2);
         
+        // 获取中文名称
+        const nameZh = getChineseName(galaxy.name, 'local-group');
+        
         return {
           name: galaxy.name,
+          nameZh: nameZh !== galaxy.name ? nameZh : undefined, // 只在有中文翻译时添加
           position: new THREE.Vector3(
             galaxy.x * MEGAPARSEC_TO_AU,
             galaxy.y * MEGAPARSEC_TO_AU,

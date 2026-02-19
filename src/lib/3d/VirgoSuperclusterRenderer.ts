@@ -6,6 +6,7 @@ import { BaseUniverseRenderer } from './BaseUniverseRenderer';
 import { createParticleSystemFromGalaxies, createConnectionLinesForGroup, updateConnectionLinesOpacity } from './utils/universeRendererUtils';
 import { UniverseLabelManager, type LabelData } from './UniverseLabelManager';
 import { VIRGO_SUPERCLUSTER_LABEL_CONFIG, getNamePriorityBonus } from '../config/universeLabelConfig';
+import { getChineseName } from '../astronomy/universeNames';
 
 export class VirgoSuperclusterRenderer extends BaseUniverseRenderer {
   private clusters: GalaxyCluster[] = [];
@@ -61,8 +62,12 @@ export class VirgoSuperclusterRenderer extends BaseUniverseRenderer {
         
         const distance = Math.sqrt(cluster.centerX ** 2 + cluster.centerY ** 2 + cluster.centerZ ** 2);
         
+        // 获取中文名称
+        const nameZh = getChineseName(cluster.name, 'virgo-supercluster');
+        
         return {
           name: cluster.name,
+          nameZh: nameZh !== cluster.name ? nameZh : undefined,
           position: new THREE.Vector3(
             cluster.centerX * MEGAPARSEC_TO_AU,
             cluster.centerY * MEGAPARSEC_TO_AU,
@@ -119,6 +124,13 @@ export class VirgoSuperclusterRenderer extends BaseUniverseRenderer {
     if (this.particleSystem) {
       this.particleSystem.updateBrightness(brightness);
     }
+  }
+
+  getObjectData(): { clusters: GalaxyCluster[]; galaxies: SimpleGalaxy[] } {
+    return {
+      clusters: this.clusters,
+      galaxies: this.galaxies,
+    };
   }
 
   dispose(): void {

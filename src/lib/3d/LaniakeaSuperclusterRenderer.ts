@@ -7,6 +7,7 @@ import { BaseUniverseRenderer } from './BaseUniverseRenderer';
 import { createParticleSystemFromGalaxies, createAdvancedConnectionLines, updateConnectionLinesOpacity } from './utils/universeRendererUtils';
 import { UniverseLabelManager, type LabelData } from './UniverseLabelManager';
 import { LANIAKEA_SUPERCLUSTER_LABEL_CONFIG, getNamePriorityBonus } from '../config/universeLabelConfig';
+import { getChineseName } from '../astronomy/universeNames';
 
 export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
   private superclusters: Supercluster[] = [];
@@ -71,8 +72,12 @@ export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
         supercluster.centerZ ** 2
       );
       
+      // 获取中文名称
+      const nameZh = getChineseName(supercluster.name, 'laniakea');
+      
       return {
         name: supercluster.name,
+        nameZh: nameZh !== supercluster.name ? nameZh : undefined,
         position: new THREE.Vector3(
           supercluster.centerX * MEGAPARSEC_TO_AU,
           supercluster.centerY * MEGAPARSEC_TO_AU,
@@ -212,6 +217,10 @@ export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
     if (this.particleSystem) {
       this.particleSystem.updateBrightness(brightness);
     }
+  }
+
+  getObjectData(): Supercluster[] {
+    return this.superclusters;
   }
 
   override dispose(): void {

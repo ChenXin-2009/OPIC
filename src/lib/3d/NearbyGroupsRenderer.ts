@@ -6,6 +6,7 @@ import { BaseUniverseRenderer } from './BaseUniverseRenderer';
 import { createParticleSystemFromGalaxies, createConnectionLinesForGroup, updateConnectionLinesOpacity } from './utils/universeRendererUtils';
 import { UniverseLabelManager, type LabelData } from './UniverseLabelManager';
 import { NEARBY_GROUPS_LABEL_CONFIG, getNamePriorityBonus } from '../config/universeLabelConfig';
+import { getChineseName } from '../astronomy/universeNames';
 
 export class NearbyGroupsRenderer extends BaseUniverseRenderer {
   private groups: GalaxyGroup[] = [];
@@ -65,8 +66,12 @@ export class NearbyGroupsRenderer extends BaseUniverseRenderer {
         
         const distance = Math.sqrt(group.centerX ** 2 + group.centerY ** 2 + group.centerZ ** 2);
         
+        // 获取中文名称
+        const nameZh = getChineseName(group.name, 'nearby-groups');
+        
         return {
           name: group.name,
+          nameZh: nameZh !== group.name ? nameZh : undefined,
           position: new THREE.Vector3(
             group.centerX * MEGAPARSEC_TO_AU,
             group.centerY * MEGAPARSEC_TO_AU,
@@ -126,6 +131,13 @@ export class NearbyGroupsRenderer extends BaseUniverseRenderer {
     }
   }
 
+  getObjectData(): { groups: GalaxyGroup[]; galaxies: SimpleGalaxy[] } {
+    return {
+      groups: this.groups,
+      galaxies: this.galaxies,
+    };
+  }
+
   dispose(): void {
     if (this.particleSystem) {
       this.group.remove(this.particleSystem.getPoints());
@@ -146,4 +158,12 @@ export class NearbyGroupsRenderer extends BaseUniverseRenderer {
     
     super.dispose();
   }
+  getObjectData(): { groups: GalaxyGroup[]; galaxies: SimpleGalaxy[] } {
+    return {
+      groups: this.groups,
+      galaxies: this.galaxies,
+    };
+  }
+
+
 }

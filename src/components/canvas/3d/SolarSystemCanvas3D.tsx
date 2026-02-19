@@ -37,6 +37,8 @@ import ScaleRuler from './ScaleRuler';
 import DistanceDisplay from './DistanceDisplay';
 import SettingsMenu from '@/components/SettingsMenu';
 import EphemerisStatusPanel from '@/components/EphemerisStatusPanel';
+import CelestialSearch from '@/components/search/CelestialSearch';
+import SearchErrorBoundary from '@/components/search/SearchErrorBoundary';
 import { ORBIT_COLORS, SUN_LIGHT_CONFIG, ORBIT_CURVE_POINTS, SATELLITE_CONFIG, ORBIT_FADE_CONFIG, FAR_VIEW_CONFIG } from '@/lib/config/visualConfig';
 import { CAMERA_CONFIG } from '@/lib/config/cameraConfig';
 import { TextureManager } from '@/lib/3d/TextureManager';
@@ -1448,6 +1450,17 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
         container={containerRef.current}
         controlsTarget={cameraControllerRef.current?.getControls()?.target || null}
       />
+      
+      {/* 天体搜索组件 - 只在 SceneManager 和 CameraController 准备好后渲染 */}
+      {sceneManagerRef.current && cameraControllerRef.current && (
+        <SearchErrorBoundary>
+          <CelestialSearch 
+            sceneManager={sceneManagerRef.current}
+            cameraController={cameraControllerRef.current}
+          />
+        </SearchErrorBoundary>
+      )}
+      
       {/* 设置菜单（仅在 3D 模式下显示） */}
       {isCameraControllerReady && cameraControllerRef.current && (
         <SettingsMenu 

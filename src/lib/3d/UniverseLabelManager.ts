@@ -16,8 +16,10 @@ import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
  * 标签数据接口
  */
 export interface LabelData {
-  /** 天体名称 */
+  /** 天体名称（英文） */
   name: string;
+  /** 天体中文名称（可选） */
+  nameZh?: string;
   /** 3D位置（AU单位） */
   position: THREE.Vector3;
   /** 优先级（0-10，数值越大越重要） */
@@ -80,6 +82,8 @@ const DEFAULT_LABEL_CONFIG: Record<string, Partial<LabelConfig>> = {
     color: '#88ccff',
     offsetX: 15,
     offsetY: -5,
+    minShowDistance: 1000,
+    maxShowDistance: 150000000, // 1.5倍原值（原100000000）
   },
   group: {
     fontSize: '15px',
@@ -87,6 +91,8 @@ const DEFAULT_LABEL_CONFIG: Record<string, Partial<LabelConfig>> = {
     color: '#ffaa88',
     offsetX: 20,
     offsetY: -8,
+    minShowDistance: 50000,
+    maxShowDistance: 450000000, // 1.5倍原值（原300000000）
   },
   cluster: {
     fontSize: '16px',
@@ -94,6 +100,8 @@ const DEFAULT_LABEL_CONFIG: Record<string, Partial<LabelConfig>> = {
     color: '#ffcc66',
     offsetX: 25,
     offsetY: -10,
+    minShowDistance: 100000,
+    maxShowDistance: 750000000, // 1.5倍原值（原500000000）
   },
   supercluster: {
     fontSize: '18px',
@@ -101,6 +109,8 @@ const DEFAULT_LABEL_CONFIG: Record<string, Partial<LabelConfig>> = {
     color: '#ff88cc',
     offsetX: 30,
     offsetY: -12,
+    minShowDistance: 500000,
+    maxShowDistance: 1500000000, // 1.5倍原值（原1000000000）
   },
 };
 
@@ -158,7 +168,15 @@ export class UniverseLabelManager {
     const labelDiv = document.createElement('div');
     labelDiv.className = `universe-label universe-label-${data.type}`;
     
-    // 创建主标题
+    // 如果有中文名称，创建中文标题（显示在上方）
+    if (data.nameZh && data.nameZh !== data.name) {
+      const zhTitleSpan = document.createElement('span');
+      zhTitleSpan.className = 'universe-label-title-zh';
+      zhTitleSpan.textContent = data.nameZh;
+      labelDiv.appendChild(zhTitleSpan);
+    }
+    
+    // 创建英文标题
     const titleSpan = document.createElement('span');
     titleSpan.className = 'universe-label-title';
     titleSpan.textContent = data.name;
@@ -377,7 +395,7 @@ export class UniverseLabelManager {
     element.style.top = `${config.offsetY}px`;
     element.style.transform = 'translate(0, 0)';
 
-    // 标题样式
+    // 标题样式（英文）
     const titleSpan = element.querySelector('.universe-label-title') as HTMLSpanElement;
     if (titleSpan) {
       titleSpan.style.fontSize = config.fontSize;
@@ -389,6 +407,21 @@ export class UniverseLabelManager {
       titleSpan.style.textTransform = 'uppercase'; // 全部转为大写
       titleSpan.style.fontVariant = 'small-caps'; // 小写字母显示为小型大写字母
       titleSpan.style.letterSpacing = '0.05em'; // 增加字母间距
+    }
+
+    // 中文标题样式（显示在英文上方）
+    const zhTitleSpan = element.querySelector('.universe-label-title-zh') as HTMLSpanElement;
+    if (zhTitleSpan) {
+      // 中文标题使用稍小的字号
+      const zhFontSize = parseInt(config.fontSize) * 0.9;
+      zhTitleSpan.style.fontSize = `${zhFontSize}px`;
+      zhTitleSpan.style.fontWeight = config.fontWeight;
+      zhTitleSpan.style.fontFamily = "'Noto Sans SC', 'Microsoft YaHei', " + config.fontFamily;
+      zhTitleSpan.style.color = config.color;
+      zhTitleSpan.style.textShadow = config.textShadow;
+      zhTitleSpan.style.lineHeight = '1.2';
+      zhTitleSpan.style.letterSpacing = '0.05em';
+      zhTitleSpan.style.marginBottom = '2px'; // 与英文标题的间距
     }
 
     // 信息行样式
