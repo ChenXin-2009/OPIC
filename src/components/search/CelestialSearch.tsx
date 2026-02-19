@@ -180,23 +180,28 @@ export default function CelestialSearch({
         const history = SearchHistory.getAll();
         if (history.length > 0) {
           // 将历史记录转换为 SearchResult 格式
-          const historyResults: SearchResult[] = history.map((entry) => {
-            const celestial = searchIndexRef.current?.getById(entry.id);
-            if (!celestial) {
-              return null;
-            }
-            return {
-              id: celestial.id,
-              name: celestial.nameZh || celestial.nameEn,
-              nameEn: celestial.nameEn,
-              nameZh: celestial.nameZh,
-              type: celestial.type,
-              scale: celestial.scale,
-              position: celestial.position,
-              distance: celestial.distance,
-              relevance: 0,
-            };
-          }).filter((r): r is SearchResult => r !== null);
+          const historyResults: SearchResult[] = history
+            .map((entry) => {
+              const celestial = searchIndexRef.current?.getById(entry.id);
+              if (!celestial) {
+                return null;
+              }
+              const result: SearchResult = {
+                id: celestial.id,
+                name: celestial.nameZh || celestial.nameEn,
+                nameEn: celestial.nameEn,
+                nameZh: celestial.nameZh,
+                type: celestial.type,
+                scale: celestial.scale,
+                position: celestial.position,
+                relevance: 0,
+              };
+              if (celestial.distance !== undefined) {
+                result.distance = celestial.distance;
+              }
+              return result;
+            })
+            .filter((r): r is SearchResult => r !== null);
 
           setState((prev) => ({
             ...prev,
@@ -521,14 +526,6 @@ export default function CelestialSearch({
         pointerEvents: 'none', // 允许点击穿透到下层
         ...style,
       }}
-      // 响应式样式
-      css={{
-        '@media (max-width: 768px)': {
-          top: '1rem',
-          padding: '0 0.5rem',
-          maxWidth: '100%',
-        },
-      } as any}
     >
       {/* 搜索框容器 */}
       <div style={{ pointerEvents: 'auto' }}>
