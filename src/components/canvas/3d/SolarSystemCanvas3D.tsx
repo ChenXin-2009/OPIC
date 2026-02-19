@@ -132,6 +132,12 @@ async function initializeUniverseRenderers(sceneManager: SceneManager) {
       
       const localGroupRenderer = new LocalGroupRenderer();
       await localGroupRenderer.loadData(localGroupGalaxies);
+      
+      // 初始化标签管理器
+      const camera = sceneManager.getCamera();
+      const canvas = sceneManager.getRenderer().domElement;
+      localGroupRenderer.initLabelManager(camera, canvas);
+      
       sceneManager.setLocalGroupRenderer(localGroupRenderer);
       console.log('LocalGroupRenderer initialized with', localGroupGalaxies.length, 'galaxies');
     } catch (error) {
@@ -145,6 +151,12 @@ async function initializeUniverseRenderers(sceneManager: SceneManager) {
       
       const nearbyGroupsRenderer = new NearbyGroupsRenderer();
       await nearbyGroupsRenderer.loadData(groups, galaxies);
+      
+      // 初始化标签管理器
+      const camera = sceneManager.getCamera();
+      const canvas = sceneManager.getRenderer().domElement;
+      nearbyGroupsRenderer.initLabelManager(camera, canvas);
+      
       sceneManager.setNearbyGroupsRenderer(nearbyGroupsRenderer);
       console.log('NearbyGroupsRenderer initialized with', groups.length, 'groups and', galaxies.length, 'galaxies');
     } catch (error) {
@@ -158,6 +170,12 @@ async function initializeUniverseRenderers(sceneManager: SceneManager) {
       
       const virgoRenderer = new VirgoSuperclusterRenderer();
       await virgoRenderer.loadData(clusters, galaxies);
+      
+      // 初始化标签管理器
+      const camera = sceneManager.getCamera();
+      const canvas = sceneManager.getRenderer().domElement;
+      virgoRenderer.initLabelManager(camera, canvas);
+      
       sceneManager.setVirgoSuperclusterRenderer(virgoRenderer);
       console.log('VirgoSuperclusterRenderer initialized with', clusters.length, 'clusters and', galaxies.length, 'galaxies');
     } catch (error) {
@@ -171,6 +189,12 @@ async function initializeUniverseRenderers(sceneManager: SceneManager) {
       
       const laniakeaRenderer = new LaniakeaSuperclusterRenderer();
       await laniakeaRenderer.loadData(superclusters, galaxies);
+      
+      // 初始化标签管理器
+      const camera = sceneManager.getCamera();
+      const canvas = sceneManager.getRenderer().domElement;
+      laniakeaRenderer.initLabelManager(camera, canvas);
+      
       sceneManager.setLaniakeaSuperclusterRenderer(laniakeaRenderer);
       console.log('LaniakeaSuperclusterRenderer initialized with', superclusters.length, 'superclusters and', galaxies.length, 'galaxies');
     } catch (error) {
@@ -863,37 +887,6 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
             });
           }
         });
-
-        // 1.5. 收集宇宙尺度标签（本星系群）
-        const universeLabels: Array<{
-          label: any;
-          screenX: number;
-          screenY: number;
-          text: string;
-          priority: number;
-          targetOpacity: number;
-        }> = [];
-
-        if (containerRef.current) {
-          const containerWidth = containerRef.current.clientWidth;
-          const containerHeight = containerRef.current.clientHeight;
-
-          // 本星系群标签
-          const localGroupRenderer = sceneManager.getLocalGroupRenderer();
-          if (localGroupRenderer && typeof localGroupRenderer.getLabelsForOverlapDetection === 'function') {
-            const localGroupLabels = localGroupRenderer.getLabelsForOverlapDetection(camera, containerWidth, containerHeight);
-            localGroupLabels.forEach((labelInfo: any) => {
-              universeLabels.push({
-                label: labelInfo.label,
-                screenX: labelInfo.screenX,
-                screenY: labelInfo.screenY,
-                text: labelInfo.text,
-                priority: labelInfo.priority,
-                targetOpacity: 1.0,
-              });
-            });
-          }
-        }
         
         // 2. 检测重叠并设置目标透明度
         // 获取选中状态
@@ -961,76 +954,6 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
           
           info1.planet.setMarkerTargetOpacity(hasOverlap ? 0.0 : 1.0);
         }
-
-        // 2.2 处理宇宙标签重叠（与行星标签和其他宇宙标签）
-        if (containerRef.current) {
-          const centerX = containerRef.current.clientWidth / 2;
-          const centerY = containerRef.current.clientHeight / 2;
-
-          for (let i = 0; i < universeLabels.length; i++) {
-            const uLabel1 = universeLabels[i];
-            if (!uLabel1) continue;
-
-            let hasOverlap = false;
-
-            // 检查与行星标签的重叠（行星标签优先级更高）
-            for (let j = 0; j < labelInfos.length; j++) {
-              const planetLabel = labelInfos[j];
-              if (!planetLabel) continue;
-
-              const labelWidth1 = uLabel1.text.length * 15; // 增加宽度估算
-              const labelWidth2 = planetLabel.text.length * 10;
-              const labelHeight = 30; // 增加高度阈值
-              const distanceX = Math.abs(uLabel1.screenX - planetLabel.screenX);
-              const distanceY = Math.abs(uLabel1.screenY - planetLabel.screenY);
-
-              if (distanceX < (labelWidth1 + labelWidth2) / 2 + 20 && distanceY < labelHeight) {
-                // 行星标签优先级更高，隐藏宇宙标签
-                hasOverlap = true;
-                break;
-              }
-            }
-
-            // 检查与其他宇宙标签的重叠
-            if (!hasOverlap) {
-              for (let j = 0; j < universeLabels.length; j++) {
-                if (i === j) continue;
-                const uLabel2 = universeLabels[j];
-                if (!uLabel2) continue;
-
-                const labelWidth1 = uLabel1.text.length * 15; // 增加宽度估算
-                const labelWidth2 = uLabel2.text.length * 15; // 增加宽度估算
-                const labelHeight = 30; // 增加高度阈值
-                const distanceX = Math.abs(uLabel1.screenX - uLabel2.screenX);
-                const distanceY = Math.abs(uLabel1.screenY - uLabel2.screenY);
-
-                if (distanceX < (labelWidth1 + labelWidth2) / 2 + 30 && distanceY < labelHeight) {
-                  // 优先级高的显示，优先级低的隐藏
-                  // 如果优先级相同，距离中心近的显示
-                  if (uLabel1.priority > uLabel2.priority) {
-                    hasOverlap = true;
-                    break;
-                  } else if (uLabel1.priority === uLabel2.priority) {
-                    const dist1 = Math.sqrt(
-                      Math.pow(uLabel1.screenX - centerX, 2) + 
-                      Math.pow(uLabel1.screenY - centerY, 2)
-                    );
-                    const dist2 = Math.sqrt(
-                      Math.pow(uLabel2.screenX - centerX, 2) + 
-                      Math.pow(uLabel2.screenY - centerY, 2)
-                    );
-                    if (dist1 > dist2 || (Math.abs(dist1 - dist2) < 1 && i > j)) {
-                      hasOverlap = true;
-                      break;
-                    }
-                  }
-                }
-              }
-            }
-
-            uLabel1.targetOpacity = hasOverlap ? 0.0 : 1.0;
-          }
-        }
         
         // 3. 更新所有标记圈和标签的透明度（平滑渐隐）
         labelInfos.forEach((info) => {
@@ -1055,28 +978,6 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
               info.label.element.style.display = 'block';
             } else {
               info.label.element.style.display = 'none';
-            }
-          }
-        });
-
-        // 3.5 更新宇宙标签的透明度
-        universeLabels.forEach((uLabel) => {
-          if (uLabel.label && uLabel.label.element) {
-            const currentOpacity = parseFloat(uLabel.label.element.style.opacity || '1');
-            const targetOpacity = uLabel.targetOpacity;
-            
-            // 平滑过渡透明度
-            const fadeSpeed = 0.1;
-            const newOpacity = currentOpacity + (targetOpacity - currentOpacity) * fadeSpeed;
-            
-            uLabel.label.element.style.opacity = newOpacity.toString();
-            
-            // 确保标签在可见时显示
-            const minOpacity = 0.01;
-            if (newOpacity > minOpacity) {
-              uLabel.label.element.style.display = 'block';
-            } else {
-              uLabel.label.element.style.display = 'none';
             }
           }
         });

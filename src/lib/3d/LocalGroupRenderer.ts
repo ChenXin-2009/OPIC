@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import type { UniverseScaleRenderer, LocalGroupGalaxy, GalaxyType } from '../types/universeTypes';
 import { LOCAL_GROUP_CONFIG, UNIVERSE_SCALE_CONFIG, MEGAPARSEC_TO_AU } from '../config/universeConfig';
-import { getChineseName } from '../astronomy/universeNames';
+import { UniverseLabelManager, type LabelData } from './UniverseLabelManager';
+import { LOCAL_GROUP_LABEL_CONFIG, getNamePriorityBonus } from '../config/universeLabelConfig';
 
 export class LocalGroupRenderer implements UniverseScaleRenderer {
   private group: THREE.Group;
@@ -11,12 +11,25 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
   private isVisible: boolean = false;
   private config: typeof LOCAL_GROUP_CONFIG;
   private galaxyMeshes: THREE.Mesh[] = [];
-  private labels: Map<string, CSS2DObject> = new Map();
+  private labelManager: UniverseLabelManager | null = null;
 
   constructor() {
     this.group = new THREE.Group();
     this.group.name = 'LocalGroup';
     this.config = LOCAL_GROUP_CONFIG;
+  }
+
+  /**
+   * 初始化标签管理器
+   */
+  initLabelManager(camera: THREE.Camera, canvas: HTMLCanvasElement): void {
+    this.labelManager = new UniverseLabelManager(this.group, camera, canvas, {
+      minShowDistance: UNIVERSE_SCALE_CONFIG.localGroupShowStart,
+      maxShowDistance: UNIVERSE_SCALE_CONFIG.nearbyGroupsShowStart,
+    });
+    
+    // 标签管理器创建后，立即创建标签
+    this.createLabels();
   }
 
   getGroup(): THREE.Group {
@@ -34,6 +47,49 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
   async loadData(galaxies: LocalGroupGalaxy[]): Promise<void> {
     this.galaxies = galaxies;
     this.createGalaxies();
+    this.createLabels();
+  }
+
+  private createLabels(): void {
+    if (!this.labelManager || !LOCAL_GROUP_LABEL_CONFIG.enabled) return;
+
+    // 为主要星系创建标签
+    const labelData: LabelData[] = this.galaxies
+      .filter(galaxy => {
+        // 排除银河系（已由其他渲染器处理）
+        if (galaxy.name === 'Milky Way' || galaxy.name === '银河系') return false;
+        
+        // 只为重要星系创建标签（亮度阈值）
+        return galaxy.brightness > LOCAL_GROUP_LABEL_CONFIG.minBrightness;
+      })
+      .map(galaxy => {
+        // 计算基础优先级（基于亮度和大小）
+        const basePriority = Math.min(10, Math.floor(galaxy.brightness * 10 + galaxy.radius / 10));
+        
+        // 添加名称优先级加成
+        const namePriorityBonus = getNamePriorityBonus(galaxy.name, 'galaxy');
+        const priority = Math.min(10, basePriority + namePriorityBonus);
+        
+        // 计算距离（Mpc）
+        const distance = Math.sqrt(galaxy.x ** 2 + galaxy.y ** 2 + galaxy.z ** 2);
+        
+        return {
+          name: galaxy.name,
+          position: new THREE.Vector3(
+            galaxy.x * MEGAPARSEC_TO_AU,
+            galaxy.y * MEGAPARSEC_TO_AU,
+            galaxy.z * MEGAPARSEC_TO_AU
+          ),
+          priority,
+          type: 'galaxy' as const,
+          metadata: {
+            distance: `${distance.toFixed(2)} Mpc`,
+            size: `${galaxy.radius.toFixed(1)} kpc`,
+          },
+        };
+      });
+
+    this.labelManager.createLabels(labelData);
   }
 
   private createGalaxies(): void {
@@ -49,14 +105,6 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
     });
     this.galaxyMeshes = [];
 
-    // Clear existing labels
-    this.labels.forEach(label => {
-      if (label.parent) {
-        label.parent.remove(label);
-      }
-    });
-    this.labels.clear();
-
     // Create galaxy meshes (exclude Milky Way as it's already rendered)
     this.galaxies.forEach(galaxy => {
       // Skip Milky Way - it's already rendered by GalaxyRenderer
@@ -67,40 +115,7 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
       const mesh = this.createGalaxyMesh(galaxy);
       this.galaxyMeshes.push(mesh);
       this.group.add(mesh);
-
-      // Create label for this galaxy
-      this.createLabel(galaxy, mesh);
     });
-  }
-
-  private createLabel(galaxy: LocalGroupGalaxy, mesh: THREE.Mesh): void {
-    const labelDiv = document.createElement('div');
-    labelDiv.className = 'galaxy-label';
-    // 使用中文名称
-    const chineseName = getChineseName(galaxy.name, 'local-group');
-    labelDiv.textContent = chineseName;
-    labelDiv.style.color = '#ffffff';
-    labelDiv.style.fontSize = '12px';
-    labelDiv.style.fontWeight = '400';
-    labelDiv.style.fontFamily = '"Novecento Wide", sans-serif';
-    labelDiv.style.pointerEvents = 'none';
-    labelDiv.style.userSelect = 'none';
-    labelDiv.style.textShadow = '0 0 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6)';
-    labelDiv.style.whiteSpace = 'nowrap';
-    labelDiv.style.opacity = '1'; // 始终显示
-    labelDiv.style.transition = 'opacity 0.3s, font-size 0.3s';
-
-    const label = new CSS2DObject(labelDiv);
-    label.position.set(0, 0, 0);
-    
-    // Position label relative to galaxy
-    labelDiv.style.position = 'absolute';
-    labelDiv.style.left = '10px';
-    labelDiv.style.top = '-5px';
-    labelDiv.style.transform = 'translate(0, 0)';
-    
-    mesh.add(label);
-    this.labels.set(galaxy.name, label);
   }
 
   private createGalaxyMesh(galaxy: LocalGroupGalaxy): THREE.Mesh {
@@ -184,48 +199,13 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
       });
     }
 
-    // 降低标签更新频率：只在相机距离变化较大时更新
-    // 使用静态变量跟踪上次更新的距离
-    if (!this.lastUpdateDistance || Math.abs(cameraDistance - this.lastUpdateDistance) > cameraDistance * 0.1) {
-      this.updateLabels(cameraDistance);
-      this.lastUpdateDistance = cameraDistance;
-      // 相机距离变化时，标签位置也会变化，需要使缓存失效
-      this.labelCacheValid = false;
-    }
-
     // Update visibility
     this.group.visible = this.isVisible;
-  }
 
-  private lastUpdateDistance: number = 0;
-  private labelInfoCache: Array<{
-    label: CSS2DObject;
-    screenX: number;
-    screenY: number;
-    text: string;
-    priority: number;
-    mesh: THREE.Mesh;
-  }> = [];
-  private labelCacheValid: boolean = false;
-
-  private updateLabels(cameraDistance: number): void {
-    // Calculate font size based on camera distance to maintain readability
-    // Scale more aggressively to ensure labels remain visible at all scales
-    const minDistance = 200000 * 63241.077; // 200k light years in AU
-    const maxDistance = 10000000 * 63241.077; // 10M light years in AU
-    
-    let fontSize = 12;
-    if (cameraDistance > minDistance) {
-      const ratio = Math.min((cameraDistance - minDistance) / (maxDistance - minDistance), 1);
-      // Scale from 12px to 24px for better visibility at large scales
-      fontSize = 12 + ratio * 12;
+    // 更新标签
+    if (this.labelManager && this.isVisible) {
+      this.labelManager.update(cameraDistance);
     }
-
-    this.labels.forEach(label => {
-      const labelDiv = label.element as HTMLDivElement;
-      labelDiv.style.fontSize = `${fontSize}px`;
-      // Don't set opacity here - it's handled by overlap detection
-    });
   }
 
   private calculateOpacity(cameraDistance: number): number {
@@ -257,60 +237,6 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
     return this.galaxies;
   }
 
-  /**
-   * Get all labels for overlap detection
-   * Returns array of label info with screen positions
-   * 优化：使用缓存减少每帧的计算量
-   */
-  getLabelsForOverlapDetection(camera: THREE.Camera, containerWidth: number, containerHeight: number): Array<{
-    label: CSS2DObject;
-    screenX: number;
-    screenY: number;
-    text: string;
-    priority: number;
-    mesh: THREE.Mesh;
-  }> {
-    if (!this.isVisible || this.opacity < 0.01) {
-      this.labelCacheValid = false;
-      return [];
-    }
-
-    // 使用缓存的结果，避免每帧都重新计算
-    // 注意：这个方法会被Canvas组件的节流机制控制，所以这里的缓存主要是防止同一帧内多次调用
-    if (this.labelCacheValid) {
-      return this.labelInfoCache;
-    }
-
-    this.labelInfoCache = [];
-
-    this.galaxyMeshes.forEach(mesh => {
-      const galaxy = mesh.userData.galaxy as LocalGroupGalaxy;
-      const label = this.labels.get(galaxy.name);
-      
-      if (!label) return;
-
-      // Get world position and project to screen
-      const worldPos = new THREE.Vector3();
-      mesh.getWorldPosition(worldPos);
-      worldPos.project(camera);
-
-      const screenX = (worldPos.x * 0.5 + 0.5) * containerWidth;
-      const screenY = (worldPos.y * -0.5 + 0.5) * containerHeight;
-
-      this.labelInfoCache.push({
-        label,
-        screenX,
-        screenY,
-        text: galaxy.name,
-        priority: 2, // Local Group has medium priority
-        mesh,
-      });
-    });
-
-    this.labelCacheValid = true;
-    return this.labelInfoCache;
-  }
-
   dispose(): void {
     this.galaxyMeshes.forEach(mesh => {
       this.group.remove(mesh);
@@ -323,15 +249,10 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
     });
     this.galaxyMeshes = [];
     
-    // Dispose labels
-    this.labels.forEach(label => {
-      if (label.parent) {
-        label.parent.remove(label);
-      }
-      if (label.element && label.element.parentNode) {
-        label.element.parentNode.removeChild(label.element);
-      }
-    });
-    this.labels.clear();
+    // 清理标签
+    if (this.labelManager) {
+      this.labelManager.clearAll();
+      this.labelManager = null;
+    }
   }
 }

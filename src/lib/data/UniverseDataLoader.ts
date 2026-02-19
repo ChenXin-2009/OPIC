@@ -56,7 +56,6 @@ export class UniverseDataLoader {
       }
 
       const arrayBuffer = await response.arrayBuffer();
-      console.log(`[UniverseDataLoader] Loaded ${path}: ${arrayBuffer.byteLength} bytes`);
       return arrayBuffer;
     } catch (error) {
       console.error(`Error loading binary file ${path}:`, error);
@@ -477,14 +476,12 @@ export class UniverseDataLoader {
    * 解析拉尼亚凯亚超星系团数据
    */
   parseLaniakeaData(buffer: ArrayBuffer): { superclusters: any[], galaxies: any[] } {
-    console.log(`[UniverseDataLoader] Parsing Laniakea data, buffer size: ${buffer.byteLength} bytes`);
     const view = new DataView(buffer);
     let offset = 0;
 
     // 读取名称表
     const nameTableSize = view.getUint16(offset, true);
     offset += 2;
-    console.log(`[UniverseDataLoader] Name table size: ${nameTableSize}`);
 
     const nameTable: string[] = [];
     for (let i = 0; i < nameTableSize; i++) {

@@ -5,6 +5,8 @@ import { OptimizedParticleSystem } from './OptimizedParticleSystem';
 import { LODManager } from './LODManager';
 import { BaseUniverseRenderer } from './BaseUniverseRenderer';
 import { createParticleSystemFromGalaxies, createAdvancedConnectionLines, updateConnectionLinesOpacity } from './utils/universeRendererUtils';
+import { UniverseLabelManager, type LabelData } from './UniverseLabelManager';
+import { LANIAKEA_SUPERCLUSTER_LABEL_CONFIG, getNamePriorityBonus } from '../config/universeLabelConfig';
 
 export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
   private superclusters: Supercluster[] = [];
@@ -13,6 +15,7 @@ export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
   private lodManager: LODManager;
   private velocityArrows: THREE.ArrowHelper[] = [];
   private connectionLines: THREE.LineSegments[] = [];
+  private labelManager: UniverseLabelManager | null = null;
 
   constructor() {
     super('LaniakeaSupercluster', {
@@ -23,9 +26,17 @@ export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
     this.lodManager = new LODManager();
   }
 
-  async loadData(superclusters: Supercluster[], galaxies: SimpleGalaxy[]): Promise<void> {
-    console.log(`[Laniakea] Loading data: ${superclusters.length} superclusters, ${galaxies.length} galaxies`);
+  initLabelManager(camera: THREE.Camera, canvas: HTMLCanvasElement): void {
+    this.labelManager = new UniverseLabelManager(this.group, camera, canvas, {
+      minShowDistance: UNIVERSE_SCALE_CONFIG.laniakeaShowStart,
+      maxShowDistance: UNIVERSE_SCALE_CONFIG.laniakeaShowStart * 100,
+    });
     
+    // 标签管理器创建后，立即创建标签
+    this.createLabels();
+  }
+
+  async loadData(superclusters: Supercluster[], galaxies: SimpleGalaxy[]): Promise<void> {
     this.superclusters = superclusters;
     this.galaxies = galaxies;
     
@@ -42,8 +53,42 @@ export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
     if (LANIAKEA_SUPERCLUSTER_CONFIG.showVelocityFlow) {
       this.createVelocityArrows();
     }
-    
-    console.log(`[Laniakea] Loaded: ${this.galaxies.length} galaxies, ${this.connectionLines.length} connection groups`);
+
+    this.createLabels();
+  }
+
+  private createLabels(): void {
+    if (!this.labelManager || !LANIAKEA_SUPERCLUSTER_LABEL_CONFIG.enabled) return;
+
+    const labelData: LabelData[] = this.superclusters.map(supercluster => {
+      const basePriority = Math.min(10, Math.floor(supercluster.richness * 2 + supercluster.memberCount / 50));
+      const namePriorityBonus = getNamePriorityBonus(supercluster.name, 'supercluster');
+      const priority = Math.min(10, basePriority + namePriorityBonus);
+      
+      const distance = Math.sqrt(
+        supercluster.centerX ** 2 + 
+        supercluster.centerY ** 2 + 
+        supercluster.centerZ ** 2
+      );
+      
+      return {
+        name: supercluster.name,
+        position: new THREE.Vector3(
+          supercluster.centerX * MEGAPARSEC_TO_AU,
+          supercluster.centerY * MEGAPARSEC_TO_AU,
+          supercluster.centerZ * MEGAPARSEC_TO_AU
+        ),
+        priority,
+        type: 'supercluster' as const,
+        metadata: {
+          distance: `${distance.toFixed(0)} Mpc`,
+          members: supercluster.memberCount,
+          size: `${supercluster.radius.toFixed(0)} Mpc`,
+        },
+      };
+    });
+
+    this.labelManager.createLabels(labelData);
   }
 
   private createConnectionLines(): void {
@@ -130,7 +175,7 @@ export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
     });
   }
 
-  update(cameraDistance: number, deltaTime: number): void {
+  override update(cameraDistance: number, deltaTime: number): void {
     super.update(cameraDistance, deltaTime);
 
     if (this.particleSystem) {
@@ -150,6 +195,10 @@ export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
       this.opacity,
       LANIAKEA_SUPERCLUSTER_CONFIG.connectionOpacity || 0.15
     );
+
+    if (this.labelManager && this.isVisible) {
+      this.labelManager.update(cameraDistance);
+    }
   }
 
   private updateLOD(cameraDistance: number): void {
@@ -159,13 +208,13 @@ export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
     }
   }
 
-  setBrightness(brightness: number): void {
+  override setBrightness(brightness: number): void {
     if (this.particleSystem) {
       this.particleSystem.updateBrightness(brightness);
     }
   }
 
-  dispose(): void {
+  override dispose(): void {
     if (this.particleSystem) {
       this.group.remove(this.particleSystem.getPoints());
       this.particleSystem.dispose();
@@ -182,6 +231,12 @@ export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
       (line.material as THREE.Material).dispose();
     });
     this.connectionLines = [];
+    
+    if (this.labelManager) {
+      this.labelManager.clearAll();
+      this.labelManager = null;
+    }
+    
     super.dispose();
   }
 }

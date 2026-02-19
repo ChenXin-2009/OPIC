@@ -4,12 +4,15 @@ import { VIRGO_SUPERCLUSTER_CONFIG, UNIVERSE_SCALE_CONFIG, MEGAPARSEC_TO_AU } fr
 import { OptimizedParticleSystem } from './OptimizedParticleSystem';
 import { BaseUniverseRenderer } from './BaseUniverseRenderer';
 import { createParticleSystemFromGalaxies, createConnectionLinesForGroup, updateConnectionLinesOpacity } from './utils/universeRendererUtils';
+import { UniverseLabelManager, type LabelData } from './UniverseLabelManager';
+import { VIRGO_SUPERCLUSTER_LABEL_CONFIG, getNamePriorityBonus } from '../config/universeLabelConfig';
 
 export class VirgoSuperclusterRenderer extends BaseUniverseRenderer {
   private clusters: GalaxyCluster[] = [];
   private galaxies: SimpleGalaxy[] = [];
   private particleSystem: OptimizedParticleSystem | null = null;
   private connectionLines: THREE.LineSegments[] = [];
+  private labelManager: UniverseLabelManager | null = null;
 
   constructor() {
     super('VirgoSupercluster', {
@@ -17,6 +20,16 @@ export class VirgoSuperclusterRenderer extends BaseUniverseRenderer {
       showStart: UNIVERSE_SCALE_CONFIG.virgoShowStart,
       showFull: UNIVERSE_SCALE_CONFIG.virgoShowFull,
     });
+  }
+
+  initLabelManager(camera: THREE.Camera, canvas: HTMLCanvasElement): void {
+    this.labelManager = new UniverseLabelManager(this.group, camera, canvas, {
+      minShowDistance: UNIVERSE_SCALE_CONFIG.virgoShowStart,
+      maxShowDistance: UNIVERSE_SCALE_CONFIG.laniakeaShowStart,
+    });
+    
+    // 标签管理器创建后，立即创建标签
+    this.createLabels();
   }
 
   async loadData(clusters: GalaxyCluster[], galaxies: SimpleGalaxy[]): Promise<void> {
@@ -32,6 +45,40 @@ export class VirgoSuperclusterRenderer extends BaseUniverseRenderer {
     if (VIRGO_SUPERCLUSTER_CONFIG.showConnections) {
       this.createConnectionLines();
     }
+
+    this.createLabels();
+  }
+
+  private createLabels(): void {
+    if (!this.labelManager || !VIRGO_SUPERCLUSTER_LABEL_CONFIG.enabled) return;
+
+    const labelData: LabelData[] = this.clusters
+      .filter(cluster => cluster.memberCount > VIRGO_SUPERCLUSTER_LABEL_CONFIG.minMembers)
+      .map(cluster => {
+        const basePriority = Math.min(10, Math.floor(cluster.richness * 3 + cluster.memberCount / 20));
+        const namePriorityBonus = getNamePriorityBonus(cluster.name, 'cluster');
+        const priority = Math.min(10, basePriority + namePriorityBonus);
+        
+        const distance = Math.sqrt(cluster.centerX ** 2 + cluster.centerY ** 2 + cluster.centerZ ** 2);
+        
+        return {
+          name: cluster.name,
+          position: new THREE.Vector3(
+            cluster.centerX * MEGAPARSEC_TO_AU,
+            cluster.centerY * MEGAPARSEC_TO_AU,
+            cluster.centerZ * MEGAPARSEC_TO_AU
+          ),
+          priority,
+          type: 'cluster' as const,
+          metadata: {
+            distance: `${distance.toFixed(0)} Mpc`,
+            members: cluster.memberCount,
+            size: `${cluster.radius.toFixed(1)} Mpc`,
+          },
+        };
+      });
+
+    this.labelManager.createLabels(labelData);
   }
 
   private createConnectionLines(): void {
@@ -62,6 +109,10 @@ export class VirgoSuperclusterRenderer extends BaseUniverseRenderer {
       this.opacity,
       VIRGO_SUPERCLUSTER_CONFIG.connectionOpacity || 0.2
     );
+
+    if (this.labelManager && this.isVisible) {
+      this.labelManager.update(cameraDistance);
+    }
   }
 
   setBrightness(brightness: number): void {
@@ -82,6 +133,12 @@ export class VirgoSuperclusterRenderer extends BaseUniverseRenderer {
       (line.material as THREE.Material).dispose();
     });
     this.connectionLines = [];
+    
+    if (this.labelManager) {
+      this.labelManager.clearAll();
+      this.labelManager = null;
+    }
+    
     super.dispose();
   }
 }
