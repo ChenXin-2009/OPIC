@@ -87,9 +87,9 @@ export class NavigationHandler {
     // 构建 CelestialObject 用于 focusOnTarget
     const celestialObject: CelestialObject = {
       name: body.name,
-      radius: body.radius,
-      isSun: body.name === 'Sun',
-      isSatellite: celestial.type === 'satellite',
+      radius: body.realRadius || body.radius, // 使用真实半径
+      isSun: body.name === 'Sun', // 添加 isSun 字段
+      isSatellite: body.parent !== undefined && body.parent !== 'Sun', // 添加 isSatellite 字段
     };
 
     // 获取天体的当前位置
