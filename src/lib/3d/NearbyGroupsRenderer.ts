@@ -106,7 +106,7 @@ export class NearbyGroupsRenderer extends BaseUniverseRenderer {
     });
   }
 
-  update(cameraDistance: number, deltaTime: number): void {
+  override update(cameraDistance: number, deltaTime: number): void {
     super.update(cameraDistance, deltaTime);
 
     if (this.particleSystem) {
