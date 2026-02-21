@@ -235,12 +235,12 @@ export class SatelliteLayer {
           size = satelliteConfig.rendering.pointSize;
         } else if (distanceToEarth < threshold2) {
           // 中距离：半透明，中等大小
-          opacity = 0.5;
-          size = 2.0;
+          opacity = 1;
+          size = 4;
         } else {
           // 远距离：半透明，小尺寸
-          opacity = 0.5;
-          size = 1.0;
+          opacity = 0.2;
+          size = 2;
         }
         
         // 更新渲染器的透明度和大小

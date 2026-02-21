@@ -6,3 +6,4 @@ export { SatelliteVisualization } from './SatelliteVisualization';
 export { SatelliteControls } from './SatelliteControls';
 export { SatelliteInfoPanel } from './SatelliteInfoPanel';
 export { SatelliteStats } from './SatelliteStats';
+export { SatelliteMenu } from './SatelliteMenu';

@@ -5,12 +5,12 @@ import { useState } from "react";
 import SolarSystemCanvas3D from "@/components/canvas/3d/SolarSystemCanvas3D";
 import TimeControl from "@/components/TimeControl";
 import InfoModal from "@/components/InfoModal";
-import { SatelliteVisualization } from "@/components/satellite";
+import { SatelliteMenu } from "@/components/satellite";
 import { HEADER_CONFIG } from "@/lib/config/visualConfig";
 
 /**
  * Info button component for top-right corner.
- * Arknights-style design with geometric elements.
+ * Arknights-style design matching the settings button.
  */
 function InfoButton({ onClick }: { onClick: () => void }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -20,64 +20,52 @@ function InfoButton({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      className="fixed"
       style={{
-        position: 'fixed',
-        top: '20px',
-        right: '20px',
+        top: '2rem',
+        right: '2rem',
         zIndex: 1001,
-        backgroundColor: 'transparent',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
+        background: '#0a0a0a',
+        border: `2px solid ${isHovered ? '#ffffff' : '#333333'}`,
         cursor: 'pointer',
         padding: '8px 16px',
-        transition: 'all 200ms ease',
-        color: isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
+        transition: 'all 0.3s ease',
+        color: '#ffffff',
         fontSize: '13px',
-        fontWeight: 300,
+        fontWeight: 700,
         letterSpacing: '1.5px',
+        textTransform: 'uppercase',
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-        clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
+        clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
+        boxShadow: isHovered ? '0 0 20px rgba(255, 255, 255, 0.5)' : 'none',
       }}
       aria-label="关于"
     >
-      {/* 左上角装饰 */}
-      <span style={{
-        position: 'absolute',
-        top: '-1px',
-        left: '-1px',
-        width: '6px',
-        height: '1px',
-        backgroundColor: isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
-        transition: 'all 200ms ease',
-      }} />
-      <span style={{
-        position: 'absolute',
-        top: '-1px',
-        left: '-1px',
-        width: '1px',
-        height: '6px',
-        backgroundColor: isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
-        transition: 'all 200ms ease',
-      }} />
+      {/* 左上角菱形装饰 */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: '-1px',
+          left: '-1px',
+          width: '12px',
+          height: '12px',
+          background: '#ffffff',
+          clipPath: 'polygon(0 0, 100% 0, 0 100%)',
+        }}
+      />
       
-      {/* 右下角装饰 */}
-      <span style={{
-        position: 'absolute',
-        bottom: '-1px',
-        right: '-1px',
-        width: '6px',
-        height: '1px',
-        backgroundColor: isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
-        transition: 'all 200ms ease',
-      }} />
-      <span style={{
-        position: 'absolute',
-        bottom: '-1px',
-        right: '-1px',
-        width: '1px',
-        height: '6px',
-        backgroundColor: isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
-        transition: 'all 200ms ease',
-      }} />
+      {/* 右下角菱形装饰 */}
+      <div 
+        style={{
+          position: 'absolute',
+          bottom: '-1px',
+          right: '-1px',
+          width: '12px',
+          height: '12px',
+          background: '#ffffff',
+          clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+        }}
+      />
       
       关于
     </button>
@@ -103,16 +91,8 @@ export default function SolarSystemPage() {
       <InfoButton onClick={() => setIsInfoModalOpen(true)} />
       <InfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} />
       
-      {/* 卫星可视化UI组件 */}
-      <div style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        zIndex: 9999,
-        pointerEvents: 'auto'
-      }}>
-        <SatelliteVisualization lang="zh" />
-      </div>
+      {/* 卫星菜单按钮 */}
+      <SatelliteMenu lang="zh" />
       
       {/* 主容器，漂浮模式下不需要留出Header高度空间 */}
       <div 

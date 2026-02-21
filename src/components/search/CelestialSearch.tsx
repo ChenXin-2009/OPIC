@@ -263,6 +263,7 @@ export default function CelestialSearch({
    * 处理聚焦
    */
   const handleFocus = useCallback(() => {
+    // 聚焦时确保搜索框已展开
     setState((prev) => ({ ...prev, isOpen: true }));
     // 如果输入为空，显示历史记录
     if (!state.query.trim()) {
@@ -517,32 +518,122 @@ export default function CelestialSearch({
       style={{
         position: 'absolute',
         top: '2rem',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '100%',
+        right: 'calc(2rem + 240px)', // 在卫星按钮左边
+        width: 'auto',
         maxWidth: '42rem',
         padding: '0 1rem',
         zIndex: 100,
-        pointerEvents: 'none', // 允许点击穿透到下层
+        pointerEvents: 'none',
         ...style,
       }}
     >
-      {/* 搜索框容器 */}
-      <div style={{ pointerEvents: 'auto' }}>
-        <SearchBox
-          value={state.query}
-          onChange={handleInputChange}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          onClear={handleClear}
-          placeholder={lang === 'zh' ? '搜索天体（Ctrl+K 或 /）' : 'Search celestial objects (Ctrl+K or /)'}
-          isFocused={state.isOpen}
-        />
-      </div>
+      {/* 搜索按钮（未展开状态） */}
+      {!state.isOpen && (
+        <div 
+          style={{ 
+            pointerEvents: 'auto',
+            display: 'flex',
+            justifyContent: 'center',
+            position: 'fixed',
+            top: '2rem',
+            right: 'calc(2rem + 240px)', // 在卫星按钮左边
+            zIndex: 1001,
+          }}
+        >
+          <button
+            onClick={() => setState((prev) => ({ ...prev, isOpen: true }))}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#ffffff';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#333333';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            style={{
+              background: '#0a0a0a',
+              border: '2px solid #333333',
+              cursor: 'pointer',
+              padding: '8px 16px',
+              transition: 'all 0.3s ease',
+              color: '#ffffff',
+              fontSize: '13px',
+              fontWeight: 700,
+              letterSpacing: '1.5px',
+              textTransform: 'uppercase',
+              fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
+              position: 'relative',
+            }}
+            aria-label={lang === 'zh' ? '搜索天体' : 'Search celestial objects'}
+          >
+            {/* 左上角菱形装饰 */}
+            <div 
+              style={{
+                position: 'absolute',
+                top: '-1px',
+                left: '-1px',
+                width: '12px',
+                height: '12px',
+                background: '#ffffff',
+                clipPath: 'polygon(0 0, 100% 0, 0 100%)',
+              }}
+            />
+            
+            {/* 右下角菱形装饰 */}
+            <div 
+              style={{
+                position: 'absolute',
+                bottom: '-1px',
+                right: '-1px',
+                width: '12px',
+                height: '12px',
+                background: '#ffffff',
+                clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+              }}
+            />
+            
+            {lang === 'zh' ? '搜索天体' : 'SEARCH'}
+          </button>
+        </div>
+      )}
+
+      {/* 搜索框容器（展开状态） */}
+      {state.isOpen && (
+        <div 
+          style={{ 
+            pointerEvents: 'auto',
+            position: 'fixed',
+            top: 'calc(2rem + 50px)',
+            right: 'calc(2rem + 240px)',
+            width: '42rem',
+            zIndex: 1001,
+          }}
+        >
+          <SearchBox
+            value={state.query}
+            onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            onClear={handleClear}
+            placeholder={lang === 'zh' ? '搜索天体（Ctrl+K 或 /）' : 'Search celestial objects (Ctrl+K or /)'}
+            isFocused={state.isOpen}
+          />
+        </div>
+      )}
 
       {/* 建议列表（包括空状态） */}
       {state.isOpen && state.query.trim() && (
-        <div style={{ pointerEvents: 'auto' }}>
+        <div 
+          style={{ 
+            pointerEvents: 'auto',
+            position: 'fixed',
+            top: 'calc(2rem + 110px)',
+            right: 'calc(2rem + 240px)',
+            width: '42rem',
+            zIndex: 1001,
+          }}
+        >
           <SuggestionList
             suggestions={state.suggestions}
             selectedIndex={state.selectedIndex}

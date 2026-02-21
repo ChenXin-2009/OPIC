@@ -27,7 +27,7 @@ export const satelliteConfig: SatelliteConfig = {
     // 支持最多100,000颗卫星
     maxSatellites: 100000,
     // 默认点大小（像素）
-    pointSize: 4,
+    pointSize: 5,
     // 透明度
     opacity: 1,
     // LOD距离阈值(单位:1000km)

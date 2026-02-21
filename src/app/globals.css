@@ -241,3 +241,40 @@ input[type="date"].date-input-white::-webkit-clear-button {
     opacity: 0;
   }
 }
+
+/* 卫星菜单滑入动画 */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 明日方舟风格滚动条 - 卫星菜单 */
+.satellite-menu-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.satellite-menu-scrollbar::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-left: 1px solid #333333;
+}
+
+.satellite-menu-scrollbar::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-left: 2px solid #1a1a1a;
+}
+
+.satellite-menu-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ffffff;
+}
+
+/* Firefox 滚动条样式 */
+.satellite-menu-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #333333 #1a1a1a;
+}
