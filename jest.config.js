@@ -2,7 +2,7 @@
 const config = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  roots: ['<rootDir>/src'],
+  roots: ['<rootDir>/src', '<rootDir>/test'],
   testPathIgnorePatterns: ['<rootDir>/src/__tests__/setup.ts'],
   testMatch: [
     '**/__tests__/**/*.ts',

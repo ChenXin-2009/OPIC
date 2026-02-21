@@ -5,6 +5,7 @@ import { useState } from "react";
 import SolarSystemCanvas3D from "@/components/canvas/3d/SolarSystemCanvas3D";
 import TimeControl from "@/components/TimeControl";
 import InfoModal from "@/components/InfoModal";
+import { SatelliteVisualization } from "@/components/satellite";
 import { HEADER_CONFIG } from "@/lib/config/visualConfig";
 
 /**
@@ -101,6 +102,17 @@ export default function SolarSystemPage() {
     >
       <InfoButton onClick={() => setIsInfoModalOpen(true)} />
       <InfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} />
+      
+      {/* 卫星可视化UI组件 */}
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        zIndex: 9999,
+        pointerEvents: 'auto'
+      }}>
+        <SatelliteVisualization lang="zh" />
+      </div>
       
       {/* 主容器，漂浮模式下不需要留出Header高度空间 */}
       <div 

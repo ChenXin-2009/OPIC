@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 5.4.3: 修bug"
+git commit -m "Release 6.0.0: 添加地球人造卫星系统"
 git checkout main
 git pull origin main
-git tag v5.4.3
+git tag v6.0.0
 git push origin main
-git push origin v5.4.3
+git push origin v6.0.0

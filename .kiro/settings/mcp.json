@@ -14,7 +14,8 @@
         "playwright_evaluate",
         "playwright_console_logs",
         "playwright_get_visible_text",
-        "playwright_get_visible_html"
+        "playwright_get_visible_html",
+        "playwright_close"
       ]
     }
   }

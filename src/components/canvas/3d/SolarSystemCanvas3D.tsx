@@ -46,6 +46,7 @@ import { LocalGroupRenderer } from '@/lib/3d/LocalGroupRenderer';
 import { NearbyGroupsRenderer } from '@/lib/3d/NearbyGroupsRenderer';
 import { VirgoSuperclusterRenderer } from '@/lib/3d/VirgoSuperclusterRenderer';
 import { LaniakeaSuperclusterRenderer } from '@/lib/3d/LaniakeaSuperclusterRenderer';
+import { SatelliteLayer } from '@/lib/3d/SatelliteLayer';
 import { UniverseScale } from '@/lib/types/universeTypes';
 import type { LocalGroupGalaxy, GalaxyGroup, SimpleGalaxy, GalaxyCluster, Supercluster } from '@/lib/types/universeTypes';
 
@@ -228,6 +229,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
   const raycasterRef = useRef<Raycaster | null>(null);
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const satelliteLayerRef = useRef<SatelliteLayer | null>(null);
   
   // 标签重叠检测节流：每3帧执行一次（约20fps），减少CPU占用
   const labelUpdateFrameCounterRef = useRef<number>(0);
@@ -309,6 +311,11 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
       initializeUniverseRenderers(sceneManager).catch(error => {
         console.error('Failed to initialize universe renderers:', error);
       });
+
+      // 创建卫星图层
+      const satelliteLayer = new SatelliteLayer(sceneManager);
+      satelliteLayerRef.current = satelliteLayer;
+      console.log('SatelliteLayer initialized');
 
       const scene = sceneManager.getScene();
       const camera = sceneManager.getCamera();
@@ -1076,6 +1083,11 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
           sceneManagerRef.current.updateMultiScaleView(distanceToSun, deltaTime);
         }
 
+        // 更新卫星图层
+        if (satelliteLayerRef.current) {
+          satelliteLayerRef.current.update();
+        }
+
         // 通知父组件相机距离变化
         if (onCameraDistanceChange) {
           onCameraDistanceChange(distanceToSun);
@@ -1396,6 +1408,13 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
           containerRef.current.removeChild(labelRendererRef.current.domElement);
         }
         labelRendererRef.current = null;
+        
+        // 清理卫星图层
+        if (satelliteLayerRef.current) {
+          satelliteLayerRef.current.dispose();
+          satelliteLayerRef.current = null;
+        }
+        
         if (cameraControllerRef.current) {
           cameraControllerRef.current.dispose();
         }

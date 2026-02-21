@@ -17,3 +17,25 @@ export {
   equatorialToEcliptic,
   calculateRotationAxis
 } from './celestialTypes';
+
+// Satellite types
+export type {
+  TLEData,
+  SatelliteState,
+  OrbitalElements,
+  SatelliteAPIResponse,
+  APIError,
+  ECIPosition,
+  ECIVelocity,
+  PropagationResult,
+  RenderConfig,
+  OrbitTrajectory,
+  SatelliteConfig,
+  WorkerMessage,
+  WorkerResponse
+} from './satellite';
+
+export {
+  OrbitType,
+  SatelliteCategory
+} from './satellite';
