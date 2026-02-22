@@ -16,8 +16,15 @@ import * as path from 'path';
 import * as https from 'https';
 import { parse } from 'csv-parse/sync';
 
-// UCS数据库URL
-const UCS_DATA_URL = 'https://raw.githubusercontent.com/planet4589/space-track-notebook/master/data/UCS-Satellite-Database-1-1-2023.txt';
+// UCS数据库URL - 使用多个备用源
+const UCS_DATA_URLS = [
+  // 备用源1: 直接从UCS网站下载(需要检查最新URL)
+  'https://www.ucsusa.org/media/11492/download',
+  // 备用源2: GitHub镜像
+  'https://raw.githubusercontent.com/planet4589/space-track-notebook/master/data/UCS-Satellite-Database-5-1-2023.txt',
+  // 备用源3: 旧版本作为fallback
+  'https://raw.githubusercontent.com/planet4589/space-track-notebook/master/data/UCS-Satellite-Database-1-1-2023.txt',
+];
 
 // 更新间隔: 30天
 const UPDATE_INTERVAL = 30 * 24 * 60 * 60 * 1000;
@@ -61,19 +68,38 @@ let lastUpdateCheck = 0;
 // ============ 辅助函数 ============
 
 /**
- * 下载UCS数据
+ * 下载UCS数据(支持多个备用源)
  */
 async function downloadUCSData(): Promise<string> {
+  let lastError: Error | null = null;
+  
+  // 尝试所有备用源
+  for (const url of UCS_DATA_URLS) {
+    try {
+      console.log(`[Metadata API] 尝试下载: ${url}`);
+      const data = await downloadFromURL(url);
+      console.log(`[Metadata API] 下载成功: ${url}`);
+      return data;
+    } catch (error) {
+      console.warn(`[Metadata API] 下载失败: ${url}`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
+  }
+  
+  // 所有源都失败
+  throw lastError || new Error('所有数据源均不可用');
+}
+
+/**
+ * 从单个URL下载文件
+ */
+function downloadFromURL(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    https.get(UCS_DATA_URL, (response) => {
+    https.get(url, (response) => {
       if (response.statusCode === 302 || response.statusCode === 301) {
         const redirectUrl = response.headers.location;
         if (redirectUrl) {
-          https.get(redirectUrl, (redirectResponse) => {
-            let data = '';
-            redirectResponse.on('data', (chunk) => { data += chunk; });
-            redirectResponse.on('end', () => resolve(data));
-          }).on('error', reject);
+          downloadFromURL(redirectUrl).then(resolve).catch(reject);
           return;
         }
       }
@@ -202,7 +228,23 @@ async function autoUpdateMetadata(): Promise<void> {
  * 加载元数据
  */
 async function loadMetadata(): Promise<MetadataMap> {
-  // 检查内存缓存
+  // 开发环境:每次都重新读取文件
+  if (process.env.NODE_ENV === 'development') {
+    const filePath = path.join(process.cwd(), 'public', 'data', 'satellite-metadata.json');
+    
+    if (fs.existsSync(filePath)) {
+      try {
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const data = JSON.parse(fileContent) as MetadataMap;
+        console.log(`[Metadata API] 从文件加载元数据: ${Object.keys(data).length} 颗卫星`);
+        return data;
+      } catch (error) {
+        console.error('[Metadata API] 文件加载失败:', error);
+      }
+    }
+  }
+  
+  // 生产环境:检查内存缓存
   if (metadataCache && Date.now() - cacheLoadTime < CACHE_DURATION) {
     return metadataCache;
   }

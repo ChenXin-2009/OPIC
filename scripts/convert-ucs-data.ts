@@ -16,8 +16,12 @@ import * as path from 'path';
 import { parse } from 'csv-parse/sync';
 import * as https from 'https';
 
-// UCS数据库的GitHub镜像地址
-const UCS_DATA_URL = 'https://raw.githubusercontent.com/planet4589/space-track-notebook/master/data/UCS-Satellite-Database-1-1-2023.txt';
+// UCS数据库的备用地址
+const UCS_DATA_URLS = [
+  'https://www.ucsusa.org/media/11492/download',
+  'https://raw.githubusercontent.com/planet4589/space-track-notebook/master/data/UCS-Satellite-Database-5-1-2023.txt',
+  'https://raw.githubusercontent.com/planet4589/space-track-notebook/master/data/UCS-Satellite-Database-1-1-2023.txt',
+];
 
 // ============ 类型定义 ============
 
@@ -74,25 +78,47 @@ interface SatelliteMetadata {
 // ============ 下载函数 ============
 
 /**
- * 从URL下载文件
+ * 从URL下载文件(支持多个备用源)
  */
-function downloadFile(url: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    console.log(`正在下载: ${url}`);
+function downloadFile(urls: string[]): Promise<string> {
+  return new Promise(async (resolve, reject) => {
+    let lastError: Error | null = null;
     
+    for (const url of urls) {
+      try {
+        console.log(`正在尝试: ${url}`);
+        const data = await downloadFromURL(url);
+        console.log(`下载完成: ${(data.length / 1024).toFixed(2)} KB`);
+        resolve(data);
+        return;
+      } catch (error) {
+        console.warn(`下载失败: ${error instanceof Error ? error.message : error}`);
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+    }
+    
+    reject(lastError || new Error('所有数据源均不可用'));
+  });
+}
+
+/**
+ * 从单个URL下载
+ */
+function downloadFromURL(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
     https.get(url, (response) => {
       if (response.statusCode === 302 || response.statusCode === 301) {
         // 处理重定向
         const redirectUrl = response.headers.location;
         if (redirectUrl) {
           console.log(`重定向到: ${redirectUrl}`);
-          downloadFile(redirectUrl).then(resolve).catch(reject);
+          downloadFromURL(redirectUrl).then(resolve).catch(reject);
           return;
         }
       }
 
       if (response.statusCode !== 200) {
-        reject(new Error(`下载失败: HTTP ${response.statusCode}`));
+        reject(new Error(`HTTP ${response.statusCode}`));
         return;
       }
 
@@ -102,7 +128,6 @@ function downloadFile(url: string): Promise<string> {
       });
 
       response.on('end', () => {
-        console.log(`下载完成: ${(data.length / 1024).toFixed(2)} KB`);
         resolve(data);
       });
     }).on('error', (error) => {
@@ -184,7 +209,7 @@ async function main() {
   // 1. 下载CSV文件
   let csvContent: string;
   try {
-    csvContent = await downloadFile(UCS_DATA_URL);
+    csvContent = await downloadFile(UCS_DATA_URLS);
   } catch (error) {
     console.error('下载失败:', error);
     console.error('\n备选方案: 手动下载UCS数据库');

@@ -1,6 +1,19 @@
 /**
  * SatelliteRenderer.ts - 卫星点云渲染器
  * 
+ * ⚠️ 重要: 坐标系统单位说明
+ * 
+ * 本项目使用天文单位(AU)作为场景坐标系统:
+ * - 1 AU ≈ 1.496亿公里 (地球到太阳的平均距离)
+ * - 地球轨道半径 ≈ 1 AU
+ * - 地球半径 ≈ 0.0000426 AU (约6371公里)
+ * - 卫星距地球 ≈ 0.00001-0.0003 AU (约1500-45000公里)
+ * 
+ * 这种极小的坐标值会影响Three.js的某些参数设置,特别是:
+ * - Points.threshold: 必须使用极小值(0.0000001)才能精确点击检测
+ * - 包围球计算: 需要特别注意精度问题
+ * - 相机near/far平面: 需要适配AU单位的距离范围
+ * 
  * 功能：
  * - 使用Three.js Points对象渲染大量卫星(最多100,000颗)
  * - 根据轨道类型使用不同颜色编码(LEO蓝色、MEO绿色、GEO红色、其他白色)
@@ -232,10 +245,15 @@ export class SatelliteRenderer {
       // 更新颜色(根据轨道类型和悬停状态)
       let color = this.getColorByOrbitType(sat.orbitType);
       
-      // 如果是悬停的卫星,使用高亮颜色(亮黄色)
+      // 如果是悬停的卫星,使用高亮颜色(明亮的黄色)
       // 注意:悬停状态优先级高于轨道类型颜色
       if (this.hoveredSatellite === sat.noradId) {
-        color = new THREE.Color(1.0, 1.0, 0.5); // 亮黄色高亮
+        color = new THREE.Color(1.0, 0.9, 0.0); // 明亮的黄色高亮,更显眼
+      }
+      
+      // 如果是选中的卫星,使用更明亮的高亮色
+      if (this.selectedSatellite === sat.noradId) {
+        color = new THREE.Color(1.0, 0.5, 0.0); // 橙色高亮,表示选中状态
       }
       
       this.colorBuffer[index * 3] = color.r;
@@ -244,6 +262,13 @@ export class SatelliteRenderer {
       
       index++;
     });
+    
+    // 动态调整点大小(如果有高亮的卫星)
+    if (this.hoveredSatellite !== null || this.selectedSatellite !== null) {
+      this.material.size = satelliteConfig.rendering.pointSize * 3.0;
+    } else {
+      this.material.size = satelliteConfig.rendering.pointSize;
+    }
     
     // 设置实际绘制的点数量
     this.geometry.setDrawRange(0, index);
@@ -375,11 +400,38 @@ export class SatelliteRenderer {
    * }
    * ```
    */
+  /**
+   * 射线投射检测点击的卫星
+   * 
+   * ⚠️ 重要: 坐标系统单位问题
+   * 
+   * 本项目使用天文单位(AU)作为场景坐标系统:
+   * - 1 AU ≈ 1.496亿公里
+   * - 地球轨道半径 ≈ 1 AU
+   * - 地球半径 ≈ 0.0000426 AU
+   * - 卫星距地球 ≈ 0.00001-0.0003 AU
+   * 
+   * Three.js的Points.threshold参数虽然文档说是"屏幕像素",
+   * 但在实际使用中会受到场景坐标系统的影响。
+   * 
+   * 由于场景使用AU单位,threshold必须设置为极小的值(如0.0000001)
+   * 才能实现精确的点击检测。如果使用常规的像素值(如5-15),
+   * 会导致整个屏幕都能触发同一个卫星的点击。
+   * 
+   * 调试建议:
+   * - 如果点击范围太大: 减小threshold值(如0.00000001)
+   * - 如果点击太难: 增大threshold值(如0.000001)
+   * - 合理范围: 0.0000001 - 0.000001
+   * 
+   * @param raycaster - Three.js射线投射器
+   * @param cameraDistance - 相机距离(可选,当前未使用)
+   * @returns 被点击的卫星NORAD ID,如果没有点击到卫星则返回null
+   */
   raycast(raycaster: THREE.Raycaster, cameraDistance?: number): number | null {
-    // 设置射线投射器的点阈值(屏幕空间像素)
-    // Three.js的Points阈值单位是像素,不是世界坐标
+    // 设置射线投射器的点阈值
+    // ⚠️ 关键: 由于场景使用AU单位,此值必须极小(0.0000001)
     raycaster.params.Points = raycaster.params.Points || {};
-    raycaster.params.Points.threshold = 0.0000001; // 极小的点击容差,只检测非常接近的点
+    raycaster.params.Points.threshold = 0.0000005; // AU单位的点击容差
     
     const intersects = raycaster.intersectObject(this.pointCloud);
     
@@ -603,6 +655,13 @@ export class SatelliteRenderer {
           
           index++;
         });
+        
+        // 动态调整点大小
+        if (this.hoveredSatellite !== null || this.selectedSatellite !== null) {
+          this.material.size = satelliteConfig.rendering.pointSize * 3.0;
+        } else {
+          this.material.size = satelliteConfig.rendering.pointSize;
+        }
         
         // 标记颜色缓冲区需要更新
         this.geometry.attributes.color.needsUpdate = true;

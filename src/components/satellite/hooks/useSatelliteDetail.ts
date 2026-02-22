@@ -1,6 +1,133 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSatelliteStore } from '@/lib/store/useSatelliteStore';
-import { TLEData, SatelliteDetailData } from '@/lib/types/satellite';
+import { TLEData, SatelliteDetailData, SatelliteCategory } from '@/lib/types/satellite';
+
+/**
+ * 从TLE数据生成详情
+ */
+function generateDetailsFromTLE(noradId: number, tleData: TLEData): SatelliteDetailData {
+  const { name, line1, line2, category } = tleData;
+  
+  // 从TLE解析基本信息
+  const cosparId = line1.substring(9, 17).trim();
+  const launchYear = parseInt(line1.substring(9, 11), 10);
+  const fullLaunchYear = launchYear < 57 ? 2000 + launchYear : 1900 + launchYear;
+  
+  // 从TLE2解析轨道参数
+  const inclination = parseFloat(line2.substring(8, 16).trim());
+  const raan = parseFloat(line2.substring(17, 25).trim());
+  const eccentricity = parseFloat('0.' + line2.substring(26, 33).trim());
+  const argOfPerigee = parseFloat(line2.substring(34, 42).trim());
+  const meanAnomaly = parseFloat(line2.substring(43, 51).trim());
+  const meanMotion = parseFloat(line2.substring(52, 63).trim());
+  
+  // 计算轨道周期（分钟）
+  const period = 1440 / meanMotion;
+  
+  // 估算半长轴
+  const mu = 398600.4418; // km³/s²
+  const periodSeconds = period * 60;
+  const semiMajorAxis = Math.pow((mu * periodSeconds * periodSeconds) / (4 * Math.PI * Math.PI), 1/3);
+  
+  // 计算近地点和远地点高度
+  const earthRadius = 6371; // km
+  const perigee = semiMajorAxis * (1 - eccentricity) - earthRadius;
+  const apogee = semiMajorAxis * (1 + eccentricity) - earthRadius;
+
+  return {
+    noradId,
+    basicInfo: {
+      name,
+      noradId,
+      cosparId: cosparId || undefined,
+      category,
+    },
+    orbitalParameters: {
+      semiMajorAxis,
+      eccentricity,
+      inclination,
+      raan,
+      argumentOfPerigee: argOfPerigee,
+      meanAnomaly,
+      period,
+      apogee,
+      perigee,
+    },
+    realTimeData: {
+      latitude: 0,
+      longitude: 0,
+      altitude: (perigee + apogee) / 2,
+      velocity: 0,
+      distance: 0,
+    },
+    physicalProperties: {},
+    launchInfo: {
+      launchDate: `${fullLaunchYear}`,
+    },
+    missionInfo: {
+      type: getCategoryType(category),
+      purpose: getCategoryPurpose(category),
+    },
+  };
+}
+
+/**
+ * 合并元数据
+ */
+function mergeMetadata(details: SatelliteDetailData, metadata: any): SatelliteDetailData {
+  if (!metadata) return details;
+
+  return {
+    ...details,
+    basicInfo: {
+      ...details.basicInfo,
+      country: metadata.country,
+      owner: metadata.owner,
+    },
+    physicalProperties: {
+      ...details.physicalProperties,
+      mass: metadata.launchMass,
+    },
+    launchInfo: {
+      ...details.launchInfo,
+      launchDate: metadata.launchDate || details.launchInfo?.launchDate,
+      launchSite: metadata.launchSite,
+      launchVehicle: metadata.launchVehicle,
+    },
+    missionInfo: {
+      ...details.missionInfo,
+      operator: metadata.operator,
+      purpose: metadata.purpose || details.missionInfo?.purpose,
+      expectedLifetime: metadata.expectedLifetime,
+    },
+  };
+}
+
+function getCategoryType(category: SatelliteCategory): string {
+  const typeMap: Partial<Record<SatelliteCategory, string>> = {
+    [SatelliteCategory.ACTIVE]: 'Active Satellite',
+    [SatelliteCategory.GPS]: 'Navigation',
+    [SatelliteCategory.COMMUNICATION]: 'Communication',
+    [SatelliteCategory.WEATHER]: 'Weather Observation',
+    [SatelliteCategory.ISS]: 'Space Station',
+    [SatelliteCategory.SCIENCE]: 'Scientific Research',
+    [SatelliteCategory.OTHER]: 'Other',
+  };
+  return typeMap[category] || 'Unknown';
+}
+
+function getCategoryPurpose(category: SatelliteCategory): string {
+  const purposeMap: Partial<Record<SatelliteCategory, string>> = {
+    [SatelliteCategory.ACTIVE]: 'General satellite operations',
+    [SatelliteCategory.GPS]: 'Global positioning and navigation',
+    [SatelliteCategory.COMMUNICATION]: 'Communication and broadcasting',
+    [SatelliteCategory.WEATHER]: 'Weather monitoring and forecasting',
+    [SatelliteCategory.ISS]: 'International Space Station',
+    [SatelliteCategory.SCIENCE]: 'Scientific research',
+    [SatelliteCategory.OTHER]: 'Various purposes',
+  };
+  return purposeMap[category] || 'Unknown purpose';
+}
 
 /**
  * useSatelliteDetail Hook返回值
@@ -62,33 +189,35 @@ export function useSatelliteDetail(noradId: number | null): UseSatelliteDetailRe
     try {
       console.log(`[useSatelliteDetail] 加载详情数据: NORAD ID=${id}`);
 
-      const response = await fetch(`/api/satellites/${id}/details`, {
+      // 优化: 直接从store获取TLE数据,不需要通过API查询
+      const satelliteState = useSatelliteStore.getState().satellites.get(id);
+      const storeTleData = useSatelliteStore.getState().tleData.get(id);
+      
+      if (!storeTleData) {
+        throw new Error('卫星TLE数据不存在');
+      }
+
+      // 从TLE生成基本详情
+      const generatedDetails = generateDetailsFromTLE(id, storeTleData);
+
+      // 并行获取元数据
+      const metadataPromise = fetch(`/api/satellites/metadata?noradId=${id}`, {
         signal: controller.signal,
-      });
+      }).then(res => res.ok ? res.json() : null).catch(() => null);
 
-      // 检查请求是否被取消
-      if (controller.signal.aborted) {
-        console.log(`[useSatelliteDetail] 请求已取消: NORAD ID=${id}`);
-        return;
-      }
+      const metadata = await metadataPromise;
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('卫星详情不存在');
-        }
-        throw new Error(`加载失败: ${response.status} ${response.statusText}`);
-      }
-
-      const data: SatelliteDetailData = await response.json();
-
-      // 再次检查是否被取消
+      // 检查是否被取消
       if (controller.signal.aborted) {
         return;
       }
 
-      console.log(`[useSatelliteDetail] 成功加载详情数据: ${data.basicInfo?.name}`);
+      // 合并元数据
+      const detailData = mergeMetadata(generatedDetails, metadata);
 
-      setDetailData(data);
+      console.log(`[useSatelliteDetail] 成功加载详情数据: ${detailData.basicInfo?.name}`);
+
+      setDetailData(detailData);
       setLoading(false);
     } catch (err) {
       // 忽略取消错误

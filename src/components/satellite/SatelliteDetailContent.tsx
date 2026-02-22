@@ -14,49 +14,126 @@ interface SatelliteDetailContentProps {
 }
 
 /**
- * 国家代码到国旗emoji的映射
+ * 国家到ISO代码的映射
  */
-const countryFlags: Record<string, string> = {
-  'US': '🇺🇸',
-  'USA': '🇺🇸',
-  'United States': '🇺🇸',
-  'Russia': '🇷🇺',
-  'RU': '🇷🇺',
-  'China': '🇨🇳',
-  'CN': '🇨🇳',
-  'Japan': '🇯🇵',
-  'JP': '🇯🇵',
-  'India': '🇮🇳',
-  'IN': '🇮🇳',
-  'UK': '🇬🇧',
-  'United Kingdom': '🇬🇧',
-  'France': '🇫🇷',
-  'FR': '🇫🇷',
-  'Germany': '🇩🇪',
-  'DE': '🇩🇪',
-  'Canada': '🇨🇦',
-  'CA': '🇨🇦',
-  'Italy': '🇮🇹',
-  'IT': '🇮🇹',
-  'Spain': '🇪🇸',
-  'ES': '🇪🇸',
-  'International': '🌍',
-  'ESA': '🇪🇺',
-  'Unknown': '🏳️',
+const countryToISO: Record<string, string> = {
+  // 主要国家
+  'US': 'us',
+  'USA': 'us',
+  'United States': 'us',
+  'Russia': 'ru',
+  'RU': 'ru',
+  'China': 'cn',
+  'CN': 'cn',
+  'Japan': 'jp',
+  'JP': 'jp',
+  'India': 'in',
+  'IN': 'in',
+  'United Kingdom': 'gb',
+  'UK': 'gb',
+  'France': 'fr',
+  'FR': 'fr',
+  'Germany': 'de',
+  'DE': 'de',
+  'Canada': 'ca',
+  'CA': 'ca',
+  'Italy': 'it',
+  'IT': 'it',
+  'Spain': 'es',
+  'ES': 'es',
+  
+  // 其他国家
+  'Luxembourg': 'lu',
+  'Uruguay': 'uy',
+  'Finland': 'fi',
+  'Australia': 'au',
+  'Brazil': 'br',
+  'South Korea': 'kr',
+  'United Arab Emirates': 'ae',
+  'Saudi Arabia': 'sa',
+  'Norway': 'no',
+  'Mexico': 'mx',
+  'Algeria': 'dz',
+  'Argentina': 'ar',
+  'Austria': 'at',
+  'Belgium': 'be',
+  'Chile': 'cl',
+  'Colombia': 'co',
+  'Czech Republic': 'cz',
+  'Denmark': 'dk',
+  'Egypt': 'eg',
+  'Greece': 'gr',
+  'Hungary': 'hu',
+  'Indonesia': 'id',
+  'Iran': 'ir',
+  'Iraq': 'iq',
+  'Ireland': 'ie',
+  'Israel': 'il',
+  'Kazakhstan': 'kz',
+  'Malaysia': 'my',
+  'Netherlands': 'nl',
+  'New Zealand': 'nz',
+  'Nigeria': 'ng',
+  'Pakistan': 'pk',
+  'Peru': 'pe',
+  'Philippines': 'ph',
+  'Poland': 'pl',
+  'Portugal': 'pt',
+  'Qatar': 'qa',
+  'Romania': 'ro',
+  'Singapore': 'sg',
+  'South Africa': 'za',
+  'Sweden': 'se',
+  'Switzerland': 'ch',
+  'Taiwan': 'tw',
+  'Thailand': 'th',
+  'Turkey': 'tr',
+  'Ukraine': 'ua',
+  'Venezuela': 've',
+  'Vietnam': 'vn',
+  
+  // 国际组织
+  'International': 'un',
+  'Multinational': 'un',
+  'ESA': 'eu',
+  'EUMETSAT': 'eu',
+  'European Space Agency': 'eu',
 };
 
 /**
- * 获取国旗emoji
+ * 获取国旗组件
  */
-function getCountryFlag(country: string | undefined): string {
-  if (!country) return '';
-  return countryFlags[country] || '🏳️';
+function getCountryFlag(country: string | undefined): React.ReactNode {
+  if (!country) return null;
+  
+  // 处理"NR (日期)"格式的未注册国家
+  if (country.startsWith('NR')) {
+    return <span className="text-gray-500 text-xs">未注册</span>;
+  }
+  
+  const isoCode = countryToISO[country];
+  if (!isoCode) {
+    return <span className="text-gray-500 text-xs">{country.substring(0, 2).toUpperCase()}</span>;
+  }
+  
+  // 使用CSS方式显示国旗
+  return (
+    <span 
+      className="inline-block w-6 h-4 rounded-sm overflow-hidden"
+      style={{
+        backgroundImage: `url(https://flagcdn.com/w40/${isoCode}.png)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+      title={country}
+    />
+  );
 }
 
 /**
  * 数据行组件 - 使用memo优化
  */
-const DataRow = memo(({ label, value }: { label: string; value: string | number }) => {
+const DataRow = memo(({ label, value }: { label: string; value: string | number | React.ReactNode }) => {
   return (
     <div className="flex justify-between items-center text-sm py-1.5 border-b border-white/5">
       <span className="text-gray-400">{label}</span>
@@ -162,8 +239,11 @@ function SatelliteDetailContent({ data, lang = 'zh' }: SatelliteDetailContentPro
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-1 h-8 bg-white/80" />
-          <h2 className="text-2xl font-light text-white tracking-wider">
+          <h2 className="text-2xl font-light text-white tracking-wider flex items-center gap-2">
             {data.basicInfo?.name || 'Unknown Satellite'}
+            {data.basicInfo?.country && (
+              <span className="ml-2">{getCountryFlag(data.basicInfo.country)}</span>
+            )}
           </h2>
         </div>
         {data.basicInfo?.category && (
@@ -181,18 +261,25 @@ function SatelliteDetailContent({ data, lang = 'zh' }: SatelliteDetailContentPro
           <SectionTitle>{t.basicInfo}</SectionTitle>
           <div className="space-y-0">
             <DataRow label="NORAD ID" value={data.basicInfo.noradId} />
-            {data.basicInfo.cosparId && (
-              <DataRow label={lang === 'zh' ? '国际编号' : 'COSPAR ID'} value={data.basicInfo.cosparId} />
-            )}
-            {data.basicInfo.country && (
-              <DataRow 
-                label={lang === 'zh' ? '所属国家' : 'Country'} 
-                value={`${getCountryFlag(data.basicInfo.country)} ${data.basicInfo.country}`} 
-              />
-            )}
-            {data.basicInfo.owner && (
-              <DataRow label={lang === 'zh' ? '所有者' : 'Owner'} value={data.basicInfo.owner} />
-            )}
+            <DataRow 
+              label={lang === 'zh' ? '国际编号' : 'COSPAR ID'} 
+              value={data.basicInfo.cosparId || (lang === 'zh' ? '未知' : 'Unknown')} 
+            />
+            <DataRow 
+              label={lang === 'zh' ? '所属国家' : 'Country'} 
+              value={
+                data.basicInfo.country ? (
+                  <span className="flex items-center gap-2">
+                    {getCountryFlag(data.basicInfo.country)}
+                    <span>{data.basicInfo.country}</span>
+                  </span>
+                ) : (lang === 'zh' ? '未知' : 'Unknown')
+              } 
+            />
+            <DataRow 
+              label={lang === 'zh' ? '所有者' : 'Owner'} 
+              value={data.basicInfo.owner || (lang === 'zh' ? '未知' : 'Unknown')} 
+            />
           </div>
         </section>
       )}
@@ -276,27 +363,18 @@ function SatelliteDetailContent({ data, lang = 'zh' }: SatelliteDetailContentPro
         <section className="relative pl-4 border-l border-white/15">
           <SectionTitle>{t.physicalProps}</SectionTitle>
           <div className="space-y-0">
-            {data.physicalProperties.rcs !== undefined && (
-              <DataRow 
-                label={lang === 'zh' ? '雷达截面积' : 'RCS'} 
-                value={`${data.physicalProperties.rcs.toFixed(2)} m²`} 
-              />
-            )}
-            {data.physicalProperties.mass !== undefined && (
-              <DataRow 
-                label={lang === 'zh' ? '质量' : 'Mass'} 
-                value={`${data.physicalProperties.mass.toFixed(2)} kg`} 
-              />
-            )}
-            {data.physicalProperties.size && (
-              <DataRow 
-                label={lang === 'zh' ? '尺寸' : 'Size'} 
-                value={data.physicalProperties.size} 
-              />
-            )}
-            {!data.physicalProperties.rcs && !data.physicalProperties.mass && !data.physicalProperties.size && (
-              <p className="text-sm text-gray-500">{t.notAvailable}</p>
-            )}
+            <DataRow 
+              label={lang === 'zh' ? '雷达截面积' : 'RCS'} 
+              value={data.physicalProperties.rcs !== undefined ? `${data.physicalProperties.rcs.toFixed(2)} m²` : (lang === 'zh' ? '未知' : 'Unknown')} 
+            />
+            <DataRow 
+              label={lang === 'zh' ? '质量' : 'Mass'} 
+              value={data.physicalProperties.mass !== undefined ? `${data.physicalProperties.mass.toFixed(2)} kg` : (lang === 'zh' ? '未知' : 'Unknown')} 
+            />
+            <DataRow 
+              label={lang === 'zh' ? '尺寸' : 'Size'} 
+              value={data.physicalProperties.size || (lang === 'zh' ? '未知' : 'Unknown')} 
+            />
           </div>
         </section>
       )}
@@ -306,27 +384,18 @@ function SatelliteDetailContent({ data, lang = 'zh' }: SatelliteDetailContentPro
         <section className="relative pl-4 border-l border-white/15">
           <SectionTitle>{t.launchInfo}</SectionTitle>
           <div className="space-y-0">
-            {data.launchInfo.launchDate && (
-              <DataRow 
-                label={lang === 'zh' ? '发射日期' : 'Launch Date'} 
-                value={data.launchInfo.launchDate} 
-              />
-            )}
-            {data.launchInfo.launchSite && (
-              <DataRow 
-                label={lang === 'zh' ? '发射场' : 'Launch Site'} 
-                value={data.launchInfo.launchSite} 
-              />
-            )}
-            {data.launchInfo.launchVehicle && (
-              <DataRow 
-                label={lang === 'zh' ? '运载火箭' : 'Launch Vehicle'} 
-                value={data.launchInfo.launchVehicle} 
-              />
-            )}
-            {!data.launchInfo.launchDate && !data.launchInfo.launchSite && !data.launchInfo.launchVehicle && (
-              <p className="text-sm text-gray-500">{t.notAvailable}</p>
-            )}
+            <DataRow 
+              label={lang === 'zh' ? '发射日期' : 'Launch Date'} 
+              value={data.launchInfo.launchDate || (lang === 'zh' ? '未知' : 'Unknown')} 
+            />
+            <DataRow 
+              label={lang === 'zh' ? '发射场' : 'Launch Site'} 
+              value={data.launchInfo.launchSite || (lang === 'zh' ? '未知' : 'Unknown')} 
+            />
+            <DataRow 
+              label={lang === 'zh' ? '运载火箭' : 'Launch Vehicle'} 
+              value={data.launchInfo.launchVehicle || (lang === 'zh' ? '未知' : 'Unknown')} 
+            />
           </div>
         </section>
       )}
@@ -336,32 +405,23 @@ function SatelliteDetailContent({ data, lang = 'zh' }: SatelliteDetailContentPro
         <section className="relative pl-4 border-l border-white/15">
           <SectionTitle>{t.missionInfo}</SectionTitle>
           <div className="space-y-0">
-            {data.missionInfo.type && (
-              <DataRow 
-                label={lang === 'zh' ? '卫星类型' : 'Type'} 
-                value={data.missionInfo.type} 
-              />
-            )}
-            {data.missionInfo.operator && (
-              <DataRow 
-                label={lang === 'zh' ? '操作者' : 'Operator'} 
-                value={data.missionInfo.operator} 
-              />
-            )}
-            {data.missionInfo.expectedLifetime && (
-              <DataRow 
-                label={lang === 'zh' ? '预期寿命' : 'Expected Lifetime'} 
-                value={data.missionInfo.expectedLifetime} 
-              />
-            )}
+            <DataRow 
+              label={lang === 'zh' ? '卫星类型' : 'Type'} 
+              value={data.missionInfo.type || (lang === 'zh' ? '未知' : 'Unknown')} 
+            />
+            <DataRow 
+              label={lang === 'zh' ? '操作者' : 'Operator'} 
+              value={data.missionInfo.operator || (lang === 'zh' ? '未知' : 'Unknown')} 
+            />
+            <DataRow 
+              label={lang === 'zh' ? '预期寿命' : 'Expected Lifetime'} 
+              value={data.missionInfo.expectedLifetime || (lang === 'zh' ? '未知' : 'Unknown')} 
+            />
             {data.missionInfo.purpose && (
               <div className="mt-3 pt-3 border-t border-white/5">
                 <p className="text-xs text-gray-400 mb-1">{lang === 'zh' ? '任务描述' : 'Purpose'}</p>
                 <p className="text-sm text-white/70 leading-relaxed">{data.missionInfo.purpose}</p>
               </div>
-            )}
-            {!data.missionInfo.type && !data.missionInfo.operator && !data.missionInfo.expectedLifetime && !data.missionInfo.purpose && (
-              <p className="text-sm text-gray-500">{t.notAvailable}</p>
             )}
           </div>
         </section>

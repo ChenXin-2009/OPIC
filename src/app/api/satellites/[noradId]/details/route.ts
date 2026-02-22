@@ -261,30 +261,43 @@ export async function GET(
     console.log(`[API] 获取卫星详情: NORAD ID=${noradId}`);
 
     // 2. 从主卫星API获取TLE数据
-    // 注意：我们需要从Celestrak API获取TLE数据
+    // 优化: 使用并行请求而不是串行,并设置合理的超时
     let tleData;
     try {
-      // 尝试从多个类别获取TLE数据
       const categories = ['active', 'stations', 'gps-ops', 'geo', 'weather', 'science'];
       
-      for (const category of categories) {
-        const tleResponse = await fetch(
-          `${request.nextUrl.origin}/api/satellites?category=${category}`,
-          { 
-            cache: 'no-store',
-            signal: AbortSignal.timeout(5000),
-          }
-        );
-        
-        if (tleResponse.ok) {
-          const tleResult = await tleResponse.json();
-          tleData = tleResult.satellites?.find((sat: any) => sat.noradId === noradId);
+      // 并行请求所有类别,取第一个成功的
+      const requests = categories.map(async (category) => {
+        try {
+          const tleResponse = await fetch(
+            `${request.nextUrl.origin}/api/satellites?category=${category}`,
+            { 
+              cache: 'default', // 使用缓存
+              signal: AbortSignal.timeout(3000),
+            }
+          );
           
-          if (tleData) {
-            console.log(`[API] 找到卫星数据: ${tleData.name} (类别: ${category})`);
-            break;
+          if (tleResponse.ok) {
+            const tleResult = await tleResponse.json();
+            const found = tleResult.satellites?.find((sat: any) => sat.noradId === noradId);
+            if (found) {
+              return { found, category };
+            }
           }
+        } catch (err) {
+          // 忽略单个请求的错误
+          return null;
         }
+        return null;
+      });
+      
+      // 等待第一个成功的结果
+      const results = await Promise.all(requests);
+      const successResult = results.find(r => r !== null);
+      
+      if (successResult) {
+        tleData = successResult.found;
+        console.log(`[API] 找到卫星数据: ${tleData.name} (类别: ${successResult.category})`);
       }
     } catch (err) {
       console.warn('[API] 无法获取TLE数据:', err);
@@ -337,7 +350,15 @@ export async function GET(
       if (metadata.operator) generatedDetails.missionInfo!.operator = metadata.operator;
       if (metadata.purpose) generatedDetails.missionInfo!.purpose = metadata.purpose;
       if (metadata.expectedLifetime) {
-        generatedDetails.missionInfo!.expectedLifetime = `${metadata.expectedLifetime} years`;
+        generatedDetails.missionInfo!.expectedLifetime = metadata.expectedLifetime;
+      }
+    } else {
+      // 如果没有metadata,尝试从COSPAR ID推断发射年份
+      const cosparId = generatedDetails.basicInfo.cosparId;
+      if (cosparId && cosparId.length >= 2) {
+        const year = parseInt(cosparId.substring(0, 2), 10);
+        const fullYear = year < 57 ? 2000 + year : 1900 + year;
+        generatedDetails.launchInfo!.launchDate = `${fullYear}`;
       }
     }
 

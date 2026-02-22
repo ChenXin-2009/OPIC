@@ -1292,7 +1292,14 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
         const currentBodies = useSolarSystemStore.getState().celestialBodies;
         
         // 检测卫星点击(仅在地球视角下启用)
-        // 计算相机到地球的距离,而不是到太阳的距离
+        // 
+        // ⚠️ 重要: 距离计算必须使用相机到地球的距离
+        // 
+        // 错误做法: camera.position.length() - 这是相机到太阳的距离,约1AU
+        // 正确做法: camera.position.distanceTo(earthPosition) - 相机到地球的距离
+        // 
+        // 当聚焦到地球时,相机距离地球很近(约0.0002 AU),但距离太阳仍是1AU。
+        // 如果使用到太阳的距离判断,会导致永远无法进入地球视角模式。
         const earthBody = currentBodies.find((b: any) => b.name.toLowerCase() === 'earth');
         
         if (earthBody) {

@@ -158,27 +158,27 @@ function SatelliteDetailModal({ lang = 'zh' }: SatelliteDetailModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[2000] flex items-center justify-end animate-fadeIn"
+      className="fixed inset-0 z-[2000] pointer-events-none"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="satellite-detail-title"
       aria-describedby="satellite-detail-description"
     >
-      {/* 背景遮罩 */}
-      <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
-
       {/* 右侧面板容器 - 明日方舟风格 */}
       <article
         ref={modalRef}
-        className="relative bg-black h-full overflow-hidden animate-slideInRight
-                   w-[400px] max-w-[90vw]"
+        className="relative bg-black/95 backdrop-blur-md overflow-hidden animate-slideInRight pointer-events-auto
+                   w-[400px] max-w-[90vw] shadow-2xl"
         onClick={handleModalClick}
         style={{
+          position: 'fixed',
+          top: '140px',
+          right: '20px',
+          bottom: '80px',
+          maxHeight: 'calc(100vh - 220px)',
           border: '2px solid rgba(255, 255, 255, 0.3)',
-          borderRight: 'none',
-          clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)',
-          marginLeft: 'auto',
+          clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
         }}
       >
         {/* 左上角装饰 */}
@@ -213,7 +213,7 @@ function SatelliteDetailModal({ lang = 'zh' }: SatelliteDetailModalProps) {
         <button
           ref={closeButtonRef}
           onClick={handleClose}
-          className="absolute top-4 left-4 text-white/60 hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
           style={{
             width: '32px',
             height: '32px',
@@ -241,7 +241,7 @@ function SatelliteDetailModal({ lang = 'zh' }: SatelliteDetailModalProps) {
 
         {/* 内容区域 */}
         <section
-          className="p-6 pt-14 overflow-y-auto h-full satellite-menu-scrollbar"
+          className="p-6 overflow-y-auto h-full satellite-menu-scrollbar"
           id="satellite-detail-description"
         >
           {/* 加载状态 */}
