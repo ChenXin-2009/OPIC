@@ -62,7 +62,7 @@ async function main() {
     skip_empty_lines: true,
     trim: true,
     relax_column_count: true, // 允许列数不一致
-  });
+  }) as Array<Record<string, string>>;
 
   console.log(`解析完成: ${records.length} 条记录\n`);
 
