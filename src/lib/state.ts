@@ -140,7 +140,9 @@ export const useSolarSystemStore = create<SolarSystemState>((set, get) => {
     
     startPlaying: (speed: number, direction: 'forward' | 'backward') => {
       // 确保速度在合理范围（以天为单位）
-      const clampedSpeed = Math.max(0.1, Math.min(365, speed)); // 最大速度限制为1年/秒（365天）
+      // 最小速度：1秒/秒 = 1/86400天/秒
+      // 最大速度：3年/秒 = 1095天/秒
+      const clampedSpeed = Math.max(1/86400, Math.min(1095, speed));
       set({ timeSpeed: clampedSpeed, playDirection: direction, isPlaying: true });
     },
     

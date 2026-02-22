@@ -1163,13 +1163,72 @@ export const TIME_SLIDER_CONFIG = {
   // ==================== 速度配置 ====================
   
   /** 最大速度（天/秒）- 滑块在最边缘时的速度 */
-  maxSpeed: 365,
+  maxSpeed: 1095,  // 3年/秒 = 1095天/秒
   
   /** 速度曲线指数 - 值越大，边缘加速越明显 */
   speedExponent: 2.5,
   
   /** 死区比例 - 中心多大范围内视为暂停（0-1） */
   deadZone: 0.05,
+  
+  /**
+   * 速度区域配置
+   * 从中心向外依次为：秒、分、时、天、月、年
+   * 每个区域定义了边界位置、最大速度和速度曲线指数
+   * 
+   * 注意：第一个区域（秒）的minSpeed通过特殊处理设为1秒/秒，
+   * 而不是从0开始，以避免显示小数秒值
+   */
+  speedZones: [
+    {
+      name: 'second',
+      start: 0.05,  // 死区边界
+      end: 0.15,    // 扩大秒区域范围，提供更精细控制
+      maxSpeed: 60 / 86400,  // 60秒/秒 = 1分/秒
+      exponent: 1.8,
+      unit: { zh: '秒/秒', en: 's/s' }
+    },
+    {
+      name: 'minute',
+      start: 0.15,
+      end: 0.3,
+      maxSpeed: 60 / 1440,  // 60分/秒 = 1时/秒
+      exponent: 1.8,
+      unit: { zh: '分/秒', en: 'min/s' }
+    },
+    {
+      name: 'hour',
+      start: 0.3,
+      end: 0.5,
+      maxSpeed: 24 / 24,  // 24时/秒 = 1天/秒
+      exponent: 2.0,
+      unit: { zh: '时/秒', en: 'h/s' }
+    },
+    {
+      name: 'day',
+      start: 0.5,
+      end: 0.7,
+      maxSpeed: 30,  // 30天/秒 = 1月/秒
+      exponent: 2.0,
+      unit: { zh: '天/秒', en: 'd/s' }
+    },
+    {
+      name: 'month',
+      start: 0.7,
+      end: 0.85,
+      maxSpeed: 365,  // 365天/秒 = 1年/秒
+      exponent: 2.2,
+      unit: { zh: '月/秒', en: 'm/s' }
+    },
+    {
+      name: 'year',
+      start: 0.85,
+      end: 1.0,
+      maxSpeed: 1095,  // 1095天/秒 = 3年/秒
+      exponent: 2.5,
+      unit: { zh: '年/秒', en: 'y/s' }
+    }
+  ] as const,
   
   // ==================== 颜色配置 ====================
   
