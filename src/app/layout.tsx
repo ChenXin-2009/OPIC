@@ -21,7 +21,48 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "SoMap-太阳系实时地图",
-  description: "SoMap - 太阳系实时地图，可视化太阳系行星轨道和位置",
+  description: "SoMap - 交互式太阳系和宇宙可视化应用。基于真实天文数据，探索从太阳系到可观测宇宙的9个尺度层次。支持高精度行星轨道计算、人造卫星实时追踪、银河系可视化。",
+  keywords: [
+    "太阳系",
+    "宇宙可视化",
+    "天文",
+    "行星轨道",
+    "卫星追踪",
+    "Three.js",
+    "NASA",
+    "星历数据",
+    "银河系",
+    "Solar System",
+    "Universe Visualization",
+    "Astronomy",
+  ],
+  authors: [{ name: "ChenXin-2009", url: "https://github.com/ChenXin-2009" }],
+  creator: "ChenXin-2009",
+  publisher: "ChenXin-2009",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'zh_CN',
+    url: 'https://somap.cxin.tech',
+    title: 'SoMap - 太阳系实时地图',
+    description: '交互式太阳系和宇宙可视化应用，探索从太阳系到可观测宇宙',
+    siteName: 'SoMap',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SoMap - 太阳系实时地图',
+    description: '交互式太阳系和宇宙可视化应用',
+  },
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },

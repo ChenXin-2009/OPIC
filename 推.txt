@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 6.4.0: 更新信息"
+git commit -m "Release 6.4.1: 提交到搜索引擎"
 git checkout main
 git pull origin main
-git tag v6.4.0
+git tag v6.4.1
 git push origin main
-git push origin v6.4.0
+git push origin v6.4.1

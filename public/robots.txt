@@ -1,0 +1,15 @@
+# Allow all search engines to crawl the site
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://somap.cxin.tech/sitemap.xml
+
+# Disallow crawling of API routes
+Disallow: /api/
+
+# Disallow crawling of data files
+Disallow: /data/
+
+# Disallow crawling of worker files
+Disallow: /workers/
