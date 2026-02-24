@@ -7,17 +7,11 @@ import { create } from 'zustand';
 import { CelestialBody, getCelestialBodies, initializeSatelliteCalculator, initializeAllBodiesCalculator } from './astronomy/orbit';
 import { dateToJulianDay } from './astronomy/time';
 
-// Initialize the ephemeris calculators on module load (client-side only)
-// This runs once when the module is first imported in the browser
-if (typeof window !== 'undefined') {
-  // Initialize all-bodies calculator (provides high-precision data for all bodies)
-  initializeAllBodiesCalculator().catch(error => {
-    console.warn('Failed to initialize all-bodies calculator, will use analytical models:', error);
-  });
-  
-  // Note: Legacy satellite calculator is deprecated and not initialized
-  // The all-bodies calculator handles all satellites now
-}
+// NOTE: Ephemeris calculator initialization is now on-demand
+// It will be initialized only when user enables high-precision mode for a body
+// This prevents automatic download of 50MB+ ephemeris data on page load
+// See: src/lib/store/useEphemerisStore.ts for user settings
+// See: src/lib/astronomy/orbit.ts for lazy initialization logic
 
 /**
  * 视图偏移量接口

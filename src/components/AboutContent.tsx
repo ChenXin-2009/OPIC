@@ -98,7 +98,7 @@ export default function AboutContent() {
             <img
               src={src}
               alt={alt}
-              className="w-40 h-40 object-contain mx-auto my-4 block"
+              className="w-100 h-100 object-contain mx-auto my-4 block"
               style={{ filter: 'brightness(0.9)' }}
             />
           ),

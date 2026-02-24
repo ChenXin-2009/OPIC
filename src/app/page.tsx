@@ -7,6 +7,7 @@ import TimeControl from "@/components/TimeControl";
 import InfoModal from "@/components/InfoModal";
 import { SatelliteMenu } from "@/components/satellite";
 import { HEADER_CONFIG } from "@/lib/config/visualConfig";
+import EphemerisStatusPanel from "@/components/EphemerisStatusPanel";
 
 /**
  * Info button component for top-right corner.
@@ -72,8 +73,73 @@ function InfoButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+/**
+ * Ephemeris Status button component for top-right corner.
+ * Arknights-style design matching other buttons.
+ */
+function EphemerisButton({ onClick }: { onClick: () => void }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="fixed"
+      style={{
+        top: '5.5rem',
+        right: '2rem',
+        zIndex: 1001,
+        background: '#0a0a0a',
+        border: `2px solid ${isHovered ? '#ffffff' : '#333333'}`,
+        cursor: 'pointer',
+        padding: '8px 16px',
+        transition: 'all 0.3s ease',
+        color: '#ffffff',
+        fontSize: '13px',
+        fontWeight: 700,
+        letterSpacing: '1.5px',
+        textTransform: 'uppercase',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
+        boxShadow: isHovered ? '0 0 20px rgba(255, 255, 255, 0.5)' : 'none',
+      }}
+      aria-label="星历状态"
+    >
+      {/* 左上角菱形装饰 */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: '-1px',
+          left: '-1px',
+          width: '12px',
+          height: '12px',
+          background: '#ffffff',
+          clipPath: 'polygon(0 0, 100% 0, 0 100%)',
+        }}
+      />
+      
+      {/* 右下角菱形装饰 */}
+      <div 
+        style={{
+          position: 'absolute',
+          bottom: '-1px',
+          right: '-1px',
+          width: '12px',
+          height: '12px',
+          background: '#ffffff',
+          clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+        }}
+      />
+      
+      星历状态
+    </button>
+  );
+}
+
 export default function SolarSystemPage() {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [isEphemerisStatusOpen, setIsEphemerisStatusOpen] = useState(false);
 
   // 计算顶部偏移（Header高度）- 漂浮模式下不需要预留空间
   const headerHeight = (HEADER_CONFIG.enabled && !HEADER_CONFIG.floatingMode) ? HEADER_CONFIG.height : 0;
@@ -89,7 +155,9 @@ export default function SolarSystemPage() {
       }}
     >
       <InfoButton onClick={() => setIsInfoModalOpen(true)} />
+      <EphemerisButton onClick={() => setIsEphemerisStatusOpen(true)} />
       <InfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} />
+      <EphemerisStatusPanel isOpen={isEphemerisStatusOpen} onClose={() => setIsEphemerisStatusOpen(false)} />
       
       {/* 卫星菜单按钮 */}
       <SatelliteMenu lang="zh" />

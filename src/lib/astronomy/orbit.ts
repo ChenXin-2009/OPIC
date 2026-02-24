@@ -28,6 +28,13 @@ import {
   solveKeplerEquation
 } from './utils';
 import { CELESTIAL_BODIES, calculateRotationAxis } from '@/lib/types/celestialTypes';
+import { useEphemerisStore, LoadingStatus } from '@/lib/store/useEphemerisStore';
+
+// 精度信息常量
+const ACCURACY_INFO = {
+  ephemeris: '±10m',      // 星历数据精度
+  analytical: '±1000km',  // 解析模型精度
+};
 import { 
   SatellitePositionCalculator,
   type PlanetaryPositionProvider,
@@ -349,9 +356,50 @@ let calculatorInitPromise: Promise<void> | null = null;
 /**
  * Global all-bodies ephemeris calculator instance
  * Provides high-precision positions for all planets and major satellites
+ * 
+ * NOTE: This is initialized lazily (on-demand) when user enables high-precision mode
  */
 let allBodiesCalculator: AllBodiesCalculator | null = null;
 let allBodiesInitPromise: Promise<void> | null = null;
+
+/**
+ * Check if ephemeris should be used for a given body
+ * This checks the user's settings in localStorage
+ * 
+ * @param naifId - NAIF ID of the body
+ * @returns true if user has enabled high-precision mode for this body
+ */
+function shouldUseEphemeris(naifId: number): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  try {
+    const stored = localStorage.getItem('ephemeris-settings');
+    if (!stored) return false;
+    
+    const settings = JSON.parse(stored);
+    if (!settings?.state?.bodies) return false;
+    
+    // Map NAIF ID to body key
+    const bodyKeyMap: Record<number, string> = {
+      199: 'mercury', 299: 'venus', 399: 'earth', 4: 'mars',
+      5: 'jupiter', 6: 'saturn', 7: 'uranus', 8: 'neptune',
+      301: 'moon',
+      501: 'io', 502: 'europa', 503: 'ganymede', 504: 'callisto',
+      601: 'mimas', 602: 'enceladus', 603: 'tethys', 604: 'dione',
+      605: 'rhea', 606: 'titan', 607: 'hyperion', 608: 'iapetus',
+      701: 'ariel', 702: 'umbriel', 703: 'titania', 704: 'oberon', 705: 'miranda',
+      801: 'triton',
+    };
+    
+    const bodyKey = bodyKeyMap[naifId];
+    if (!bodyKey) return false;
+    
+    return settings.state.bodies[bodyKey]?.enabled === true;
+  } catch (error) {
+    console.warn('[Ephemeris] Failed to check user settings:', error);
+    return false;
+  }
+}
 
 /**
  * Get the all-bodies ephemeris calculator instance
@@ -362,8 +410,12 @@ export function getAllBodiesCalculator(): AllBodiesCalculator | null {
 }
 
 /**
- * Initialize the all-bodies ephemeris calculator
+ * Initialize the all-bodies ephemeris calculator (lazy initialization)
  * This provides high-precision positions for planets and satellites
+ * 
+ * NOTE: This is now called on-demand when user enables high-precision mode
+ * for any celestial body, instead of automatic initialization on page load.
+ * This prevents downloading 50MB+ of ephemeris data unnecessarily.
  */
 export async function initializeAllBodiesCalculator(): Promise<void> {
   if (allBodiesInitPromise) {
@@ -372,13 +424,50 @@ export async function initializeAllBodiesCalculator(): Promise<void> {
 
   allBodiesInitPromise = (async () => {
     try {
+      console.log('[Ephemeris] Initializing all-bodies calculator (on-demand)...');
       allBodiesCalculator = new AllBodiesCalculator({
         baseUrl: '/data/ephemeris'
       });
-      console.log('All-bodies ephemeris calculator initialized');
+      
+      // 获取所有天体的时间范围并更新Store
+      const bodies = allBodiesCalculator.getBodies();
+      const store = useEphemerisStore.getState();
+      
+      bodies.forEach((bodyConfig: any) => {
+        // 将NAIF ID映射到bodyKey
+        const bodyKeyMap: Record<number, string> = {
+          199: 'mercury', 299: 'venus', 399: 'earth', 4: 'mars',
+          5: 'jupiter', 6: 'saturn', 7: 'uranus', 8: 'neptune',
+          301: 'moon',
+          501: 'io', 502: 'europa', 503: 'ganymede', 504: 'callisto',
+          601: 'mimas', 602: 'enceladus', 603: 'tethys', 604: 'dione',
+          605: 'rhea', 606: 'titan', 607: 'hyperion', 608: 'iapetus',
+          701: 'ariel', 702: 'umbriel', 703: 'titania', 704: 'oberon', 705: 'miranda',
+          801: 'triton'
+        };
+        
+        const bodyKey = bodyKeyMap[bodyConfig.naifId];
+        if (bodyKey && bodyConfig.timeRange) {
+          store.setBodyTimeRange(
+            bodyKey as any,
+            bodyConfig.timeRange.start,
+            bodyConfig.timeRange.end
+          );
+          store.setBodyAccuracy(
+            bodyKey as any,
+            ACCURACY_INFO.ephemeris,
+            ACCURACY_INFO.analytical
+          );
+        }
+      });
+      
+      console.log('[Ephemeris] All-bodies calculator initialized successfully');
     } catch (error) {
-      console.warn('Failed to initialize all-bodies calculator:', error);
+      console.warn('[Ephemeris] Failed to initialize all-bodies calculator:', error);
       allBodiesCalculator = null;
+      // Reset promise so it can be retried
+      allBodiesInitPromise = null;
+      throw error;
     }
   })();
 
@@ -742,29 +831,66 @@ async function calculatePlanetPositions(
   
   for (const [key, elements] of Object.entries(ORBITAL_ELEMENTS)) {
     let pos: { x: number; y: number; z: number; r: number };
+    let usingEphemeris = false;
     
-    // Try to use high-precision ephemeris if available
-    if (allBodiesCalculator && planetNaifIds[key]) {
-      try {
-        const result = await allBodiesCalculator.calculatePosition(planetNaifIds[key], julianDay);
-        if (result.usingEphemeris) {
-          pos = {
-            x: result.position.x,
-            y: result.position.y,
-            z: result.position.z,
-            r: Math.sqrt(result.position.x ** 2 + result.position.y ** 2 + result.position.z ** 2)
-          };
-        } else {
-          // Fall back to analytical model
-          pos = calculatePosition(elements, julianDay);
+    const naifId = planetNaifIds[key];
+    
+    // Check if user has enabled high-precision mode for this planet
+    const shouldUseHighPrecision = naifId && shouldUseEphemeris(naifId);
+    
+    // Try to use high-precision ephemeris if user enabled it
+    if (shouldUseHighPrecision) {
+      // Initialize calculator if not already done
+      if (!allBodiesCalculator) {
+        try {
+          // Update status to LOADING for this body
+          const bodyKey = key as any; // mercury, venus, earth, etc.
+          useEphemerisStore.getState().setBodyStatus(bodyKey, LoadingStatus.LOADING);
+          
+          await initializeAllBodiesCalculator();
+        } catch (error) {
+          console.warn(`[Ephemeris] Failed to initialize calculator for ${key}, using analytical model:`, error);
+          // Update status to ERROR
+          const bodyKey = key as any;
+          useEphemerisStore.getState().setBodyStatus(bodyKey, LoadingStatus.ERROR, String(error));
         }
-      } catch (error) {
-        // Fall back to analytical model on error
+      }
+      
+      // Try to get ephemeris position
+      if (allBodiesCalculator) {
+        try {
+          const result = await allBodiesCalculator.calculatePosition(naifId, julianDay);
+          if (result.usingEphemeris) {
+            pos = {
+              x: result.position.x,
+              y: result.position.y,
+              z: result.position.z,
+              r: Math.sqrt(result.position.x ** 2 + result.position.y ** 2 + result.position.z ** 2)
+            };
+            usingEphemeris = true;
+            
+            // Update status to LOADED
+            const bodyKey = key as any;
+            useEphemerisStore.getState().setBodyStatus(bodyKey, LoadingStatus.LOADED);
+          } else {
+            // Ephemeris failed, fall back to analytical
+            pos = calculatePosition(elements, julianDay);
+          }
+        } catch (error) {
+          // Error getting ephemeris, fall back to analytical
+          console.warn(`[Ephemeris] Error for ${key}, using analytical model:`, error);
+          pos = calculatePosition(elements, julianDay);
+          
+          // Update status to ERROR
+          const bodyKey = key as any;
+          useEphemerisStore.getState().setBodyStatus(bodyKey, LoadingStatus.ERROR, String(error));
+        }
+      } else {
+        // Calculator not available, use analytical
         pos = calculatePosition(elements, julianDay);
-        console.warn(`${key}: Ephemeris error, using analytical model:`, error);
       }
     } else {
-      // Use analytical model if ephemeris not available
+      // User hasn't enabled high-precision mode, use analytical model
       pos = calculatePosition(elements, julianDay);
     }
     
@@ -824,6 +950,12 @@ async function calculateSatellitePositions(
     'Titan': 606,
     'Hyperion': 607,
     'Iapetus': 608,
+    // Uranus
+    'Miranda': 705,
+    'Ariel': 701,
+    'Umbriel': 702,
+    'Titania': 703,
+    'Oberon': 704,
     // Neptune
     'Triton': 801
   };
@@ -835,116 +967,103 @@ async function calculateSatellitePositions(
       continue;
     }
 
-    // Try to use all-bodies ephemeris system first
-    if (allBodiesCalculator) {
-      for (const sat of sats) {
-        const naifId = satelliteNaifIds[sat.name];
-        
-        // Special case: Force Enceladus to use analytical model due to data quality issues
-        if (sat.name === 'Enceladus') {
-          // Get parent planet's axis orientation
-          const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
-          
-          // Calculate satellite position relative to parent using analytical model
-          const satellitePos = calculateSatellitePosition(
-            sat,
-            daysSinceJ2000,
-            parentAxisQuaternion
-          );
-
-          // Add satellite to bodies array
-          bodies.push({
-            name: sat.name,
-            x: parentPos.x + satellitePos.x,
-            y: parentPos.y + satellitePos.y,
-            z: parentPos.z + satellitePos.z,
-            r: 0,
-            radius: sat.radius,
-            color: sat.color,
-            parent: parentKey,
-            isSatellite: true,
-            usingEphemeris: false,  // Force analytical model for Enceladus
-          } as unknown as CelestialBody);
-          continue; // Skip to next satellite
-        }
-        
-        if (naifId) {
-          try {
-            const result = await allBodiesCalculator.calculatePosition(naifId, julianDay);
-            if (result.usingEphemeris) {
-              // Ephemeris returns planetcentric position, convert to heliocentric
-              bodies.push({
-                name: sat.name,
-                x: parentPos.x + result.position.x,
-                y: parentPos.y + result.position.y,
-                z: parentPos.z + result.position.z,
-                r: 0,
-                radius: sat.radius,
-                color: sat.color,
-                parent: parentKey,
-                isSatellite: true,
-                usingEphemeris: true,  // Mark as using ephemeris data
-              } as unknown as CelestialBody);
-              continue; // Skip to next satellite
-            }
-          } catch (error) {
-            // Fall through to analytical model
-            console.warn(`Failed to get ephemeris for ${sat.name}, using analytical model:`, error);
+    // Check if user wants to use ephemeris for any satellite in this system
+    const hasEphemerisEnabled = sats.some(sat => {
+      const naifId = satelliteNaifIds[sat.name];
+      return naifId && shouldUseEphemeris(naifId);
+    });
+    
+    // Initialize calculator if needed and not already done
+    if (hasEphemerisEnabled && !allBodiesCalculator) {
+      try {
+        // Update status to LOADING for enabled satellites in this system
+        sats.forEach(sat => {
+          const naifId = satelliteNaifIds[sat.name];
+          if (naifId && shouldUseEphemeris(naifId)) {
+            const bodyKey = sat.name.toLowerCase() as any;
+            useEphemerisStore.getState().setBodyStatus(bodyKey, LoadingStatus.LOADING);
           }
-        }
+        });
         
-        // If we reach here, use analytical model for this satellite
-        // Get parent planet's axis orientation
+        await initializeAllBodiesCalculator();
+      } catch (error) {
+        console.warn(`[Ephemeris] Failed to initialize calculator for ${parentKey} satellites:`, error);
+        
+        // Update status to ERROR for enabled satellites
+        sats.forEach(sat => {
+          const naifId = satelliteNaifIds[sat.name];
+          if (naifId && shouldUseEphemeris(naifId)) {
+            const bodyKey = sat.name.toLowerCase() as any;
+            useEphemerisStore.getState().setBodyStatus(bodyKey, LoadingStatus.ERROR, String(error));
+          }
+        });
+      }
+    }
+    
+    // Process each satellite
+    for (const sat of sats) {
+      const naifId = satelliteNaifIds[sat.name];
+      let useEphemeris = false;
+      let satellitePos: THREE.Vector3;
+      
+      // Check if user enabled high-precision for this satellite
+      const shouldUseHighPrecision = naifId && shouldUseEphemeris(naifId);
+      
+      // Special case: Force Enceladus to use analytical model due to data quality issues
+      if (sat.name === 'Enceladus') {
         const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
-        
-        // Calculate satellite position relative to parent
-        const satellitePos = calculateSatellitePosition(
-          sat,
-          daysSinceJ2000,
-          parentAxisQuaternion
-        );
-
-        // Add satellite to bodies array
-        bodies.push({
-          name: sat.name,
-          x: parentPos.x + satellitePos.x,
-          y: parentPos.y + satellitePos.y,
-          z: parentPos.z + satellitePos.z,
-          r: 0,
-          radius: sat.radius,
-          color: sat.color,
-          parent: parentKey,
-          isSatellite: true,
-          usingEphemeris: false,  // Using analytical model
-        } as unknown as CelestialBody);
+        satellitePos = calculateSatellitePosition(sat, daysSinceJ2000, parentAxisQuaternion);
+        useEphemeris = false;
+      } else if (shouldUseHighPrecision && allBodiesCalculator && naifId) {
+        // Try to use ephemeris
+        try {
+          const result = await allBodiesCalculator.calculatePosition(naifId, julianDay);
+          if (result.usingEphemeris) {
+            // Ephemeris returns planetcentric position
+            satellitePos = new THREE.Vector3(
+              result.position.x,
+              result.position.y,
+              result.position.z
+            );
+            useEphemeris = true;
+            
+            // Update status to LOADED
+            const bodyKey = sat.name.toLowerCase() as any;
+            useEphemerisStore.getState().setBodyStatus(bodyKey, LoadingStatus.LOADED);
+          } else {
+            // Ephemeris failed, use analytical
+            const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
+            satellitePos = calculateSatellitePosition(sat, daysSinceJ2000, parentAxisQuaternion);
+          }
+        } catch (error) {
+          // Error, fall back to analytical
+          console.warn(`[Ephemeris] Error for ${sat.name}, using analytical model:`, error);
+          const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
+          satellitePos = calculateSatellitePosition(sat, daysSinceJ2000, parentAxisQuaternion);
+          
+          // Update status to ERROR
+          const bodyKey = sat.name.toLowerCase() as any;
+          useEphemerisStore.getState().setBodyStatus(bodyKey, LoadingStatus.ERROR, String(error));
+        }
+      } else {
+        // User hasn't enabled high-precision, use analytical
+        const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
+        satellitePos = calculateSatellitePosition(sat, daysSinceJ2000, parentAxisQuaternion);
       }
-    } else {
-      // No ephemeris calculator, use analytical model for all satellites
-      // Get parent planet's axis orientation
-      const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
-
-      for (const sat of sats) {
-        // Calculate satellite position relative to parent
-        const satellitePos = calculateSatellitePosition(
-          sat,
-          daysSinceJ2000,
-          parentAxisQuaternion
-        );
-
-        // Add satellite to bodies array
-        bodies.push({
-          name: sat.name,
-          x: parentPos.x + satellitePos.x,
-          y: parentPos.y + satellitePos.y,
-          z: parentPos.z + satellitePos.z,
-          r: 0,
-          radius: sat.radius,
-          color: sat.color,
-          parent: parentKey,
-          isSatellite: true,
-          usingEphemeris: false,  // Using analytical model
-        } as unknown as CelestialBody);
-      }
+      
+      // Add satellite to bodies array (convert to heliocentric)
+      bodies.push({
+        name: sat.name,
+        x: parentPos.x + satellitePos.x,
+        y: parentPos.y + satellitePos.y,
+        z: parentPos.z + satellitePos.z,
+        r: 0,
+        radius: sat.radius,
+        color: sat.color,
+        parent: parentKey,
+        isSatellite: true,
+        usingEphemeris: useEphemeris,
+      } as unknown as CelestialBody);
     }
   }
 }
