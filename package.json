@@ -17,8 +17,10 @@
     "prepare": "node -e \"try { require('husky').install() } catch (e) {}\""
   },
   "dependencies": {
+    "@types/cesium": "^1.67.14",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
+    "cesium": "^1.138.0",
     "csv-parse": "^6.1.0",
     "fuse.js": "^7.1.0",
     "next": "^16.0.7",
@@ -42,6 +44,7 @@
     "@types/react-dom": "^19",
     "@types/three": "^0.170.0",
     "babel-plugin-react-compiler": "1.0.0",
+    "copy-webpack-plugin": "^13.0.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
     "fast-check": "^4.4.0",

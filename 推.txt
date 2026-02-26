@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 6.5.4: 修复卫星搜索"
+git commit -m "Release 6.6.0: 地球瓦片地图测试"
 git checkout main
 git pull origin main
-git tag v6.5.4
+git tag v6.6.0
 git push origin main
-git push origin v6.5.4
+git push origin v6.6.0

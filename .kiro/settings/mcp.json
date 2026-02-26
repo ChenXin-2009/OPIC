@@ -7,7 +7,7 @@
         "@executeautomation/playwright-mcp-server"
       ],
       "env": {},
-      "disabled": false,
+      "disabled": true,
       "autoApprove": [
         "playwright_navigate",
         "playwright_screenshot",
