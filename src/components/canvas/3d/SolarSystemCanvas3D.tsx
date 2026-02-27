@@ -886,7 +886,10 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
           
           // 更新 OrbitLabel 的位置
           if (label) {
-            const planetPosition = new THREE.Vector3(body.x, body.y, body.z);
+            // 对于卫星，使用跟随模式（传入卫星自己的位置）
+            // 对于行星，使用固定模式（传入行星位置，但内部会固定在轨道下方）
+            const centerPosition = new THREE.Vector3(body.x, body.y, body.z);
+            
             const orbit = orbitsRef.current.get(key);
             
             // 获取轨道法向量（如果有轨道且方法存在）
@@ -896,7 +899,8 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
             }
             
             // 更新标签位置，传入相机以支持自动翻转
-            label.updatePositionWithCamera(planetPosition, orbitNormal, camera);
+            // 传入 isSatellite 标志
+            label.updatePositionWithCamera(centerPosition, orbitNormal, camera, body.isSatellite || false);
           }
         });
         
