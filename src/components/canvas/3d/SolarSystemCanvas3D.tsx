@@ -494,8 +494,10 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
           
           if (body.isSatellite) {
             // 卫星使用其轨道半径
-            const def = SATELLITE_DEFINITIONS[body.name as keyof typeof SATELLITE_DEFINITIONS];
-            orbitRadius = def ? def.orbitRadius : 0.01;
+            const parentKey = body.parent as string;
+            const defs = SATELLITE_DEFINITIONS[parentKey];
+            const def = defs ? defs.find((s) => s.name === body.name) : null;
+            orbitRadius = def ? def.a : 0.01;
           } else {
             // 行星使用轨道元素的半长轴
             const elements = elementsMap[body.name.toLowerCase() as keyof typeof elementsMap];
@@ -836,9 +838,8 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
           
           // 太阳标签始终显示（不参与重叠检测）
           const sunLabel = labelsRef.current.get('sun');
-          if (sunLabel && sunLabel.element) {
-            sunLabel.element.style.opacity = '1';
-            sunLabel.element.style.display = 'block';
+          if (sunLabel) {
+            sunLabel.setOpacity(1);
           }
           
           // 每帧更新太阳的屏幕空间光晕（如果 Planet 实例提供该方法）
@@ -1128,13 +1129,10 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
             satellite.setMarkerTargetOpacity(isVisible ? satelliteOpacity : 0);
           }
           
-          // 更新卫星标签可见性和交互
+          // 更新卫星标签可见性
           const satelliteLabel = labelsRef.current.get(satelliteKey);
-          if (satelliteLabel && satelliteLabel.element) {
-            satelliteLabel.element.style.opacity = isVisible ? satelliteOpacity.toString() : '0';
-            satelliteLabel.element.style.display = isVisible ? 'block' : 'none';
-            // 关键：不可见时禁用指针事件，防止 DOM 元素阻挡行星标签
-            satelliteLabel.element.style.pointerEvents = isVisible ? 'auto' : 'none';
+          if (satelliteLabel) {
+            satelliteLabel.setOpacity(isVisible ? satelliteOpacity : 0);
           }
           
           // 更新轨道中心位置

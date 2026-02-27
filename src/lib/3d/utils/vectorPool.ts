@@ -40,7 +40,6 @@ export class Vector3Pool {
    * 清空池中所有对象
    */
   clear(): void {
-    this.pool.forEach(v => v.dispose?.());
     this.pool = [];
   }
   
