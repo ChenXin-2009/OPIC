@@ -72,20 +72,6 @@ export function SatelliteInfoPanel({ lang = 'zh' }: SatelliteInfoPanelProps) {
     return labels[orbitType]?.[lang] || orbitType;
   };
 
-  // 获取类别标签
-  const getCategoryLabel = (category: string): string => {
-    const labels: Record<string, { zh: string; en: string }> = {
-      active: { zh: '活跃卫星', en: 'Active' },
-      stations: { zh: '空间站', en: 'ISS' },
-      'gps-ops': { zh: 'GPS', en: 'GPS' },
-      geo: { zh: '通信卫星', en: 'Communication' },
-      weather: { zh: '气象卫星', en: 'Weather' },
-      science: { zh: '科学卫星', en: 'Science' },
-      other: { zh: '其他', en: 'Other' },
-    };
-    return labels[category]?.[lang] || category;
-  };
-
   const orbitColor = getOrbitColor(satellite.orbitType);
   const isOrbitVisible = showOrbits.has(selectedSatellite);
 
@@ -169,28 +155,16 @@ export function SatelliteInfoPanel({ lang = 'zh' }: SatelliteInfoPanelProps) {
           >
             {satellite.name}
           </h3>
-          <div className="flex gap-2">
-            <span
-              className="text-xs px-2 py-0.5 font-bold uppercase tracking-wide"
-              style={{
-                background: `${orbitColor}20`,
-                color: orbitColor,
-                border: `1px solid ${orbitColor}`,
-              }}
-            >
-              {getOrbitTypeLabel(satellite.orbitType)}
-            </span>
-            <span
-              className="text-xs px-2 py-0.5 font-mono"
-              style={{
-                background: ARKNIGHTS_CONFIG.colors.darkLight,
-                color: ARKNIGHTS_CONFIG.colors.secondary,
-                border: `1px solid ${ARKNIGHTS_CONFIG.colors.border}`,
-              }}
-            >
-              {getCategoryLabel(satellite.category)}
-            </span>
-          </div>
+          <span
+            className="text-xs px-2 py-0.5 font-bold uppercase tracking-wide inline-block"
+            style={{
+              background: `${orbitColor}20`,
+              color: orbitColor,
+              border: `1px solid ${orbitColor}`,
+            }}
+          >
+            {getOrbitTypeLabel(satellite.orbitType)}
+          </span>
         </div>
 
         {/* 基本信息 */}

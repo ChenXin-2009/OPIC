@@ -25,6 +25,7 @@ import { SceneManager } from '@/lib/3d/SceneManager';
 import { CameraController } from '@/lib/3d/CameraController';
 import { Planet } from '@/lib/3d/Planet';
 import { OrbitCurve } from '@/lib/3d/OrbitCurve';
+import { OrbitLabel } from '@/lib/3d/OrbitLabel';
 import { SatelliteOrbit } from '@/lib/3d/SatelliteOrbit';
 import { SATELLITE_DEFINITIONS } from '@/lib/astronomy/orbit';
 import { dateToJulianDay } from '@/lib/astronomy/time';
@@ -33,7 +34,7 @@ import { planetNames } from '@/lib/astronomy/names';
 import { CELESTIAL_BODIES } from '@/lib/types/celestialTypes';
 import * as THREE from 'three';
 import { Raycaster } from 'three';
-import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import ScaleRuler from './ScaleRuler';
 import DistanceDisplay from './DistanceDisplay';
 import SettingsMenu from '@/components/SettingsMenu';
@@ -224,7 +225,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
   const labelRendererRef = useRef<CSS2DRenderer | null>(null);
   const planetsRef = useRef<Map<string, Planet>>(new Map());
   const orbitsRef = useRef<Map<string, OrbitCurve>>(new Map());
-  const labelsRef = useRef<Map<string, CSS2DObject>>(new Map());
+  const labelsRef = useRef<Map<string, OrbitLabel>>(new Map());
   const animationFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(Date.now());
   const raycasterRef = useRef<Raycaster | null>(null);
@@ -298,7 +299,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
       cameraRef.current = camera; // 保存相机引用用于标尺
       const renderer = sceneManager.getRenderer();
       
-      // 创建 CSS2DRenderer 用于显示文字标签
+      // 创建 CSS2DRenderer 用于显示标记圈
       // 确保只创建一次，避免重复添加
       if (!labelRendererRef.current) {
         const labelRenderer = new CSS2DRenderer();
@@ -442,7 +443,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
         });
 
         // 创建标记圈（2D）
-        planet.createMarkerCircle(CSS2DObject);
+        planet.createMarkerCircle();
 
         // 创建轨道
         if (isSatellite) {
@@ -473,33 +474,70 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
         }
 
         // 创建文字标签（确保每个行星/卫星只创建一个标签）
-        // 标签位置在标记圈的右上角
+        // 标签贴合在轨道圆盘上
         if (!labelsRef.current.has(body.name.toLowerCase())) {
-          const labelDiv = document.createElement('div');
-          labelDiv.className = 'planet-label';
-          labelDiv.textContent = planetNames[lang]?.[body.name] || body.name;
-          labelDiv.style.color = '#ffffff';
-          labelDiv.style.fontSize = LABEL_CONFIG.fontSize;
-          labelDiv.style.fontWeight = LABEL_CONFIG.fontWeight;
-          labelDiv.style.fontFamily = LABEL_CONFIG.fontFamily;
-          labelDiv.style.pointerEvents = 'auto'; // 允许点击标签
-          labelDiv.style.cursor = 'pointer'; // 鼠标悬停时显示手型光标
-          labelDiv.style.userSelect = 'none';
-          labelDiv.style.textShadow = '0 0 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6)';
-          labelDiv.style.whiteSpace = 'nowrap';
-          labelDiv.style.opacity = '1'; // 初始显示，由重叠检测控制
-          labelDiv.style.transition = 'opacity 0.1s';
-          labelDiv.style.display = 'block'; // 默认显示
+          const labelTextEn = planetNames.en?.[body.name] || body.name;
+          const labelTextZh = planetNames.zh?.[body.name] || body.name;
           
-          const label = new CSS2DObject(labelDiv);
-          // 标签位置在标记圈的右侧（与标记圈在同一位置，通过CSS偏移）
-          label.position.set(0, 0, 0);
-          // 使用CSS定位来设置标签相对于标记圈的位置
-          labelDiv.style.position = 'absolute';
-          labelDiv.style.left = `${LABEL_CONFIG.offsetX}px`;
-          labelDiv.style.top = `${LABEL_CONFIG.offsetY}px`;
-          labelDiv.style.transform = 'translate(0, 0)'; // 覆盖CSS2DObject的默认transform
-          planetMesh.add(label);
+          // 获取行星颜色并调亮
+          const baseColor = new THREE.Color(body.color);
+          // 将颜色转换为HSL，增加亮度
+          const hsl = { h: 0, s: 0, l: 0 };
+          baseColor.getHSL(hsl);
+          // 增加亮度（最多到0.9）
+          hsl.l = Math.min(hsl.l + 0.3, 0.9);
+          const brighterColor = new THREE.Color().setHSL(hsl.h, hsl.s, hsl.l);
+          const colorString = '#' + brighterColor.getHexString();
+          
+          // 获取轨道半径（半长轴）
+          let orbitRadius = 1.0; // 默认值
+          
+          if (body.isSatellite) {
+            // 卫星使用其轨道半径
+            const def = SATELLITE_DEFINITIONS[body.name as keyof typeof SATELLITE_DEFINITIONS];
+            orbitRadius = def ? def.orbitRadius : 0.01;
+          } else {
+            // 行星使用轨道元素的半长轴
+            const elements = elementsMap[body.name.toLowerCase() as keyof typeof elementsMap];
+            orbitRadius = elements ? elements.a : 1.0;
+          }
+          
+          // 计算轨道间距（圆环宽度）
+          // 从太阳到当前行星的连线上，当前行星到内侧轨道交点的距离
+          let orbitSpacing = orbitRadius * 0.3; // 默认间距（30%）
+          
+          if (!body.isSatellite) {
+            // 行星顺序：水星、金星、地球、火星、木星、土星、天王星、海王星
+            const planetOrder = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
+            const currentIndex = planetOrder.indexOf(body.name.toLowerCase());
+            
+            if (currentIndex > 0) {
+              // 获取上一个行星的轨道半径
+              const prevPlanetName = planetOrder[currentIndex - 1];
+              const prevElements = elementsMap[prevPlanetName as keyof typeof elementsMap];
+              if (prevElements) {
+                // 圆环宽度 = 当前轨道半径 - 上一个轨道半径
+                orbitSpacing = orbitRadius - prevElements.a;
+              }
+            } else if (currentIndex === 0) {
+              // 水星：到太阳的距离
+              orbitSpacing = orbitRadius;
+            }
+          } else {
+            // 卫星间距使用轨道半径的 30%
+            orbitSpacing = orbitRadius * 0.3;
+          }
+          
+          const label = new OrbitLabel({
+            textEn: labelTextEn,
+            textZh: labelTextZh,
+            color: colorString,
+            orbitRadius: orbitRadius,
+            orbitSpacing: orbitSpacing,
+          });
+          
+          // 将标签添加到场景
+          scene.add(label.getSprite());
           labelsRef.current.set(body.name.toLowerCase(), label);
         }
       });
@@ -841,15 +879,36 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
         const maxDistance = Math.max(cameraDistance * 3, 50);
         sceneManager.updateCameraClipping(0.01, maxDistance);
         
-        // 标签重叠检测节流：每N帧执行一次，大幅减少CPU占用
+        // 1. 每帧更新标签位置（不节流，保证流畅移动）
+        currentBodies.forEach((body: any) => {
+          const key = body.name.toLowerCase();
+          const label = labelsRef.current.get(key);
+          
+          // 更新 OrbitLabel 的位置
+          if (label) {
+            const planetPosition = new THREE.Vector3(body.x, body.y, body.z);
+            const orbit = orbitsRef.current.get(key);
+            
+            // 获取轨道法向量（如果有轨道且方法存在）
+            let orbitNormal = new THREE.Vector3(0, 0, 1); // 默认法向量
+            if (orbit && typeof orbit.getOrbitNormal === 'function') {
+              orbitNormal = orbit.getOrbitNormal();
+            }
+            
+            // 更新标签位置，传入相机以支持自动翻转
+            label.updatePositionWithCamera(planetPosition, orbitNormal, camera);
+          }
+        });
+        
+        // 2. 标签重叠检测节流：每N帧执行一次，大幅减少CPU占用
         labelUpdateFrameCounterRef.current++;
         const shouldUpdateLabels = labelUpdateFrameCounterRef.current >= LABEL_UPDATE_INTERVAL;
         if (shouldUpdateLabels) {
           labelUpdateFrameCounterRef.current = 0;
         }
         
-        // 重叠检测和标记圈/标签显示逻辑（类似2D版本）
-        // 1. 收集所有标签信息（屏幕坐标）
+        // 3. 重叠检测和标记圈/标签显示逻辑（类似2D版本）
+        // 收集所有标签信息（屏幕坐标）
         const labelInfos: Array<{
           body: any;
           planet: Planet;
@@ -984,9 +1043,8 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
         labelInfos.forEach((info) => {
           // 太阳标签始终显示，不参与透明度更新
           if (info.body.isSun) {
-            if (info.label && info.label.element) {
-              info.label.element.style.opacity = '1';
-              info.label.element.style.display = 'block';
+            if (info.label) {
+              info.label.setOpacity(1.0);
             }
             return;
           }
@@ -995,15 +1053,8 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
           const opacity = info.planet.getMarkerOpacity();
           
           // 更新标签的透明度
-          if (info.label && info.label.element) {
-            info.label.element.style.opacity = opacity.toString();
-            // 确保标签在可见时显示
-            const minOpacity = 0.01; // 最小透明度阈值
-            if (opacity > minOpacity) {
-              info.label.element.style.display = 'block';
-            } else {
-              info.label.element.style.display = 'none';
-            }
+          if (info.label) {
+            info.label.setOpacity(opacity);
           }
         });
         
@@ -1114,7 +1165,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
         // 主渲染器和标签渲染器必须在同一帧同步执行，避免闪烁
         sceneManager.render();
         
-        // 立即在同一帧渲染标签（确保与主渲染器同步）
+        // 渲染标记圈（CSS2DRenderer）
         if (labelRendererRef.current) {
           labelRendererRef.current.render(scene, camera);
         }
@@ -1319,39 +1370,33 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
               }
             }
             
-            // 3. 检测标签（CSS2DObject）- 使用屏幕坐标
+            // 3. 检测标签（OrbitLabel）- 使用屏幕坐标
             const label = labelsRef.current.get(key);
-            if (label && label.element && containerRef.current) {
-              const worldPos = new THREE.Vector3(body.x, body.y, body.z);
-              worldPos.project(camera);
-              const screenX = (worldPos.x * 0.5 + 0.5) * containerRef.current.clientWidth;
-              const screenY = (worldPos.y * -0.5 + 0.5) * containerRef.current.clientHeight;
+            if (label && containerRef.current) {
+              const bounds = label.getScreenBounds(
+                camera,
+                containerRef.current.clientWidth,
+                containerRef.current.clientHeight
+              );
               
-              const clickX = event.clientX - rect.left;
-              const clickY = event.clientY - rect.top;
-              
-              // 标签位置（考虑偏移）
-              const labelX = screenX + LABEL_CONFIG.offsetX;
-              const labelY = screenY + LABEL_CONFIG.offsetY;
-              
-              // 估算标签大小
-              const displayName = planetNames[lang]?.[body.name] || body.name;
-              const labelWidth = displayName.length * 10;
-              const labelHeight = 20;
-              
-              if (
-                clickX >= labelX - labelWidth / 2 &&
-                clickX <= labelX + labelWidth / 2 &&
-                clickY >= labelY - labelHeight / 2 &&
-                clickY <= labelY + labelHeight / 2
-              ) {
-                intersects.push({
-                  planet,
-                  body,
-                  distance: 0, // 标签点击优先级最高
-                  type: 'label',
-                  isSatellite,
-                });
+              if (bounds) {
+                const clickX = event.clientX - rect.left;
+                const clickY = event.clientY - rect.top;
+                
+                if (
+                  clickX >= bounds.left &&
+                  clickX <= bounds.right &&
+                  clickY >= bounds.top &&
+                  clickY <= bounds.bottom
+                ) {
+                  intersects.push({
+                    planet,
+                    body,
+                    distance: 0, // 标签点击优先级最高
+                    type: 'label',
+                    isSatellite,
+                  });
+                }
               }
             }
           }
@@ -1443,7 +1488,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
       renderer.domElement.addEventListener('mouseup', handleMouseUp);
       renderer.domElement.addEventListener('click', handleClick);
       
-      // 也在 labelRenderer 的 DOM 元素上添加点击事件（用于点击标签和标记圈）
+      // 也在 labelRenderer 的 DOM 元素上添加点击事件（用于点击标记圈）
       if (labelRendererRef.current) {
         labelRendererRef.current.domElement.addEventListener('mousedown', handleMouseDown);
         labelRendererRef.current.domElement.addEventListener('mousemove', handleMouseMove);
@@ -1453,6 +1498,47 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
 
       // 启动动画循环
       animationFrameRef.current = requestAnimationFrame(animate);
+
+      // 初始化完成后自动聚焦到地球
+      setTimeout(() => {
+        const earthBody = currentState.celestialBodies.find((b: any) => b.name.toLowerCase() === 'earth');
+        if (earthBody && cameraControllerRef.current) {
+          // 选中地球
+          useSolarSystemStore.getState().selectPlanet('Earth');
+          
+          // 获取地球的Planet实例
+          const earthPlanet = planetsRef.current.get('earth');
+          if (earthPlanet) {
+            const targetPosition = new THREE.Vector3(earthBody.x, earthBody.y, earthBody.z);
+            const planetRadius = earthPlanet.getRealRadius();
+            
+            const celestialObject = {
+              name: 'Earth',
+              radius: planetRadius,
+              type: 'planet' as const
+            };
+            
+            // 创建跟踪函数
+            const trackingTargetGetter = () => {
+              const currentBodies = useSolarSystemStore.getState().celestialBodies;
+              const currentBody = currentBodies.find((b: any) => b.name === 'Earth');
+              if (currentBody) {
+                return new THREE.Vector3(currentBody.x, currentBody.y, currentBody.z);
+              }
+              return targetPosition.clone();
+            };
+            
+            // 聚焦到地球
+            cameraControllerRef.current.focusOnTarget(
+              targetPosition, 
+              celestialObject, 
+              trackingTargetGetter
+            );
+            
+            console.log('Auto-focused on Earth');
+          }
+        }
+      }, 500); // 延迟500ms，确保场景完全初始化
 
       // 处理窗口大小变化
       const handleResize = () => {
@@ -1515,10 +1601,12 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange }: SolarSys
         });
         orbitsRef.current.forEach((orbit) => orbit.dispose());
         
-        // 清理标签（从场景中移除）
+        // 清理标签
         labelsRef.current.forEach((label) => {
-          if (label.parent) {
-            label.parent.remove(label);
+          label.dispose();
+          const sprite = label.getSprite();
+          if (sprite.parent) {
+            sprite.parent.remove(sprite);
           }
         });
         labelsRef.current.clear();

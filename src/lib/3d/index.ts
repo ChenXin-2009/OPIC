@@ -7,6 +7,7 @@ export { SceneManager } from './SceneManager';
 export { CameraController } from './CameraController';
 export { Planet } from './Planet';
 export { OrbitCurve } from './OrbitCurve';
+export { OrbitLabel } from './OrbitLabel';
 export { SatelliteOrbit } from './SatelliteOrbit';
 
 // 宇宙尺度渲染器

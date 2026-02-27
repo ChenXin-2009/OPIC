@@ -21,7 +21,7 @@ import { useSolarSystemStore } from '../state';
 import { useSatelliteStore } from '../store/useSatelliteStore';
 import { satelliteConfig } from '../config/satelliteConfig';
 import * as THREE from 'three';
-import { PositionInterpolator } from '../performance/PositionInterpolator';
+import { OrbitalInterpolator } from '../performance/OrbitalInterpolator';
 import { PerformanceMonitor } from '../performance/PerformanceMonitor';
 import { QualityController } from '../performance/QualityController';
 import { logDebug, logError } from '../performance/performanceConfig';
@@ -66,8 +66,8 @@ export class SatelliteLayer {
   private calculator: SGP4Calculator;
   private visible: boolean = true;
   
-  // 性能优化组件
-  private interpolator: PositionInterpolator;
+  // 性能优化组件（使用轨道动力学插值器）
+  private interpolator: OrbitalInterpolator;
   private performanceMonitor: PerformanceMonitor;
   private qualityController: QualityController;
   
@@ -88,8 +88,8 @@ export class SatelliteLayer {
     this.renderer = new SatelliteRenderer(sceneManager);
     this.calculator = new SGP4Calculator();
     
-    // 初始化性能优化组件
-    this.interpolator = new PositionInterpolator();
+    // 初始化性能优化组件（使用轨道动力学插值器）
+    this.interpolator = new OrbitalInterpolator(true); // 启用轨道动力学
     this.performanceMonitor = new PerformanceMonitor();
     this.qualityController = new QualityController(this.performanceMonitor);
     
@@ -206,17 +206,17 @@ export class SatelliteLayer {
         const fadeThreshold = 1000000 / 149597870.7; // 1,000,000 km in AU (开始渐隐)
         
         // 计算可见性和透明度
-        const isVisible = distanceToEarth < visibilityThreshold;
+        const isVisibleByDistance = distanceToEarth < visibilityThreshold;
         let opacity: number;
         let size: number;
         
-        if (!isVisible) {
+        if (!isVisibleByDistance) {
           // 超出可见范围，完全隐藏
           opacity = 0;
           size = 0;
           this.renderer.setVisible(false);
         } else {
-          // 在可见范围内
+          // 在可见范围内，显示卫星
           this.renderer.setVisible(true);
           
           if (distanceToEarth < fadeThreshold) {
@@ -321,6 +321,25 @@ export class SatelliteLayer {
         
         logDebug('[SatelliteLayer] SGP4 calculated', positions.size, 'positions');
         
+        // 清除不在可见列表中的卫星数据
+        const visibleSet = new Set(visibleSatellites);
+        const toRemove: number[] = [];
+        
+        this.satelliteStates.forEach((_, noradId) => {
+          if (!visibleSet.has(noradId)) {
+            toRemove.push(noradId);
+          }
+        });
+        
+        toRemove.forEach(noradId => {
+          this.satelliteStates.delete(noradId);
+          this.interpolator.clear(noradId);
+        });
+        
+        if (toRemove.length > 0) {
+          logDebug('[SatelliteLayer] Removed', toRemove.length, 'invisible satellites');
+        }
+        
         // 获取质量设置
         const settings = this.qualityController.getSettings();
         // 下次计算时间 = 当前模拟时间 + 更新间隔
@@ -340,8 +359,13 @@ export class SatelliteLayer {
             position: state.position,
           });
           
-          // 设置插值目标（使用模拟时间）
-          this.interpolator.setTarget(noradId, state.position.clone(), nextCalcTime);
+          // 设置插值目标（使用模拟时间，传入位置和速度）
+          this.interpolator.setTarget(
+            noradId,
+            state.position.clone(),
+            state.velocity.clone(),
+            nextCalcTime
+          );
         });
         
         // 同步到Store（供详情面板使用）

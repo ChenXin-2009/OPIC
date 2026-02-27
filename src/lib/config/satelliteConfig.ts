@@ -44,8 +44,8 @@ export const satelliteConfig: SatelliteConfig = {
 
   // 计算配置
   computation: {
-    // 每批最多计算1000颗卫星
-    maxBatchSize: 1000,
+    // 每批最多计算5000颗卫星（优化：增大批次减少Worker通信开销）
+    maxBatchSize: 5000,
     // Web Worker数量
     workerCount: 1,
     // 缓存最多10000个计算结果

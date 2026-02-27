@@ -6,9 +6,8 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useSatelliteStore } from '@/lib/store/useSatelliteStore';
-import { SatelliteCategory } from '@/lib/types/satellite';
 
 // 明日方舟风格配置
 const ARKNIGHTS_CONFIG = {
@@ -24,29 +23,17 @@ const ARKNIGHTS_CONFIG = {
   },
 };
 
-// 类别选项配置
-const CATEGORY_OPTIONS = [
-  { value: SatelliteCategory.ACTIVE, label: { zh: '活跃卫星', en: 'Active' } },
-  { value: SatelliteCategory.ISS, label: { zh: '空间站', en: 'ISS' } },
-  { value: SatelliteCategory.GPS, label: { zh: 'GPS', en: 'GPS' } },
-  { value: SatelliteCategory.COMMUNICATION, label: { zh: '通信', en: 'Comm' } },
-  { value: SatelliteCategory.WEATHER, label: { zh: '气象', en: 'Weather' } },
-  { value: SatelliteCategory.SCIENCE, label: { zh: '科学', en: 'Science' } },
-];
-
 interface SatelliteControlsProps {
   lang?: 'zh' | 'en';
 }
 
 export function SatelliteControls({ lang = 'zh' }: SatelliteControlsProps) {
   const {
-    selectedCategories,
     searchQuery,
     showSatellites,
     visibleSatellites,
     lastUpdate,
     loading,
-    setSelectedCategories,
     setSearchQuery,
     setShowSatellites,
     fetchSatellites,
@@ -62,20 +49,6 @@ export function SatelliteControls({ lang = 'zh' }: SatelliteControlsProps) {
 
     return () => clearTimeout(timer);
   }, [localSearchQuery, setSearchQuery]);
-
-  // 切换类别选择
-  const toggleCategory = useCallback((category: SatelliteCategory) => {
-    const newCategories = new Set(selectedCategories);
-    if (newCategories.has(category)) {
-      // 至少保留一个类别
-      if (newCategories.size > 1) {
-        newCategories.delete(category);
-      }
-    } else {
-      newCategories.add(category);
-    }
-    setSelectedCategories(newCategories);
-  }, [selectedCategories, setSelectedCategories]);
 
   // 格式化更新时间
   const formatUpdateTime = (date: Date | null) => {
@@ -179,11 +152,11 @@ export function SatelliteControls({ lang = 'zh' }: SatelliteControlsProps) {
           >
             {showSatellites
               ? lang === 'zh'
-                ? '显示卫星'
-                : 'SHOW SATELLITES'
+                ? '隐藏卫星'
+                : 'HIDE SATELLITES'
               : lang === 'zh'
-              ? '隐藏卫星'
-              : 'HIDE SATELLITES'}
+              ? '显示卫星'
+              : 'SHOW SATELLITES'}
           </button>
         </div>
 
@@ -212,45 +185,6 @@ export function SatelliteControls({ lang = 'zh' }: SatelliteControlsProps) {
               outline: 'none',
             }}
           />
-        </div>
-
-        {/* 类别筛选 */}
-        <div className="mb-4">
-          <label
-            className="text-xs uppercase tracking-wide block mb-2"
-            style={{ color: ARKNIGHTS_CONFIG.colors.textDim }}
-          >
-            {lang === 'zh' ? '类别' : 'CATEGORIES'}
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {CATEGORY_OPTIONS.map((option) => {
-              const isSelected = selectedCategories.has(option.value);
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => toggleCategory(option.value)}
-                  className="py-1.5 text-xs font-bold uppercase tracking-wide transition-all duration-200"
-                  style={{
-                    background: isSelected
-                      ? ARKNIGHTS_CONFIG.colors.primary
-                      : ARKNIGHTS_CONFIG.colors.darkLight,
-                    color: isSelected
-                      ? ARKNIGHTS_CONFIG.colors.dark
-                      : ARKNIGHTS_CONFIG.colors.textDim,
-                    border: `1px solid ${
-                      isSelected
-                        ? ARKNIGHTS_CONFIG.colors.primary
-                        : ARKNIGHTS_CONFIG.colors.border
-                    }`,
-                    clipPath:
-                      'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)',
-                  }}
-                >
-                  {option.label[lang]}
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         {/* 数据状态 */}

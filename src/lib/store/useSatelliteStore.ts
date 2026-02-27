@@ -40,8 +40,6 @@ export interface SatelliteStore {
   lastUpdate: Date | null;
 
   // ========== 筛选状态 ==========
-  /** 选中的类别集合 */
-  selectedCategories: Set<SatelliteCategory>;
   /** 搜索查询字符串 */
   searchQuery: string;
   /** 可见卫星的NORAD ID集合 */
@@ -68,8 +66,6 @@ export interface SatelliteStore {
   fetchSatellites: (category?: SatelliteCategory) => Promise<void>;
   /** 更新卫星位置和筛选 */
   updateSatellitePositions: (time: number) => void;
-  /** 设置选中的类别 */
-  setSelectedCategories: (categories: Set<SatelliteCategory>) => void;
   /** 设置搜索查询 */
   setSearchQuery: (query: string) => void;
   /** 选择卫星 */
@@ -98,7 +94,6 @@ export interface SatelliteStore {
  * 需要持久化的状态
  */
 interface PersistedState {
-  selectedCategories: SatelliteCategory[];
   showSatellites: boolean;
 }
 
@@ -107,7 +102,6 @@ interface PersistedState {
  */
 function hydratePersistedState(persisted: PersistedState): Partial<SatelliteStore> {
   return {
-    selectedCategories: new Set(persisted.selectedCategories),
     showSatellites: persisted.showSatellites,
   };
 }
@@ -117,7 +111,6 @@ function hydratePersistedState(persisted: PersistedState): Partial<SatelliteStor
  */
 function dehydrateState(state: SatelliteStore): PersistedState {
   return {
-    selectedCategories: Array.from(state.selectedCategories),
     showSatellites: state.showSatellites,
   };
 }
@@ -136,7 +129,6 @@ export const useSatelliteStore = create<SatelliteStore>()(
       loading: false,
       error: null,
       lastUpdate: null,
-      selectedCategories: new Set([SatelliteCategory.ACTIVE]),
       searchQuery: '',
       visibleSatellites: new Set(),
       selectedSatellite: null,
@@ -205,22 +197,17 @@ export const useSatelliteStore = create<SatelliteStore>()(
       /**
        * 更新卫星位置和筛选
        * 
-       * 根据选中的类别和搜索查询筛选可见卫星
+       * 根据搜索查询筛选可见卫星
        */
       updateSatellitePositions: (time: number) => {
-        const { tleData, selectedCategories, searchQuery } = get();
+        const { tleData, searchQuery } = get();
 
         // 筛选可见卫星
         const visible = new Set<number>();
         const query = searchQuery.toLowerCase().trim();
 
         tleData.forEach((tle, noradId) => {
-          // 类别筛选
-          if (!selectedCategories.has(tle.category)) {
-            return;
-          }
-
-          // 搜索筛选
+          // 如果有搜索查询，进行搜索筛选
           if (query) {
             const nameMatch = tle.name.toLowerCase().includes(query);
             const idMatch = noradId.toString().includes(query);
@@ -230,6 +217,7 @@ export const useSatelliteStore = create<SatelliteStore>()(
             }
           }
 
+          // 没有搜索查询或匹配搜索条件，添加到可见列表
           visible.add(noradId);
         });
 
@@ -238,20 +226,6 @@ export const useSatelliteStore = create<SatelliteStore>()(
         );
 
         set({ visibleSatellites: visible });
-      },
-
-      /**
-       * 设置选中的类别
-       */
-      setSelectedCategories: (categories: Set<SatelliteCategory>) => {
-        console.log(
-          `[SatelliteStore] 设置类别筛选: ${Array.from(categories).join(', ')}`
-        );
-
-        set({ selectedCategories: categories });
-
-        // 触发筛选更新
-        get().updateSatellitePositions(Date.now());
       },
 
       /**

@@ -29,6 +29,7 @@
     "remark-gfm": "^4.0.1",
     "satellite.js": "^6.0.2",
     "three": "^0.170.0",
+    "troika-three-text": "^0.52.4",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

@@ -32,7 +32,7 @@ interface SatelliteStatsProps {
 }
 
 export function SatelliteStats({ lang = 'zh' }: SatelliteStatsProps) {
-  const { tleData, visibleSatellites, selectedCategories } = useSatelliteStore();
+  const { tleData, visibleSatellites } = useSatelliteStore();
   
   const [fps, setFps] = useState(0);
   const [renderTime, setRenderTime] = useState(0);

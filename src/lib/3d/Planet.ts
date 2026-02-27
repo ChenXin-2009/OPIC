@@ -16,6 +16,7 @@
  */
 
 import * as THREE from 'three';
+import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import type { CelestialBody } from '@/lib/astronomy/orbit';
 import { CelestialBodyConfig, rotationPeriodToSpeed, calculateRotationAxis, CELESTIAL_BODIES } from '@/lib/types/celestialTypes';
 import { MARKER_CONFIG, SUN_GLOW_CONFIG, SUN_RAINBOW_LAYERS, SUN_STAR_SPIKES_CONFIG, PLANET_LOD_CONFIG, PLANET_GRID_CONFIG, PLANET_LIGHTING_CONFIG, getCelestialMaterialParams, SATURN_RING_CONFIG, SUN_SHADER_CONFIG } from '@/lib/config/visualConfig';
@@ -1132,7 +1133,7 @@ export class Planet {
    * 创建标记圈（类似 NASA JPL Eyes）
    * 当行星很小时，显示一个2D圆圈标记其位置
    */
-  createMarkerCircle(CSS2DObject: any): void {
+  createMarkerCircle(): void {
     if (this.markerDiv) return; // 已经创建过了
     
     // 创建标记圈DOM元素（固定像素大小，始终显示）

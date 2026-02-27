@@ -208,7 +208,7 @@ export class QualityController {
    * 降低渲染质量
    * 
    * 调整策略：
-   * - 增加更新间隔（1000ms → 2000ms）
+   * - 增加更新间隔（2000ms → 4000ms → 8000ms）
    * - 切换到线性插值
    * - 降低位置阈值
    */
@@ -221,12 +221,12 @@ export class QualityController {
     if (this.currentQualityLevel === QualityLevel.HIGH) {
       // 从高质量降到中质量
       this.currentQualityLevel = QualityLevel.MEDIUM;
-      this.currentSettings.updateInterval = 1000;
+      this.currentSettings.updateInterval = 2000;
       this.currentSettings.interpolationMethod = 'linear';
     } else if (this.currentQualityLevel === QualityLevel.MEDIUM) {
-      // 从中质量降到低质量
+      // 从中质量降到低质量（优化：大幅增加更新间隔）
       this.currentQualityLevel = QualityLevel.LOW;
-      this.currentSettings.updateInterval = 2000;
+      this.currentSettings.updateInterval = 4000; // 4秒（从2秒增加）
       this.currentSettings.interpolationMethod = 'linear';
       this.currentSettings.positionThreshold = 0.0002; // 降低精度
     }
@@ -236,7 +236,7 @@ export class QualityController {
    * 提升渲染质量
    * 
    * 调整策略：
-   * - 减少更新间隔（2000ms → 1000ms）
+   * - 减少更新间隔（8000ms → 4000ms → 1000ms）
    * - 切换到三次插值（如果支持）
    * - 提高位置阈值
    */
@@ -249,13 +249,13 @@ export class QualityController {
     if (this.currentQualityLevel === QualityLevel.LOW) {
       // 从低质量升到中质量
       this.currentQualityLevel = QualityLevel.MEDIUM;
-      this.currentSettings.updateInterval = 1000;
+      this.currentSettings.updateInterval = 2000;
       this.currentSettings.interpolationMethod = 'linear';
       this.currentSettings.positionThreshold = 0.0001;
     } else if (this.currentQualityLevel === QualityLevel.MEDIUM) {
       // 从中质量升到高质量
       this.currentQualityLevel = QualityLevel.HIGH;
-      this.currentSettings.updateInterval = 500;
+      this.currentSettings.updateInterval = 1000;
       this.currentSettings.interpolationMethod = 'linear'; // 暂时保持线性插值
     }
   }
@@ -315,20 +315,20 @@ export class QualityController {
   setQualityLevel(level: QualityLevel): void {
     this.currentQualityLevel = level;
     
-    // 根据质量级别设置参数
+    // 根据质量级别设置参数（优化：调整更新间隔）
     switch (level) {
       case QualityLevel.LOW:
-        this.currentSettings.updateInterval = 2000;
+        this.currentSettings.updateInterval = 4000; // 4秒
         this.currentSettings.interpolationMethod = 'linear';
         this.currentSettings.positionThreshold = 0.0002;
         break;
       case QualityLevel.MEDIUM:
-        this.currentSettings.updateInterval = 1000;
+        this.currentSettings.updateInterval = 2000; // 2秒
         this.currentSettings.interpolationMethod = 'linear';
         this.currentSettings.positionThreshold = 0.0001;
         break;
       case QualityLevel.HIGH:
-        this.currentSettings.updateInterval = 500;
+        this.currentSettings.updateInterval = 1000; // 1秒
         this.currentSettings.interpolationMethod = 'linear';
         this.currentSettings.positionThreshold = 0.0001;
         break;

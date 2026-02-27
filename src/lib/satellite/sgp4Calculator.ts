@@ -227,8 +227,13 @@ export class SGP4Calculator {
     const jd = julianDate || this.dateToJulianDate(Date.now());
     const results = new Map<number, SatelliteState>();
 
-    // 按批次处理(每批最多maxBatchSize颗卫星)
-    const batchSize = satelliteConfig.computation.maxBatchSize;
+    // 自适应批次大小：卫星数量越多，批次越大，减少Worker通信开销
+    let batchSize = satelliteConfig.computation.maxBatchSize;
+    if (noradIds.length > 10000) {
+      batchSize = 10000; // 超过1万颗卫星，使用1万的批次
+    } else if (noradIds.length > 5000) {
+      batchSize = 5000; // 超过5千颗卫星，使用5千的批次
+    }
     
     for (let i = 0; i < noradIds.length; i += batchSize) {
       const batchIds = noradIds.slice(i, i + batchSize);

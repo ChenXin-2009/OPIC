@@ -113,8 +113,8 @@ export function logError(message: string, ...args: any[]): void {
  * 性能配置常量
  */
 export const PERFORMANCE_CONFIG: PerformanceConfig = {
-  // 默认质量设置
-  DEFAULT_UPDATE_INTERVAL: 1000,        // 1 秒
+  // 默认质量设置（优化：增加更新间隔减少计算频率）
+  DEFAULT_UPDATE_INTERVAL: 2000,        // 2 秒（从1秒增加到2秒）
   DEFAULT_INTERPOLATION: 'linear',
   DEFAULT_POSITION_THRESHOLD: 0.0001,   // 0.0001 AU ≈ 15 km
   

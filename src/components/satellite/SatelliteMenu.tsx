@@ -6,9 +6,9 @@
 
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSatelliteStore } from '@/lib/store/useSatelliteStore';
-import { SatelliteCategory, OrbitType } from '@/lib/types/satellite';
+import { OrbitType } from '@/lib/types/satellite';
 
 // 明日方舟风格配置
 const ARKNIGHTS_CONFIG = {
@@ -28,16 +28,6 @@ const ARKNIGHTS_CONFIG = {
   },
 };
 
-// 类别选项配置
-const CATEGORY_OPTIONS = [
-  { value: SatelliteCategory.ACTIVE, label: { zh: '活跃卫星', en: 'Active' } },
-  { value: SatelliteCategory.ISS, label: { zh: '空间站', en: 'ISS' } },
-  { value: SatelliteCategory.GPS, label: { zh: 'GPS', en: 'GPS' } },
-  { value: SatelliteCategory.COMMUNICATION, label: { zh: '通信', en: 'Comm' } },
-  { value: SatelliteCategory.WEATHER, label: { zh: '气象', en: 'Weather' } },
-  { value: SatelliteCategory.SCIENCE, label: { zh: '科学', en: 'Science' } },
-];
-
 interface SatelliteMenuProps {
   lang?: 'zh' | 'en';
 }
@@ -49,7 +39,6 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const {
-    selectedCategories,
     searchQuery,
     showSatellites,
     visibleSatellites,
@@ -57,7 +46,6 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
     loading,
     selectedSatellite,
     showOrbits,
-    setSelectedCategories,
     setSearchQuery,
     setShowSatellites,
     fetchSatellites,
@@ -81,11 +69,12 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
 
   // 组件加载时自动获取卫星数据
   useEffect(() => {
+    const state = useSatelliteStore.getState();
     // 只在没有数据时才自动获取
-    if (useSatelliteStore.getState().tleData.size === 0 && !loading) {
+    if (state.tleData.size === 0 && !loading) {
       fetchSatellites();
     }
-  }, []); // 空依赖数组,只在组件挂载时执行一次
+  }, [fetchSatellites, loading]);
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -108,19 +97,6 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
     }
     return undefined;
   }, [isOpen]);
-
-  // 切换类别选择
-  const toggleCategory = useCallback((category: SatelliteCategory) => {
-    const newCategories = new Set(selectedCategories);
-    if (newCategories.has(category)) {
-      if (newCategories.size > 1) {
-        newCategories.delete(category);
-      }
-    } else {
-      newCategories.add(category);
-    }
-    setSelectedCategories(newCategories);
-  }, [selectedCategories, setSelectedCategories]);
 
   // 格式化更新时间
   const formatUpdateTime = (date: Date | null) => {
@@ -167,21 +143,7 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
     return labels[orbitType]?.[lang] || orbitType;
   };
 
-  // 获取类别标签
-  const getCategoryLabel = (category: string): string => {
-    const labels: Record<string, { zh: string; en: string }> = {
-      active: { zh: '活跃卫星', en: 'Active' },
-      stations: { zh: '空间站', en: 'ISS' },
-      'gps-ops': { zh: 'GPS', en: 'GPS' },
-      geo: { zh: '通信卫星', en: 'Communication' },
-      weather: { zh: '气象卫星', en: 'Weather' },
-      science: { zh: '科学卫星', en: 'Science' },
-      other: { zh: '其他', en: 'Other' },
-    };
-    return labels[category]?.[lang] || category;
-  };
-
-  // 计算轨道颜色和可见性(在函数定义之后)
+  // 计算轨道颜色和可见性
   const orbitColor = satellite ? getOrbitColor(satellite.orbitType) : ARKNIGHTS_CONFIG.colors.primary;
   const isOrbitVisible = selectedSatellite ? showOrbits.has(selectedSatellite) : false;
 
@@ -338,11 +300,11 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
               >
                 {showSatellites
                   ? lang === 'zh'
-                    ? '显示卫星'
-                    : 'SHOW SATELLITES'
+                    ? '隐藏卫星'
+                    : 'HIDE SATELLITES'
                   : lang === 'zh'
-                  ? '隐藏卫星'
-                  : 'HIDE SATELLITES'}
+                  ? '显示卫星'
+                  : 'SHOW SATELLITES'}
               </button>
             </div>
 
@@ -371,45 +333,6 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
                   outline: 'none',
                 }}
               />
-            </div>
-
-            {/* 类别筛选 */}
-            <div className="mb-4">
-              <label
-                className="text-xs uppercase tracking-wide block mb-2"
-                style={{ color: ARKNIGHTS_CONFIG.colors.textDim }}
-              >
-                {lang === 'zh' ? '类别' : 'CATEGORIES'}
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {CATEGORY_OPTIONS.map((option) => {
-                  const isSelected = selectedCategories.has(option.value);
-                  return (
-                    <button
-                      key={option.value}
-                      onClick={() => toggleCategory(option.value)}
-                      className="py-1.5 text-xs font-bold uppercase tracking-wide transition-all duration-200"
-                      style={{
-                        background: isSelected
-                          ? ARKNIGHTS_CONFIG.colors.primary
-                          : ARKNIGHTS_CONFIG.colors.darkLight,
-                        color: isSelected
-                          ? ARKNIGHTS_CONFIG.colors.dark
-                          : ARKNIGHTS_CONFIG.colors.textDim,
-                        border: `1px solid ${
-                          isSelected
-                            ? ARKNIGHTS_CONFIG.colors.primary
-                            : ARKNIGHTS_CONFIG.colors.border
-                        }`,
-                        clipPath:
-                          'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)',
-                      }}
-                    >
-                      {option.label[lang]}
-                    </button>
-                  );
-                })}
-              </div>
             </div>
 
             {/* 数据状态 */}
@@ -530,28 +453,16 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
                   >
                     {satellite.name}
                   </h3>
-                  <div className="flex gap-2">
-                    <span
-                      className="text-xs px-2 py-0.5 font-bold uppercase tracking-wide"
-                      style={{
-                        background: `${orbitColor}20`,
-                        color: orbitColor,
-                        border: `1px solid ${orbitColor}`,
-                      }}
-                    >
-                      {getOrbitTypeLabel(satellite.orbitType)}
-                    </span>
-                    <span
-                      className="text-xs px-2 py-0.5 font-mono"
-                      style={{
-                        background: ARKNIGHTS_CONFIG.colors.darkLight,
-                        color: ARKNIGHTS_CONFIG.colors.secondary,
-                        border: `1px solid ${ARKNIGHTS_CONFIG.colors.border}`,
-                      }}
-                    >
-                      {getCategoryLabel(satellite.category)}
-                    </span>
-                  </div>
+                  <span
+                    className="text-xs px-2 py-0.5 font-bold uppercase tracking-wide inline-block"
+                    style={{
+                      background: `${orbitColor}20`,
+                      color: orbitColor,
+                      border: `1px solid ${orbitColor}`,
+                    }}
+                  >
+                    {getOrbitTypeLabel(satellite.orbitType)}
+                  </span>
                 </div>
 
                 {/* 基本信息 */}

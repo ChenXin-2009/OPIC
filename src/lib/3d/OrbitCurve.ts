@@ -820,6 +820,24 @@ export class OrbitCurve {
     return new THREE.Vector3(x, y, z);
   }
 
+  /**
+   * 获取轨道平面的法向量
+   * 基于轨道倾角和升交点黄经计算
+   */
+  getOrbitNormal(): THREE.Vector3 {
+    const i = this.elements.i; // 轨道倾角 (rad)
+    const O = this.elements.O; // 升交点黄经 (rad)
+    
+    // 轨道法向量的计算：
+    // 在黄道坐标系中，轨道法向量为：
+    // n = (sin(i) * sin(O), -sin(i) * cos(O), cos(i))
+    const nx = Math.sin(i) * Math.sin(O);
+    const ny = -Math.sin(i) * Math.cos(O);
+    const nz = Math.cos(i);
+    
+    return new THREE.Vector3(nx, ny, nz).normalize();
+  }
+
   dispose(): void {
     this.visualObjects.forEach(obj => {
       if (obj instanceof THREE.Line || obj instanceof THREE.Mesh) {
@@ -835,3 +853,4 @@ export class OrbitCurve {
   }
 }
 
+import { vectorPool } from './utils/vectorPool';
