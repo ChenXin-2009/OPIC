@@ -1,9 +1,64 @@
 /**
- * CameraController.ts - 3D 相机控制器
- *
- * 功能：
- * - 管理 Three.js PerspectiveCamera 和 OrbitControls
- * - 实现平滑缩放、聚焦、跟踪等功能
+ * @module 3d/CameraController
+ * @description 3D 相机控制器
+ * 
+ * 本模块负责管理 Three.js 相机和 OrbitControls,提供平滑缩放、聚焦、跟踪等高级相机功能。
+ * 支持多种相机模式（自由、锁定、跟随）和动态配置管理。
+ * 
+ * @architecture
+ * - 所属子系统：3D 渲染
+ * - 架构层级：核心层
+ * - 职责边界：负责相机控制和视角管理,不负责场景渲染或天体计算
+ * 
+ * @dependencies
+ * - 直接依赖：three, three/addons/controls/OrbitControls, 3d/FocusManager, config/cameraConfig, config/CameraConfigManager
+ * - 被依赖：components/UniverseVisualization
+ * - 循环依赖：无
+ * 
+ * @renderPipeline
+ * 相机控制管线：
+ * 1. 输入处理：鼠标滚轮、触摸手势
+ * 2. 缩放计算：平滑缩放算法（指数衰减）
+ * 3. 聚焦动画：Lerp 插值平滑移动
+ * 4. 跟踪更新：实时跟随目标天体
+ * 5. 防穿透约束：限制相机不穿透行星表面
+ * 6. 阻尼更新：OrbitControls 惯性效果
+ * 
+ * @performance
+ * - 使用指数衰减算法实现平滑缩放
+ * - 使用 Lerp 插值避免突兀的相机移动
+ * - 使用阻尼（damping）提供自然的惯性效果
+ * - 动态配置管理支持运行时调整参数
+ * 
+ * @coordinateSystem
+ * - 相机位置：世界坐标系（与场景坐标系一致）
+ * - 控制目标：世界坐标系中的点
+ * - 距离计算：欧几里得距离
+ * 
+ * @note
+ * - 相机模式：free（自由）、locked（锁定）、follow（跟随）
+ * - 防穿透约束基于目标天体的真实半径
+ * - 支持快速预设配置（QUICK_CAMERA_SETTINGS）
+ * - 使用 FocusManager 管理复杂的聚焦逻辑
+ * 
+ * @example
+ * ```typescript
+ * import { CameraController } from '@/lib/3d';
+ * 
+ * const cameraController = new CameraController(camera, domElement);
+ * 
+ * // 聚焦到地球
+ * cameraController.focusOnBody(earthMesh, {
+ *   distance: 0.05,
+ *   duration: 2000
+ * });
+ * 
+ * // 跟踪月球
+ * cameraController.trackBody(() => moonPosition, 0.1);
+ * 
+ * // 在动画循环中更新
+ * cameraController.update(deltaTime);
+ * ```
  */
 
 import * as THREE from 'three';

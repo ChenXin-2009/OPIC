@@ -1,14 +1,85 @@
 /**
- * 卫星状态管理Store
+ * @module store/useSatelliteStore
+ * @description 卫星状态管理 Store - 管理人造卫星的数据、筛选、搜索和交互状态
  * 
- * 使用Zustand管理卫星数据、筛选、搜索和交互状态
+ * 本模块使用 Zustand 管理卫星可视化的全局状态，提供以下核心功能:
+ * 1. 数据管理 - 从 API 获取和存储 TLE (Two-Line Element) 数据
+ * 2. 实时状态 - 管理卫星的位置、速度、可见性等实时状态
+ * 3. 筛选搜索 - 支持按名称、NORAD ID 搜索卫星
+ * 4. 交互状态 - 管理选中、悬停、轨道显示、相机跟随等交互
+ * 5. 持久化存储 - 将用户偏好保存到 localStorage
  * 
- * 功能:
- * - 从API获取卫星TLE数据
- * - 管理卫星位置和可见性
- * - 处理类别筛选和搜索
- * - 管理卫星选择和轨道显示
- * - 持久化用户偏好到本地存储
+ * @architecture
+ * - 所属子系统: 状态管理
+ * - 架构层级: 服务层
+ * - 职责边界:
+ *   - 负责: 卫星数据获取、状态管理、筛选逻辑、用户偏好持久化
+ *   - 不负责: 卫星位置计算（由 SGP4 算法处理）、3D 渲染、UI 组件逻辑
+ * - 设计模式: Flux 单向数据流 + 持久化中间件
+ * 
+ * @dependencies
+ * - 直接依赖:
+ *   - zustand (状态管理库)
+ *   - zustand/middleware (persist 中间件)
+ *   - ../types/satellite (卫星类型定义)
+ *   - ../config/satelliteConfig (配置常量)
+ * - 被依赖:
+ *   - src/components/satellite/ (卫星 UI 组件)
+ *   - src/lib/3d/satellite/ (卫星渲染器)
+ * - 循环依赖: 无
+ * 
+ * @stateLifecycle
+ * 1. 初始化: 从 localStorage 恢复用户偏好（showSatellites）
+ * 2. 数据获取: 调用 fetchSatellites() 从 API 获取 TLE 数据
+ * 3. 位置更新: 定期调用 updateSatellitePositions() 更新可见卫星列表
+ * 4. 用户交互: 通过 UI 选择、搜索、切换轨道显示
+ * 5. 持久化: 状态变化时自动保存到 localStorage
+ * 
+ * @dataFlow
+ * - 输入: API 响应（TLE 数据）、用户操作（搜索、选择）、时间更新
+ * - 输出: 可见卫星列表、选中卫星信息、轨道显示状态
+ * - 副作用: 
+ *   - 网络请求（fetchSatellites）
+ *   - localStorage 写入（persist 中间件）
+ *   - 控制台日志（调试信息）
+ * 
+ * @performance
+ * - 数据量: 支持 ~1000-5000 颗卫星
+ * - 筛选性能: O(n) - 遍历所有卫星进行搜索匹配
+ * - 状态更新: O(1) - 直接更新 Map 中的单个条目
+ * - 内存占用: ~2-10 MB（取决于卫星数量）
+ * - 优化策略: 使用 Map 存储卫星数据，使用 Set 存储可见卫星 ID
+ * 
+ * @async
+ * - fetchSatellites: 异步 API 请求，带超时控制
+ * - 错误处理: 捕获网络错误和 API 错误，设置 error 状态
+ * 
+ * @example
+ * ```typescript
+ * // 在组件中使用
+ * const {
+ *   satellites,
+ *   visibleSatellites,
+ *   fetchSatellites,
+ *   setSearchQuery,
+ *   selectSatellite
+ * } = useSatelliteStore();
+ * 
+ * // 获取卫星数据
+ * await fetchSatellites(SatelliteCategory.ACTIVE);
+ * 
+ * // 搜索卫星
+ * setSearchQuery('ISS');
+ * 
+ * // 选择卫星
+ * selectSatellite(25544); // ISS NORAD ID
+ * 
+ * // 渲染可见卫星
+ * visibleSatellites.forEach(noradId => {
+ *   const satellite = satellites.get(noradId);
+ *   // 渲染卫星...
+ * });
+ * ```
  */
 
 import { create } from 'zustand';

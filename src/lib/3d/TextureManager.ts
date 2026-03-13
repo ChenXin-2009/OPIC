@@ -1,17 +1,61 @@
 /**
- * TextureManager.ts - 行星贴图管理器
+ * @module 3d/TextureManager
+ * @description 行星贴图管理器单例
  * 
- * Render Layer 私有单例服务，负责：
- * - 加载和缓存行星表面贴图
- * - 管理贴图引用计数
- * - 控制 GPU 资源释放
+ * 本模块是 Render Layer 的私有服务,负责加载、缓存和管理行星表面纹理贴图。
+ * 使用引用计数机制管理 GPU 资源,避免重复加载和内存泄漏。
  * 
- * CRITICAL: 
- * - 此类仅供 Render Layer 使用
- * - 禁止被 Physical Layer 模块导入
- * - 贴图不参与任何物理计算
+ * @architecture
+ * - 所属子系统：3D 渲染
+ * - 架构层级：资源管理层
+ * - 职责边界：仅负责纹理资源管理,不参与物理计算或天文计算
+ * - 设计模式：单例模式（Singleton Pattern）
  * 
- * @see .kiro/specs/planet-texture-system/requirements.md
+ * @dependencies
+ * - 直接依赖：three, config/visualConfig
+ * - 被依赖：3d/Planet
+ * - 循环依赖：无
+ * 
+ * @renderPipeline
+ * 纹理管理管线：
+ * 1. 加载请求：根据 BodyId 查找纹理路径
+ * 2. 缓存查找：检查纹理是否已加载
+ * 3. 异步加载：使用 Three.js TextureLoader 加载图片
+ * 4. 引用计数：增加/减少纹理引用计数
+ * 5. 资源释放：引用计数为 0 时释放 GPU 资源
+ * 
+ * @performance
+ * - 使用 Map 缓存已加载的纹理（O(1) 查找）
+ * - 引用计数机制避免过早释放正在使用的纹理
+ * - 支持预加载和延迟加载策略
+ * - 自动释放未使用的纹理节省 GPU 内存
+ * 
+ * @unit
+ * - 纹理大小：像素（px）
+ * - 引用计数：整数
+ * 
+ * @note
+ * - 这是一个单例类,通过 getInstance() 获取实例
+ * - 仅供 Render Layer 使用,禁止被 Physical Layer 导入
+ * - 纹理路径配置在 PLANET_TEXTURE_CONFIG 中
+ * - 支持的纹理格式：WebP, PNG, JPG
+ * - BodyId 规范化：小写、去空格
+ * 
+ * @example
+ * ```typescript
+ * import { TextureManager } from '@/lib/3d';
+ * 
+ * const textureManager = TextureManager.getInstance();
+ * 
+ * // 加载地球纹理
+ * const earthTexture = await textureManager.loadTexture('earth');
+ * 
+ * // 增加引用计数
+ * textureManager.addReference('earth');
+ * 
+ * // 释放引用
+ * textureManager.releaseTexture('earth');
+ * ```
  */
 
 import * as THREE from 'three';

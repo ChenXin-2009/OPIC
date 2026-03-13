@@ -1,16 +1,43 @@
 /**
- * Time Conversion Module
+ * @module astronomy/time
+ * @description 时间转换模块
  * 
- * This module provides utilities for converting between JavaScript Date
- * objects and Julian Day Numbers (JD), which are the standard time
- * representation in astronomical calculations.
+ * 本模块提供 JavaScript Date 对象与儒略日数（Julian Day Number, JD）之间的转换工具。
+ * 儒略日是天文计算中的标准时间表示方法，用于简化跨越不同历法系统的日期计算。
  * 
- * Julian Day Number:
- * - Continuous count of days since the beginning of the Julian Period
- * - Starts at noon (12:00 TT) on January 1, 4713 BC (proleptic Julian calendar)
- * - Used to simplify date calculations in astronomy
+ * @architecture
+ * - 所属子系统：天文计算
+ * - 架构层级：核心层
+ * - 职责边界：负责时间格式转换和儒略日计算，不负责天体位置计算或坐标变换
  * 
- * Reference: Jean Meeus - Astronomical Algorithms (2nd Ed.)
+ * @dependencies
+ * - 直接依赖：errors/base
+ * - 被依赖：astronomy/orbit, astronomy/utils, astronomy/index
+ * - 循环依赖：无
+ * 
+ * @unit 时间：儒略日（Julian Day），连续计数的天数
+ * @precision 毫秒级精度（JavaScript Date 的精度限制）
+ * 
+ * 儒略日数（Julian Day Number）：
+ * - 从儒略周期开始的连续天数计数
+ * - 起点：公元前 4713 年 1 月 1 日 12:00 TT（儒略历）
+ * - 用于简化天文学中的日期计算
+ * - J2000.0 历元：2000-01-01 12:00:00 TT，JD = 2451545.0
+ * 
+ * 参考文献：Jean Meeus - Astronomical Algorithms (2nd Ed.)
+ * 
+ * @example
+ * ```typescript
+ * import { dateToJulianDay, julianDayToDate, J2000 } from './time';
+ * 
+ * // 将当前时间转换为儒略日
+ * const jd = dateToJulianDay(new Date());
+ * console.log(`当前儒略日: ${jd}`);
+ * 
+ * // 将 J2000.0 历元转换回日期
+ * const date = julianDayToDate(J2000);
+ * console.log(date.toISOString()); // '2000-01-01T12:00:00.000Z'
+ * ```
  */
 
 import { ValidationError } from '@/lib/errors/base';

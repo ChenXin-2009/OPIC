@@ -1,7 +1,60 @@
 /**
- * LODManager.ts - LOD（细节层次）管理器
+ * @module 3d/LODManager
+ * @description LOD（Level of Detail）细节层次管理器
  * 
- * 根据相机距离动态调整渲染质量以优化性能
+ * 本模块根据相机距离动态调整渲染质量,优化大规模宇宙可视化的性能。
+ * 使用分级策略在不同距离下使用不同的粒子密度和纹理分辨率。
+ * 
+ * @architecture
+ * - 所属子系统：3D 渲染
+ * - 架构层级：优化层
+ * - 职责边界：负责 LOD 级别计算和渲染器配置,不负责具体的渲染逻辑
+ * 
+ * @dependencies
+ * - 直接依赖：config/galaxyConfig, types/universeTypes
+ * - 被依赖：3d/SceneManager, 3d/BaseUniverseRenderer
+ * - 循环依赖：无
+ * 
+ * @renderPipeline
+ * LOD 管理管线：
+ * 1. 距离计算：获取相机到场景中心的距离
+ * 2. 级别查找：二分查找确定当前 LOD 级别
+ * 3. 参数应用：更新渲染器的粒子比例和纹理大小
+ * 4. 性能优化：减少远距离时的渲染负载
+ * 
+ * @performance
+ * - 使用二分查找算法（O(log n)）快速定位 LOD 级别
+ * - 4 个 LOD 级别覆盖从太阳系到宇宙尺度
+ * - 粒子比例从 100% 降至 5%（20倍性能提升）
+ * - 纹理大小从 512px 降至 64px（64倍内存节省）
+ * 
+ * @unit
+ * - 距离：AU（天文单位）
+ * - 粒子比例：0.0-1.0（百分比）
+ * - 纹理大小：像素（px）
+ * 
+ * @note
+ * - LOD 级别定义：
+ *   - Level 0: 0 AU, 100% 粒子, 512px 纹理
+ *   - Level 1: 1亿光年, 50% 粒子, 256px 纹理
+ *   - Level 2: 5亿光年, 20% 粒子, 128px 纹理
+ *   - Level 3: 10亿光年, 5% 粒子, 64px 纹理
+ * - 支持自定义 LOD 级别配置
+ * - 渲染器需要实现 setParticleRatio() 和 setTextureSize() 方法
+ * 
+ * @example
+ * ```typescript
+ * import { LODManager } from '@/lib/3d';
+ * 
+ * const lodManager = new LODManager();
+ * 
+ * // 在动画循环中
+ * const cameraDistance = camera.position.length();
+ * const currentLOD = lodManager.getCurrentLOD(cameraDistance);
+ * 
+ * // 应用到渲染器
+ * lodManager.updateRendererLOD(galaxyRenderer, currentLOD);
+ * ```
  */
 
 import { LIGHT_YEAR_TO_AU } from '../config/galaxyConfig';

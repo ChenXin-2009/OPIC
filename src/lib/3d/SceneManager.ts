@@ -1,17 +1,58 @@
 /**
- * SceneManager.ts - Three.js 场景管理器
+ * @module 3d/SceneManager
+ * @description Three.js 场景管理器核心模块
  * 
- * 功能：
- * - 初始化和管理 Three.js 场景、渲染器、相机
- * - 处理窗口大小变化
- * - 动态调整相机视距裁剪（防止近远平面裁切问题）
- * - 管理场景背景（银河系天空盒）
- * - 多尺度宇宙视图（太阳系 → 近邻恒星 → 银河系）
+ * 本模块负责整个 3D 可视化系统的场景初始化、渲染循环和资源管理。
+ * 是 3D 渲染系统的核心入口,协调相机、渲染器、场景对象和多尺度宇宙视图。
  * 
- * 使用：
- * - 在组件中创建 SceneManager 实例
- * - 通过 getScene()、getCamera()、getRenderer() 获取对象
- * - 在动画循环中调用 render() 渲染场景
+ * @architecture
+ * - 所属子系统：3D 渲染
+ * - 架构层级：核心层
+ * - 职责边界：负责 Three.js 场景生命周期管理,不负责具体天体的渲染逻辑
+ * 
+ * @dependencies
+ * - 直接依赖：three, 3d/NearbyStars, 3d/GalaxyRenderer, 3d/GaiaStars, config/cameraConfig, config/galaxyConfig
+ * - 被依赖：components/UniverseVisualization
+ * - 循环依赖：无
+ * 
+ * @renderPipeline
+ * 渲染管线阶段：
+ * 1. 初始化阶段：创建 WebGLRenderer、Scene、Camera
+ * 2. 场景构建：加载银河系天空盒、初始化多尺度组件
+ * 3. 渲染循环：更新多尺度视图、调整相机裁剪面、执行渲染
+ * 4. 清理阶段：释放 WebGL 资源、移除事件监听器
+ * 
+ * @performance
+ * - 使用对数深度缓冲处理巨大的尺度差异（从行星表面到星际距离）
+ * - 动态调整相机近远裁剪面,避免 Z-fighting 和裁剪问题
+ * - 根据相机距离动态显示/隐藏多尺度组件
+ * - 使用 WebGL 2.0 和硬件抗锯齿提升渲染质量
+ * 
+ * @coordinateSystem
+ * - 场景坐标系：右手坐标系（Three.js 默认）
+ * - 天空盒：赤道坐标系转换到黄道坐标系
+ * - 星空对齐：赤道坐标系对齐到太阳系黄道坐标系
+ * 
+ * @note
+ * - 银河系天空盒使用 equirectangular 投影
+ * - 坐标系转换参数基于 IAU 2006 岁差章动模型
+ * - 多尺度视图切换使用平滑过渡避免视觉跳跃
+ * 
+ * @example
+ * ```typescript
+ * const container = document.getElementById('canvas-container');
+ * const sceneManager = new SceneManager(container);
+ * 
+ * // 在动画循环中
+ * function animate() {
+ *   sceneManager.updateMultiScaleView(cameraDistance, deltaTime);
+ *   sceneManager.render();
+ *   requestAnimationFrame(animate);
+ * }
+ * 
+ * // 清理资源
+ * sceneManager.dispose();
+ * ```
  */
 
 import * as THREE from 'three';
@@ -633,6 +674,48 @@ export class SceneManager {
    * sceneManager.updateMultiScaleView(distance, deltaTime, 1.5);
    * ```
    */
+  /**
+   * 更新多尺度宇宙视图
+   * 
+   * @description 根据相机距离动态更新多尺度宇宙组件的可见性和透明度。
+   * 实现从太阳系到宇宙尺度的平滑过渡,避免视觉跳跃。
+   * 
+   * @renderPipeline 渲染管线阶段
+   * 1. 距离计算：获取相机到场景中心的距离
+   * 2. 组件更新：更新近邻恒星、Gaia 恒星、银河系渲染器
+   * 3. 透明度计算：基于距离计算淡入淡出效果
+   * 4. 可见性判断：动态显示/隐藏组件
+   * 5. 背景更新：调整银河系天空盒透明度
+   * 6. 边界更新：更新可观测宇宙边界球体
+   * 
+   * @performance
+   * - 执行频率：每帧一次
+   * - 性能影响：中等（主要是透明度计算和可见性判断）
+   * - 优化策略：使用阈值避免频繁切换
+   * 
+   * @param cameraDistance - 相机距离（AU）
+   * @param deltaTime - 帧时间间隔（秒）
+   * 
+   * @coordinateSystem
+   * - 距离单位：AU（天文单位）
+   * - 距离阈值：
+   *   - 近邻恒星：100-10000 AU
+   *   - Gaia 恒星：1000-100000 AU
+   *   - 银河系：10000-1000000 AU
+   *   - 本星系群：> 1000000 AU
+   * 
+   * @note
+   * - 使用平滑过渡避免突兀的显示/隐藏
+   * - 多个组件可以同时可见（叠加效果）
+   * - 透明度计算使用线性插值
+   * 
+   * @example
+   * ```typescript
+   * const cameraDistance = camera.position.length();
+   * const deltaTime = clock.getDelta();
+   * sceneManager.updateMultiScaleView(cameraDistance, deltaTime);
+   * ```
+   */
   updateMultiScaleView(cameraDistance: number, deltaTime: number): void {
     // 更新近邻恒星
     if (this.nearbyStars) {
@@ -966,6 +1049,38 @@ export class SceneManager {
    * ```typescript
    * function animate() {
    *   sceneManager.render();
+   *   requestAnimationFrame(animate);
+   * }
+   * ```
+   */
+  /**
+   * 渲染场景
+   * 
+   * @description 执行 Three.js 渲染管线,将场景渲染到 WebGL 画布。
+   * 这是渲染循环的最后一步,应该在所有更新完成后调用。
+   * 
+   * @renderPipeline 渲染管线阶段
+   * 1. 视锥剔除：Three.js 自动剔除视锥外的对象
+   * 2. 深度排序：根据渲染顺序和深度值排序对象
+   * 3. 着色器编译：首次渲染时编译 GLSL 着色器
+   * 4. 绘制调用：执行 WebGL drawArrays/drawElements
+   * 5. 后处理：应用抗锯齿和色调映射
+   * 
+   * @performance
+   * - 执行频率：每帧一次（通常 60 FPS）
+   * - 性能瓶颈：GPU 绘制调用数量、着色器复杂度
+   * - 优化策略：视锥剔除、LOD、实例化渲染
+   * 
+   * @note
+   * - 使用对数深度缓冲处理大尺度范围
+   * - 启用硬件抗锯齿（MSAA）
+   * - 使用 sRGB 色彩空间确保颜色准确
+   * 
+   * @example
+   * ```typescript
+   * function animate() {
+   *   sceneManager.updateMultiScaleView(cameraDistance, deltaTime);
+   *   sceneManager.render(); // 渲染场景
    *   requestAnimationFrame(animate);
    * }
    * ```

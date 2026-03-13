@@ -1,18 +1,71 @@
 /**
- * Planet.ts - 3D 行星类
+ * @module 3d/Planet
+ * @description 3D 行星渲染类
  * 
- * 功能：
- * - 创建和管理 3D 行星网格（SphereGeometry + 自定义 Shader 材质）
- * - 实现真实的太阳光照效果（向阳面亮，背阳面暗）
- * - 支持地球昼夜贴图渐变（nightmap）
- * - 管理行星自转动画
- * - 创建标记圈（CSS2D，用于小行星的可视化）
- * - 为太阳添加光晕效果
+ * 本模块负责创建和管理单个行星的 3D 网格对象,包括几何体、材质、纹理、光照效果和自转动画。
+ * 支持真实的太阳光照、昼夜贴图渐变、土星环、太阳光晕等特殊效果。
  * 
- * 使用：
- * - 通过 PlanetConfig 创建行星实例
- * - 在动画循环中调用 updatePosition() 和 updateRotation()
- * - 通过 getMesh() 获取 Three.js Mesh 对象添加到场景
+ * @architecture
+ * - 所属子系统：3D 渲染
+ * - 架构层级：核心层
+ * - 职责边界：负责单个行星的视觉表现,不负责轨道计算、位置更新或用户交互
+ * 
+ * @dependencies
+ * - 直接依赖：three, three/examples/jsm/renderers/CSS2DRenderer, astronomy/orbit, types/celestialTypes, config/visualConfig
+ * - 被依赖：3d/SceneManager, components/UniverseVisualization
+ * - 循环依赖：无
+ * 
+ * @renderPipeline
+ * 渲染管线阶段：
+ * 1. 几何体创建：SphereGeometry（动态 LOD 分段数）
+ * 2. 材质创建：自定义 Shader 材质（太阳光照、昼夜贴图）
+ * 3. 纹理加载：通过 TextureManager 加载行星表面贴图
+ * 4. 特殊效果：太阳光晕、土星环、标记圈（小行星）
+ * 5. 自转动画：基于真实自转周期的旋转更新
+ * 6. LOD 优化：根据相机距离动态调整几何体分段数
+ * 
+ * @performance
+ * - 使用 LOD 系统动态调整球体分段数（16-64 segments）
+ * - 使用自定义 Shader 实现高效的光照计算
+ * - 使用纹理管理器避免重复加载贴图
+ * - 小行星使用 CSS2D 标记圈代替 3D 网格
+ * 
+ * @coordinateSystem
+ * - 位置坐标：日心黄道坐标系（AU）
+ * - 自转轴：黄道坐标系中的单位向量
+ * - 纹理坐标：经纬度映射（0° 经度对应 J2000.0 本初子午线）
+ * 
+ * @unit
+ * - 位置：AU（天文单位）
+ * - 半径：AU（天文单位）
+ * - 自转速度：弧度/秒
+ * - 自转周期：小时
+ * 
+ * @note
+ * - 太阳使用特殊的自发光材质和光晕效果
+ * - 地球支持昼夜贴图渐变（nightmap）
+ * - 土星支持半透明环系统
+ * - 自转轴倾角基于 IAU WGCCRE 报告
+ * 
+ * @example
+ * ```typescript
+ * import { Planet } from '@/lib/3d';
+ * 
+ * // 创建地球
+ * const earth = new Planet({
+ *   name: 'Earth',
+ *   radius: 0.008,
+ *   color: '#4A90E2',
+ *   rotationPeriod: 23.9345 // 小时
+ * });
+ * 
+ * // 更新位置和自转
+ * earth.updatePosition(x, y, z);
+ * earth.updateRotation(deltaTime);
+ * 
+ * // 添加到场景
+ * scene.add(earth.getMesh());
+ * ```
  */
 
 import * as THREE from 'three';
@@ -1218,6 +1271,42 @@ export class Planet {
   /**
    * 更新位置
    */
+  /**
+   * 更新行星位置
+   * 
+   * @description 设置行星网格在场景中的 3D 位置坐标。
+   * 位置坐标应该来自天文计算模块（astronomy/orbit）。
+   * 
+   * @renderPipeline 渲染管线阶段
+   * 1. 坐标转换：将天文坐标转换为场景坐标
+   * 2. 位置更新：更新 Three.js Mesh 的 position 属性
+   * 3. 矩阵更新：Three.js 自动更新世界变换矩阵
+   * 
+   * @performance
+   * - 执行频率：每帧一次（对于每个行星）
+   * - 性能影响：极低（简单的向量赋值）
+   * - 优化策略：无需优化
+   * 
+   * @param x - X 坐标（AU，日心黄道坐标系）
+   * @param y - Y 坐标（AU，日心黄道坐标系）
+   * @param z - Z 坐标（AU，日心黄道坐标系）
+   * 
+   * @coordinateSystem
+   * - 输入坐标系：日心黄道坐标系（ICRS J2000.0）
+   * - 场景坐标系：右手坐标系（Three.js 默认）
+   * - 单位：AU（天文单位）
+   * 
+   * @note
+   * - 坐标系对齐：黄道坐标系与场景坐标系一致
+   * - 不执行坐标变换（直接使用）
+   * - 位置更新不影响自转状态
+   * 
+   * @example
+   * ```typescript
+   * const earthPos = calculatePosition(ORBITAL_ELEMENTS.earth, julianDay);
+   * earth.updatePosition(earthPos.x, earthPos.y, earthPos.z);
+   * ```
+   */
   updatePosition(x: number, y: number, z: number): void {
     this.mesh.position.set(x, y, z);
   }
@@ -1234,6 +1323,52 @@ export class Planet {
    * - 贴图本初子午线在方位角 180° 位置
    * 
    * @param currentTimeInDays 当前时间（从 J2000.0 起的天数）
+   */
+  /**
+   * 更新行星自转
+   * 
+   * @description 根据当前时间和自转周期更新行星的旋转状态。
+   * 使用 IAU WGCCRE 标准的 W 角度公式计算本初子午线位置。
+   * 
+   * @renderPipeline 渲染管线阶段
+   * 1. 时间计算：将当前时间转换为 J2000.0 以来的天数
+   * 2. W 角度计算：使用 IAU 公式计算本初子午线角度
+   * 3. 纹理对齐：应用纹理偏移和校准偏移
+   * 4. 四元数计算：计算自转四元数和轴倾角四元数
+   * 5. 四元数组合：先自转,再应用轴倾角
+   * 6. 旋转应用：更新 Mesh 的 quaternion 属性
+   * 
+   * @performance
+   * - 执行频率：每帧一次（对于每个行星）
+   * - 性能影响：低（四元数计算）
+   * - 优化策略：太阳着色器动画使用 uniform 更新
+   * 
+   * @param currentTimeInDays - 当前时间（J2000.0 以来的天数）
+   * @param timeSpeed - 时间速度倍率（默认 1.0）
+   * @param isPlaying - 是否播放动画（默认 true）
+   * 
+   * @coordinateSystem
+   * - 自转轴：黄道坐标系中的单位向量
+   * - 旋转角度：IAU W 角度（度）
+   * - 参考点：J2000.0 历元
+   * 
+   * @unit
+   * - 时间：天（地球日）
+   * - 角度：度（内部转换为弧度）
+   * - 自转速度：弧度/秒
+   * 
+   * @note
+   * - 纹理对齐偏移：180° + (-90°) = 90°
+   * - 180° 偏移：纹理本初子午线在 U=0.5
+   * - -90° 偏移：场景坐标系校准
+   * - 太阳使用特殊的着色器动画（不使用四元数旋转）
+   * - 自转周期为 0 时跳过更新
+   * 
+   * @example
+   * ```typescript
+   * const currentTime = (julianDay - 2451545.0); // J2000.0 以来的天数
+   * earth.updateRotation(currentTime, timeSpeed, isPlaying);
+   * ```
    */
   updateRotation(currentTimeInDays: number, timeSpeed: number = 1, isPlaying: boolean = true): void {
     // 更新太阳着色器的时间参数（用于动画效果）
