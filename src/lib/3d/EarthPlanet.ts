@@ -87,7 +87,10 @@ export class EarthPlanet extends Planet {
         const simDate = new Date(J2000_MS + currentTimeInDays * 86400000);
         this.cesiumExtension.syncTime(simDate);
       }
-      return; // Cesium 启用时不旋转 Planet mesh
+      // Cesium 模式下仍然更新 mesh.quaternion，供 earth-lock 计算旋转增量使用
+      // mesh 本身不可见（depth-only 材质），所以视觉上没有影响
+      super.updateRotation(currentTimeInDays, timeSpeed, isPlaying);
+      return;
     }
     super.updateRotation(currentTimeInDays, timeSpeed, isPlaying);
   }
