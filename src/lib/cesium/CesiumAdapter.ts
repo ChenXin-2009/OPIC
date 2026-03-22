@@ -348,7 +348,7 @@ export class CesiumAdapter {
       console.log(`[CesiumAdapter] Container display set to: ${this.container.style.display}`);
       
       if (visible && this.isAvailable && this.viewer) {
-        // 重新显示时强制 Cesium 重新计算 canvas 尺寸并渲染一帧
+        // 重新显示时强制 Cesium 重新计算 canvas 尺寸
         // 避免 display:none 期间 WebGL context 状态不一致
         try {
           // 保持 Cesium 相机控制器禁用（由 Three.js OrbitControls 驱动）
@@ -362,9 +362,10 @@ export class CesiumAdapter {
           this.cesiumCanvas.width = w;
           this.cesiumCanvas.height = h;
           this.viewer.resize();
-          this.viewer.render();
+          // 注意：不在这里 render()，让调用方在 syncCamera 之后再渲染
+          // 避免用旧相机位置渲染出错误帧，影响 Cesium 内部 frustum 状态
         } catch (e) {
-          console.warn('[CesiumAdapter] resize/render on show failed:', e);
+          console.warn('[CesiumAdapter] resize on show failed:', e);
         }
       }
     }

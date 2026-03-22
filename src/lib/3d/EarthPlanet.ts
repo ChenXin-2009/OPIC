@@ -36,6 +36,7 @@ export class EarthPlanet extends Planet {
   private config: EarthPlanetConfig;
   private originalMaterial: THREE.Material | null = null; // 保存原始材质
   private cesiumEnabled: boolean = false; // 跟踪 Cesium 状态
+  private cesiumCanvasVisible: boolean = false; // 跟踪 canvas 可见状态，避免重复调用
   
   constructor(config: EarthPlanetConfig) {
     super(config);
@@ -105,12 +106,18 @@ export class EarthPlanet extends Planet {
 
         if (distAU > 0.1) {
           // 太远时隐藏 Cesium canvas（避免显示过时画面），但保持状态
-          this.cesiumExtension.setVisible(false);
+          if (this.cesiumCanvasVisible) {
+            this.cesiumExtension.setVisible(false);
+            this.cesiumCanvasVisible = false;
+          }
           return;
         }
 
-        // 靠近时确保 canvas 可见
-        this.cesiumExtension.setVisible(true);
+        // 靠近时确保 canvas 可见（只在状态变化时调用，避免每帧 resize）
+        if (!this.cesiumCanvasVisible) {
+          this.cesiumExtension.setVisible(true);
+          this.cesiumCanvasVisible = true;
+        }
 
         // 1. 将 Three.js 相机同步到 Cesium（OrbitControls 驱动，Cesium 跟随）
         this.cesiumExtension.syncCamera(camera, earthPos);
@@ -219,6 +226,7 @@ export class EarthPlanet extends Planet {
         }
       }
       this.cesiumExtension.setVisible(true);
+      this.cesiumCanvasVisible = true;
       // 保留 mesh 可见但换成 depth-only 材质：
       // - 写入深度缓冲，让地球后面的卫星被正确遮挡
       // - 不写颜色（colorWrite=false），地球区域透明，Cesium 地球从下层透出来
@@ -239,6 +247,7 @@ export class EarthPlanet extends Planet {
       // 禁用 Cesium: 隐藏 Cesium canvas，恢复 Planet 球体材质
       console.log('[EarthPlanet] Disabling Cesium canvas overlay');
       this.cesiumExtension.setVisible(false);
+      this.cesiumCanvasVisible = false;
       if (this.originalMaterial) {
         mesh.material = this.originalMaterial;
       }
