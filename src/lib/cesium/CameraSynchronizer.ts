@@ -53,24 +53,25 @@ export class CameraSynchronizer {
     // 获取相机的世界右向量（用于验证）
     rightThree.crossVectors(directionThree, upThree).normalize();
     
-    // 4. 坐标系转换：Three.js (Y-up, Z-backward) → Cesium ECEF (Z-up, Y-forward)
-    // Three.js: X-right, Y-up, Z-backward  右手系
-    // Cesium ECEF: X-right(本初子午线), Y-forward(东经90°), Z-up(北极)  右手系
-    //
-    // 保持右手系手性的正确映射：
-    //   Cesium.x =  Three.x
-    //   Cesium.y = -Three.z   ← 负号保持手性
-    //   Cesium.z =  Three.y
+    // 4. 坐标系转换：Three.js 黄道坐标系 → Cesium ECEF（赤道坐标系）
+    // 步骤一：黄道 → 赤道，绕 X 轴旋转 -ε（ε = 黄赤交角 23.4393°）
+    //   x_eq =  x_ecl
+    //   y_eq =  y_ecl * cos(ε) + z_ecl * sin(ε)
+    //   z_eq = -y_ecl * sin(ε) + z_ecl * cos(ε)
+    // 步骤二：赤道坐标系轴 → Cesium ECEF 轴（直接对应，无需额外变换）
+    const cosObl = Math.cos(23.4393 * Math.PI / 180);
+    const sinObl = Math.sin(23.4393 * Math.PI / 180);
+
     const directionCesium = new Cesium.Cartesian3(
       directionThree.x,
-      -directionThree.z,
-      directionThree.y
+      directionThree.y * cosObl + directionThree.z * sinObl,
+      -directionThree.y * sinObl + directionThree.z * cosObl
     );
     
     const upCesium = new Cesium.Cartesian3(
       upThree.x,
-      -upThree.z,
-      upThree.y
+      upThree.y * cosObl + upThree.z * sinObl,
+      -upThree.y * sinObl + upThree.z * cosObl
     );
     
     // 5. 设置 Cesium 相机方向（归一化）

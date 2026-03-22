@@ -20,6 +20,12 @@ export class CoordinateConstants {
   
   /** 地球半径（AU） */
   static readonly EARTH_RADIUS_AU = CoordinateConstants.EARTH_RADIUS_METERS / CoordinateConstants.AU_TO_METERS;
+
+  /** 黄赤交角（度，J2000.0） */
+  static readonly OBLIQUITY_DEG = 23.4393;
+
+  /** 黄赤交角（弧度） */
+  static readonly OBLIQUITY_RAD = CoordinateConstants.OBLIQUITY_DEG * Math.PI / 180;
 }
 
 /**
@@ -43,24 +49,38 @@ export class CoordinateTransformer {
     // 1. 计算相机相对于地球的位置（局部坐标系，AU）
     const localPosition = cameraPosition.clone().sub(earthPosition);
     
-    // 2. 坐标系转换：Three.js (Y-up) → Cesium ECEF (Z-up)
-    // Three.js: X-right, Y-up, Z-backward  右手系
-    // Cesium ECEF: X-right(本初子午线), Y-forward(东经90°), Z-up(北极)  右手系
-    //
-    // 保持右手系手性的正确映射：
-    //   Cesium.x =  Three.x
-    //   Cesium.y = -Three.z   ← 负号保持手性
-    //   Cesium.z =  Three.y
-    const localCesiumX = localPosition.x;
-    const localCesiumY = -localPosition.z;
-    const localCesiumZ = localPosition.y;
+    // 2. 黄道坐标系 → 地心赤道坐标系
+    // Three.js 场景坐标系 = 黄道坐标系（X→春分点，Y→黄道面内90°，Z→黄道北极）
+    // 地心赤道坐标系（X→春分点，Y→赤道面内90°，Z→天球北极/地球自转轴）
+    // 转换：绕 X 轴旋转 -ε（ε = 黄赤交角 23.4393°）
+    //   x_eq =  x_ecl
+    //   y_eq =  y_ecl * cos(ε) + z_ecl * sin(ε)
+    //   z_eq = -y_ecl * sin(ε) + z_ecl * cos(ε)
+    const cosObl = Math.cos(CoordinateConstants.OBLIQUITY_RAD);
+    const sinObl = Math.sin(CoordinateConstants.OBLIQUITY_RAD);
+    const eqX = localPosition.x;
+    const eqY = localPosition.y * cosObl + localPosition.z * sinObl;
+    const eqZ = -localPosition.y * sinObl + localPosition.z * cosObl;
+
+    // 3. 赤道坐标系 → Cesium ECEF 轴重映射
+    // 赤道坐标系：X→春分点，Y→赤道面内90°，Z→北极  右手系
+    // Cesium ECEF：X→本初子午线，Y→东经90°，Z→北极  右手系
+    // 注意：赤道坐标系的 X 轴指向春分点，Cesium ECEF 的 X 轴指向本初子午线
+    // 两者之间有地球自转角度的差异，但对于相机同步（只关心相对方向）可以忽略
+    // 轴映射（保持右手系）：
+    //   Cesium.x =  eq.x
+    //   Cesium.y =  eq.y   （注意：这里不需要负号，赤道坐标系已经是右手系）
+    //   Cesium.z =  eq.z
+    const localCesiumX = eqX;
+    const localCesiumY = eqY;
+    const localCesiumZ = eqZ;
     
-    // 3. 转换单位：AU → 米
+    // 4. 转换单位：AU → 米
     const positionMetersX = localCesiumX * CoordinateConstants.AU_TO_METERS;
     const positionMetersY = localCesiumY * CoordinateConstants.AU_TO_METERS;
     const positionMetersZ = localCesiumZ * CoordinateConstants.AU_TO_METERS;
     
-    // 4. 创建 ECEF 坐标
+    // 5. 创建 ECEF 坐标
     const cameraECEF = new Cesium.Cartesian3(
       positionMetersX,
       positionMetersY,
@@ -73,7 +93,7 @@ export class CoordinateTransformer {
       const distanceKm = distance * CoordinateConstants.AU_TO_METERS / 1000;
       console.log('[CoordinateTransformer] Camera conversion:', {
         localThree: { x: localPosition.x.toFixed(6), y: localPosition.y.toFixed(6), z: localPosition.z.toFixed(6) },
-        localCesium: { x: localCesiumX.toFixed(6), y: localCesiumY.toFixed(6), z: localCesiumZ.toFixed(6) },
+        localEq: { x: eqX.toFixed(6), y: eqY.toFixed(6), z: eqZ.toFixed(6) },
         distanceKm: distanceKm.toFixed(0),
         ecef: { x: cameraECEF.x.toFixed(0), y: cameraECEF.y.toFixed(0), z: cameraECEF.z.toFixed(0) }
       });
