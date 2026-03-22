@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { debugRotationOffset } from '@/lib/cesium/CoordinateTransformer';
 
 interface CesiumDebugInfo {
   // 相机信息
@@ -61,6 +62,9 @@ export default function CesiumDebugPanel({ earthPlanet, camera }: CesiumDebugPan
   
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [rotX, setRotX] = useState(0);
+  const [rotY, setRotY] = useState(0);
+  const [rotZ, setRotZ] = useState(0);
   const frameCountRef = useRef(0);
   const lastTimeRef = useRef(performance.now());
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -375,6 +379,64 @@ export default function CesiumDebugPanel({ earthPlanet, camera }: CesiumDebugPan
                 <span style={{ color: '#fff' }}>{debugInfo.textureUpdateTime.toFixed(2)} ms</span>
               </div>
             </div>
+          </div>
+
+          {/* 旋转调试控件 */}
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{
+              color: '#f59e0b',
+              fontWeight: 'bold',
+              marginBottom: '6px',
+              fontSize: '10px',
+              textTransform: 'uppercase',
+            }}>
+              🔧 Rotation Debug (deg)
+            </div>
+            {(['x', 'y', 'z'] as const).map((axis) => {
+              const val = axis === 'x' ? rotX : axis === 'y' ? rotY : rotZ;
+              const setter = axis === 'x' ? setRotX : axis === 'y' ? setRotY : setRotZ;
+              return (
+                <div key={axis} style={{ marginBottom: '6px', paddingLeft: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                    <span style={{ color: '#999' }}>Rot {axis.toUpperCase()}:</span>
+                    <span style={{ color: '#fff', minWidth: '50px', textAlign: 'right' }}>{val.toFixed(1)}°</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={-180}
+                    max={180}
+                    step={0.5}
+                    value={val}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      setter(v);
+                      debugRotationOffset[axis] = v;
+                    }}
+                    style={{ width: '100%', accentColor: '#f59e0b' }}
+                  />
+                </div>
+              );
+            })}
+            <button
+              onClick={() => {
+                setRotX(0); setRotY(0); setRotZ(0);
+                debugRotationOffset.x = 0;
+                debugRotationOffset.y = 0;
+                debugRotationOffset.z = 0;
+              }}
+              style={{
+                marginLeft: '8px',
+                background: 'none',
+                border: '1px solid rgba(255,255,255,0.2)',
+                color: '#999',
+                cursor: 'pointer',
+                fontSize: '9px',
+                padding: '2px 8px',
+                borderRadius: '2px',
+              }}
+            >
+              RESET
+            </button>
           </div>
 
           {/* 日志输出 */}

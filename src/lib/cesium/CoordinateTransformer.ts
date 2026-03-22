@@ -29,6 +29,16 @@ export class CoordinateConstants {
 }
 
 /**
+ * 调试用旋转偏移（度）
+ * 可在运行时通过 CesiumDebugPanel 调整，用于校准坐标系对齐
+ */
+export const debugRotationOffset = {
+  x: 0,  // 绕 X 轴旋转（度）
+  y: 0,  // 绕 Y 轴旋转（度）
+  z: 0,  // 绕 Z 轴旋转（度）
+};
+
+/**
  * CoordinateTransformer - 坐标转换工具类
  */
 export class CoordinateTransformer {
@@ -62,18 +72,35 @@ export class CoordinateTransformer {
     const eqY = localPosition.y * cosObl + localPosition.z * sinObl;
     const eqZ = -localPosition.y * sinObl + localPosition.z * cosObl;
 
-    // 3. 赤道坐标系 → Cesium ECEF 轴重映射
-    // 赤道坐标系：X→春分点，Y→赤道面内90°，Z→北极  右手系
-    // Cesium ECEF：X→本初子午线，Y→东经90°，Z→北极  右手系
-    // 注意：赤道坐标系的 X 轴指向春分点，Cesium ECEF 的 X 轴指向本初子午线
-    // 两者之间有地球自转角度的差异，但对于相机同步（只关心相对方向）可以忽略
-    // 轴映射（保持右手系）：
-    //   Cesium.x =  eq.x
-    //   Cesium.y =  eq.y   （注意：这里不需要负号，赤道坐标系已经是右手系）
-    //   Cesium.z =  eq.z
-    const localCesiumX = eqX;
-    const localCesiumY = eqY;
-    const localCesiumZ = eqZ;
+    // 3. 应用调试旋转偏移（用于校准坐标系对齐）
+    // 依次绕 X、Y、Z 轴旋转
+    let dx = eqX, dy = eqY, dz = eqZ;
+    if (debugRotationOffset.x !== 0) {
+      const rx = debugRotationOffset.x * Math.PI / 180;
+      const cy = Math.cos(rx), sy = Math.sin(rx);
+      const ny = dy * cy - dz * sy;
+      const nz = dy * sy + dz * cy;
+      dy = ny; dz = nz;
+    }
+    if (debugRotationOffset.y !== 0) {
+      const ry = debugRotationOffset.y * Math.PI / 180;
+      const cx = Math.cos(ry), sx = Math.sin(ry);
+      const nx = dx * cx + dz * sx;
+      const nz = -dx * sx + dz * cx;
+      dx = nx; dz = nz;
+    }
+    if (debugRotationOffset.z !== 0) {
+      const rz = debugRotationOffset.z * Math.PI / 180;
+      const cz = Math.cos(rz), sz = Math.sin(rz);
+      const nx = dx * cz - dy * sz;
+      const ny = dx * sz + dy * cz;
+      dx = nx; dy = ny;
+    }
+
+    // 4. 赤道坐标系 → Cesium ECEF 轴重映射（直接对应）
+    const localCesiumX = dx;
+    const localCesiumY = dy;
+    const localCesiumZ = dz;
     
     // 4. 转换单位：AU → 米
     const positionMetersX = localCesiumX * CoordinateConstants.AU_TO_METERS;

@@ -9,7 +9,7 @@
 
 import * as THREE from 'three';
 import * as Cesium from 'cesium';
-import { CoordinateTransformer } from './CoordinateTransformer';
+import { CoordinateTransformer, debugRotationOffset } from './CoordinateTransformer';
 
 /**
  * CameraSynchronizer - 相机同步工具类
@@ -62,17 +62,36 @@ export class CameraSynchronizer {
     const cosObl = Math.cos(23.4393 * Math.PI / 180);
     const sinObl = Math.sin(23.4393 * Math.PI / 180);
 
-    const directionCesium = new Cesium.Cartesian3(
-      directionThree.x,
-      directionThree.y * cosObl + directionThree.z * sinObl,
-      -directionThree.y * sinObl + directionThree.z * cosObl
-    );
-    
-    const upCesium = new Cesium.Cartesian3(
-      upThree.x,
-      upThree.y * cosObl + upThree.z * sinObl,
-      -upThree.y * sinObl + upThree.z * cosObl
-    );
+    // 黄道 → 赤道
+    let dDirX = directionThree.x;
+    let dDirY = directionThree.y * cosObl + directionThree.z * sinObl;
+    let dDirZ = -directionThree.y * sinObl + directionThree.z * cosObl;
+    let dUpX = upThree.x;
+    let dUpY = upThree.y * cosObl + upThree.z * sinObl;
+    let dUpZ = -upThree.y * sinObl + upThree.z * cosObl;
+
+    // 应用调试旋转偏移（与位置转换保持一致）
+    if (debugRotationOffset.x !== 0) {
+      const rx = debugRotationOffset.x * Math.PI / 180;
+      const cy = Math.cos(rx), sy = Math.sin(rx);
+      [dDirY, dDirZ] = [dDirY * cy - dDirZ * sy, dDirY * sy + dDirZ * cy];
+      [dUpY, dUpZ] = [dUpY * cy - dUpZ * sy, dUpY * sy + dUpZ * cy];
+    }
+    if (debugRotationOffset.y !== 0) {
+      const ry = debugRotationOffset.y * Math.PI / 180;
+      const cx = Math.cos(ry), sx = Math.sin(ry);
+      [dDirX, dDirZ] = [dDirX * cx + dDirZ * sx, -dDirX * sx + dDirZ * cx];
+      [dUpX, dUpZ] = [dUpX * cx + dUpZ * sx, -dUpX * sx + dUpZ * cx];
+    }
+    if (debugRotationOffset.z !== 0) {
+      const rz = debugRotationOffset.z * Math.PI / 180;
+      const cz = Math.cos(rz), sz = Math.sin(rz);
+      [dDirX, dDirY] = [dDirX * cz - dDirY * sz, dDirX * sz + dDirY * cz];
+      [dUpX, dUpY] = [dUpX * cz - dUpY * sz, dUpX * sz + dUpY * cz];
+    }
+
+    const directionCesium = new Cesium.Cartesian3(dDirX, dDirY, dDirZ);
+    const upCesium = new Cesium.Cartesian3(dUpX, dUpY, dUpZ);
     
     // 5. 设置 Cesium 相机方向（归一化）
     cesiumCamera.direction = Cesium.Cartesian3.normalize(directionCesium, new Cesium.Cartesian3());
