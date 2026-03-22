@@ -273,12 +273,12 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       const camera = cesiumEnabled ? (cameraRef.current as THREE.PerspectiveCamera ?? undefined) : undefined;
       (earthPlanet as any).setCesiumEnabled(cesiumEnabled, camera);
       
-      // 当 Cesium 启用时，禁用 Three.js 相机控制器（避免冲突）
-      // 当 Cesium 禁用时，重新启用 Three.js 相机控制器
+      // Cesium 模式下 OrbitControls 保持启用（Three.js 相机驱动 Cesium）
+      // 无论启用还是禁用 Cesium，OrbitControls 始终开启
       if (cameraControllerRef.current) {
         const controls = cameraControllerRef.current.getControls();
-        controls.enabled = !cesiumEnabled;
-        console.log(`[SolarSystemCanvas3D] OrbitControls enabled: ${!cesiumEnabled}`);
+        controls.enabled = true;
+        console.log(`[SolarSystemCanvas3D] OrbitControls always enabled`);
       }
     }
   }, [cesiumEnabled]);

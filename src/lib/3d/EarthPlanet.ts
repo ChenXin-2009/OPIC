@@ -93,15 +93,13 @@ export class EarthPlanet extends Planet {
   update(camera: THREE.Camera, deltaTime: number): void {
     if (this.cesiumExtension && this.cesiumEnabled) {
       if (camera instanceof THREE.PerspectiveCamera) {
-        // 1. 渲染 Cesium 场景（Cesium 自己处理相机控制）
-        this.cesiumExtension.render();
+        // 1. 将 Three.js 相机同步到 Cesium（OrbitControls 驱动，Cesium 跟随）
+        this.cesiumExtension.syncCamera(camera, this.getMesh().position);
         
-        // 2. 将 Cesium 相机状态同步回 Three.js 相机
-        // 这样 Three.js 场景（太阳系、卫星等）会跟随 Cesium 相机移动
-        this.cesiumExtension.syncCameraFromCesium(camera, this.getMesh().position);
+        // 2. 渲染 Cesium 场景
+        this.cesiumExtension.render();
       }
     }
-    // Cesium 禁用时旋转由 updateRotation override 处理，这里不重复调用
   }
   
   /**

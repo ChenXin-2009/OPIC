@@ -232,8 +232,12 @@ export class CesiumAdapter {
     // 设置 canvas CSS 背景透明，确保 Three.js 场景可见
     this.cesiumCanvas.style.background = 'transparent';
     this.container.style.background = 'transparent';
-    // canvas 本身响应鼠标事件（Cesium 交互），但容器不拦截（UI 可穿透）
-    this.cesiumCanvas.style.pointerEvents = 'auto';
+    // 禁用 Cesium canvas 的鼠标事件：由 Three.js OrbitControls 统一处理相机
+    this.cesiumCanvas.style.pointerEvents = 'none';
+    this.container.style.pointerEvents = 'none';
+    
+    // 禁用 Cesium 内置相机控制器，相机由 Three.js OrbitControls 驱动
+    this.viewer.scene.screenSpaceCameraController.enableInputs = false;
     
     // 手动调整 Cesium canvas 尺寸（Cesium 有时不能正确读取容器尺寸）
     const canvasWidth = window.innerWidth * (this.config.canvasResolutionScale ?? 1.0);
@@ -343,8 +347,8 @@ export class CesiumAdapter {
         // 重新显示时强制 Cesium 重新计算 canvas 尺寸并渲染一帧
         // 避免 display:none 期间 WebGL context 状态不一致
         try {
-          // 确保相机控制器已启用
-          this.viewer.scene.screenSpaceCameraController.enableInputs = true;
+          // 保持 Cesium 相机控制器禁用（由 Three.js OrbitControls 驱动）
+          this.viewer.scene.screenSpaceCameraController.enableInputs = false;
           // 重新设置容器和 canvas 尺寸（display:none 期间可能丢失）
           const parent = this.config.parentElement ?? document.body;
           const w = parent.clientWidth || window.innerWidth;
