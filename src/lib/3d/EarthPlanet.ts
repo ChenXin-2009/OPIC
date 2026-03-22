@@ -234,12 +234,13 @@ export class EarthPlanet extends Planet {
       mesh.visible = true;
       if (this.originalMaterial) {
         const depthOnlyMat = new THREE.MeshBasicMaterial({
-          colorWrite: false,
-          depthWrite: true,
+          color: 0x000000,
+          transparent: true,
+          opacity: 0,        // alpha=0：地球区域写入透明颜色，Cesium 从下层透出
+          depthWrite: true,  // 写入深度，让卫星等物体被正确遮挡
           side: THREE.FrontSide,
         });
-        depthOnlyMat.depthTest = true;
-        mesh.renderOrder = -2000;
+        mesh.renderOrder = 0; // 普通渲染顺序，在 Pass 2 中正常渲染
         mesh.material = depthOnlyMat;
       }
       console.log('[EarthPlanet] Cesium enabled, mesh switched to depth-only');

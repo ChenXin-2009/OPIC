@@ -225,6 +225,8 @@ export class SceneManager {
     const fov = 75; // 默认 FOV，实际值由 CameraController 管理
     this.camera = new THREE.PerspectiveCamera(fov, aspect, 0.01, 1e12);
     this.camera.position.set(0, 0, 10);
+    // 启用 Layer 1，让相机在普通模式下也能看到天空盒（天空盒在 Layer 1）
+    this.camera.layers.enable(1);
 
     // 设置渲染器尺寸（在相机初始化之后）
     this.updateSize();
@@ -1163,26 +1165,28 @@ export class SceneManager {
   render(): void {
     if (this.cesiumCompositeMode && this.skybox) {
       // Cesium 模式：两 pass 渲染
-      // Pass 1：只渲染天空盒（Layer 1），不清除颜色缓冲（autoClear=false）
-      //   天空盒渲染到 Three.js canvas，作为银河系背景
-      // Pass 2：清除深度缓冲，相机切回 Layer 0，渲染地球 depth-only mesh + 其他物体
-      //   地球 depth-only mesh 写入深度，让卫星等物体被正确遮挡
-      //   Three.js canvas 在地球区域是透明的（clearColor alpha=0），Cesium 从下层透出
+      // Pass 1：只渲染天空盒（Layer 1）→ 银河系背景写入颜色缓冲
+      // clearDepth()：清除深度缓冲（天空盒不写深度，但确保干净）
+      // Pass 2：渲染其他物体（Layer 0，不含天空盒）
+      //   - 地球 mesh：opacity=0 透明色 + depthWrite=true → 地球区域变透明，Cesium 透出
+      //   - 卫星等：正常渲染在地球前面
+
+      this.renderer.autoClear = false;
+      this.renderer.clear(true, true, false); // 清颜色+深度，不清模板
 
       // Pass 1：渲染天空盒
-      this.renderer.autoClear = false;
-      this.renderer.clear(); // 清除颜色+深度
-      this.camera.layers.set(1); // 只看 Layer 1（天空盒）
+      this.camera.layers.set(1);
       this.renderer.render(this.scene, this.camera);
 
-      // Pass 2：清除深度缓冲，渲染其他物体（不含天空盒）
+      // Pass 2：清深度，渲染其他物体（地球写透明色，卫星正常渲染）
       this.renderer.clearDepth();
-      this.camera.layers.set(0); // 只看 Layer 0（其他物体，天空盒不在 Layer 0）
+      this.camera.layers.set(0);
       this.renderer.render(this.scene, this.camera);
 
-      // 恢复默认状态
+      // 恢复
       this.renderer.autoClear = true;
-      this.camera.layers.enableAll(); // 恢复相机看所有层
+      this.camera.layers.enable(0);
+      this.camera.layers.enable(1);
     } else {
       this.renderer.render(this.scene, this.camera);
     }
