@@ -54,21 +54,20 @@ export class CameraSynchronizer {
     rightThree.crossVectors(directionThree, upThree).normalize();
     
     // 4. 坐标系转换：Three.js 黄道坐标系 → Cesium ECEF（赤道坐标系）
-    // 步骤一：黄道 → 赤道，绕 X 轴旋转 -ε（ε = 黄赤交角 23.4393°）
-    //   x_eq =  x_ecl
-    //   y_eq =  y_ecl * cos(ε) + z_ecl * sin(ε)
-    //   z_eq = -y_ecl * sin(ε) + z_ecl * cos(ε)
-    // 步骤二：赤道坐标系轴 → Cesium ECEF 轴（直接对应，无需额外变换）
+    // 绕 X 轴旋转 -ε（ε = 黄赤交角 23.4393°），将黄道北极 Z 旋转到赤道北极：
+    //   x' = x
+    //   y' = y * cos(ε) - z * sin(ε)
+    //   z' = y * sin(ε) + z * cos(ε)
     const cosObl = Math.cos(23.4393 * Math.PI / 180);
     const sinObl = Math.sin(23.4393 * Math.PI / 180);
 
     // 黄道 → 赤道
     let dDirX = directionThree.x;
-    let dDirY = directionThree.y * cosObl + directionThree.z * sinObl;
-    let dDirZ = -directionThree.y * sinObl + directionThree.z * cosObl;
+    let dDirY = directionThree.y * cosObl - directionThree.z * sinObl;
+    let dDirZ = directionThree.y * sinObl + directionThree.z * cosObl;
     let dUpX = upThree.x;
-    let dUpY = upThree.y * cosObl + upThree.z * sinObl;
-    let dUpZ = -upThree.y * sinObl + upThree.z * cosObl;
+    let dUpY = upThree.y * cosObl - upThree.z * sinObl;
+    let dUpZ = upThree.y * sinObl + upThree.z * cosObl;
 
     // 应用调试旋转偏移（与位置转换保持一致）
     if (debugRotationOffset.x !== 0) {
