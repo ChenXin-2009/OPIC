@@ -207,14 +207,28 @@ export class EarthPlanet extends Planet {
         }
       }
       this.cesiumExtension.setVisible(true);
-      mesh.visible = false;
-      console.log('[EarthPlanet] Cesium enabled, planet mesh hidden');
+      // 保留 mesh 可见但换成 depth-only 材质：
+      // - 写入深度缓冲，让地球后面的卫星被正确遮挡
+      // - 不写颜色（colorWrite=false），地球区域透明，Cesium 地球从下层透出来
+      mesh.visible = true;
+      if (this.originalMaterial) {
+        const depthOnlyMat = new THREE.MeshBasicMaterial({
+          colorWrite: false,   // 不写颜色 → 透明，Cesium 地球透出来
+          depthWrite: true,    // 写深度 → 地球后面的卫星被遮挡
+          side: THREE.FrontSide,
+        });
+        mesh.material = depthOnlyMat;
+      }
+      console.log('[EarthPlanet] Cesium enabled, mesh switched to depth-only');
     } else {
-      // 禁用 Cesium: 隐藏 Cesium canvas，显示 Planet 球体
+      // 禁用 Cesium: 隐藏 Cesium canvas，恢复 Planet 球体材质
       console.log('[EarthPlanet] Disabling Cesium canvas overlay');
       this.cesiumExtension.setVisible(false);
+      if (this.originalMaterial) {
+        mesh.material = this.originalMaterial;
+      }
       mesh.visible = true;
-      console.log('[EarthPlanet] Cesium disabled, planet mesh visible');
+      console.log('[EarthPlanet] Cesium disabled, planet mesh restored');
     }
   }
   

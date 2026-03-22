@@ -186,7 +186,7 @@ export class SceneManager {
       antialias: true,
       powerPreference: 'high-performance',
       logarithmicDepthBuffer: true, // 防止深度闪烁（太阳系尺度很大）
-      alpha: false, // 禁用 alpha 通道，确保背景不透明
+      alpha: true, // 启用 alpha 通道，支持 Cesium 模式下透明背景合成
     });
 
     // 物理光照（某些版本可能不支持，使用可选链）
@@ -195,7 +195,7 @@ export class SceneManager {
     }
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制最大像素比
-    this.renderer.setClearColor(0x000000, 1); // 明确设置清除颜色为黑色
+    this.renderer.setClearColor(0x000000, 1); // 默认不透明黑色背景
     
     // ⚠️ 修复：在 Canvas 元素上设置 touchAction，允许自定义触摸处理
     // 这样可以避免影响 fixed 定位的按钮（Firefox 特别敏感）
@@ -1042,6 +1042,21 @@ export class SceneManager {
    */
   getRenderer(): THREE.WebGLRenderer {
     return this.renderer;
+  }
+
+  /**
+   * 切换 Cesium 合成模式
+   * Cesium 模式下：Three.js canvas 透明背景，Cesium 在下层显示地球
+   * 普通模式下：Three.js canvas 不透明黑色背景
+   */
+  setCesiumCompositeMode(enabled: boolean): void {
+    if (enabled) {
+      this.renderer.setClearColor(0x000000, 0); // 透明背景
+      this.scene.background = null;
+    } else {
+      this.renderer.setClearColor(0x000000, 1); // 不透明黑色
+      this.scene.background = new THREE.Color(0x000000);
+    }
   }
 
   /**

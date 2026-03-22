@@ -125,7 +125,7 @@ export class CesiumAdapter {
     this.container.style.top = '0';
     this.container.style.left = '0';
     this.container.style.pointerEvents = 'none'; // 默认不拦截事件，只有 globe 区域才响应
-    this.container.style.zIndex = '2'; // 地球层在前
+    this.container.style.zIndex = '0'; // 地球层在最底层，Three.js canvas 叠在上面
     this.container.style.display = 'none'; // 默认隐藏，等待 setCesiumEnabled(true) 调用
     
     // 设置容器尺寸（CSS 尺寸，Cesium 需要这个来确定 canvas 大小）

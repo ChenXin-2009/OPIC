@@ -265,6 +265,11 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
     // 同步 ref，让动画循环闭包能读到最新值
     cesiumEnabledRef.current = cesiumEnabled;
 
+    // 切换 Three.js 背景透明度（Cesium 模式下透明，让 Cesium 地球从下层透出来）
+    if (sceneManagerRef.current) {
+      sceneManagerRef.current.setCesiumCompositeMode(cesiumEnabled);
+    }
+
     const earthPlanet = planetsRef.current.get('earth');
     if (earthPlanet && 'setCesiumEnabled' in earthPlanet) {
       console.log(`[SolarSystemCanvas3D] Setting Cesium enabled: ${cesiumEnabled}`);
