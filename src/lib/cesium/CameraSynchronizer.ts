@@ -95,11 +95,15 @@ export class CameraSynchronizer {
       });
     }
     
-    // 同步 FOV：将 Three.js 的垂直 FOV 设置给 Cesium，确保地球大小一致
-    // Cesium frustum 使用弧度，Three.js 使用角度
-    const fovRadians = THREE.MathUtils.degToRad(threeCamera.fov);
+    // 同步 FOV：将 Three.js 的垂直 FOV 转换为水平 FOV 后设置给 Cesium
+    // Three.js camera.fov 是垂直 FOV（角度）
+    // Cesium PerspectiveFrustum.fov 是水平 FOV（弧度）
+    // 转换公式：hFov = 2 * atan(tan(vFov/2) * aspectRatio)
     if (cesiumCamera.frustum instanceof Cesium.PerspectiveFrustum) {
-      cesiumCamera.frustum.fov = fovRadians;
+      const vFovRad = THREE.MathUtils.degToRad(threeCamera.fov);
+      const aspect = threeCamera.aspect;
+      const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
+      cesiumCamera.frustum.fov = hFovRad;
     }
   }
   
