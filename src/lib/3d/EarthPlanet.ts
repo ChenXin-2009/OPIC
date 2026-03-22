@@ -236,11 +236,19 @@ export class EarthPlanet extends Planet {
         const depthOnlyMat = new THREE.MeshBasicMaterial({
           color: 0x000000,
           transparent: true,
-          opacity: 0,        // alpha=0：地球区域写入透明颜色，Cesium 从下层透出
-          depthWrite: true,  // 写入深度，让卫星等物体被正确遮挡
+          opacity: 1,
+          depthWrite: true,
           side: THREE.FrontSide,
+          // 自定义混合：把地球区域的 RGBA 全部写为 0（完全透明）
+          // 这样 Cesium canvas 从下层透出，而不是被天空盒颜色覆盖
+          blending: THREE.CustomBlending,
+          blendEquation: THREE.AddEquation,
+          blendSrc: THREE.ZeroFactor,
+          blendDst: THREE.ZeroFactor,
+          blendSrcAlpha: THREE.ZeroFactor,
+          blendDstAlpha: THREE.ZeroFactor,
         });
-        mesh.renderOrder = 0; // 普通渲染顺序，在 Pass 2 中正常渲染
+        mesh.renderOrder = 0;
         mesh.material = depthOnlyMat;
       }
       console.log('[EarthPlanet] Cesium enabled, mesh switched to depth-only');
