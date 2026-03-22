@@ -785,9 +785,8 @@ export class SceneManager {
    * 更新银河系背景透明度
    */
   private updateSkyboxOpacity(cameraDistance: number, deltaTime: number): void {
-    // Cesium 模式下天空盒由 setCesiumCompositeMode 管理，跳过自动透明度控制
-    if (this.cesiumCompositeMode) return;
-    
+    // Cesium 模式下天空盒的 depthTest/transparent 由 setCesiumCompositeMode 管理
+    // 但距离淡出逻辑仍然需要执行（控制 visible 和 opacity）
     const scaleConfig = SCALE_VIEW_CONFIG;
     
     // 0.7 光年 = 0.7 * LIGHT_YEAR_TO_AU
@@ -804,18 +803,18 @@ export class SceneManager {
       targetOpacity = 0;
     }
     
-    // 直接设置透明度，不使用平滑过渡
     this.skyboxOpacity = targetOpacity;
     
-    // 应用透明度到天空盒
     if (this.skybox) {
       if (this.skyboxOpacity > 0.01) {
         this.skybox.visible = true;
         const material = this.skybox.material as THREE.MeshBasicMaterial;
         material.opacity = this.skyboxOpacity;
-        material.transparent = this.skyboxOpacity < 1;
+        // Cesium 模式下保持 transparent=true（合成需要），普通模式下按透明度决定
+        if (!this.cesiumCompositeMode) {
+          material.transparent = this.skyboxOpacity < 1;
+        }
       } else {
-        // 完全隐藏
         this.skybox.visible = false;
       }
     }
