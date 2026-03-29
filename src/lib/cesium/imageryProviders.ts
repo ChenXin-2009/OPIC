@@ -31,6 +31,18 @@ function daysAgo(n: number): string {
 export const IMAGERY_SOURCES: ImagerySourceDef[] = [
   // ── 通用地图源 ──────────────────────────────────────────────
   {
+    id: 'bing-default',
+    name: 'Bing Maps',
+    description: 'Cesium 内置卫星影像',
+    category: 'general',
+    previewUrl: 'https://ecn.t3.tiles.virtualearth.net/tiles/a120.jpeg?g=1',
+    create: async () => {
+      const Cesium = await import('cesium');
+      // 使用 Cesium Ion 默认的 Bing Maps 图源（resource id=2）
+      return await Cesium.IonImageryProvider.fromAssetId(2);
+    },
+  },
+  {
     id: 'esri-world-imagery',
     name: 'ESRI 卫星影像',
     description: '高分辨率卫星图像',

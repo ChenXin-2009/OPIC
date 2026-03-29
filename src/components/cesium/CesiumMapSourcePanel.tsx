@@ -47,7 +47,7 @@ function PreviewImage({ src, alt }: { src: string; alt: string }) {
 }
 
 export default function CesiumMapSourcePanel({ earthPlanet, visible = true }: CesiumMapSourcePanelProps) {
-  const [activeId, setActiveId] = useState<string>('esri-world-imagery');
+  const [activeId, setActiveId] = useState<string>('bing-default');
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -59,24 +59,28 @@ export default function CesiumMapSourcePanel({ earthPlanet, visible = true }: Ce
     errorTimerRef.current = setTimeout(() => setError(null), 4000);
   }, []);
 
-  const handleSelect = useCallback(async (source: ImagerySourceDef) => {
-    if (!earthPlanet || loading) return;
-    const ext = earthPlanet.getCesiumExtension?.();
+  const applySource = useCallback(async (source: ImagerySourceDef, silent = false) => {
+    const ext = earthPlanet?.getCesiumExtension?.();
     if (!ext) return;
-
-    setLoading(source.id);
+    if (!silent) setLoading(source.id);
     setError(null);
     try {
       const provider = await source.create();
-      ext.setImageryProvider(provider);
+      if (provider !== null) {
+        ext.setImageryProvider(provider);
+      }
       setActiveId(source.id);
     } catch (e: any) {
-      console.error('[CesiumMapSourcePanel] Failed:', e);
-      showError(`加载失败：${source.name}（${e?.message ?? '网络错误'}）`);
+      if (!silent) showError(`加载失败：${source.name}（${e?.message ?? '网络错误'}）`);
     } finally {
-      setLoading(null);
+      if (!silent) setLoading(null);
     }
-  }, [earthPlanet, loading, showError]);
+  }, [earthPlanet, showError]);
+
+  const handleSelect = useCallback(async (source: ImagerySourceDef) => {
+    if (!earthPlanet || loading) return;
+    await applySource(source);
+  }, [earthPlanet, loading, applySource]);
 
   if (!visible) return null;
 

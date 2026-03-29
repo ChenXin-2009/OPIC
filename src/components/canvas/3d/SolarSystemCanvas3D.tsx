@@ -53,7 +53,7 @@ import { SatelliteLayer } from '@/lib/3d/SatelliteLayer';
 import { UniverseScale } from '@/lib/types/universeTypes';
 import type { LocalGroupGalaxy, GalaxyGroup, SimpleGalaxy, GalaxyCluster, Supercluster } from '@/lib/types/universeTypes';
 import SatelliteDetailModal from '@/components/satellite/SatelliteDetailModal';
-import ClippingTestPanel from '@/components/debug/ClippingTestPanel';
+
 
 // ==================== 可调参数配置 ====================
 // ⚙️ 以下参数可在文件顶部调整，影响 3D 场景显示效果
@@ -984,19 +984,38 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           setDistanceToEarth(distToEarth);
         }
 
-        // 动态调整视距裁剪（A3方案：near = 到地表距离 × 0.001）
+        // 动态调整视距裁剪
         const cameraDistance = Math.sqrt(
           Math.pow(camera.position.x, 2) +
           Math.pow(camera.position.y, 2) +
           Math.pow(camera.position.z, 2)
         );
         const maxDistance = Math.max(cameraDistance * 3, 50);
+        // 动态调整 near/far，保持 near:far 比值合理（深度缓冲精度）
+        // 关键原则：near/far 比值不能太小，否则深度缓冲精度不足导致 z-fighting
         if (earthBody) {
           const earthPos = new THREE.Vector3(earthBody.x, earthBody.y, earthBody.z);
           const EARTH_RADIUS_AU = 0.0000426;
-          const distToSurface = Math.max(camera.position.distanceTo(earthPos) - EARTH_RADIUS_AU, 1e-12);
-          camera.near = distToSurface * 0.001;
-          camera.far = maxDistance;
+          const distToCenter = camera.position.distanceTo(earthPos);
+          const distToSurface = Math.max(distToCenter - EARTH_RADIUS_AU, 1e-12);
+
+          let near: number;
+          let far: number;
+
+          if (distToSurface < 0.1) {
+            // 靠近地球：near 基于到中心距离而非表面距离
+            // 这样 near 平面不会切入球体三角面（球体顶点到中心距离 = 半径）
+            near = Math.max(distToCenter * 0.001, 1e-8);
+            // far 只需覆盖到太阳系范围，不需要 1e6
+            far = Math.min(maxDistance, distToSurface * 1e5 + 50);
+          } else {
+            // 远离地球：使用固定值，保证卫星/银河系正常显示
+            near = 0.01;
+            far = Math.max(maxDistance, 1e6);
+          }
+
+          camera.near = near;
+          camera.far = far;
           camera.updateProjectionMatrix();
         } else {
           sceneManager.updateCameraClipping(0.01, maxDistance);
@@ -1824,13 +1843,6 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       
       {/* 卫星详情模态框 */}
       <SatelliteDetailModal lang={lang} />
-
-      {/* 裁切问题测试面板 */}
-      <ClippingTestPanel
-        cameraRef={cameraRef}
-        planetsRef={planetsRef}
-        sceneManagerRef={sceneManagerRef}
-      />
     </div>
   );
 }
