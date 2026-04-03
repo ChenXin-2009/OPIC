@@ -338,3 +338,4 @@ input[type="date"].date-input-white::-webkit-clear-button {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari and Opera */
 }
+

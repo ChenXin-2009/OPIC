@@ -16,8 +16,13 @@ const AU_TO_KM = 149597870.7; // 1 AU = 149,597,870.7 公里
 const AU_TO_LIGHT_YEAR = 1 / 63241.077; // 1 AU = 1/63241.077 光年
 
 interface DistanceDisplayProps {
-  distanceAU: number; // 距离（AU单位）
+  distanceAU: number; // 距离（AU单位，地心距离）
 }
+
+// 地球半径（AU）
+const EARTH_RADIUS_AU = 0.000043;
+// 地球半径（km）
+const EARTH_RADIUS_KM = EARTH_RADIUS_AU * AU_TO_KM; // ≈ 6432 km
 
 // 尺度名称映射（中文）
 const scaleNames: Record<UniverseScale, string> = {
@@ -62,67 +67,76 @@ function getUniverseScale(distance: number): UniverseScale {
 /**
  * 格式化距离显示
  * 根据距离大小自动选择合适的单位
+ * 当距离接近地球时，显示地表距离（地心距离 - 地球半径）
  */
-function formatDistance(distanceAU: number): { value: string; unit: string } {
+function formatDistance(distanceAU: number): { value: string; unit: string; label: string } {
   const distanceKM = distanceAU * AU_TO_KM;
   const distanceLY = distanceAU * AU_TO_LIGHT_YEAR;
-  
-  // 小于 0.001 AU（约 15 万公里）时显示公里
-  if (distanceAU < 0.001) {
-    if (distanceKM < 1000) {
-      return { value: distanceKM.toFixed(1), unit: '公里' };
-    } else if (distanceKM < 1000000) {
-      return { value: (distanceKM / 1000).toFixed(2), unit: '千公里' };
+
+  // 距离地球中心 < 0.01 AU（约 150 万公里）时，显示地表距离
+  if (distanceAU < 0.01) {
+    const surfaceDistKM = distanceKM - EARTH_RADIUS_KM;
+    const label = '距地表';
+
+    if (surfaceDistKM <= 0) {
+      // 在地表以下（不应发生，但保险起见）
+      return { value: '0', unit: 'm', label };
+    } else if (surfaceDistKM < 0.001) {
+      // < 1 m
+      return { value: (surfaceDistKM * 1000).toFixed(1), unit: 'm', label };
+    } else if (surfaceDistKM < 1) {
+      // 1m ~ 1km
+      return { value: (surfaceDistKM * 1000).toFixed(0), unit: 'm', label };
+    } else if (surfaceDistKM < 1000) {
+      // 1km ~ 1000km
+      return { value: surfaceDistKM.toFixed(2), unit: 'km', label };
+    } else if (surfaceDistKM < 1000000) {
+      // 1000km ~ 100万km
+      return { value: (surfaceDistKM / 1000).toFixed(3), unit: '千km', label };
     } else {
-      return { value: (distanceKM / 1000000).toFixed(3), unit: '百万公里' };
+      return { value: (surfaceDistKM / 1000000).toFixed(4), unit: '百万km', label };
     }
   }
-  
-  // 0.001 - 1 AU 之间显示百万公里或 AU
+
+  const label = '距地球';
+
+  // 0.01 - 1 AU 之间
   if (distanceAU < 1) {
     const millionKM = distanceKM / 1000000;
     if (millionKM < 10) {
-      return { value: millionKM.toFixed(2), unit: '百万公里' };
+      return { value: millionKM.toFixed(3), unit: '百万km', label };
     }
-    return { value: distanceAU.toFixed(4), unit: 'AU' };
+    return { value: distanceAU.toFixed(5), unit: 'AU', label };
   }
-  
-  // 1 - 10 AU 显示 AU
+
+  // 1 - 10 AU
   if (distanceAU < 10) {
-    return { value: distanceAU.toFixed(3), unit: 'AU' };
+    return { value: distanceAU.toFixed(4), unit: 'AU', label };
   }
-  
-  // 10 - 10000 AU 显示 AU（保留2位小数）
+
+  // 10 - 10000 AU
   if (distanceAU < 10000) {
-    return { value: distanceAU.toFixed(2), unit: 'AU' };
+    return { value: distanceAU.toFixed(2), unit: 'AU', label };
   }
-  
-  // 大于 10000 AU（约 0.16 光年）切换到光年
+
+  // > 10000 AU 切换到光年
   if (distanceLY < 1) {
-    return { value: distanceLY.toFixed(3), unit: '光年' };
+    return { value: distanceLY.toFixed(4), unit: '光年', label };
   }
-  
-  // 1 - 100 光年
   if (distanceLY < 100) {
-    return { value: distanceLY.toFixed(2), unit: '光年' };
+    return { value: distanceLY.toFixed(3), unit: '光年', label };
   }
-  
-  // 100 - 10000 光年
   if (distanceLY < 10000) {
-    return { value: distanceLY.toFixed(1), unit: '光年' };
+    return { value: distanceLY.toFixed(1), unit: '光年', label };
   }
-  
-  // 大于 10000 光年，显示千光年
   if (distanceLY < 1000000) {
-    return { value: (distanceLY / 1000).toFixed(2), unit: '千光年' };
+    return { value: (distanceLY / 1000).toFixed(2), unit: '千光年', label };
   }
-  
-  // 大于 100万光年，显示百万光年
-  return { value: (distanceLY / 1000000).toFixed(2), unit: '百万光年' };
+  return { value: (distanceLY / 1000000).toFixed(2), unit: '百万光年', label };
 }
 
 export default function DistanceDisplay({ distanceAU }: DistanceDisplayProps) {
-  const { value, unit } = formatDistance(distanceAU);
+  const { value, unit, label } = formatDistance(distanceAU);
   const cfg = DISTANCE_DISPLAY_CONFIG;
   const scale = getUniverseScale(distanceAU);
   const scaleName = scaleNames[scale];
@@ -168,7 +182,7 @@ export default function DistanceDisplay({ distanceAU }: DistanceDisplayProps) {
       }}>{scaleName}</div>
       
       {/* 距离信息 */}
-      <div style={{ opacity: cfg.titleOpacity }}>{cfg.titleText}</div>
+      <div style={{ opacity: cfg.titleOpacity }}>{label}</div>
       <div style={{ 
         fontSize: `${cfg.valueFontSize}px`, 
         fontWeight: 400,

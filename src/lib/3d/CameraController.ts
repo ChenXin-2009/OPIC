@@ -75,8 +75,24 @@ import { FocusManager, type CelestialObject, type FocusOptions } from './FocusMa
 
 // 兼容旧代码中对单一 CAMERA_CONFIG 的使用（现在直接使用新的统一配置）
 
+/**
+ * 相机控制模式枚举
+ *
+ * - `'free'`：自由模式，用户可自由旋转和缩放
+ * - `'locked'`：锁定模式，相机跟随目标天体但不自动旋转
+ * - `'follow'`：跟随模式，相机平滑跟随目标天体移动
+ */
 export type CameraMode = 'free' | 'locked' | 'follow';
 
+/**
+ * Three.js 相机控制器
+ *
+ * 封装 OrbitControls，提供太阳系场景所需的相机控制功能，包括：
+ * - 鼠标/触摸缩放（指数衰减平滑）
+ * - 防穿透约束（防止相机进入天体内部）
+ * - 相机模式切换（自由/锁定/跟随）
+ * - 聚焦目标天体（平滑过渡到目标位置）
+ */
 export class CameraController {
   private controls: OrbitControls;
   private camera: THREE.PerspectiveCamera;
@@ -121,73 +137,93 @@ export class CameraController {
   // controls.update() 之后需要同步的 up 向量
   private _pendingUpForQuat: THREE.Vector3 | null = null;
 
+  /**
+   * 构造函数：初始化相机控制器
+   *
+   * 初始化流程：
+   * 1. 保存相机和 DOM 元素引用，读取初始配置
+   * 2. 初始化 FocusManager（聚焦逻辑管理器）
+   * 3. 应用 FOV 配置并创建 OrbitControls 实例
+   * 4. 在 OrbitControls 创建完成后注册配置变更监听器（顺序不可颠倒）
+   * 5. 配置 OrbitControls 各项参数（阻尼、距离限制、触摸手势等）
+   * 6. 初始化平滑缩放距离状态
+   * 7. 绑定滚轮和触摸缩放事件监听器
+   * 8. 初始化角度平滑过渡状态
+   *
+   * @param camera Three.js 透视相机实例
+   * @param domElement 用于绑定鼠标/触摸事件的 DOM 元素（通常为 renderer.domElement）
+   */
   constructor(camera: THREE.PerspectiveCamera, domElement: HTMLElement) {
     this.camera = camera;
     this.domElement = domElement;
     
-    // 初始化配置管理（但暂不设置监听器）
+    // 步骤 1：初始化配置管理（但暂不设置监听器，需等 OrbitControls 创建完毕）
     this.currentConfig = cameraConfigManager.getConfig();
     
-    // Initialize enhanced focus manager
+    // 步骤 2：初始化增强聚焦管理器（负责聚焦距离计算和过渡动画）
     this.focusManager = new FocusManager();
     
-    // 应用 FOV 配置
+    // 步骤 3a：应用 FOV 配置（视野角度，影响透视感）
     this.camera.fov = CAMERA_CONFIG.fov;
     this.camera.updateProjectionMatrix();
     
+    // 步骤 3b：创建 OrbitControls 实例（绑定到相机和 DOM 元素）
     this.controls = new OrbitControls(camera, domElement);
     
-    // ⚠️ 重要：在 OrbitControls 初始化后再设置配置监听器
+    // 步骤 4：在 OrbitControls 初始化后再设置配置监听器
+    // ⚠️ 重要：必须在 OrbitControls 创建之后注册，否则 applyConfigChanges 中访问 this.controls 会报错
     this.setupConfigListener();
     
-    // 配置 OrbitControls - 优化缓动效果
+    // 步骤 5a：配置 OrbitControls 阻尼（惯性效果）
     this.controls.enableDamping = true; // 启用阻尼（惯性效果）
     // 阻尼系数：值越小，缓动越明显（每次只衰减一小部分速度，所以会持续更久）
     // 0.05 表示每帧保留 95% 的速度，衰减 5%，会产生明显的惯性效果
     this.controls.dampingFactor = CAMERA_CONFIG.dampingFactor;
     
-    // 确保每帧都更新阻尼（即使没有输入）
+    // 步骤 5b：启用旋转，禁用平移（防止焦点漂移）
     this.controls.enableRotate = true;
-    // 🔧 禁用平移功能，防止焦点漂移
+    // 🔧 禁用平移功能，防止焦点漂移（Ctrl/Shift+拖动、双指平移均被禁用）
     this.controls.enablePan = false;
     
-    // 初始化距离
+    // 步骤 6：初始化平滑缩放距离状态（三个变量保持同步，避免初始跳跃）
     this.smoothDistance = this.camera.position.distanceTo(this.controls.target);
     this.targetDistance = this.smoothDistance;
     this.lastDistance = this.smoothDistance;
     
-    // 距离限制（移除最小距离限制，允许更接近目标）
+    // 步骤 5c：配置距离限制
     // 将 minDistance 设为 0，避免在聚焦/滚轮时被瞬间限制回较远距离
+    // 实际最小距离由防穿透约束动态控制
     this.controls.minDistance = 0;
     this.controls.maxDistance = CAMERA_CONFIG.maxDistance;
     
-    // 启用各种操作
-    // 🔧 禁用平移，防止焦点漂移（Ctrl/Shift+拖动、双指平移）
+    // 步骤 5d：配置各操作速度参数
+    // 🔧 再次确认禁用平移（防止 enablePan 被其他逻辑意外开启）
     this.controls.enablePan = false;
     this.controls.enableRotate = true; // 启用旋转
     
-    // 缩放平滑度配置
+    // 缩放/平移/旋转速度（基础值，update() 中会根据距离动态调整）
     this.controls.zoomSpeed = CAMERA_CONFIG.zoomSpeed;
     this.controls.panSpeed = CAMERA_CONFIG.panSpeed;
     this.controls.rotateSpeed = CAMERA_CONFIG.rotateSpeed;
     
-    // 禁用 OrbitControls 的自动缩放，我们将手动实现平滑缩放
+    // 步骤 5e：禁用 OrbitControls 内置缩放，改用自定义平滑缩放算法
+    // 原因：OrbitControls 的缩放是线性的，缺乏近距离时的精细控制
     this.controls.enableZoom = false;
     
-    // 移动端优化：防止缩放时视角飘走
-    // 🔧 双指只缩放，不平移，防止焦点漂移
+    // 步骤 5f：移动端触摸手势配置
+    // 🔧 双指只缩放+旋转，不平移，防止焦点漂移
     this.controls.touches = {
-      ONE: THREE.TOUCH.ROTATE, // 单指旋转
+      ONE: THREE.TOUCH.ROTATE,        // 单指旋转
       TWO: THREE.TOUCH.DOLLY_ROTATE,  // 双指缩放+旋转，不平移
     };
     
-    // 立即绑定事件监听器（不延迟，确保事件监听器始终存在）
+    // 步骤 7：立即绑定事件监听器（不延迟，确保事件监听器始终存在）
     // 即使 DOM 元素还没有连接到 DOM，事件监听器也会在元素准备好后自动生效
     this.setupWheelZoom(domElement);
     this.setupTouchZoom(domElement);
     
-    // 如果 DOM 元素还没有连接到 DOM，使用 requestAnimationFrame 确保绑定
-    // 这是一个备用方案，因为事件监听器已经在上面绑定了
+    // 备用方案：如果 DOM 元素尚未挂载，等待两帧后再次检查并补充绑定
+    // （正常情况下上面的绑定已经足够，这里只是防御性处理）
     if (!domElement.isConnected) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -204,28 +240,28 @@ export class CameraController {
       });
     }
     
-    // 平滑缩放（使用平滑插值）
-    this.controls.screenSpacePanning = false; // 使用球面平移，更自然
+    // 步骤 5g：平移模式和极角限制配置
+    this.controls.screenSpacePanning = false; // 使用球面平移，更自然（沿球面移动而非屏幕平面）
     
-    // 完全移除旋转角度限制，允许自由旋转（包括上下翻转）
-    // 明确设置为 0 和 Math.PI 允许从上方到下方的完整旋转（180度）
+    // 允许完整的上下旋转（0 到 π，即从正上方到正下方）
+    // 不限制极角，支持翻转视角（如从地球南极方向观察）
     this.controls.minPolarAngle = 0;
     this.controls.maxPolarAngle = Math.PI;
     
-    // ⚠️ 关键修复：禁用 OrbitControls 的 azimuthalAngle 范围限制，避免双重 wrap
-    // 防止 OrbitControls 自己 wrap 一次，我们再 wrap 一次导致角度跳跃
+    // ⚠️ 关键修复：禁用 OrbitControls 的方位角范围限制，避免双重 wrap
+    // 若设置了有限范围，OrbitControls 会自己 wrap 一次，我们再 wrap 一次会导致角度跳跃
     this.controls.minAzimuthAngle = -Infinity;
     this.controls.maxAzimuthAngle = Infinity;
     
-    // 自动旋转（可选，如果需要）
+    // 自动旋转（默认关闭，可通过外部调用开启）
     this.controls.autoRotate = false;
-    this.controls.autoRotateSpeed = 2.0;
+    this.controls.autoRotateSpeed = 2.0; // 自动旋转速度（度/秒）
     
-    // 相机角度平滑过渡相关
+    // 步骤 8：初始化角度平滑过渡状态（极角 polarAngle）
     this.isPolarAngleTransitioning = false;
     this.targetPolarAngle = 0;
     this.currentPolarAngle = 0;
-    this.polarAngleTransitionSpeed = 0.08; // 角度过渡速度（0-1，越大越快）
+    this.polarAngleTransitionSpeed = 0.08; // 角度过渡速度（0-1，越大越快；0.08 约需 30 帧完成过渡）
   }
   
   // 相机角度平滑过渡相关
@@ -241,56 +277,67 @@ export class CameraController {
   private azimuthalAngleTransitionSpeed: number = 0.08; // 角度过渡速度（0-1，越大越快）
 
   /**
-   * 设置相机垂直角度（polarAngle）
-   * @param angle 角度（度），0度 = 俯视（垂直于轨道平面），45度 = 45度视角
+   * 设置相机垂直角度（polarAngle / 仰俯角）
+   *
+   * OrbitControls 的 polarAngle（phi）定义：
+   * - polarAngle = 0°   → 从 +Y 轴往下看（纯俯视，正上方）
+   * - polarAngle = 90°  → 在地平线上（水平视角）
+   * - polarAngle > 90°  → 仰视（从下方往上看）
+   * - polarAngle = 180° → 从 -Y 轴往上看（纯仰视，正下方）
+   *
+   * 角度标准化逻辑：
+   * - 负数角度：-45° → 135°（等效于从下方看）
+   * - 超过 360°：取模后再标准化
+   * - 超过 180°：折叠到 0-180° 范围（360° - angle）
+   *
+   * @param angle 角度（度），0° = 俯视，90° = 水平，支持负数和超过 360° 的值
    * @param smooth 是否平滑过渡（默认 false，立即切换）
-   * 
-   * 注意：OrbitControls 的 polarAngle 定义：
-   * - polarAngle = 0° → 从 +Y 轴往下看（纯俯视）
-   * - polarAngle = 90° → 在地平线上（水平视角）
-   * - polarAngle > 90° → 仰视
    */
   setPolarAngle(angle: number, smooth = false) {
-    // 将角度转换为弧度
+    // 步骤 1：将输入角度标准化到 0-180° 范围
     // 允许任意角度值（包括负数），但最终会转换为 0 到 Math.PI 的范围
-    // 负数角度会被转换为对应的正角度（例如 -45° = 135°）
     let normalizedAngle = angle;
-    // 将角度标准化到 0-180 度范围
+    // 负数角度处理：-45° 转换为 135°（从下方看的等效角度）
     if (normalizedAngle < 0) {
-      // 负数角度：-45° 转换为 135°（从下方看）
       normalizedAngle = 180 + normalizedAngle;
     }
+    // 超过 360° 的角度：取模归一化
     if (normalizedAngle >= 360) {
       normalizedAngle = normalizedAngle % 360;
     }
+    // 超过 180° 的角度：折叠到 0-180° 范围（利用对称性）
     if (normalizedAngle > 180) {
       normalizedAngle = 360 - normalizedAngle;
     }
     
+    // 步骤 2：转换为弧度（OrbitControls 内部使用弧度）
     const angleRad = normalizedAngle * (Math.PI / 180);
     
-    // 移除角度范围限制，允许任意值
+    // 步骤 3：有效性检查（防止 NaN/Infinity 导致相机状态异常）
     if (!isFinite(angleRad)) {
       console.warn('CameraController.setPolarAngle: Invalid angle value', angle);
       return;
     }
     
-    // 先调用 update() 确保 spherical 被初始化
+    // 步骤 4：先调用 update() 确保 OrbitControls 内部的 spherical 对象被初始化
     this.controls.update();
     
-    // 使用类型断言访问 spherical（OrbitControls 内部属性）
+    // 使用类型断言访问 spherical（OrbitControls 内部属性，未在公开 API 中暴露）
     const controlsAnyPol1 = this.controls as any;
     
     if (!smooth) {
       // 立即切换模式：直接修改 OrbitControls 的 spherical.phi（phi 就是 polarAngle）
       if (controlsAnyPol1.spherical) {
+        // 主路径：直接设置球坐标的仰俯角分量
         controlsAnyPol1.spherical.phi = angleRad;
         this.controls.update();
       } else {
-        // 如果 spherical 不存在，使用备用方法：通过设置相机位置
+        // 备用路径：spherical 不存在时，通过重新计算相机位置来设置角度
+        // 保持当前距离和方位角不变，只改变仰俯角
         const currentDistance = this.camera.position.distanceTo(this.controls.target);
         const currentAzimuthalAngle = this.controls.getAzimuthalAngle();
         const newPosition = new THREE.Vector3();
+        // 球坐标转笛卡尔坐标：x = r·sin(φ)·cos(θ), y = r·cos(φ), z = r·sin(φ)·sin(θ)
         newPosition.x = currentDistance * Math.sin(angleRad) * Math.cos(currentAzimuthalAngle);
         newPosition.y = currentDistance * Math.cos(angleRad);
         newPosition.z = currentDistance * Math.sin(angleRad) * Math.sin(currentAzimuthalAngle);
@@ -299,66 +346,76 @@ export class CameraController {
         this.camera.lookAt(this.controls.target);
         this.controls.update();
       }
+      // 同步内部状态，防止下一帧的过渡逻辑误判
       this.currentPolarAngle = angleRad;
       this.targetPolarAngle = angleRad;
       this.isPolarAngleTransitioning = false;
       return;
     }
     
-    // 平滑过渡模式
+    // 平滑过渡模式：设置目标角度，由 update() 每帧插值逼近
     this.targetPolarAngle = angleRad;
     this.isPolarAngleTransitioning = true;
-    // 直接从 spherical.phi 读取当前角度（更准确）
+    // 从 spherical.phi 读取当前角度（比 getPolarAngle() 更准确，避免阻尼引入的误差）
     const controlsAnyPol2 = this.controls as any;
     this.currentPolarAngle = controlsAnyPol2.spherical ? controlsAnyPol2.spherical.phi : this.controls.getPolarAngle();
   }
 
   /**
-   * 设置相机左右角度（azimuthalAngle）
-   * @param angle 角度（度），0度 = 正前方，90度 = 右侧，-90度 = 左侧
+   * 设置相机水平角度（azimuthalAngle / 方位角）
+   *
+   * 角度标准化逻辑：
+   * - 输入角度被标准化到 -180° 到 +180° 范围（对应 -π 到 +π 弧度）
+   * - 立即切换时选择最短旋转路径，避免绕远路旋转（如从 170° 到 -170° 走 20° 而非 340°）
+   * - 平滑过渡时同样选择最短路径，并在 update() 中逐帧插值
+   *
+   * @param angle 角度（度），0° = 正前方，90° = 右侧，-90° = 左侧，支持任意值
    * @param smooth 是否平滑过渡（默认 false，立即切换）
    */
   setAzimuthalAngle(angle: number, smooth = false) {
-    // 将角度转换为弧度
+    // 步骤 1：将输入角度标准化到 -180° 到 +180° 范围
     // 允许任意角度值（包括负数），转换为 -Math.PI 到 Math.PI 的范围
     let normalizedAngle = angle;
-    // 将角度标准化到 -180 到 180 度范围
+    // 循环减法/加法，将角度归一化到 [-180, 180) 区间
     while (normalizedAngle < -180) normalizedAngle += 360;
     while (normalizedAngle >= 180) normalizedAngle -= 360;
     
+    // 步骤 2：转换为弧度
     const angleRad = normalizedAngle * (Math.PI / 180);
     
+    // 步骤 3：有效性检查
     if (!isFinite(angleRad)) {
       console.warn('CameraController.setAzimuthalAngle: Invalid angle value', angle);
       return;
     }
     
-    // 先调用 update() 确保 spherical 被初始化
+    // 步骤 4：先调用 update() 确保 OrbitControls 内部的 spherical 对象被初始化
     this.controls.update();
     
-    // 使用类型断言访问 spherical（OrbitControls 内部属性）
+    // 使用类型断言访问 spherical（OrbitControls 内部属性，未在公开 API 中暴露）
     const controlsAnyAz1 = this.controls as any;
     
     if (!smooth) {
       // 立即切换模式：计算最短路径，然后设置角度
       // ⚠️ 关键修复：即使立即切换，也要选择最短路径，避免旋转方向错误
       if (controlsAnyAz1.spherical) {
-        // 读取当前角度
+        // 读取当前角度（theta 是方位角）
         const currentAngle = controlsAnyAz1.spherical.theta;
-        // 标准化当前角度到 -π 到 π 范围
+        // 将当前角度标准化到 -π 到 π 范围，确保差值计算正确
         let normalizedCurrent = currentAngle;
         while (normalizedCurrent > Math.PI) normalizedCurrent -= 2 * Math.PI;
         while (normalizedCurrent < -Math.PI) normalizedCurrent += 2 * Math.PI;
         
-        // 计算角度差值，选择最短路径
+        // 计算角度差值，选择最短路径（差值绝对值不超过 π）
         let angleDiff = angleRad - normalizedCurrent;
-        if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-        if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+        if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;   // 顺时针更短
+        if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;  // 逆时针更短
         
-        // 使用最短路径的目标角度
+        // 最终目标角度 = 当前角度 + 最短路径差值
         const finalAngle = normalizedCurrent + angleDiff;
         
         // ⚠️ 关键修复：临时禁用阻尼，避免与自定义角度设置冲突
+        // 阻尼会在 update() 中对角度施加额外的插值，导致设置的角度不准确
         const oldEnableDamping = this.controls.enableDamping;
         this.controls.enableDamping = false;
         
@@ -368,8 +425,8 @@ export class CameraController {
         // 恢复阻尼设置
         this.controls.enableDamping = oldEnableDamping;
       } else {
-        // 如果 spherical 不存在，使用备用方法：通过设置相机位置
-        // 也需要计算最短路径
+        // 备用路径：spherical 不存在时，通过重新计算相机位置来设置角度
+        // 同样需要计算最短路径
         const currentAngle = this.controls.getAzimuthalAngle();
         let normalizedCurrent = currentAngle;
         while (normalizedCurrent > Math.PI) normalizedCurrent -= 2 * Math.PI;
@@ -381,6 +438,7 @@ export class CameraController {
         
         const finalAngle = normalizedCurrent + angleDiff;
         
+        // 球坐标转笛卡尔坐标：保持距离和仰俯角不变，只改变方位角
         const currentDistance = this.camera.position.distanceTo(this.controls.target);
         const currentPolarAngle = this.controls.getPolarAngle();
         const newPosition = new THREE.Vector3();
@@ -392,50 +450,65 @@ export class CameraController {
         this.camera.lookAt(this.controls.target);
         this.controls.update();
       }
+      // 同步内部状态
       this.currentAzimuthalAngle = angleRad;
       this.targetAzimuthalAngle = angleRad;
       this.isAzimuthalAngleTransitioning = false;
       return;
     }
     
-    // 平滑过渡模式
+    // 平滑过渡模式：设置目标角度，由 update() 每帧插值逼近
     this.targetAzimuthalAngle = angleRad;
     this.isAzimuthalAngleTransitioning = true;
-    // 获取当前角度，直接从 spherical.theta 读取（更准确）
+    // 从 spherical.theta 读取当前角度（比 getAzimuthalAngle() 更准确）
     this.controls.update();
     const controlsAnyAz2 = this.controls as any;
     const currentAngle = controlsAnyAz2.spherical ? controlsAnyAz2.spherical.theta : this.controls.getAzimuthalAngle();
-    // 标准化当前角度到 -π 到 π 范围
+    // 将当前角度标准化到 -π 到 π 范围
     let normalizedCurrent = currentAngle;
     while (normalizedCurrent > Math.PI) normalizedCurrent -= 2 * Math.PI;
     while (normalizedCurrent < -Math.PI) normalizedCurrent += 2 * Math.PI;
-    // 计算角度差值，选择最短路径
+    // 计算最短路径差值（处理角度环绕，如从 170° 到 -170° 走 20° 而非 340°）
     let angleDiff = angleRad - normalizedCurrent;
-    // 如果差值超过180度，选择另一条路径
+    // 如果差值超过 180°，选择另一条更短的路径
     if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
     if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-    // 从标准化后的当前角度开始
+    // 从标准化后的当前角度开始插值（确保插值方向正确）
     this.currentAzimuthalAngle = normalizedCurrent;
   }
 
-  // 设置滚轮缩放处理
+  /**
+   * 初始化鼠标滚轮缩放事件处理
+   *
+   * 事件处理逻辑：
+   * 1. 阻止默认滚动行为（preventDefault），防止页面滚动与相机缩放冲突
+   * 2. 若正在执行聚焦动画，立即中断并切换到用户控制模式
+   * 3. 若正在跟踪目标，同步当前距离到缩放状态（允许跟踪时缩放）
+   * 4. 根据 deltaY 方向和大小计算缩放增量，调用 zoom() 执行缩放
+   *
+   * 注意：OrbitControls 的内置缩放已被禁用（enableZoom = false），
+   * 所有缩放操作均通过此处理器路由到自定义平滑缩放算法。
+   *
+   * @param domElement 绑定事件的 DOM 元素（renderer.domElement）
+   */
   private setupWheelZoom(domElement: HTMLElement) {
-    // 如果已经绑定过，先移除旧的监听器
+    // 如果已经绑定过，先移除旧的监听器（防止重复绑定导致缩放速度翻倍）
     if (this.wheelHandler) {
       domElement.removeEventListener('wheel', this.wheelHandler);
     }
     
     this.wheelHandler = (e: WheelEvent) => {
-      // ⚠️ 关键：确保事件被正确处理
+      // 阻止默认行为（防止页面滚动）和事件冒泡（防止父元素响应）
       e.preventDefault();
       e.stopPropagation();
       
-      // 如果正在聚焦动画，立即停止，允许用户立即控制缩放
+      // 中断聚焦动画：用户开始滚轮操作时，立即停止正在进行的聚焦过渡
+      // 这样用户可以在聚焦动画未完成时就开始缩放，提升响应性
       if (this.isFocusing) {
         this.isFocusing = false;
         this.targetCameraPosition = null;
         this.targetControlsTarget = null;
-        // 同步当前距离，确保缩放从当前位置开始
+        // 同步当前距离，确保缩放从当前位置开始（而非聚焦目标位置）
         const currentDist = this.camera.position.distanceTo(this.controls.target);
         if (isFinite(currentDist) && currentDist > 0) {
           this.smoothDistance = currentDist;
@@ -445,8 +518,8 @@ export class CameraController {
         this.resetMinDistance();
       }
       
-      // ⚠️ 关键修复：不要停止跟踪，允许在跟踪的同时缩放
-      // 如果正在跟踪，同步当前距离（使用 smoothDistance 如果存在，否则使用实际距离）
+      // 跟踪模式下的缩放处理：不停止跟踪，允许在跟踪的同时调整距离
+      // 同步 smoothDistance 和 trackingDistance，确保缩放从当前距离开始
       if (this.isTracking) {
         const currentDist = this.smoothDistance || this.camera.position.distanceTo(this.controls.target);
         if (isFinite(currentDist) && currentDist > 0) {
@@ -457,80 +530,88 @@ export class CameraController {
         }
       }
       
-      // 确保缩放功能启用（聚焦后可能被禁用）
+      // 标记缩放状态（确保 update() 中的缩放逻辑被激活）
       this.isZooming = true;
       
-      // 计算缩放增量（与2D版本一致）
-      const scrollSpeed = Math.min(Math.abs(e.deltaY) / 100, 3);
+      // 计算缩放增量：
+      // - scrollSpeed：将 deltaY 归一化到 [0, 3] 范围，避免高精度触控板产生过大增量
+      // - zoomDelta：向下滚动（deltaY > 0）为负值（拉远），向上滚动（deltaY < 0）为正值（拉近）
+      const scrollSpeed = Math.min(Math.abs(e.deltaY) / 100, 3); // 最大步长限制为 3
       // 向下滚动缩小（deltaY > 0），向上滚动放大（deltaY < 0）
-      // 注意：向下滚动应该拉远（缩小），向上滚动应该拉近（放大）
       const zoomDelta = e.deltaY > 0 ? -scrollSpeed : scrollSpeed;
       this.zoom(zoomDelta);
     };
     
-    // 绑定到 canvas 元素（renderer.domElement）
+    // 绑定到 canvas 元素，使用 passive: false 以允许 preventDefault()
     domElement.addEventListener('wheel', this.wheelHandler, { passive: false });
   }
 
-  // 设置触摸缩放处理
+  /**
+   * 初始化触摸捏合缩放事件处理（移动端双指缩放）
+   *
+   * 事件处理逻辑：
+   * - touchstart：检测双指触摸，记录初始指间距离和平滑距离；中断聚焦动画
+   * - touchmove：计算当前指间距离与初始距离的比值（scale），转换为缩放增量
+   *   - 使用平方根函数放大小幅度手指移动的效果（提升灵敏度）
+   *   - 限制更新频率（每 8ms 最多一次，约 120fps），避免过于频繁的计算
+   *   - 每次处理后更新 initialDistance，实现连续缩放（而非相对初始位置的绝对缩放）
+   * - touchend：重置捏合状态，但不立即停止缩放（保留惯性效果）
+   *
+   * @param domElement 绑定事件的 DOM 元素（renderer.domElement）
+   */
   private setupTouchZoom(domElement: HTMLElement) {
-    // 如果已经绑定过，先移除旧的监听器
+    // 如果已经绑定过，先移除旧的监听器（防止重复绑定）
     if (this.touchStartHandler) {
       domElement.removeEventListener('touchstart', this.touchStartHandler);
       domElement.removeEventListener('touchmove', this.touchMoveHandler!);
       domElement.removeEventListener('touchend', this.touchEndHandler!);
     }
     
-    let initialDistance = 0;
-    let initialSmoothDistance = 0;
-    let isPinching = false; // 添加缩放状态标记
-    let lastUpdateTime = 0; // 添加更新时间控制，优化性能
+    let initialDistance = 0;       // 双指触摸开始时的指间距离（像素）
+    let initialSmoothDistance = 0; // 双指触摸开始时的相机平滑距离（AU）
+    let isPinching = false;        // 是否正在进行捏合缩放
+    let lastUpdateTime = 0;        // 上次处理 touchmove 的时间戳（用于限频）
 
     this.touchStartHandler = (e: TouchEvent) => {
       if (e.touches.length === 2) {
-        e.preventDefault(); // 阻止默认的缩放行为
+        e.preventDefault(); // 阻止默认的浏览器缩放行为（防止页面被放大）
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
+        // 计算两指间的欧几里得距离（像素）
         initialDistance = Math.sqrt(
           Math.pow(touch2.clientX - touch1.clientX, 2) +
           Math.pow(touch2.clientY - touch1.clientY, 2)
         );
         initialSmoothDistance = this.smoothDistance;
         isPinching = true;
-        lastUpdateTime = performance.now(); // 重置更新时间
+        lastUpdateTime = performance.now(); // 重置更新时间戳
         
-        // ⚠️ 关键修复：双指缩放时的处理逻辑与滚轮保持一致
-        // 如果正在聚焦，立即停止聚焦但允许缩放
+        // 中断聚焦动画（与滚轮处理逻辑保持一致）
         if (this.isFocusing) {
           this.isFocusing = false;
           this.targetCameraPosition = null;
           this.targetControlsTarget = null;
-          // 同步当前距离，确保缩放从当前位置开始
           const currentDist = this.camera.position.distanceTo(this.controls.target);
           if (isFinite(currentDist) && currentDist > 0) {
             this.smoothDistance = currentDist;
             this.targetDistance = currentDist;
           }
-          // 重置最小距离（允许用户自由缩放）
           this.resetMinDistance();
         }
         
-        // ⚠️ 关键修复：不要停止跟踪，允许在跟踪的同时缩放
-        // 如果正在跟踪，同步当前距离（使用 smoothDistance 如果存在，否则使用实际距离）
+        // 跟踪模式下同步距离（允许跟踪时缩放）
         if (this.isTracking) {
           const currentDist = this.smoothDistance || this.camera.position.distanceTo(this.controls.target);
           if (isFinite(currentDist) && currentDist > 0) {
             this.smoothDistance = currentDist;
             this.targetDistance = currentDist;
-            // 同步 trackingDistance，确保跟踪逻辑使用正确的距离
             this.trackingDistance = currentDist;
           }
         }
         
-        // 确保缩放功能启用
         this.isZooming = true;
       } else {
-        // 非双指触摸时重置缩放状态
+        // 非双指触摸时重置捏合状态（如单指触摸开始）
         isPinching = false;
         initialDistance = 0;
       }
@@ -538,78 +619,90 @@ export class CameraController {
 
     this.touchMoveHandler = (e: TouchEvent) => {
       if (e.touches.length === 2 && isPinching && initialDistance > 0) {
-        e.preventDefault(); // 阻止默认的缩放行为
+        e.preventDefault(); // 阻止默认的浏览器缩放行为
         
-        // ⚠️ 性能优化：限制更新频率，避免过于频繁的计算
+        // 限制更新频率：每 8ms 最多处理一次（约 120fps），改善大范围缩放的平滑度
         const currentTime = performance.now();
-        if (currentTime - lastUpdateTime < 8) { // 提高到120fps，改善大范围缩放的平滑度
+        if (currentTime - lastUpdateTime < 8) {
           return;
         }
         lastUpdateTime = currentTime;
         
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
+        // 计算当前指间距离
         const currentDistance = Math.sqrt(
           Math.pow(touch2.clientX - touch1.clientX, 2) +
           Math.pow(touch2.clientY - touch1.clientY, 2)
         );
         
-        // 添加最小距离检查，避免除零错误
+        // 最小距离检查（避免除零错误，且过小的距离变化无意义）
         if (currentDistance > 10 && initialDistance > 10) {
+          // 计算缩放比例（当前距离 / 初始距离）
           const scale = currentDistance / initialDistance;
           
-          // ⚠️ 关键修复：使用更激进的触摸缩放算法，提供明显的缩放效果
-          // 计算缩放增量，模拟滚轮的行为
+          // 计算缩放增量：
+          // - scaleDiff > 0：两指张开（放大）
+          // - scaleDiff < 0：两指合拢（缩小）
           const scaleDiff = scale - 1.0;
           
-          // 使用指数放大来增强小幅度的手指移动
-          // 这样即使很小的手指移动也能产生明显的缩放效果
+          // 使用平方根函数放大小幅度手指移动的效果：
+          // - 小变化（如 scaleDiff = 0.01）：sqrt(0.01) * 3 = 0.3，放大了 30 倍
+          // - 大变化（如 scaleDiff = 0.25）：sqrt(0.25) * 3 = 1.5，放大了 6 倍
+          // 这样即使很小的手指移动也能产生明显的缩放效果，同时大幅度移动不会过于激进
           let zoomDelta;
           if (Math.abs(scaleDiff) > 0.001) {
-            // 使用指数函数来放大小的变化
             const sign = scaleDiff > 0 ? 1 : -1;
             const absScaleDiff = Math.abs(scaleDiff);
-            // 使用平方根函数来放大小变化，但限制大变化
-            zoomDelta = sign * Math.sqrt(absScaleDiff) * 3; // 大幅增加敏感度
+            zoomDelta = sign * Math.sqrt(absScaleDiff) * 3; // 灵敏度系数 3
           } else {
             zoomDelta = 0;
           }
           
-          // 限制单次缩放的最大幅度，但允许更大的范围
-          zoomDelta = Math.max(-6, Math.min(6, zoomDelta)); // 进一步增加到±6
+          // 限制单次缩放的最大幅度（±6），防止手指快速移动时产生过大跳跃
+          zoomDelta = Math.max(-6, Math.min(6, zoomDelta));
           
-          // 使用与滚轮相同的zoom方法
+          // 调用统一的缩放方法（与滚轮缩放使用相同的算法）
           this.zoom(zoomDelta);
           
-          // 更新初始距离，实现连续缩放
+          // 更新初始距离，实现连续缩放（每帧相对上一帧计算，而非相对触摸开始位置）
           initialDistance = currentDistance;
-          // 同步 initialSmoothDistance 以保持一致性
           initialSmoothDistance = this.smoothDistance;
         }
       } else if (e.touches.length !== 2) {
-        // 触摸点数量变化时重置缩放状态
+        // 触摸点数量变化时重置捏合状态
         isPinching = false;
         initialDistance = 0;
       }
     };
 
     this.touchEndHandler = (e: TouchEvent) => {
-      // ⚠️ 修复触控缩放惯性问题：不要立即停止缩放状态
-      // 让缩放继续进行直到自然完成，这样就有惯性效果
+      // 修复触控缩放惯性问题：不要立即停止缩放状态
+      // 让缩放继续进行直到自然完成（isZooming 会在 update() 中自动清除），这样就有惯性效果
       if (e.touches.length < 2) {
         isPinching = false;
         initialDistance = 0;
         initialSmoothDistance = 0;
         lastUpdateTime = 0;
-        // 注意：不要设置 this.isZooming = false，让缩放自然完成
+        // 注意：不设置 this.isZooming = false，让缩放自然完成（保留惯性）
       }
     };
 
+    // 绑定事件监听器，touchstart/touchmove 使用 passive: false 以允许 preventDefault()
     domElement.addEventListener('touchstart', this.touchStartHandler, { passive: false });
     domElement.addEventListener('touchmove', this.touchMoveHandler, { passive: false });
     domElement.addEventListener('touchend', this.touchEndHandler);
   }
 
+  /**
+   * 设置相机控制模式
+   *
+   * - `free`：自由模式，用户可以自由旋转和缩放，OrbitControls 完全启用
+   * - `locked`：锁定模式，OrbitControls 启用但相机锁定到目标天体（TODO）
+   * - `follow`：跟随模式，OrbitControls 禁用，相机自动跟随目标天体移动
+   *
+   * @param mode 相机模式（'free' | 'locked' | 'follow'）
+   */
   setMode(mode: CameraMode) {
     this.mode = mode;
     
@@ -628,6 +721,14 @@ export class CameraController {
     }
   }
 
+  /**
+   * 设置相机跟随的目标天体
+   *
+   * 将 OrbitControls 的观察目标点（target）立即移动到目标天体的当前位置。
+   * 通常在切换到 `locked` 或 `follow` 模式前调用。
+   *
+   * @param body 目标天体的 Three.js 对象（其 position 属性将作为观察中心）
+   */
   setTarget(body: THREE.Object3D) {
     this.targetBody = body;
     if (body) {
@@ -637,11 +738,22 @@ export class CameraController {
   }
   
   /**
-   * Enhanced focus on target with intelligent distance calculation
-   * @param targetPosition 目标位置（初始位置）
-   * @param celestialObject Target celestial object with properties
-   * @param trackingTargetGetter 可选的跟踪目标位置获取函数，如果提供则持续跟踪目标
-   * @param options Optional focus parameters
+   * 聚焦到目标天体（增强版，使用 FocusManager 智能计算聚焦距离）
+   *
+   * 聚焦距离计算流程：
+   * 1. 若提供了 `celestialObject`，调用 FocusManager 根据天体半径和类型计算最优聚焦距离
+   *    （例如：地球半径约 0.0426 AU，聚焦距离约为半径的 3-5 倍）
+   * 2. 若未提供天体信息，使用 `options.distance` 或默认值 5 AU
+   * 3. 根据当前相机方向（从 controls.target 指向 camera.position）计算新相机位置
+   * 4. 对新相机位置应用防穿透约束（确保不进入天体内部）
+   * 5. 同步平滑缩放距离，启动聚焦过渡动画（由 update() 每帧 Lerp 插值完成）
+   *
+   * 若提供了 `trackingTargetGetter`，聚焦完成后将持续跟踪目标位置（适用于运动天体）。
+   *
+   * @param targetPosition 目标天体的初始世界坐标（AU）
+   * @param celestialObject 目标天体的属性（名称、半径等），用于智能距离计算
+   * @param trackingTargetGetter 可选的跟踪函数，每帧调用以获取目标最新位置（用于运动天体）
+   * @param options 可选的聚焦参数（距离、动画时长等）
    */
   focusOnTarget(
     targetPosition: THREE.Vector3, 
@@ -717,7 +829,14 @@ export class CameraController {
   }
 
   /**
-   * Legacy focus method for backward compatibility
+   * 向后兼容的聚焦方法（旧版接口，新代码请使用 focusOnTarget）
+   *
+   * 将参数转换为 CelestialObject 格式后委托给 focusOnTarget 处理。
+   *
+   * @param targetPosition 目标天体的世界坐标（AU）
+   * @param targetDistance 聚焦距离（AU），默认 5 AU
+   * @param trackingTargetGetter 可选的跟踪函数，每帧调用以获取目标最新位置
+   * @param planetRadius 目标天体半径（AU），用于防穿透约束
    */
   focusOnTargetLegacy(targetPosition: THREE.Vector3, targetDistance = 5, trackingTargetGetter?: () => THREE.Vector3, planetRadius?: number): void {
     const celestialObject: CelestialObject | undefined = planetRadius ? {
@@ -730,6 +849,10 @@ export class CameraController {
   
   /**
    * 设置配置监听器（在 OrbitControls 初始化后调用）
+   *
+   * 订阅 CameraConfigManager 的配置变更事件，当用户通过调试面板修改参数时，
+   * 自动将新配置应用到 OrbitControls（如阻尼系数等）。
+   * 返回的取消订阅函数保存在 configUnsubscribe 中，由 dispose() 调用清理。
    */
   private setupConfigListener() {
     this.configUnsubscribe = cameraConfigManager.addListener((newConfig) => {
@@ -738,13 +861,23 @@ export class CameraController {
     });
   }
 
+  /**
+   * 将配置变更应用到 OrbitControls（配置监听器的回调函数）
+   *
+   * 目前仅同步阻尼系数（dampingFactor），后续可扩展其他参数。
+   *
+   * @param config 新的相机配置对象
+   */
   private applyConfigChanges(config: CameraConfigType) {
     if (!this.controls) return;
     this.controls.dampingFactor = config.dampingFactor;
   }
 
   /**
-   * 重置最小距离到默认值（用于取消聚焦时）
+   * 重置最小距离限制到默认值（取消聚焦或停止跟踪时调用）
+   *
+   * 将 OrbitControls.minDistance 重置为 0，允许用户自由缩放到任意近距离。
+   * 实际的最小距离由防穿透约束动态控制，而非 OrbitControls 的静态限制。
    */
   resetMinDistance() {
     // 将 minDistance 重置为 0（不再限制最小距离）
@@ -752,8 +885,20 @@ export class CameraController {
   }
 
   /**
-   * Enhanced penetration prevention system with real-time detection
-   * @param deltaTime 时间步长（秒）
+   * 防穿透约束系统（实时检测，每帧调用）
+   *
+   * 安全距离计算依据：
+   * - 最小安全距离 = 目标天体半径 × safetyDistanceMultiplier
+   * - safetyDistanceMultiplier 默认为 1.000001（来自 CAMERA_PENETRATION_CONFIG）
+   *   对应地球表面上方约 6m（地球半径 6371km × 0.000001 ≈ 6.37m）
+   * - 这个微小的安全余量确保相机始终在天体表面外侧，避免 Z-fighting 和穿透视觉问题
+   *
+   * 修正策略：
+   * - 穿透深度比例 > 0.7（深度穿透）：立即强制修正（forceSnap），避免相机卡在天体内部
+   * - 穿透深度比例 ≤ 0.7（轻微穿透）：平滑修正，使用 easeOutQuart 缓动函数逐渐推出
+   *   - 自适应平滑系数：穿透越深，修正越快（adaptiveSmoothness = baseSmoothness × (1 + penetrationRatio)）
+   *
+   * @param deltaTime 当前帧时间步长（秒），用于帧率无关的平滑修正
    */
   applyPenetrationConstraint(deltaTime: number) {
     // 仅在已知目标半径时启用防穿透逻辑
@@ -788,6 +933,7 @@ export class CameraController {
     if (!isPenetrating) return;
 
     // Calculate penetration severity for adaptive response
+    // 穿透比例 = 穿透深度 / 最小安全距离（0 = 刚好接触，1 = 完全在中心）
     const penetrationRatio = penetrationDepth / minAllowedFromCenter;
     const isDeepPenetration = penetrationRatio > 0.7; // 提高深度穿透阈值
 
@@ -797,34 +943,32 @@ export class CameraController {
     // ⚠️ 关键修复：只调整相机位置，不修改 controls.target
     // 这样用户仍然可以自由旋转视角，只是不能穿透星球
     if (CAMERA_PENETRATION_CONFIG.forceSnap && isDeepPenetration) {
-      // 立即修正：直接设置相机位置到安全距离
-      const safeDistance = Math.max(minAllowedFromCenter, this.smoothDistance || minAllowedFromCenter);
-      const safeCamPos = center.clone().add(dirNorm.clone().multiplyScalar(safeDistance));
+      // 立即修正：直接设置相机位置到安全距离（仅用 minAllowedFromCenter，不用 smoothDistance）
+      const safeCamPos = center.clone().add(dirNorm.clone().multiplyScalar(minAllowedFromCenter));
       this.camera.position.copy(safeCamPos);
-      this.smoothDistance = safeDistance;
-      this.targetDistance = safeDistance;
+      this.smoothDistance = minAllowedFromCenter;
+      this.targetDistance = minAllowedFromCenter;
       
       // 如果正在跟踪，同步跟踪距离
       if (this.isTracking) {
-        this.trackingDistance = safeDistance;
+        this.trackingDistance = minAllowedFromCenter;
       }
       
       this.controls.update();
     } else {
-      // 平滑修正：逐渐将相机移动到安全距离
+      // 平滑修正：逐渐将相机移动到安全距离（仅推到 minAllowedFromCenter，不多推）
       const baseSmoothness = CAMERA_PENETRATION_CONFIG.constraintSmoothness;
       const adaptiveSmoothness = baseSmoothness * (1 + penetrationRatio);
       const factor = Math.min(1, adaptiveSmoothness * Math.max(0.0001, deltaTime * 60));
       
       const easedFactor = this.easeOutQuart(factor);
-      const safeDistance = Math.max(minAllowedFromCenter, this.smoothDistance || minAllowedFromCenter);
-      const safeCamPos = center.clone().add(dirNorm.clone().multiplyScalar(safeDistance));
+      const safeCamPos = center.clone().add(dirNorm.clone().multiplyScalar(minAllowedFromCenter));
       this.camera.position.lerp(safeCamPos, easedFactor);
       
       // Update smooth distance gradually
       const currentDist = this.camera.position.distanceTo(center);
       this.smoothDistance = THREE.MathUtils.lerp(this.smoothDistance, currentDist, easedFactor);
-      this.targetDistance = Math.max(this.targetDistance, this.smoothDistance);
+      this.targetDistance = Math.max(this.targetDistance, minAllowedFromCenter);
       
       // 如果正在跟踪，同步跟踪距离
       if (this.isTracking) {
@@ -840,15 +984,32 @@ export class CameraController {
   }
 
   /**
-   * Easing function for smooth constraint application
+   * 四次方缓出（easeOutQuart）缓动函数
+   *
+   * 数学原理：`f(t) = 1 - (1 - t)^4`
+   * - 当 t = 0 时，f(0) = 0（起始点，速度最快）
+   * - 当 t = 1 时，f(1) = 1（终止点，速度为零）
+   * - 函数在 t 接近 1 时急剧减速（四次方衰减），产生"快进慢出"的视觉效果
+   * - 相比线性插值（Lerp），缓出函数使防穿透修正在接近安全距离时更加平滑，
+   *   避免相机在边界处产生抖动
+   *
+   * @param t 插值参数，范围 [0, 1]
+   * @returns 缓动后的插值系数，范围 [0, 1]
    */
   private easeOutQuart(t: number): number {
     return 1 - Math.pow(1 - t, 4);
   }
 
   /**
-   * Real-time penetration detection during user input
-   * Called during zoom and rotation operations to prevent penetration
+   * 输入操作期间的实时防穿透检测（缩放和旋转时调用）
+   *
+   * 在用户主动缩放时，对计算出的新相机位置进行防穿透检查。
+   * 若新位置在安全距离内，则将其推回到安全距离处（保持方向不变）。
+   * 这是 applyPenetrationConstraint 的补充，专门处理缩放操作中的即时约束。
+   *
+   * @param proposedCameraPosition 缩放计算出的候选相机位置（世界坐标，AU）
+   * @param center 目标天体的中心位置（世界坐标，AU）
+   * @returns 经过防穿透约束后的安全相机位置
    */
   private preventPenetrationDuringInput(proposedCameraPosition: THREE.Vector3, center: THREE.Vector3): THREE.Vector3 {
     if (!this.currentTargetRadius) return proposedCameraPosition;
@@ -873,7 +1034,11 @@ export class CameraController {
   }
   
   /**
-   * 停止跟踪目标
+   * 停止跟踪目标，切换回自由相机模式
+   *
+   * 清除跟踪状态和跟踪目标获取函数。
+   * 若当前不在缩放状态，同时重置最小距离限制（允许用户自由缩放）。
+   * 在双指缩放时不重置最小距离，避免相机位置跳跃。
    */
   stopTracking() {
     this.isTracking = false;
@@ -886,13 +1051,20 @@ export class CameraController {
 
   /**
    * 设置地球锁定相机模式（启用/禁用标志）
+   *
+   * 地球锁定模式下，相机会随地球自转同步旋转，使地球在视觉上保持静止。
+   * 启用后需配合 applyEarthLockDelta() 每帧传入自转增量四元数。
+   *
+   * @param enabled 是否启用地球锁定模式
    */
   setEarthLockMode(enabled: boolean): void {
     this.earthLockEnabled = enabled;
   }
 
   /**
-   * 获取地球锁定模式状态
+   * 获取地球锁定模式的当前状态
+   *
+   * @returns 是否处于地球锁定模式
    */
   getEarthLockEnabled(): boolean {
     return this.earthLockEnabled;
@@ -908,9 +1080,20 @@ export class CameraController {
   }
 
   /**
-   * 地球锁定算法：把 camera.up 对齐到地球自转轴在视平面上的投影，
-   * 同时在 controls.update() 之后同步 _quat。
-   * 这样 up 始终"朝向地球北极"，视觉上地球不会滚动，拖动也正确。
+   * 地球锁定算法 V9：将相机随地球自转同步旋转，同时保持 camera.up 对齐地球北极方向
+   *
+   * 算法步骤：
+   * 1. 将相机位置（相对地球中心）应用自转增量四元数，使相机随地球转动
+   * 2. 将 controls.target（相对地球中心）同样应用四元数，保持观察方向不变
+   * 3. 将 camera.up 应用四元数，使 up 向量跟随地球自转轴旋转
+   * 4. 将 earthAxis（自转轴方向）投影到垂直于视线的平面，作为修正后的 up 向量
+   *    - 这样 up 始终"朝向地球北极"，视觉上地球不会滚动
+   *    - 拖动旋转时方向也正确（因为 up 与视线垂直）
+   * 5. 将修正后的 up 存入 _pendingUpForQuat，等 controls.update() 之后再同步 _quat
+   *    - 必须在 controls.update() 之后同步，否则 OrbitControls 会用旧的 _quat 覆盖
+   *
+   * @param deltaQ 本帧地球自转的增量四元数（newQ × inverse(oldQ)）
+   * @param earthPos 地球世界坐标（AU）
    */
   private _applyEarthLockV9(deltaQ: THREE.Quaternion, earthPos: THREE.Vector3): void {
     // 旋转相机位置
@@ -945,6 +1128,19 @@ export class CameraController {
     this._pendingUpForQuat = this.camera.up.clone();
   }
 
+  /**
+   * 手动缩放相机（带平滑效果和防穿透约束）
+   *
+   * 缩放算法：
+   * - 使用距离自适应灵敏度：近距离时降低灵敏度（对数曲线），避免近距离时缩放过快
+   * - 放大方向（delta > 0）：距离乘以 (1 - factor)，指数衰减
+   * - 缩小方向（delta < 0）：距离乘以 (1 + factor)，指数增长
+   * - 当距离被防穿透约束卡住时，自动切换到 FOV 缩放模式（光学变焦）
+   * - 缩小时优先恢复 FOV 到默认值，再拉远距离（与放大方向对称）
+   *
+   * @param delta 缩放增量，正值放大（拉近），负值缩小（拉远）
+   *              典型范围：[-3, 3]（来自滚轮事件的归一化值）
+   */
   // 手动缩放方法（带平滑效果和增强的防穿透）
   zoom(delta: number) {
     if (this.isFocusing) {
@@ -962,62 +1158,124 @@ export class CameraController {
     const baseFactor = this.currentConfig.zoomBaseFactor;
     const scrollSpeed = Math.min(Math.abs(delta), 2); // 限制最大滚动速度影响
 
-    // 距离自适应缩放灵敏度：近距离时大幅降低灵敏度
-    // 曲线设计（以 AU 为单位）：
-    //   REF_DISTANCE = 1 AU（地球轨道），此处灵敏度 = 100%
-    //   LOG_RANGE = 5（跨越5个数量级）
-    //   scale = clamp(log10(distance / 1AU) / 5 + 1, MIN, 1)
-    // 关键节点：
-    //   100 AU  → scale = 1.0  (正常)
-    //   1 AU    → scale = 1.0  (正常)
-    //   0.003 AU (月球轨道) → scale ≈ 0.48
-    //   0.0001 AU (15000km) → scale ≈ 0.20
-    //   0.0000426 AU (地表) → scale ≈ 0.13
+    // 距离自适应缩放灵敏度：近距离时适当降低灵敏度，但保持足够的响应性
     const REF_DISTANCE_AU = 1.0;
     const LOG_RANGE = 5;
-    const MIN_SCALE = 0.04; // 最近距离时灵敏度不低于4%
+    const MIN_SCALE = 0.15;
     const logRatio = Math.log10(Math.max(currentDistance, 1e-12) / REF_DISTANCE_AU);
     const distanceScale = Math.max(MIN_SCALE, Math.min(1.0, logRatio / LOG_RANGE + 1.0));
     const effectiveFactor = baseFactor * distanceScale;
 
-    // delta > 0 表示放大（拉近），delta < 0 表示缩小（拉远）
-    const zoomFactor = delta > 0 
-      ? 1 - (effectiveFactor * scrollSpeed)  // 减小距离（拉近/放大）
-      : 1 + (effectiveFactor * scrollSpeed);  // 增大距离（拉远/缩小）
-    
-    // 计算新的目标距离
-    let newTargetDistance = currentDistance * zoomFactor;
-    
-    // 增强的防穿透检查：在缩放时始终检查最小安全距离
-    if (this.currentTargetRadius) {
-      const minSafeDistance = this.currentTargetRadius * CAMERA_PENETRATION_CONFIG.safetyDistanceMultiplier;
-      
-      // 无论是放大还是缩小，都确保不会低于最小安全距离
-      newTargetDistance = Math.max(newTargetDistance, minSafeDistance);
-      
-      // 如果当前距离已经小于安全距离，强制设置为安全距离
-      if (currentDistance < minSafeDistance) {
-        newTargetDistance = minSafeDistance;
-        this.smoothDistance = minSafeDistance;
+    const currentFov = this.camera.fov;
+    const defaultFov = CameraController.FOV_DEFAULT;
+    const minFov = CameraController.FOV_MIN;
+
+    if (delta > 0) {
+      // 放大方向
+      // 计算如果正常缩放距离会变成多少
+      const zoomFactor = 1 - (effectiveFactor * scrollSpeed);
+      let newTargetDistance = currentDistance * zoomFactor;
+
+      // 防穿透约束
+      if (this.currentTargetRadius) {
+        const minSafeDistance = this.currentTargetRadius * CAMERA_PENETRATION_CONFIG.safetyDistanceMultiplier;
+        newTargetDistance = Math.max(newTargetDistance, minSafeDistance);
+        if (currentDistance < minSafeDistance) {
+          newTargetDistance = minSafeDistance;
+          this.smoothDistance = minSafeDistance;
+        }
       }
+      newTargetDistance = Math.max(CAMERA_CONFIG.minDistance, Math.min(this.controls.maxDistance, newTargetDistance));
+
+      // 检测距离是否被卡住（变化量小于 0.1%）：切换到 FOV 缩放
+      const distanceStuck = newTargetDistance >= currentDistance * 0.999;
+      if (distanceStuck || this.fovZoomActive) {
+        this.fovZoomActive = true;
+        // FOV 缩放灵敏度：FOV 越小时每步缩小比例越小，保持对数感知均匀
+        // 使用固定比例缩放：每步缩小 FOV 的固定百分比（类似距离缩放的乘法模型）
+        // 这样 FOV 从 45° 到 0.05° 的感知步数是均匀的
+        const fovZoomFactor = 1 - effectiveFactor * scrollSpeed * this.getFovZoomSpeed();
+        const newFov = Math.max(minFov, currentFov * fovZoomFactor);
+        this.targetFov = newFov;
+        this.isFovTransitioning = true;
+        this.currentFov = currentFov;
+        // 距离保持不变
+        this.targetDistance = currentDistance;
+        this.smoothDistance = currentDistance;
+        this.isZooming = true;
+        if (this.isTracking) this.trackingDistance = this.targetDistance;
+        return;
+      }
+
+      this.targetDistance = newTargetDistance;
+    } else {
+      // 缩小方向
+      if (this.fovZoomActive && currentFov < defaultFov - 0.1) {
+        // 先恢复 FOV，再拉远距离（同样用固定比例，与放大对称）
+        const fovZoomFactor = 1 + effectiveFactor * scrollSpeed * this.getFovZoomSpeed();
+        const newFov = Math.min(defaultFov, currentFov * fovZoomFactor);
+        this.targetFov = newFov;
+        this.isFovTransitioning = true;
+        this.currentFov = currentFov;
+        if (newFov >= defaultFov - 0.1) {
+          this.fovZoomActive = false;
+        }
+        this.targetDistance = currentDistance;
+        this.smoothDistance = currentDistance;
+        this.isZooming = true;
+        if (this.isTracking) this.trackingDistance = this.targetDistance;
+        return;
+      }
+      // FOV 已恢复，正常拉远
+      this.fovZoomActive = false;
+      const zoomFactor = 1 + (effectiveFactor * scrollSpeed);
+      let newTargetDistance = currentDistance * zoomFactor;
+
+      if (this.currentTargetRadius) {
+        const minSafeDistance = this.currentTargetRadius * CAMERA_PENETRATION_CONFIG.safetyDistanceMultiplier;
+        newTargetDistance = Math.max(newTargetDistance, minSafeDistance);
+        if (currentDistance < minSafeDistance) {
+          newTargetDistance = minSafeDistance;
+          this.smoothDistance = minSafeDistance;
+        }
+      }
+
+      this.targetDistance = Math.max(
+        CAMERA_CONFIG.minDistance,
+        Math.min(this.controls.maxDistance, newTargetDistance)
+      );
     }
-    
-    // 更新目标距离（限制在合理范围内）
-    this.targetDistance = Math.max(
-      CAMERA_CONFIG.minDistance,
-      Math.min(this.controls.maxDistance, newTargetDistance)
-    );
     
     // 同步平滑距离，确保缩放从当前位置开始
     this.smoothDistance = currentDistance;
     this.isZooming = true;
     
-    // 如果正在跟踪，立即更新跟踪距离，这样跟踪逻辑会使用新的距离
+    // 如果正在跟踪，立即更新跟踪距离
     if (this.isTracking) {
       this.trackingDistance = this.targetDistance;
     }
   }
 
+  /**
+   * 每帧更新相机状态（动画循环主入口）
+   *
+   * 执行顺序（顺序不可随意调整）：
+   * 1. 更新 FocusManager 的聚焦过渡进度
+   * 2. 处理 FOV 平滑过渡（光学变焦动画）
+   * 3. 应用防穿透约束（确保相机不进入天体内部）
+   * 4. 处理方位角（左右）平滑过渡
+   * 5. 处理极角（上下）平滑过渡
+   * 6. 处理聚焦动画（Lerp 插值移动相机到目标位置）
+   * 7. 处理跟随模式（follow mode）
+   * 8. 执行平滑缩放（指数衰减逼近目标距离）
+   * 9. 处理跟踪模式（持续跟随运动天体）
+   * 10. 同步平滑距离（防止累积误差）
+   * 11. 动态调整旋转/平移速度（基于距离和 FOV 的对数曲线）
+   * 12. 调用 OrbitControls.update()（应用阻尼效果）
+   * 13. 同步地球锁定的四元数（controls.update() 之后）
+   *
+   * @param deltaTime 当前帧时间步长（秒），用于帧率无关的动画计算
+   */
   update(deltaTime: number) {
     // Update focus manager transitions
     const focusProgress = this.focusManager.updateFocusTransition(deltaTime);
@@ -1385,16 +1643,26 @@ export class CameraController {
     }
     
     // 更新 OrbitControls（这会应用旋转和平移的阻尼效果）
-    // 动态调整 panSpeed + rotateSpeed：近距离时降低灵敏度，对数曲线与缩放一致
-    // 曲线：scale = clamp(log10(dist / 1AU) / 5 + 1, 0.04, 1.0)
-    // 1AU→100%，月球轨道→48%，地表→13%
+    // 动态调整 panSpeed + rotateSpeed：
+    // - 正常模式：基于距离的对数曲线，近距离时降低灵敏度
+    // - FOV 缩放模式：基于 FOV 比例，FOV 越小灵敏度越低
+    // 两者取较大值（不叠乘），避免 FOV 模式下灵敏度过低
     {
       const REF_DISTANCE_AU = 1.0;
       const LOG_RANGE = 5;
       const MIN_SCALE = 0.04;
       const currentDist = this.camera.position.distanceTo(this.controls.target);
       const logRatio = Math.log10(Math.max(currentDist, 1e-12) / REF_DISTANCE_AU);
-      const scale = Math.max(MIN_SCALE, Math.min(1.0, logRatio / LOG_RANGE + 1.0));
+      const distScale = Math.max(MIN_SCALE, Math.min(1.0, logRatio / LOG_RANGE + 1.0));
+      // FOV 缩放灵敏度：FOV 越小灵敏度越低，与视角放大倍数成反比
+      // 使用 fov/defaultFov 线性比例，但设置合理下限
+      const fovScale = Math.max(0.005, this.camera.fov / CameraController.FOV_DEFAULT);
+      // FOV 模式下：用 fovScale * fovDragSensitivity（距离不变，只有 FOV 在变）
+      // 正常模式下：用 distScale
+      // 两者取较大值，避免叠乘导致过低
+      const scale = this.fovZoomActive
+        ? fovScale * (this.currentConfig.fovDragSensitivity ?? 3.0)
+        : Math.max(distScale, fovScale);
       this.controls.panSpeed = CAMERA_CONFIG.panSpeed * scale;
       this.controls.rotateSpeed = CAMERA_CONFIG.rotateSpeed * scale;
     }
@@ -1412,6 +1680,95 @@ export class CameraController {
     }
   }
 
+  /**
+   * 获取调试信息（供调试面板使用）
+   *
+   * 返回当前相机状态的快照，包括距离、FOV、缩放状态、速度缩放系数等，
+   * 用于 CameraDebugPanel 实时显示和参数调试。
+   *
+   * @returns 包含相机调试信息的对象
+   */
+  getDebugInfo() {
+    const currentDist = this.camera.position.distanceTo(this.controls.target);
+    const REF_DISTANCE_AU = 1.0;
+    const LOG_RANGE = 5;
+    const logRatio = Math.log10(Math.max(currentDist, 1e-12) / REF_DISTANCE_AU);
+    const distScale = Math.max(0.04, Math.min(1.0, logRatio / LOG_RANGE + 1.0));
+    const fovScale = Math.max(0.005, this.camera.fov / CameraController.FOV_DEFAULT);
+    const rotateScale = this.fovZoomActive ? fovScale : Math.max(distScale, fovScale);
+    return {
+      distance: currentDist,
+      fov: this.camera.fov,
+      fovDefault: CameraController.FOV_DEFAULT,
+      fovMin: CameraController.FOV_MIN,
+      fovZoomActive: this.fovZoomActive,
+      smoothDistance: this.smoothDistance,
+      targetDistance: this.targetDistance,
+      isZooming: this.isZooming,
+      isTracking: this.isTracking,
+      distScale,
+      fovScale,
+      rotateScale,
+      panSpeed: this.controls.panSpeed,
+      rotateSpeed: this.controls.rotateSpeed,
+      zoomBaseFactor: this.currentConfig.zoomBaseFactor,
+      zoomEasingSpeed: this.currentConfig.zoomEasingSpeed,
+      fovDragSensitivity: this.currentConfig.fovDragSensitivity ?? 3.0,
+    };
+  }
+
+  /**
+   * 动态更新缩放/灵敏度参数（供调试面板使用）
+   *
+   * 支持的参数键：
+   * - `zoomBaseFactor`：缩放基础系数（影响每次滚轮的缩放幅度）
+   * - `zoomEasingSpeed`：缩放缓动速度（影响平滑缩放的响应速度）
+   * - `fovZoomSpeed`：FOV 缩放速度（影响光学变焦的速度）
+   * - `fovDragSensitivity`：FOV 模式下的拖动灵敏度
+   * - `dampingFactor`：OrbitControls 阻尼系数（影响惯性效果）
+   *
+   * @param key 参数名称
+   * @param value 参数值
+   */
+  setDebugParam(key: string, value: number) {
+    switch (key) {
+      case 'zoomBaseFactor':
+        this.currentConfig = { ...this.currentConfig, zoomBaseFactor: value };
+        break;
+      case 'zoomEasingSpeed':
+        this.currentConfig = { ...this.currentConfig, zoomEasingSpeed: value };
+        break;
+      case 'fovZoomSpeed':
+        // 存储到实例变量，zoom() 里读取
+        (this as any)._fovZoomSpeed = value;
+        break;
+      case 'fovDragSensitivity':
+        this.currentConfig = { ...this.currentConfig, fovDragSensitivity: value };
+        break;
+      case 'dampingFactor':
+        this.controls.dampingFactor = value;
+        this.currentConfig = { ...this.currentConfig, dampingFactor: value };
+        break;
+    }
+  }
+
+  /**
+   * 获取当前 FOV 缩放速度（光学变焦速度系数）
+   *
+   * 优先返回通过 setDebugParam('fovZoomSpeed', ...) 设置的自定义值，
+   * 否则返回默认值 3.5。
+   *
+   * @returns FOV 缩放速度系数（默认 3.5）
+   */
+  getFovZoomSpeed(): number {
+    return (this as any)._fovZoomSpeed ?? 3.5;
+  }
+
+  /**
+   * 获取底层 OrbitControls 实例（供外部直接访问控制器属性）
+   *
+   * @returns Three.js OrbitControls 实例
+   */
   getControls(): OrbitControls {
     return this.controls;
   }
@@ -1421,6 +1778,12 @@ export class CameraController {
   private currentFov: number = CAMERA_CONFIG.fov;
   private isFovTransitioning: boolean = false;
   private fovTransitionSpeed: number = 0.15; // FOV 过渡速度（0-1，越大越快）
+
+  // FOV 缩放（光学变焦）相关
+  // 当距离无法继续缩小时（被防穿透或 minDistance 限制），改用 FOV 缩放实现超级放大
+  private static readonly FOV_MIN = 0.05; // 最小 FOV（度），约等于 300mm 长焦镜头
+  private static readonly FOV_DEFAULT = CAMERA_CONFIG.fov; // 默认 FOV（度）
+  private fovZoomActive: boolean = false; // 是否处于 FOV 缩放模式
 
   /**
    * 设置相机视野角度（FOV）
@@ -1450,11 +1813,24 @@ export class CameraController {
 
   /**
    * 获取当前相机视野角度（FOV）
+   *
+   * @returns 当前 FOV（度），范围 [FOV_MIN, 180)
    */
   getFov() {
     return this.camera.fov;
   }
 
+  /**
+   * 销毁相机控制器，释放所有资源
+   *
+   * 清理顺序：
+   * 1. 取消配置变更监听器订阅
+   * 2. 移除滚轮事件监听器
+   * 3. 移除触摸事件监听器（touchstart、touchmove、touchend）
+   * 4. 调用 OrbitControls.dispose() 清理其内部事件监听器
+   *
+   * 在组件卸载时必须调用此方法，否则会导致内存泄漏。
+   */
   dispose(): void {
     // 清理配置监听器
     if (this.configUnsubscribe) {

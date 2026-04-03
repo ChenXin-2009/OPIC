@@ -1005,9 +1005,10 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           if (distToSurface < 0.1) {
             // 靠近地球：near 基于到中心距离而非表面距离
             // 这样 near 平面不会切入球体三角面（球体顶点到中心距离 = 半径）
-            near = Math.max(distToCenter * 0.001, 1e-8);
-            // far 只需覆盖到太阳系范围，不需要 1e6
-            far = Math.min(maxDistance, distToSurface * 1e5 + 50);
+            near = Math.max(distToCenter * 0.0001, 1e-9);
+            // far 必须足够大以覆盖整个地球（直径约 0.0000852 AU）
+            // 同时也要覆盖到太阳系范围（卫星轨道等）
+            far = Math.max(maxDistance, EARTH_RADIUS_AU * 100, 1e6);
           } else {
             // 远离地球：使用固定值，保证卫星/银河系正常显示
             near = 0.01;

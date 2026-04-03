@@ -1,7 +1,13 @@
 /**
- * SatelliteMenu - 卫星菜单组件（明日方舟风格）
- * 
- * 合并卫星控制面板和信息面板，通过按钮展开/收起
+ * @module SatelliteMenu
+ * @description 卫星菜单组件（明日方舟风格 UI）
+ *
+ * 架构层级：UI 层 → 卫星子系统
+ * 职责：提供卫星数据的可视化控制界面，包含卫星显示开关、搜索过滤、
+ *   数据刷新、选中卫星详情展示（轨道参数、基本信息）及轨道线切换。
+ * 依赖：
+ *   - `@/lib/store/useSatelliteStore`：全局卫星状态管理（Zustand store）
+ *   - `@/lib/types/satellite`：卫星轨道类型枚举定义
  */
 
 'use client';
@@ -10,28 +16,53 @@ import { useState, useRef, useEffect } from 'react';
 import { useSatelliteStore } from '@/lib/store/useSatelliteStore';
 import { OrbitType } from '@/lib/types/satellite';
 
-// 明日方舟风格配置
+/**
+ * 明日方舟风格 UI 配色方案
+ *
+ * 各轨道类型对应颜色含义：
+ * - `leo`（低地球轨道，200–2000 km）：蓝色 `#00aaff`，代表高频、活跃
+ * - `meo`（中地球轨道，2000–35786 km）：绿色 `#00ff00`，代表中等高度
+ * - `geo`（地球同步轨道，~35786 km）：红色 `#ff0000`，代表高轨、醒目
+ * - `heo`（高椭圆轨道）：白色 `#ffffff`，代表特殊/极轨
+ */
 const ARKNIGHTS_CONFIG = {
   colors: {
-    primary: '#ffffff',
-    secondary: '#e0e0e0',
-    accent: '#f0f0f0',
-    dark: '#0a0a0a',
-    darkLight: '#1a1a1a',
-    border: '#333333',
-    text: '#ffffff',
-    textDim: '#999999',
-    leo: '#00aaff',
-    meo: '#00ff00',
-    geo: '#ff0000',
-    heo: '#ffffff',
+    primary: '#ffffff',   // 主色：纯白，用于标题、主要文字
+    secondary: '#e0e0e0', // 次要色：浅灰，用于数值显示
+    accent: '#f0f0f0',    // 强调色：近白，用于高亮元素
+    dark: '#0a0a0a',      // 深色背景：近黑
+    darkLight: '#1a1a1a', // 次深色背景：用于卡片、输入框
+    border: '#333333',    // 边框色：深灰
+    text: '#ffffff',      // 正文色：白色
+    textDim: '#999999',   // 暗文字色：灰色，用于标签、次要信息
+    leo: '#00aaff',       // 低地球轨道（LEO）颜色：蓝色
+    meo: '#00ff00',       // 中地球轨道（MEO）颜色：绿色
+    geo: '#ff0000',       // 地球同步轨道（GEO）颜色：红色
+    heo: '#ffffff',       // 高椭圆轨道（HEO）颜色：白色
   },
 };
 
+/**
+ * SatelliteMenu 组件的 Props 接口
+ */
 interface SatelliteMenuProps {
+  /** 界面显示语言；`'zh'` 为中文（默认），`'en'` 为英文 */
   lang?: 'zh' | 'en';
 }
 
+/**
+ * 卫星菜单组件
+ *
+ * 提供卫星数据的可视化控制界面，包含：
+ * - 卫星显示开关（在地球上显示/隐藏卫星点位）
+ * - 搜索过滤（支持按名称搜索卫星）
+ * - 数据刷新（手动触发 TLE 数据更新）
+ * - 选中卫星详情展示（轨道参数、基本信息）
+ * - 轨道线切换
+ *
+ * @param props - 组件属性
+ * @param props.lang - 界面显示语言，`'zh'` 为中文（默认），`'en'` 为英文
+ */
 export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -40,18 +71,18 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const {
-    searchQuery,
-    showSatellites,
-    visibleSatellites,
-    lastUpdate,
-    loading,
-    selectedSatellite,
-    showOrbits,
-    setSearchQuery,
-    setShowSatellites,
-    fetchSatellites,
-    selectSatellite,
-    toggleOrbit,
+    searchQuery,        // 当前生效的搜索关键词（已防抖，由 store 管理）
+    showSatellites,     // 是否在地球上显示卫星点位
+    visibleSatellites,  // 当前视口内可见的卫星 ID 集合
+    lastUpdate,         // 最近一次 TLE 数据成功获取的时间戳
+    loading,            // 是否正在请求卫星数据
+    selectedSatellite,  // 当前选中的卫星 NORAD ID，未选中时为 null
+    showOrbits,         // 已开启轨道线显示的卫星 ID 集合
+    setSearchQuery,     // 更新 store 中的搜索关键词
+    setShowSatellites,  // 切换卫星整体显示/隐藏
+    fetchSatellites,    // 触发从远程获取最新 TLE 数据
+    selectSatellite,    // 设置当前选中的卫星
+    toggleOrbit,        // 切换指定卫星的轨道线显示状态
   } = useSatelliteStore();
 
   // 只在需要时获取选中的卫星数据
@@ -59,7 +90,8 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
     ? useSatelliteStore.getState().satellites.get(selectedSatellite) 
     : null;
 
-  // 搜索防抖 (300ms)
+  // 搜索防抖：用户停止输入 300ms 后才将关键词同步到 store，
+  // 避免每次按键都触发卫星列表过滤计算，降低渲染开销。
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearchQuery(localSearchQuery);
@@ -68,7 +100,7 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
     return () => clearTimeout(timer);
   }, [localSearchQuery, setSearchQuery]);
 
-  // 组件加载时自动获取卫星数据
+  // 组件首次挂载时自动获取卫星数据（仅在 TLE 数据为空且未在加载中时触发）
   useEffect(() => {
     const state = useSatelliteStore.getState();
     // 只在没有数据时才自动获取
@@ -77,7 +109,8 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
     }
   }, [fetchSatellites, loading]);
 
-  // 点击外部关闭菜单
+  // 菜单展开时监听全局鼠标点击事件，点击面板和按钮以外的区域时自动关闭菜单；
+  // 菜单关闭后移除监听器，避免不必要的事件处理开销。
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -99,7 +132,19 @@ export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
     return undefined;
   }, [isOpen]);
 
-  // 格式化更新时间
+  /**
+   * 将 Date 对象格式化为相对时间字符串（如"5分钟前"、"2小时前"）
+   *
+   * 格式化规则（支持中英文双语）：
+   * - `null`：返回"未更新" / "Not updated"
+   * - 不足 1 分钟：返回"刚刚" / "Just now"
+   * - 1–59 分钟：返回"N分钟前" / "Nm ago"
+   * - 1–23 小时：返回"N小时前" / "Nh ago"
+   * - 24 小时以上：返回"N天前" / "Nd ago"
+   *
+   * @param date - 要格式化的时间，为 `null` 时表示从未更新
+   * @returns 相对时间的本地化字符串
+   */
   const formatUpdateTime = (date: Date | null) => {
     if (!date) return lang === 'zh' ? '未更新' : 'Not updated';
     

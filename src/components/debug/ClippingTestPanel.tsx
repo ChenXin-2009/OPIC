@@ -1,3 +1,19 @@
+/**
+ * @module ClippingTestPanel
+ * @description Three.js 相机近/远裁切平面（near/far）调试面板。
+ *   提供多种预设裁切方案，用于解决宇宙尺度场景中深度精度不足导致的 Z-fighting 和
+ *   近平面裁切穿地问题。支持动态（每帧）和静态（固定值）两类方案。
+ *
+ * @architecture UI 组件层（调试工具）
+ *   - 依赖 Three.js PerspectiveCamera 直接修改 near/far 参数
+ *   - 依赖 SceneManager 的 clippingLocked 标志防止 SceneManager 覆盖调试值
+ *   - 依赖 Planet 接口获取地球网格位置
+ *
+ * @dependencies
+ *   - `three`：PerspectiveCamera 类型
+ *   - `@/lib/3d/SceneManager`：通过 clippingLocked 标志协调裁切参数控制权
+ *   - `@/lib/3d/Planet`：获取地球 mesh 位置
+ */
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -5,20 +21,36 @@ import * as THREE from 'three';
 import type { SceneManager } from '@/lib/3d/SceneManager';
 import type { Planet } from '@/lib/3d/Planet';
 
+/**
+ * @interface ClippingTestPanelProps
+ * @description ClippingTestPanel 组件的外部传入属性。
+ */
 interface ClippingTestPanelProps {
+  /** Three.js 透视相机的 ref，面板直接修改其 near/far 属性并调用 updateProjectionMatrix() */
   cameraRef: React.RefObject<THREE.PerspectiveCamera | null>;
+  /** 太阳系行星 Map 的 ref，用于获取地球（key: 'earth'）的网格位置 */
   planetsRef: React.RefObject<Map<string, Planet>>;
+  /** SceneManager 的 ref，用于设置 clippingLocked 标志以防止 SceneManager 覆盖调试值 */
   sceneManagerRef: React.RefObject<SceneManager | null>;
 }
 
+/** 地球半径（AU 单位）。换算：0.0000426 AU ≈ 6371 km（地球平均半径）。
+ *  用于从相机到地球中心的距离中减去地球半径，得到到地表的距离。 */
 const EARTH_RADIUS_AU = 0.0000426;
 
+/**
+ * 裁切方案列表。每个方案定义一种 near/far 设置策略，用于测试不同场景下的深度精度表现。
+ * - 静态方案（dynamic: false）：一次性设置固定值，适合快速对比基准效果
+ * - 动态方案（dynamic: true）：每帧根据相机到地表距离重新计算，适合贴近地表飞行场景
+ */
 const STRATEGIES = [
   {
     id: 'reset',
     label: '⟳ 重置（原始默认值）',
     color: '#94a3b8',
     desc: 'near=0.01 AU，far=1e12 AU（原始值，靠近时裁切）',
+    // 适用场景：恢复默认值，作为其他方案的对比基准
+    // 预期效果：远距离正常，靠近地表时出现近平面裁切（地球被切掉一块）
     dynamic: false,
     apply: (cam: THREE.PerspectiveCamera) => {
       cam.near = 0.01;
@@ -31,6 +63,8 @@ const STRATEGIES = [
     label: 'A1. near = 距地表 × 0.1',
     color: '#60a5fa',
     desc: '每帧动态：near = distToSurface × 0.1',
+    // 适用场景：中等高度飞行（数千至数万公里），near 随距离自适应
+    // 预期效果：消除大部分近平面裁切，但贴近地表时 near 仍可能过大
     dynamic: true,
     apply: (cam: THREE.PerspectiveCamera, earthPos: THREE.Vector3) => {
       const d = Math.max(cam.position.distanceTo(earthPos) - EARTH_RADIUS_AU, 1e-12);
@@ -44,6 +78,8 @@ const STRATEGIES = [
     label: 'A2. near = 距地表 × 0.01',
     color: '#38bdf8',
     desc: '每帧动态：near = distToSurface × 0.01',
+    // 适用场景：低轨道飞行（数百至数千公里），near 更小，允许更近的视角
+    // 预期效果：贴近地表时基本无裁切，far/near 比值约 1e14，深度精度可能不足
     dynamic: true,
     apply: (cam: THREE.PerspectiveCamera, earthPos: THREE.Vector3) => {
       const d = Math.max(cam.position.distanceTo(earthPos) - EARTH_RADIUS_AU, 1e-12);
@@ -57,6 +93,8 @@ const STRATEGIES = [
     label: 'A3. near = 距地表 × 0.001',
     color: '#22d3ee',
     desc: '每帧动态：near = distToSurface × 0.001，贴近地表也不裁切',
+    // 适用场景：极低空飞行（数十公里以内），near 极小，几乎不裁切
+    // 预期效果：贴近地表无裁切，但 far/near 比值极大，需配合对数深度缓冲
     dynamic: true,
     apply: (cam: THREE.PerspectiveCamera, earthPos: THREE.Vector3) => {
       const d = Math.max(cam.position.distanceTo(earthPos) - EARTH_RADIUS_AU, 1e-12);
@@ -70,6 +108,8 @@ const STRATEGIES = [
     label: 'B1. near = 1e-8 AU（固定）',
     color: '#a78bfa',
     desc: '固定 near = 1e-8 AU（≈1500m），依赖对数深度缓冲',
+    // 适用场景：已启用对数深度缓冲（logarithmicDepthBuffer: true）的场景
+    // 预期效果：固定 near 约 1500m，对数深度缓冲可覆盖大范围深度，Z-fighting 较少
     dynamic: false,
     apply: (cam: THREE.PerspectiveCamera) => {
       cam.near = 1e-8;
@@ -82,6 +122,8 @@ const STRATEGIES = [
     label: 'B2. near = 1e-9 AU（更小）',
     color: '#c084fc',
     desc: '固定 near = 1e-9 AU（≈150m）',
+    // 适用场景：需要更近视角的对数深度缓冲场景
+    // 预期效果：near 约 150m，可飞入城市级别高度，需对数深度缓冲支撑
     dynamic: false,
     apply: (cam: THREE.PerspectiveCamera) => {
       cam.near = 1e-9;
@@ -94,6 +136,8 @@ const STRATEGIES = [
     label: 'B3. near = 1e-10 AU（极限）',
     color: '#e879f9',
     desc: '固定 near = 1e-10 AU（≈15m），对数深度缓冲极限测试',
+    // 适用场景：测试对数深度缓冲的极限能力
+    // 预期效果：near 约 15m，接近地面级别，far/near ≈ 1e22，仅对数深度缓冲可用
     dynamic: false,
     apply: (cam: THREE.PerspectiveCamera) => {
       cam.near = 1e-10;
@@ -106,6 +150,8 @@ const STRATEGIES = [
     label: 'C1. far 缩小到 1e6 AU',
     color: '#fb923c',
     desc: 'near=0.01 不变，far=1e6，far/near=1e8，减少精度压力',
+    // 适用场景：不需要渲染超远距离天体（如银河系外）的场景
+    // 预期效果：far/near 比值从 1e14 降至 1e8，深度精度显著提升，Z-fighting 减少
     dynamic: false,
     apply: (cam: THREE.PerspectiveCamera) => {
       cam.near = 0.01;
@@ -118,6 +164,8 @@ const STRATEGIES = [
     label: 'D1. 动态 near+far 双向收紧',
     color: '#4ade80',
     desc: '每帧动态：near=distToSurface×0.01，far=max(1e6, distToSun×10)',
+    // 适用场景：需要同时保证近处无裁切和远处深度精度的综合场景
+    // 预期效果：near 和 far 均随相机位置动态调整，far/near 比值相对稳定
     dynamic: true,
     apply: (cam: THREE.PerspectiveCamera, earthPos: THREE.Vector3) => {
       const d = Math.max(cam.position.distanceTo(earthPos) - EARTH_RADIUS_AU, 1e-12);
@@ -131,6 +179,8 @@ const STRATEGIES = [
     label: 'D2. 保持 far/near ≤ 1e8',
     color: '#86efac',
     desc: '每帧动态：near=distToSurface×0.01，far=near×1e8',
+    // 适用场景：对深度精度要求严格的场景，强制将 far/near 比值控制在 1e8 以内
+    // 预期效果：深度精度最优，但 far 随 near 缩小，远处天体可能被裁切
     dynamic: true,
     apply: (cam: THREE.PerspectiveCamera, earthPos: THREE.Vector3) => {
       const d = Math.max(cam.position.distanceTo(earthPos) - EARTH_RADIUS_AU, 1e-12);
@@ -142,6 +192,18 @@ const STRATEGIES = [
   },
 ];
 
+/**
+ * 裁切测试面板组件
+ *
+ * 调试工具，用于测试和比较不同的 Three.js 相机近/远裁切平面策略。
+ * 实时显示相机到地球的距离、当前 near/far 值及其比值，
+ * 并允许一键切换预设的裁切方案（STRATEGIES）。
+ *
+ * @param props - 组件属性
+ * @param props.cameraRef - Three.js 相机引用
+ * @param props.planetsRef - 行星对象 Map 引用，用于获取地球位置
+ * @param props.sceneManagerRef - 场景管理器引用，用于应用裁切策略
+ */
 export default function ClippingTestPanel({ cameraRef, planetsRef, sceneManagerRef }: ClippingTestPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [activeId, setActiveId] = useState('reset');
@@ -165,6 +227,9 @@ export default function ClippingTestPanel({ cameraRef, planetsRef, sceneManagerR
     if (!s) return;
 
     // 锁定/解锁 SceneManager 的 clipping 覆盖
+    // clippingLocked = true 时，SceneManager 的自动 near/far 更新逻辑将跳过，
+    // 确保调试面板设置的值不被 SceneManager 每帧覆盖；
+    // 选择 'reset' 方案时解锁，恢复 SceneManager 的正常控制权。
     const sm = sceneManagerRef.current as any;
     if (sm) sm.clippingLocked = id !== 'reset';
 
@@ -207,7 +272,12 @@ export default function ClippingTestPanel({ cameraRef, planetsRef, sceneManagerR
     return () => clearInterval(interval);
   }, [cameraRef, getEarthPos]);
 
+  // nearWarn：当 near 平面距离（换算为 km）大于相机到地表距离时触发，
+  // 说明近平面已超过地表，相机视锥体将裁切掉地球表面，出现"穿地"现象。
   const nearWarn = liveInfo.near > 0 && liveInfo.distKm > 0 && liveInfo.near * 149597870700 > liveInfo.distKm * 1000;
+  // ratioWarn：当 far/near 比值超过 1e7 时触发，
+  // 说明深度缓冲精度不足（标准 24 位深度缓冲的有效比值上限约为 1e7），
+  // 可能导致远处物体出现 Z-fighting（深度闪烁）。
   const ratioWarn = liveInfo.ratio > 1e7;
 
   if (collapsed) {

@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 7.2.0: 支持近距离观察地球"
+git commit -m "Release 7.3.0: 支持超近距离观察地球，添加大量注释"
 git checkout main
 git pull origin main
-git tag v7.2.0
+git tag v7.3.0
 git push origin main
-git push origin v7.2.0
+git push origin v7.3.0

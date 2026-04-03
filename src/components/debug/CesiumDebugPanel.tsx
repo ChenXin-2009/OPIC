@@ -1,46 +1,108 @@
+/**
+ * @module CesiumDebugPanel
+ * @description Cesium 调试面板组件，用于实时监控 Cesium 地球渲染状态、相机参数、
+ *   坐标信息和性能指标，并提供旋转偏移调试控件以校准 Three.js 与 Cesium 的坐标系对齐。
+ *
+ * @architecture UI 组件层（调试工具）
+ *   - 依赖 EarthPlanet 实例获取 Cesium 扩展和地球网格位置
+ *   - 依赖 Three.js Camera 获取相机位置
+ *   - 依赖 CoordinateTransformer.debugRotationOffset 实现运行时旋转偏移调试
+ *
+ * @dependencies
+ *   - `@/lib/cesium/CoordinateTransformer`：提供 debugRotationOffset 调试旋转偏移量
+ *   - Three.js（通过 camera prop 间接使用）
+ *   - EarthPlanet（通过 earthPlanet prop 间接使用）
+ */
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { debugRotationOffset } from '@/lib/cesium/CoordinateTransformer';
 
+/**
+ * @interface CesiumDebugInfo
+ * @description 调试面板实时监控的 Cesium 状态快照，每 100ms 刷新一次。
+ *   包含相机位置、Cesium 运行状态、地理坐标、渲染统计和性能指标。
+ */
 interface CesiumDebugInfo {
-  // 相机信息
+  // ── 相机信息 ──────────────────────────────────────────────
+  /** 相机到地球中心的距离（AU），用于判断是否需要激活 Cesium 地球纹理 */
   cameraDistanceToEarth: number; // AU
+  /** 相机到地球表面的距离（km），用于显示当前飞行高度 */
   cameraDistanceToSurface: number; // km
+  /** 相机在 Three.js 太阳系坐标系中的位置（AU），用于调试坐标对齐 */
   cameraPosition: { x: number; y: number; z: number }; // AU
   
-  // Cesium 状态
+  // ── Cesium 状态 ───────────────────────────────────────────
+  /** Cesium 扩展是否已挂载到 EarthPlanet（非 null 即为已启用） */
   cesiumEnabled: boolean;
+  /** Cesium Viewer 是否已完成初始化（含 WebGL 上下文创建） */
   cesiumInitialized: boolean;
+  /** Cesium 当前是否正在渲染地球纹理（由 earthPlanet.cesiumEnabled 标志控制） */
   cesiumRendering: boolean;
   
-  // 坐标转换
+  // ── 坐标转换 ──────────────────────────────────────────────
+  /** 相机正下方地面点的经度（度），用于验证坐标转换精度 */
   longitude: number; // 度
+  /** 相机正下方地面点的纬度（度），用于验证坐标转换精度 */
   latitude: number; // 度
+  /** 相机到地球表面的高度（km），与 cameraDistanceToSurface 相同，用于坐标区域显示 */
   height: number; // km
   
-  // 渲染信息
+  // ── 渲染信息 ──────────────────────────────────────────────
+  /** 已完成加载的地图瓦片数量，用于监控瓦片缓存状态 */
   tilesLoaded: number;
+  /** 正在加载中的地图瓦片数量，用于监控网络请求压力 */
   tilesLoading: number;
+  /** Cesium 纹理显存占用（MB），用于监控 GPU 内存使用情况 */
   textureMemoryUsage: number; // MB
   
-  // 性能
+  // ── 性能 ──────────────────────────────────────────────────
+  /** 当前帧率（帧/秒），每秒统计一次，用于监控整体渲染性能 */
   fps: number;
+  /** Cesium 单帧渲染耗时（ms），用于定位 Cesium 渲染瓶颈 */
   cesiumRenderTime: number; // ms
+  /** Cesium 纹理更新到 Three.js 的耗时（ms），用于监控纹理同步开销 */
   textureUpdateTime: number; // ms
 }
 
+/**
+ * @interface LogEntry
+ * @description 调试日志条目，记录面板运行期间的状态变化和错误信息。
+ *   日志按时间顺序追加，最多保留 50 条（超出时自动丢弃最旧的条目）。
+ */
 interface LogEntry {
+  /** 日志产生时刻的本地时间字符串，格式为 HH:MM:SS.mmm */
   timestamp: string;
+  /** 日志级别：info（普通状态变化）、warn（潜在问题）、error（运行时错误） */
   level: 'info' | 'warn' | 'error';
+  /** 日志正文，描述具体的状态变化或错误原因 */
   message: string;
 }
 
+/**
+ * @interface CesiumDebugPanelProps
+ * @description CesiumDebugPanel 组件的外部传入属性。
+ */
 interface CesiumDebugPanelProps {
+  /** EarthPlanet 实例，用于获取 Cesium 扩展、地球网格位置和真实半径 */
   earthPlanet?: any; // EarthPlanet 实例
+  /** Three.js 透视相机，用于读取相机位置和计算到地球的距离 */
   camera?: any; // Three.js Camera
 }
 
+/**
+ * Cesium 调试信息面板组件
+ *
+ * 开发调试工具，实时显示 Cesium 地球子系统的运行状态，包括：
+ * - 相机到地球的距离（AU 和 km）
+ * - 相机在 Cesium ECEF 坐标系中的经纬度和高度
+ * - Cesium 渲染状态（是否启用、是否初始化、是否正在渲染）
+ * - 坐标系旋转调试控件（用于校准 Three.js 与 Cesium 的坐标系对齐）
+ *
+ * @param props - 组件属性
+ * @param props.earthPlanet - EarthPlanet 实例，用于获取 Cesium 扩展、地球网格位置和真实半径
+ * @param props.camera - Three.js 透视相机，用于读取相机位置和计算到地球的距离
+ */
 export default function CesiumDebugPanel({ earthPlanet, camera }: CesiumDebugPanelProps) {
   const [debugInfo, setDebugInfo] = useState<CesiumDebugInfo>({
     cameraDistanceToEarth: 0,
@@ -69,7 +131,11 @@ export default function CesiumDebugPanel({ earthPlanet, camera }: CesiumDebugPan
   const lastTimeRef = useRef(performance.now());
   const logsEndRef = useRef<HTMLDivElement>(null);
 
-  // 添加日志
+  /**
+   * 向日志列表追加一条新日志。
+   * 日志格式：[HH:MM:SS.mmm] LEVEL message
+   * 最多保留最近 50 条，超出时自动丢弃最旧的条目，防止内存无限增长。
+   */
   const addLog = (level: 'info' | 'warn' | 'error', message: string) => {
     const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
     setLogs(prev => {
@@ -109,6 +175,11 @@ export default function CesiumDebugPanel({ earthPlanet, camera }: CesiumDebugPan
     let lastCesiumEnabled = false;
     let currentFps = 0;
 
+    /**
+     * 定时轮询更新调试信息。
+     * 更新频率：每 100ms 一次（10 Hz），在性能与实时性之间取得平衡。
+     * 监控内容：FPS 计算、相机位置、Cesium 状态、瓦片加载统计。
+     */
     const updateInterval = setInterval(() => {
       // 计算 FPS
       frameCountRef.current++;
@@ -381,7 +452,10 @@ export default function CesiumDebugPanel({ earthPlanet, camera }: CesiumDebugPan
             </div>
           </div>
 
-          {/* 旋转调试控件 */}
+          {/* 旋转调试控件：用于校准 Three.js 与 Cesium 坐标系的旋转对齐。
+              通过拖动 X/Y/Z 轴滑块，实时调整 debugRotationOffset，
+              观察 Cesium 地球纹理与 Three.js 地球模型的对齐效果，
+              找到最佳偏移值后可将其固化到 CoordinateTransformer 中。 */}
           <div style={{ marginBottom: '12px' }}>
             <div style={{
               color: '#f59e0b',
