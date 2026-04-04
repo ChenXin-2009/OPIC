@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 查看文档
+    url: https://github.com/ChenXin-2009/somap#readme
+    about: 查看项目 README 了解功能和使用方法
+  - name: 💬 提问讨论
+    url: https://github.com/ChenXin-2009/somap/discussions
+    about: 有问题或想法？在 Discussions 中讨论
