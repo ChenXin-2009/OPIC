@@ -681,6 +681,39 @@ export class CesiumAdapter {
   }
 
   /**
+   * 切换 Cesium 原生摄像机控制器
+   *
+   * @param enabled - `true` 启用 Cesium 内置相机交互，`false` 禁用（由 Three.js OrbitControls 驱动）
+   */
+  setNativeCameraEnabled(enabled: boolean): void {
+    if (!this.isAvailable || !this.viewer) return;
+    this.viewer.scene.screenSpaceCameraController.enableInputs = enabled;
+    this.cesiumCanvas.style.pointerEvents = enabled ? 'auto' : 'none';
+    this.container.style.pointerEvents = enabled ? 'auto' : 'none';
+  }
+
+  /**
+   * 获取 Cesium 相机球坐标（heading/pitch/distance），用于驱动 Three.js OrbitControls
+   *
+   * @returns 球坐标对象，或 null（适配器不可用时）
+   */
+  getCesiumCameraSpherical(): { distance: number; heading: number; pitch: number } | null {
+    if (!this.isAvailable || !this.viewer) return null;
+    try {
+      const camera = this.viewer.camera;
+      const cartographic = Cesium.Cartographic.fromCartesian(camera.position);
+      const distance = Cesium.Cartesian3.magnitude(camera.position);
+      return {
+        distance,
+        heading: camera.heading,
+        pitch: cartographic.latitude,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * 清理资源，销毁 Cesium Viewer 并移除所有 DOM 元素和事件监听器
    *
    * 调用后适配器不可再使用。通常在组件卸载或页面销毁时调用。
