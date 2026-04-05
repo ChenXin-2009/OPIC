@@ -1,8 +1,7 @@
 // src/app/page.tsx 或 src/app/solar-system/page.tsx
 'use client';
 
-import { useEffect, useRef, useState } from "react";
-import SolarSystemCanvas3D from "@/components/canvas/3d/SolarSystemCanvas3D";
+import { useEffect, useRef, useState } from "react";import SolarSystemCanvas3D from "@/components/canvas/3d/SolarSystemCanvas3D";
 import TimeControl from "@/components/TimeControl";
 import InfoModal from "@/components/InfoModal";
 import { SatelliteMenu } from "@/components/satellite";
@@ -13,6 +12,13 @@ import CesiumMapSourcePanel from "@/components/cesium/CesiumMapSourcePanel";
 import EarthLockButton from "@/components/EarthLockButton";
 import EarthLightButton from "@/components/EarthLightButton";
 import { useSolarSystemStore } from "@/lib/state";
+import ModManagerButton from "@/components/ModManagerButton";
+import { initModManager, autoEnableMods } from "@/lib/mod-manager";
+import { registerCoreMods } from "@/lib/mods";
+import { useModStore } from "@/lib/mod-manager/store";
+import { useModManager } from "@/hooks/useModManager";
+import { FlightTrackingPanel } from "@/components/flight-tracking/FlightTrackingPanel";
+import FlightPanel from "@/components/flight-tracking/FlightPanel";
 
 /**
  * Info button component for top-right corner.
@@ -145,7 +151,6 @@ function EphemerisButton({ onClick, lang }: { onClick: () => void; lang: 'zh' | 
 export default function SolarSystemPage() {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isEphemerisStatusOpen, setIsEphemerisStatusOpen] = useState(false);
-  const [cesiumEnabled, setCesiumEnabled] = useState(true); // 默认启用 Cesium
   const [earthLockEnabled, setEarthLockEnabled] = useState(true);
   const [earthLightEnabled, setEarthLightEnabled] = useState(true);
   const [earthPlanet, setEarthPlanet] = useState<any>(null);
@@ -155,6 +160,34 @@ export default function SolarSystemPage() {
   
   // 获取当前语言
   const lang = useSolarSystemStore((state) => state.lang);
+
+  // 从MOD状态读取功能启用状态
+  const cesiumModEnabled = useModStore((state) => state.mods['cesium-integration']?.state === 'enabled');
+  const satelliteModEnabled = useModStore((state) => state.mods['satellite-tracking']?.state === 'enabled');
+  const flightModEnabled = useModStore((state) => state.mods['flight-tracking']?.state === 'enabled');
+
+  // cesiumEnabled 由 MOD 状态 + 用户手动切换共同决定
+  const [userCesiumEnabled, setUserCesiumEnabled] = useState(true);
+  const cesiumEnabled = cesiumModEnabled && userCesiumEnabled;
+
+  // Cesium 关闭时级联禁用依赖它的 MOD（如航班追踪）
+  const { enableMod, disableMod } = useModManager();
+  useEffect(() => {
+    if (!cesiumEnabled && flightModEnabled) {
+      disableMod('flight-tracking').catch(() => {});
+    }
+  }, [cesiumEnabled, flightModEnabled, disableMod]);
+
+  // 初始化MOD管理器
+  useEffect(() => {
+    const init = async () => {
+      initModManager();
+      registerCoreMods();
+      // 自动启用 defaultEnabled 的 MOD
+      await autoEnableMods();
+    };
+    init();
+  }, []);
 
   // 每帧检测相机到地球的距离，控制按钮显隐
   // 距离阈值：10 AU 以内认为"可以看见地球"
@@ -197,6 +230,7 @@ export default function SolarSystemPage() {
     >
       <InfoButton onClick={() => setIsInfoModalOpen(true)} lang={lang} />
       <EphemerisButton onClick={() => setIsEphemerisStatusOpen(true)} lang={lang} />
+      <ModManagerButton lang={lang} />
       <InfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} />
       <EphemerisStatusPanel isOpen={isEphemerisStatusOpen} onClose={() => setIsEphemerisStatusOpen(false)} />
       
@@ -216,7 +250,7 @@ export default function SolarSystemPage() {
           transition: 'opacity 0.6s ease',
         }}
       >
-        <CesiumToggleButton onToggle={setCesiumEnabled} initialEnabled={cesiumEnabled} />
+        {cesiumModEnabled && <CesiumToggleButton onToggle={setUserCesiumEnabled} initialEnabled={cesiumEnabled} />}
         <EarthLockButton onToggle={setEarthLockEnabled} initialEnabled={earthLockEnabled} />
         <EarthLightButton
           initialEnabled={earthLightEnabled}
@@ -226,11 +260,14 @@ export default function SolarSystemPage() {
             ext?.setEnableLighting?.(enabled);
           }}
         />
-        <SatelliteMenu lang={lang} />
+        {satelliteModEnabled && <SatelliteMenu lang={lang} />}
       </div>
       
       {/* Cesium 地图源切换面板（仅 Cesium 模式下显示） */}
       <CesiumMapSourcePanel earthPlanet={earthPlanet} visible={cesiumEnabled} />
+
+      {/* 航班追踪面板（仅 flight-tracking MOD 启用时显示） */}
+      {flightModEnabled && <FlightPanel lang={lang} />}
       
       {/* 主容器，漂浮模式下不需要留出Header高度空间 */}
       <div 

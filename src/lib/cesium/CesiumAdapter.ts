@@ -321,6 +321,11 @@ export class CesiumAdapter {
     
     // 通知 Cesium 场景尺寸已更改
     this.viewer.resize();
+
+    // 将 viewer 暴露到 window，供 MOD 系统访问
+    (window as unknown as Record<string, unknown>).__cesiumViewer = this.viewer;
+    // 通知所有监听者 viewer 已就绪
+    window.dispatchEvent(new CustomEvent('cesium:viewer-ready'));
   }
 
   
