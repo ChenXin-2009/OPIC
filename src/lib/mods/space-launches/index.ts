@@ -3,6 +3,7 @@
  */
 
 import type { ModLifecycleHooks, ModContext } from '@/lib/mod-manager/types';
+import * as THREE from 'three';
 import { spaceLaunchesManifest } from './manifest';
 import { LaunchRenderer } from './LaunchRenderer';
 
