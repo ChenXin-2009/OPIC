@@ -25,6 +25,7 @@ import { OrbitalInterpolator } from '../performance/OrbitalInterpolator';
 import { PerformanceMonitor } from '../performance/PerformanceMonitor';
 import { QualityController } from '../performance/QualityController';
 import { logDebug, logError } from '../performance/performanceConfig';
+import { useModStore } from '../mod-manager/store';
 
 /**
  * SatelliteLayer - 卫星图层管理器
@@ -136,6 +137,13 @@ export class SatelliteLayer {
    */
   update(): void {
     if (!this.visible) {
+      return;
+    }
+
+    // 检查 satellite-tracking MOD 是否启用，禁用时隐藏所有卫星
+    const modState = useModStore.getState().mods['satellite-tracking']?.state;
+    if (modState && modState !== 'enabled') {
+      this.renderer.setVisible(false);
       return;
     }
     
