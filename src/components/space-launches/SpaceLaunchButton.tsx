@@ -51,7 +51,7 @@ export default function SpaceLaunchButton({ lang = 'zh' }: Props) {
       </button>
 
       {isOpen && (
-        <SpaceLaunchOverlay onClose={() => setIsOpen(false)} lang={lang} />
+        <SpaceLaunchOverlay lang={lang} />
       )}
     </>
   );

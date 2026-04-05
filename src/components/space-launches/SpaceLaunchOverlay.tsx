@@ -19,6 +19,7 @@ import { useSolarSystemStore } from '@/lib/state';
 
 interface Props {
   lang?: 'zh' | 'en';
+  onClose?: () => void;
 }
 
 /** 在 scene 里按名字找地球 mesh */
@@ -26,7 +27,7 @@ function findEarthMesh(scene: THREE.Scene): THREE.Object3D | null {
   return scene.getObjectByName('earth') ?? null;
 }
 
-export const SpaceLaunchOverlay: React.FC<Props> = ({ lang = 'zh' }) => {
+export const SpaceLaunchOverlay: React.FC<Props> = ({ lang = 'zh', onClose }) => {
   const modState  = useModStore(s => s.mods['space-launches']?.state);
   const modConfig = useModStore(s => s.mods['space-launches']?.config);
   const setModConfig = useModStore(s => s.setModConfig);
@@ -115,6 +116,7 @@ export const SpaceLaunchOverlay: React.FC<Props> = ({ lang = 'zh' }) => {
       lang={lang}
       initialConfig={modConfig as any}
       onConfigChange={cfg => setModConfig('space-launches', cfg as Record<string, unknown>)}
+      onClose={onClose}
     />
   );
 };

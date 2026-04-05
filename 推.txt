@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 8.1.0: 添加了一些新的MOD，优化了卫星显示"
+git commit -m "Release 8.1.1: 修BUG"
 git checkout main
 git pull origin main
-git tag v8.1.0
+git tag v8.1.1
 git push origin main
-git push origin v8.1.0
+git push origin v8.1.1
