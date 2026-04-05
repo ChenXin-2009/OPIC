@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 8.0.2: 接入OpenSkyAPI"
+git commit -m "Release 8.0.3: 修BUG"
 git checkout main
 git pull origin main
-git tag v8.0.2
+git tag v8.0.3
 git push origin main
-git push origin v8.0.2
+git push origin v8.0.3

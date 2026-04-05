@@ -9,7 +9,6 @@ import { FlightController } from './controller/FlightController';
 import { AircraftRenderer } from './renderer/AircraftRenderer';
 import { FlightPathRenderer } from './renderer/FlightPathRenderer';
 import { useFlightStore } from './store/flightStore';
-import { getOpenSkyClient } from './api/OpenSkyClient';
 
 /**
  * MOD 运行时状态
@@ -84,11 +83,6 @@ export const flightTrackingHooks: ModLifecycleHooks = {
 
     const store = useFlightStore.getState();
     const { config } = store;
-
-    // 初始化 OpenSky 客户端凭证
-    if (config.openSkyUsername && config.openSkyPassword) {
-      getOpenSkyClient().setCredentials(config.openSkyUsername, config.openSkyPassword);
-    }
 
     // 尝试初始化渲染器（Cesium 可能尚未就绪）
     tryInitRenderers(context);
