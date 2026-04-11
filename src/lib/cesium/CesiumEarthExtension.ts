@@ -140,6 +140,13 @@ export class CesiumEarthExtension {
   setNativeCameraEnabled(enabled: boolean): void {
     this.adapter.setNativeCameraEnabled(enabled);
   }
+  
+  /**
+   * 获取 Cesium 原生相机是否启用
+   */
+  getNativeCameraEnabled(): boolean {
+    return this.adapter.getNativeCameraEnabled();
+  }
 
   /**
    * 获取 Cesium 相机球坐标（heading/pitch/distance），用于驱动 Three.js OrbitControls

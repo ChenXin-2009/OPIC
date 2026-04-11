@@ -139,6 +139,7 @@ export class CesiumAdapter {
   private cesiumCanvas!: HTMLCanvasElement; // Cesium 内部的 canvas
   private config: CesiumAdapterConfig;
   private isAvailable: boolean = true;
+  private nativeCameraEnabled: boolean = false; // 跟踪 Cesium 原生相机是否启用
   private errorCallback?: (error: Error) => void;
   private performanceMonitor?: any;
   private logCallback?: (level: 'info' | 'warn' | 'error', message: string) => void;
@@ -273,7 +274,15 @@ export class CesiumAdapter {
     // 配置 TerrainProvider（如果提供）
     if (this.config.terrainProvider) {
       this.viewer.terrainProvider = this.config.terrainProvider;
+    } else {
+      // 默认使用椭球体地形（平坦地形）
+      this.viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
     }
+    
+    // ==================== 近地能力配置 ====================
+    // 开启 Cesium 原生相机碰撞检测（防止相机穿透地形）
+    // 注意：这个设置在所有模式下都启用，确保相机不会穿透地形
+    this.viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
     
     // 禁用大气效果（由 Three.js 场景控制）
     if (this.viewer.scene.sun) {
@@ -687,9 +696,67 @@ export class CesiumAdapter {
    */
   setNativeCameraEnabled(enabled: boolean): void {
     if (!this.isAvailable || !this.viewer) return;
-    this.viewer.scene.screenSpaceCameraController.enableInputs = enabled;
-    this.cesiumCanvas.style.pointerEvents = enabled ? 'auto' : 'none';
-    this.container.style.pointerEvents = enabled ? 'auto' : 'none';
+    
+    this.nativeCameraEnabled = enabled;
+    const controller = this.viewer.scene.screenSpaceCameraController;
+    
+    controller.enableInputs = enabled;
+    
+    if (enabled) {
+      // Cesium 主导模式：Cesium canvas 需要在 Three.js canvas 上面接收输入
+      this.cesiumCanvas.style.pointerEvents = 'auto';
+      this.container.style.pointerEvents = 'auto';
+      this.container.style.zIndex = '2'; // 提升到 Three.js canvas (z-index: 1) 上面
+      
+      // 启用所有相机控制功能
+      controller.enableRotate = true;
+      controller.enableTranslate = true;
+      controller.enableZoom = true;
+      controller.enableTilt = true;
+      controller.enableLook = true;
+      
+      // 设置合理的最小/最大高度（米）
+      controller.minimumZoomDistance = 1.0; // 最小 1 米（可以非常接近地面）
+      controller.maximumZoomDistance = 50000000.0; // 最大 50,000 km
+      
+      // ==================== 关键修复：重置 frustum，让 Cesium 自动管理 ====================
+      // 在 Cesium 主导模式下，不应该手动设置 near/far
+      // Cesium 会根据相机高度自动计算最优的 near/far 值
+      // 这里我们只需要确保 frustum 使用合理的默认值
+      if (this.viewer.camera.frustum instanceof Cesium.PerspectiveFrustum) {
+        const frustum = this.viewer.camera.frustum;
+        // 重置为 Cesium 默认值
+        // Cesium 会在每帧渲染前自动更新这些值
+        // 我们只需要确保初始值合理即可
+        frustum.near = 0.1; // Cesium 默认最小值
+        frustum.far = 5e8;  // Cesium 默认最大值（500,000 km）
+      }
+      
+      console.log('[CesiumAdapter] Native camera enabled with full controls, z-index: 2');
+      console.log('[CesiumAdapter] Camera position:', this.viewer.camera.position);
+      console.log('[CesiumAdapter] Camera height:', this.viewer.camera.positionCartographic.height);
+      console.log('[CesiumAdapter] Frustum reset to Cesium defaults (near: 0.1, far: 5e8)');
+    } else {
+      // Three.js 主导模式：Cesium canvas 在下面，不接收输入
+      this.cesiumCanvas.style.pointerEvents = 'none';
+      this.container.style.pointerEvents = 'none';
+      this.container.style.zIndex = '0'; // 恢复到 Three.js canvas 下面
+      
+      console.log('[CesiumAdapter] Native camera disabled, z-index: 0');
+    }
+    
+    // 地形保护功能：只在 cesium_primary 模式下启用
+    // 这样可以防止相机穿透地形表面，提供更真实的近地浏览体验
+    this.viewer.scene.globe.depthTestAgainstTerrain = enabled;
+  }
+  
+  /**
+   * 获取 Cesium 原生相机是否启用
+   *
+   * @returns `true` 如果 Cesium 原生相机已启用，`false` 否则
+   */
+  getNativeCameraEnabled(): boolean {
+    return this.nativeCameraEnabled;
   }
 
   /**

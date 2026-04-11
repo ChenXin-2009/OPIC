@@ -136,6 +136,10 @@ export class CameraController {
   private earthLockEnabled: boolean = false;
   // controls.update() 之后需要同步的 up 向量
   private _pendingUpForQuat: THREE.Vector3 | null = null;
+  
+  // Cesium 主导模式相关
+  private cesiumPrimaryMode: boolean = false;
+  private earthLockWasPaused: boolean = false; // 记录 Earth Lock 是否被暂停
 
   /**
    * 构造函数：初始化相机控制器
@@ -1083,6 +1087,55 @@ export class CameraController {
   getEarthLockEnabled(): boolean {
     return this.earthLockEnabled;
   }
+  
+  /**
+   * 设置 Cesium 主导模式
+   * 
+   * 在 Cesium 主导模式下：
+   * - 禁用 OrbitControls（Cesium 接管相机控制）
+   * - 暂停聚焦动画
+   * - 暂停地球锁定模式
+   * 
+   * @param enabled 是否启用 Cesium 主导模式
+   */
+  setCesiumPrimaryMode(enabled: boolean): void {
+    this.cesiumPrimaryMode = enabled;
+    
+    if (enabled) {
+      // 切换到 Cesium 主导模式
+      console.log('[CameraController] Switching to Cesium primary mode');
+      
+      // 1. 禁用 OrbitControls
+      this.controls.enabled = false;
+      
+      // 2. 暂停聚焦动画
+      if (this.isFocusing) {
+        this.isFocusing = false;
+        this.targetCameraPosition = null;
+        this.targetControlsTarget = null;
+      }
+      
+      // 3. 暂停地球锁定模式（如果已启用）
+      if (this.earthLockEnabled) {
+        this.earthLockWasPaused = true;
+        this.earthLockEnabled = false;
+        console.log('[CameraController] Earth Lock paused for Cesium mode');
+      }
+    } else {
+      // 切换回 Three.js 主导模式
+      console.log('[CameraController] Switching to Three.js primary mode');
+      
+      // 1. 恢复 OrbitControls
+      this.controls.enabled = true;
+      
+      // 2. 恢复地球锁定模式（如果之前被暂停）
+      if (this.earthLockWasPaused) {
+        this.earthLockEnabled = true;
+        this.earthLockWasPaused = false;
+        console.log('[CameraController] Earth Lock restored');
+      }
+    }
+  }
 
   /**
    * 应用地球自转增量到相机（由动画循环每帧调用）
@@ -1299,6 +1352,13 @@ export class CameraController {
    * @param deltaTime 当前帧时间步长（秒），用于帧率无关的动画计算
    */
   update(deltaTime: number) {
+    // Cesium 主导模式：跳过大部分逻辑，仅保留必要的状态同步
+    if (this.cesiumPrimaryMode) {
+      // 在 Cesium 主导模式下，相机由 Cesium 控制
+      // 仅保留必要的状态更新，避免与 Cesium 冲突
+      return;
+    }
+    
     // Update focus manager transitions
     const focusProgress = this.focusManager.updateFocusTransition(deltaTime);
     if (focusProgress >= 0 && focusProgress < 1) {

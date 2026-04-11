@@ -219,6 +219,36 @@ async function initializeUniverseRenderers(sceneManager: SceneManager) {
   }
 }
 
+// ==================== 渲染模式状态机类型定义 ====================
+/**
+ * 渲染模式枚举
+ * - three_primary: Three.js 主导模式（远景），Cesium 相机跟随 Three.js
+ * - cesium_primary: Cesium 主导模式（近地），Three.js 相机反向跟随 Cesium
+ */
+type RenderingMode = 'three_primary' | 'cesium_primary';
+
+/**
+ * 渲染状态接口
+ */
+interface RenderingState {
+  mode: RenderingMode;
+  cameraDistance: number; // 相机到地球中心的距离（AU）
+  isTransitioning: boolean; // 是否正在切换模式
+}
+
+/**
+ * 渲染模式配置接口
+ */
+interface RenderingModeConfig {
+  enterCesiumThreshold: number;  // 进入 cesium_primary 的距离阈值（AU）
+  exitCesiumThreshold: number;   // 退出 cesium_primary 的距离阈值（AU）
+  transitionDuration: number;    // 过渡动画时长（ms，当前版本为 0，立即切换）
+  cameraSyncFrequency: number;   // 相机同步频率（FPS，1-60）
+  cameraPositionLerp: number;    // 相机位置插值系数（0.0-1.0）
+  cameraRotationLerp: number;    // 相机旋转插值系数（0.0-1.0）
+  cameraSmoothTransition: boolean; // 是否启用相机平滑过渡
+}
+
 interface SolarSystemCanvas3DProps {
   onCameraDistanceChange?: (distance: number) => void;
   cesiumEnabled?: boolean;
@@ -246,6 +276,49 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
   // earthLockEnabled ref — 让动画循环能读到最新值
   const earthLockEnabledRef = useRef<boolean>(earthLockEnabled);
   
+  // ==================== 渲染模式状态机 ====================
+  // 渲染模式状态
+  const renderingStateRef = useRef<RenderingState>({
+    mode: 'three_primary',
+    cameraDistance: Infinity,
+    isTransitioning: false,
+  });
+  
+  // 渲染模式配置（可通过调试面板调整）
+  const renderingConfigRef = useRef<RenderingModeConfig>({
+    enterCesiumThreshold: 0.01,  // AU，约 150 万公里
+    exitCesiumThreshold: 0.015,  // AU，约 225 万公里
+    transitionDuration: 0,       // ms，当前版本立即切换
+    cameraSyncFrequency: 60,     // FPS，默认 60 FPS
+    cameraPositionLerp: 1.0,     // 位置插值系数，默认 1.0（无插值）
+    cameraRotationLerp: 1.0,     // 旋转插值系数，默认 1.0（无插值）
+    cameraSmoothTransition: false, // 默认关闭平滑过渡
+  });
+  
+  // 调试日志系统
+  const debugLogsRef = useRef<Array<{
+    timestamp: number;
+    level: 'info' | 'warn' | 'error';
+    message: string;
+    data?: any;
+  }>>([]);
+  const maxDebugLogs = 50; // 最多保留 50 条日志
+  
+  // 添加调试日志的辅助函数
+  const addDebugLog = React.useCallback((level: 'info' | 'warn' | 'error', message: string, data?: any) => {
+    const log = {
+      timestamp: Date.now(),
+      level,
+      message,
+      data,
+    };
+    debugLogsRef.current.push(log);
+    // 保持日志数量在限制内
+    if (debugLogsRef.current.length > maxDebugLogs) {
+      debugLogsRef.current.shift();
+    }
+  }, []);
+  
   // 卫星跟随状态跟踪
   const isTrackingSatelliteRef = useRef<boolean>(false);
   const lastFollowTargetRef = useRef<number | null>(null);
@@ -267,6 +340,234 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
   // 但初始化时需要获取初始值
   const lang = useSolarSystemStore((state) => state.lang);
 
+  // ==================== 渲染模式切换函数 ====================
+  /**
+   * 切换到 Cesium 主导模式（近地模式）
+   */
+  const switchToCesiumPrimary = React.useCallback(() => {
+    const state = renderingStateRef.current;
+    if (state.mode === 'cesium_primary' || state.isTransitioning) {
+      return; // 已经是 cesium_primary 模式或正在切换中
+    }
+    
+    try {
+      addDebugLog('info', 'Switching to cesium_primary mode', { distance: state.cameraDistance });
+      console.log('[RenderingMode] Switching to cesium_primary mode');
+      state.isTransitioning = true;
+      
+      // 1. 检查 EarthPlanet 是否可用
+      const earthPlanet = planetsRef.current.get('earth');
+      if (!earthPlanet || !('setCesiumNativeCameraEnabled' in earthPlanet)) {
+        addDebugLog('warn', 'EarthPlanet not available, staying in three_primary mode');
+        console.warn('[RenderingMode] EarthPlanet not available, staying in three_primary mode');
+        state.isTransitioning = false;
+        return;
+      }
+      
+      // 记录切换前的相机位置
+      const cameraPosBefore = cameraRef.current ? cameraRef.current.position.clone() : null;
+      
+      // ==================== 关键修复：切换前同步相机位置 ====================
+      // 在启用 Cesium 控制之前，需要将 Three.js 相机的最终位置同步到 Cesium
+      // 确保 Cesium 相机从正确的位置开始
+      if ('getCesiumExtension' in earthPlanet && cameraRef.current) {
+        const cesiumExtension = (earthPlanet as any).getCesiumExtension();
+        if (cesiumExtension && typeof cesiumExtension.syncCamera === 'function') {
+          try {
+            const earthPos = (earthPlanet as any).getMesh().position;
+            cesiumExtension.syncCamera(cameraRef.current, earthPos);
+            addDebugLog('info', 'Final camera sync: Three.js → Cesium before mode switch');
+            console.log('[RenderingMode] Final camera sync: Three.js → Cesium before mode switch');
+          } catch (error) {
+            addDebugLog('error', 'Failed to sync camera before mode switch', error);
+            console.error('[RenderingMode] Failed to sync camera before mode switch:', error);
+          }
+        }
+      }
+      
+      // 2. 启用 Cesium 原生相机控制
+      (earthPlanet as any).setCesiumNativeCameraEnabled(true);
+      
+      // 3. 禁用 Three.js 侧控制
+      if (cameraControllerRef.current) {
+        cameraControllerRef.current.setCesiumPrimaryMode(true);
+      }
+      
+      // 4. 更新状态
+      state.mode = 'cesium_primary';
+      state.isTransitioning = false;
+      
+      // 记录切换后的相机位置
+      const cameraPosAfter = cameraRef.current ? cameraRef.current.position.clone() : null;
+      if (cameraPosBefore && cameraPosAfter) {
+        const positionChange = cameraPosBefore.distanceTo(cameraPosAfter);
+        addDebugLog('info', 'Mode switch completed', {
+          positionChange: positionChange.toFixed(6) + ' AU',
+          mode: 'cesium_primary'
+        });
+      }
+      
+      console.log('[RenderingMode] Successfully switched to cesium_primary mode');
+    } catch (error) {
+      addDebugLog('error', 'Failed to switch to cesium_primary mode', error);
+      console.error('[RenderingMode] Failed to switch to cesium_primary mode:', error);
+      // 回滚到 three_primary
+      const earthPlanet = planetsRef.current.get('earth');
+      if (earthPlanet && 'setCesiumNativeCameraEnabled' in earthPlanet) {
+        (earthPlanet as any).setCesiumNativeCameraEnabled(false);
+      }
+      if (cameraControllerRef.current) {
+        cameraControllerRef.current.setCesiumPrimaryMode(false);
+      }
+      renderingStateRef.current.mode = 'three_primary';
+      renderingStateRef.current.isTransitioning = false;
+    }
+  }, [addDebugLog]);
+  
+  /**
+   * 切换到 Three.js 主导模式（远景模式）
+   */
+  const switchToThreePrimary = React.useCallback(() => {
+    const state = renderingStateRef.current;
+    if (state.mode === 'three_primary' || state.isTransitioning) {
+      return; // 已经是 three_primary 模式或正在切换中
+    }
+    
+    try {
+      addDebugLog('info', 'Switching to three_primary mode', { distance: state.cameraDistance });
+      console.log('[RenderingMode] Switching to three_primary mode');
+      state.isTransitioning = true;
+      
+      // 记录切换前的相机位置
+      const cameraPosBefore = cameraRef.current ? cameraRef.current.position.clone() : null;
+      const distanceBefore = state.cameraDistance;
+      
+      // ==================== 关键修复：切换前同步相机位置 ====================
+      // 在禁用 Cesium 控制之前，需要将 Cesium 相机的最终位置同步到 Three.js
+      // 否则 Three.js 相机会使用旧位置，导致"回弹"现象
+      const earthPlanet = planetsRef.current.get('earth');
+      if (earthPlanet && 'getCesiumExtension' in earthPlanet && cameraRef.current) {
+        const cesiumExtension = (earthPlanet as any).getCesiumExtension();
+        if (cesiumExtension && typeof cesiumExtension.syncCameraFromCesium === 'function') {
+          try {
+            const earthPos = (earthPlanet as any).getMesh().position;
+            cesiumExtension.syncCameraFromCesium(cameraRef.current, earthPos);
+            // 强制更新相机矩阵
+            cameraRef.current.updateMatrixWorld(true);
+            addDebugLog('info', 'Final camera sync: Cesium → Three.js before mode switch');
+            console.log('[RenderingMode] Final camera sync: Cesium → Three.js before mode switch');
+            
+            // 记录同步后的距离
+            const cameraPosAfterSync = cameraRef.current.position.clone();
+            const distanceAfterSync = cameraPosAfterSync.distanceTo(earthPos);
+            addDebugLog('info', 'Camera position after sync', {
+              distanceBefore: distanceBefore.toFixed(6) + ' AU',
+              distanceAfterSync: distanceAfterSync.toFixed(6) + ' AU',
+              difference: Math.abs(distanceBefore - distanceAfterSync).toFixed(6) + ' AU'
+            });
+            
+            // ==================== 关键修复：清除 OrbitControls 的惯性和速度 ====================
+            // 同步后，立即更新 OrbitControls 的目标点和内部状态
+            if (cameraControllerRef.current) {
+              const controls = cameraControllerRef.current.getControls();
+              
+              // 1. 确保 target 指向地球中心（不变）
+              controls.target.copy(earthPos);
+              
+              // 2. 强制更新 OrbitControls 的内部球坐标
+              // 这会根据当前相机位置重新计算 spherical 坐标
+              controls.update();
+              
+              // 3. 清除 OrbitControls 的速度和惯性
+              // 访问 OrbitControls 的私有属性（通过 any 类型绕过 TypeScript 检查）
+              const controlsAny = controls as any;
+              if (controlsAny.target0) {
+                // 保存当前状态为"初始状态"，这样 reset() 不会回到旧位置
+                controlsAny.target0.copy(controls.target);
+                controlsAny.position0.copy(cameraRef.current.position);
+                controlsAny.zoom0 = cameraRef.current.zoom;
+              }
+              
+              // 清除旋转和缩放的速度（如果存在）
+              if (controlsAny.rotateSpeed !== undefined) {
+                controlsAny.rotateStart?.set(0, 0);
+                controlsAny.rotateEnd?.set(0, 0);
+                controlsAny.rotateDelta?.set(0, 0);
+              }
+              if (controlsAny.zoomStart !== undefined) {
+                controlsAny.zoomStart = 0;
+                controlsAny.zoomEnd = 0;
+              }
+              if (controlsAny.panStart !== undefined) {
+                controlsAny.panStart?.set(0, 0);
+                controlsAny.panEnd?.set(0, 0);
+                controlsAny.panDelta?.set(0, 0);
+              }
+              
+              addDebugLog('info', 'OrbitControls state reset, inertia cleared');
+              console.log('[RenderingMode] OrbitControls state reset, inertia cleared');
+            }
+          } catch (error) {
+            addDebugLog('error', 'Failed to sync camera before mode switch', error);
+            console.error('[RenderingMode] Failed to sync camera before mode switch:', error);
+          }
+        }
+      }
+      
+      // 1. 禁用 Cesium 原生相机控制
+      if (earthPlanet && 'setCesiumNativeCameraEnabled' in earthPlanet) {
+        (earthPlanet as any).setCesiumNativeCameraEnabled(false);
+      }
+      
+      // 2. 恢复 Three.js 侧控制
+      if (cameraControllerRef.current) {
+        cameraControllerRef.current.setCesiumPrimaryMode(false);
+      }
+      
+      // 3. 更新状态
+      state.mode = 'three_primary';
+      state.isTransitioning = false;
+      
+      // 记录切换后的相机位置
+      const cameraPosAfter = cameraRef.current ? cameraRef.current.position.clone() : null;
+      if (cameraPosBefore && cameraPosAfter && earthPlanet) {
+        const earthPos = (earthPlanet as any).getMesh().position;
+        const distanceAfter = cameraPosAfter.distanceTo(earthPos);
+        const positionChange = cameraPosBefore.distanceTo(cameraPosAfter);
+        addDebugLog('info', 'Mode switch completed', {
+          mode: 'three_primary',
+          distanceBefore: distanceBefore.toFixed(6) + ' AU',
+          distanceAfter: distanceAfter.toFixed(6) + ' AU',
+          positionChange: positionChange.toFixed(6) + ' AU'
+        });
+      }
+      
+      console.log('[RenderingMode] Successfully switched to three_primary mode');
+    } catch (error) {
+      addDebugLog('error', 'Failed to switch to three_primary mode', error);
+      console.error('[RenderingMode] Failed to switch to three_primary mode:', error);
+      renderingStateRef.current.isTransitioning = false;
+    }
+  }, [addDebugLog]);
+  
+  /**
+   * 根据相机距离更新渲染模式
+   */
+  const updateRenderingMode = React.useCallback((cameraToEarthDistance: number) => {
+    const state = renderingStateRef.current;
+    const config = renderingConfigRef.current;
+    
+    // 更新距离
+    state.cameraDistance = cameraToEarthDistance;
+    
+    // 滞回阈值逻辑
+    if (state.mode === 'three_primary' && cameraToEarthDistance <= config.enterCesiumThreshold) {
+      switchToCesiumPrimary();
+    } else if (state.mode === 'cesium_primary' && cameraToEarthDistance >= config.exitCesiumThreshold) {
+      switchToThreePrimary();
+    }
+  }, [switchToCesiumPrimary, switchToThreePrimary]);
+
   // 监听 cesiumEnabled 变化,动态切换 Cesium 渲染
   React.useEffect(() => {
     // 同步 ref，让动画循环闭包能读到最新值
@@ -280,9 +581,11 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
     if (earthPlanet && 'setCesiumEnabled' in earthPlanet) {
       console.log(`[SolarSystemCanvas3D] Setting Cesium enabled: ${cesiumEnabled}`);
       
-      // 把当前 Three.js 相机传给 setCesiumEnabled，启用时会自动做初始同步
+      // 把当前 Three.js 相机和 cameraController 传给 setCesiumEnabled
+      // 这样在禁用 Cesium 时可以正确恢复 OrbitControls 状态
       const camera = cesiumEnabled ? (cameraRef.current as THREE.PerspectiveCamera ?? undefined) : undefined;
-      (earthPlanet as any).setCesiumEnabled(cesiumEnabled, camera);
+      const cameraController = cameraControllerRef.current;
+      (earthPlanet as any).setCesiumEnabled(cesiumEnabled, camera, cameraController);
       
       // Cesium 模式下 OrbitControls 保持启用（Three.js 相机驱动 Cesium）
       // 无论启用还是禁用 Cesium，OrbitControls 始终开启
@@ -414,6 +717,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       }, 100);
       
       controls.enabled = true;
+      console.log('[SolarSystemCanvas3D] OrbitControls initialized and enabled:', controls.enabled);
 
       // 添加点光源（太阳光）- 使用顶部的 SUN_LIGHT_CONFIG 可快速调整
       const sunLight = new THREE.PointLight(
@@ -488,6 +792,8 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
                 canvasResolutionScale: 1.0,
                 maximumScreenSpaceError: 2,
                 maximumNumberOfLoadedTiles: 1000,
+                // 注意：terrainProvider 将在后续异步加载
+                // 初始化时使用默认椭球体地形，加载完成后替换为真实地形
               },
               // 距离阈值 - 不再使用,Cesium 在所有距离都可用
               cesiumVisibleDistance: 2000,
@@ -643,6 +949,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       });
 
       // 动画循环
+      let _lastModeDebugTime = 0; // 用于限制调试日志频率
       const animate = () => {
         const now = Date.now();
         const deltaTime = Math.min((now - lastTimeRef.current) / 1000, 0.1);
@@ -676,7 +983,14 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
             const currentTimeInDays = dateToJulianDay(currentState.currentTime) - 2451545.0; // Days since J2000.0
             
             // 地球锁定模式：记录自转前的四元数，自转后计算 delta 并旋转相机
-            if (key === 'earth' && earthLockEnabledRef.current && cameraControllerRef.current) {
+            // 注意：在 cesium_primary 模式下，地球锁定模式会被暂停
+            const renderingState = renderingStateRef.current;
+            const shouldApplyEarthLock = key === 'earth' 
+              && earthLockEnabledRef.current 
+              && cameraControllerRef.current
+              && renderingState.mode !== 'cesium_primary'; // Cesium 主导模式下不应用地球锁定
+            
+            if (shouldApplyEarthLock) {
               const quatBefore = planet.getRotationQuaternion();
               planet.updateRotation(currentTimeInDays, currentState.timeSpeed);
               const quatAfter = planet.getRotationQuaternion();
@@ -979,13 +1293,42 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           cameraControllerRef.current.update(deltaTime);
         }
 
-        // 计算相机到地球的距离（用于左上角显示）
+        // ==================== 相机同步逻辑（必须在距离计算之前）====================
+        // 根据当前渲染模式执行相应的相机同步
+        const renderingState = renderingStateRef.current;
+        const earthPlanet = planetsRef.current.get('earth');
+        
+        // 获取地球位置（用于相机同步和距离计算）
         const earthBody = currentBodies.find((b: any) => b.name.toLowerCase() === 'earth');
         if (earthBody) {
           const earthPos = new THREE.Vector3(earthBody.x, earthBody.y, earthBody.z);
+          
+          if (renderingState.mode === 'cesium_primary') {
+            // Cesium 主导模式：Three.js 相机反向跟随 Cesium 相机
+            if (earthPlanet && 'getCesiumExtension' in earthPlanet) {
+              const cesiumExtension = (earthPlanet as any).getCesiumExtension();
+              if (cesiumExtension && typeof cesiumExtension.syncCameraFromCesium === 'function') {
+                try {
+                  cesiumExtension.syncCameraFromCesium(camera, earthPos);
+                  // 强制更新相机矩阵，确保位置立即生效
+                  camera.updateMatrixWorld(true);
+                } catch (error) {
+                  console.error('[RenderingMode] Failed to sync camera from Cesium:', error);
+                }
+              }
+            }
+          } else {
+            // Three.js 主导模式：Cesium 相机跟随 Three.js 相机（现有逻辑）
+            // 这部分已经在 updateEarthPlanet 中处理，无需额外操作
+          }
+          
+          // 重新计算相机到地球的距离（使用同步后的相机位置）
           const cameraPos = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
           const distToEarth = cameraPos.distanceTo(earthPos);
           setDistanceToEarth(distToEarth);
+          
+          // 更新渲染模式（基于同步后的相机距离）
+          updateRenderingMode(distToEarth);
         }
 
         // 动态调整视距裁剪
@@ -1714,6 +2057,332 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           }
         }
       }, 500); // 延迟500ms，确保场景完全初始化
+
+      // ==================== 调试接口 ====================
+      // 暴露调试接口到 window，供开发者调试使用
+      (window as any).__renderingDebug = {
+        /**
+         * 获取当前渲染模式
+         */
+        getCurrentMode: () => renderingStateRef.current.mode,
+        
+        /**
+         * 获取相机到地球的距离（AU）
+         */
+        getCameraDistance: () => renderingStateRef.current.cameraDistance,
+        
+        /**
+         * 强制切换渲染模式（忽略距离阈值）
+         * @param mode - 目标模式：'three_primary' 或 'cesium_primary'
+         */
+        forceMode: (mode: RenderingMode) => {
+          if (mode === 'cesium_primary') {
+            switchToCesiumPrimary();
+          } else if (mode === 'three_primary') {
+            switchToThreePrimary();
+          } else {
+            console.warn('[RenderingDebug] Invalid mode:', mode);
+          }
+        },
+        
+        /**
+         * 获取当前配置
+         */
+        getConfig: () => ({
+          enterCesiumThreshold: renderingConfigRef.current.enterCesiumThreshold,
+          exitCesiumThreshold: renderingConfigRef.current.exitCesiumThreshold,
+          transitionDuration: renderingConfigRef.current.transitionDuration,
+          cameraSyncFrequency: renderingConfigRef.current.cameraSyncFrequency,
+          cameraPositionLerp: renderingConfigRef.current.cameraPositionLerp,
+          cameraRotationLerp: renderingConfigRef.current.cameraRotationLerp,
+          cameraSmoothTransition: renderingConfigRef.current.cameraSmoothTransition,
+        }),
+        
+        /**
+         * 设置配置（部分更新）
+         * @param newConfig - 新配置（部分）
+         */
+        setConfig: (newConfig: Partial<RenderingModeConfig>) => {
+          Object.assign(renderingConfigRef.current, newConfig);
+          console.log('[RenderingDebug] Config updated:', renderingConfigRef.current);
+          
+          // 保存到 localStorage
+          try {
+            localStorage.setItem('renderingModeConfig', JSON.stringify(renderingConfigRef.current));
+          } catch (error) {
+            console.warn('[RenderingDebug] Failed to save config to localStorage:', error);
+          }
+        },
+        
+        /**
+         * 获取渲染状态
+         */
+        getState: () => ({
+          mode: renderingStateRef.current.mode,
+          cameraDistance: renderingStateRef.current.cameraDistance,
+          isTransitioning: renderingStateRef.current.isTransitioning,
+        }),
+        
+        /**
+         * 获取调试日志
+         * @param count - 返回最近的 N 条日志（默认全部）
+         * @param level - 筛选日志级别（可选）
+         */
+        getDebugLogs: (count?: number, level?: 'info' | 'warn' | 'error') => {
+          let logs = debugLogsRef.current;
+          
+          // 按级别筛选
+          if (level) {
+            logs = logs.filter(log => log.level === level);
+          }
+          
+          // 限制数量
+          if (count !== undefined && count > 0) {
+            logs = logs.slice(-count);
+          }
+          
+          return logs;
+        },
+        
+        /**
+         * 清除调试日志
+         */
+        clearDebugLogs: () => {
+          debugLogsRef.current = [];
+        },
+        
+        /**
+         * 获取相机差异信息（仅在 cesium_primary 模式下有效）
+         * @returns 相机位置差异（米）和旋转差异（度），如果无法计算则返回 null
+         */
+        getCameraDifference: () => {
+          if (renderingStateRef.current.mode !== 'cesium_primary') {
+            return null;
+          }
+          
+          const earthPlanet = planetsRef.current.get('earth');
+          if (!earthPlanet || !('getCesiumExtension' in earthPlanet)) return null;
+          
+          const cesiumExtension = (earthPlanet as any).getCesiumExtension();
+          if (!cesiumExtension) return null;
+          
+          // 注意：getCesiumExtension 返回的是 CesiumEarthExtension，没有 getAdapter 方法
+          // 我们需要直接访问 viewer，但 CesiumEarthExtension 没有暴露这个接口
+          // 暂时返回 null，后续需要扩展 CesiumEarthExtension API
+          
+          const camera = sceneManagerRef.current?.getCamera();
+          if (!camera) return null;
+          
+          try {
+            // TODO: 需要在 CesiumEarthExtension 中添加 getCameraPosition 等方法
+            // 暂时返回模拟数据
+            return {
+              positionDifference: 0, // 米
+              rotationDifference: 0, // 度
+            };
+          } catch (error) {
+            console.error('[RenderingDebug] Failed to calculate camera difference:', error);
+            return null;
+          }
+        },
+        
+        /**
+         * 设置卫星图层可见性
+         * @param visible - 是否可见
+         */
+        setSatelliteLayerVisible: (visible: boolean) => {
+          if (satelliteLayerRef.current) {
+            satelliteLayerRef.current.setVisible(visible);
+          }
+        },
+        
+        /**
+         * 设置行星图层可见性
+         * @param visible - 是否可见
+         */
+        setPlanetsVisible: (visible: boolean) => {
+          planetsRef.current.forEach((planet) => {
+            const mesh = planet.getMesh();
+            if (mesh) {
+              mesh.visible = visible;
+            }
+          });
+        },
+        
+        /**
+         * 设置轨道图层可见性
+         * @param visible - 是否可见
+         */
+        setOrbitsVisible: (visible: boolean) => {
+          orbitsRef.current.forEach((orbit) => {
+            const line = orbit.getLine();
+            if (line) {
+              line.visible = visible;
+            }
+          });
+        },
+        
+        /**
+         * 设置标签图层可见性
+         * @param visible - 是否可见
+         */
+        setLabelsVisible: (visible: boolean) => {
+          labelsRef.current.forEach((label) => {
+            const sprite = label.getSprite();
+            if (sprite) {
+              sprite.visible = visible;
+            }
+          });
+        },
+        
+        /**
+         * 设置星系图层可见性
+         * @param visible - 是否可见
+         */
+        setGalaxiesVisible: (visible: boolean) => {
+          const sceneManager = sceneManagerRef.current;
+          if (!sceneManager) return;
+          
+          const localGroupRenderer = sceneManager.getLocalGroupRenderer();
+          if (localGroupRenderer && localGroupRenderer.getGroup) {
+            localGroupRenderer.getGroup().visible = visible;
+          }
+          
+          const nearbyGroupsRenderer = sceneManager.getNearbyGroupsRenderer();
+          if (nearbyGroupsRenderer && nearbyGroupsRenderer.getGroup) {
+            nearbyGroupsRenderer.getGroup().visible = visible;
+          }
+          
+          const virgoRenderer = sceneManager.getVirgoSuperclusterRenderer();
+          if (virgoRenderer && virgoRenderer.getGroup) {
+            virgoRenderer.getGroup().visible = visible;
+          }
+          
+          const laniakeaRenderer = sceneManager.getLaniakeaSuperclusterRenderer();
+          if (laniakeaRenderer && laniakeaRenderer.getGroup) {
+            laniakeaRenderer.getGroup().visible = visible;
+          }
+        },
+        
+        /**
+         * 设置 Cesium 地形启用状态
+         * @param enabled - 是否启用
+         */
+        setCesiumTerrainEnabled: async (enabled: boolean) => {
+          const earthPlanet = planetsRef.current.get('earth');
+          if (!earthPlanet) return;
+          
+          const cesiumExtension = earthPlanet.getCesiumExtension?.();
+          if (!cesiumExtension) return;
+          
+          const adapter = cesiumExtension.getAdapter?.();
+          if (!adapter || !adapter.isAvailable) return;
+          
+          const viewer = adapter.getViewer?.();
+          if (!viewer) return;
+          
+          try {
+            if (enabled) {
+              // 启用地形
+              const terrainProvider = await window.Cesium.createWorldTerrainAsync({
+                requestWaterMask: true,
+                requestVertexNormals: true,
+              });
+              viewer.terrainProvider = terrainProvider;
+            } else {
+              // 禁用地形，使用椭球体
+              viewer.terrainProvider = new window.Cesium.EllipsoidTerrainProvider();
+            }
+          } catch (error) {
+            console.error('[RenderingDebug] Failed to toggle terrain:', error);
+          }
+        },
+        
+        /**
+         * 设置 Cesium 影像启用状态
+         * @param enabled - 是否启用
+         */
+        setCesiumImageryEnabled: (enabled: boolean) => {
+          const earthPlanet = planetsRef.current.get('earth');
+          if (!earthPlanet) return;
+          
+          const cesiumExtension = earthPlanet.getCesiumExtension?.();
+          if (!cesiumExtension) return;
+          
+          const adapter = cesiumExtension.getAdapter?.();
+          if (!adapter || !adapter.isAvailable) return;
+          
+          const viewer = adapter.getViewer?.();
+          if (!viewer) return;
+          
+          try {
+            const imageryLayers = viewer.imageryLayers;
+            if (imageryLayers.length > 0) {
+              imageryLayers.get(0).show = enabled;
+            }
+          } catch (error) {
+            console.error('[RenderingDebug] Failed to toggle imagery:', error);
+          }
+        },
+        
+        /**
+         * 设置 Three.js 辅助层整体透明度
+         * @param opacity - 透明度（0-1）
+         */
+        setThreeLayerOpacity: (opacity: number) => {
+          const clampedOpacity = Math.max(0, Math.min(1, opacity));
+          
+          // 设置卫星透明度
+          if (satelliteLayerRef.current) {
+            const renderer = satelliteLayerRef.current.getRenderer();
+            if (renderer && renderer.setOpacity) {
+              renderer.setOpacity(clampedOpacity);
+            }
+          }
+          
+          // 设置行星透明度（排除太阳和地球）
+          planetsRef.current.forEach((planet, key) => {
+            // 跳过太阳和地球
+            if (key === 'sun' || key === 'earth') return;
+            
+            const mesh = planet.getMesh();
+            if (mesh && mesh.material) {
+              const material = mesh.material as THREE.Material;
+              if ('opacity' in material) {
+                material.transparent = clampedOpacity < 1;
+                (material as any).opacity = clampedOpacity;
+                material.needsUpdate = true;
+              }
+            }
+          });
+          
+          // 设置轨道透明度
+          orbitsRef.current.forEach((orbit) => {
+            if (orbit.setOpacity) {
+              orbit.setOpacity(clampedOpacity);
+            }
+          });
+          
+          // 设置标签透明度
+          labelsRef.current.forEach((label) => {
+            if (label.setOpacity) {
+              label.setOpacity(clampedOpacity);
+            }
+          });
+        },
+      };
+      
+      // 从 localStorage 加载配置
+      try {
+        const savedConfig = localStorage.getItem('renderingModeConfig');
+        if (savedConfig) {
+          const parsedConfig = JSON.parse(savedConfig);
+          Object.assign(renderingConfigRef.current, parsedConfig);
+          console.log('[RenderingDebug] Loaded config from localStorage:', renderingConfigRef.current);
+        }
+      } catch (error) {
+        console.warn('[RenderingDebug] Failed to load config from localStorage:', error);
+      }
 
       // 处理窗口大小变化
       const handleResize = () => {

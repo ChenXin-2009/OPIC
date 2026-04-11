@@ -107,23 +107,26 @@ export class EarthPlanet extends Planet {
         const earthPos = this.getMesh().position;
         const distAU = camera.position.distanceTo(earthPos);
 
-        if (distAU > 0.1) {
-          // 太远时隐藏 Cesium canvas（避免显示过时画面），但保持状态
-          if (this.cesiumCanvasVisible) {
-            this.cesiumExtension.setVisible(false);
-            this.cesiumCanvasVisible = false;
-          }
-          return;
-        }
-
-        // 靠近时确保 canvas 可见（只在状态变化时调用，避免每帧 resize）
+        // 移除距离检查 - Cesium canvas 始终可见（只要 cesiumEnabled=true）
+        // 这样无论远近，Cesium 地球都会显示
+        
+        // 确保 canvas 可见（只在状态变化时调用，避免每帧 resize）
         if (!this.cesiumCanvasVisible) {
           this.cesiumExtension.setVisible(true);
           this.cesiumCanvasVisible = true;
         }
 
-        // Three.js OrbitControls 驱动，同步后渲染
-        this.cesiumExtension.syncCamera(camera, earthPos);
+        // 检查当前是否为 Cesium 主导模式
+        const cesiumNativeEnabled = this.cesiumExtension.getNativeCameraEnabled();
+        
+        if (!cesiumNativeEnabled) {
+          // Three.js 主导模式：Three.js OrbitControls 驱动，同步到 Cesium
+          this.cesiumExtension.syncCamera(camera, earthPos);
+        }
+        // 如果是 Cesium 主导模式，不执行正向同步
+        // 反向同步（Cesium → Three.js）在 SolarSystemCanvas3D 的渲染循环中处理
+        
+        // 无论哪种模式，都需要渲染 Cesium
         this.cesiumExtension.render();
       }
     }
@@ -198,8 +201,9 @@ export class EarthPlanet extends Planet {
    * 
    * @param enabled - 是否启用 Cesium
    * @param initialCamera - 启用时用于初始同步的 Three.js 相机（可选）
+   * @param cameraController - 相机控制器（用于恢复 OrbitControls 状态）
    */
-  setCesiumEnabled(enabled: boolean, initialCamera?: THREE.PerspectiveCamera): void {
+  setCesiumEnabled(enabled: boolean, initialCamera?: THREE.PerspectiveCamera, cameraController?: any): void {
     console.log(`[EarthPlanet] setCesiumEnabled called with: ${enabled}`);
     
     if (!this.cesiumExtension) {
@@ -220,51 +224,139 @@ export class EarthPlanet extends Planet {
       // 启用 Cesium: 先同步相机（Three.js → Cesium），再显示 canvas
       if (initialCamera) {
         try {
+          // ⚠️ 关键修复：启用时先同步相机状态，避免相机跳变
+          // 使用当前 Three.js 相机的位置和朝向初始化 Cesium 相机
           this.cesiumExtension.syncCamera(initialCamera, mesh.position);
           console.log('[EarthPlanet] Initial camera synced Three.js → Cesium');
+          
+          // 等待一帧，确保 Cesium 相机状态已更新
+          requestAnimationFrame(() => {
+            // 再次同步，确保状态一致
+            if (initialCamera && this.cesiumExtension) {
+              this.cesiumExtension.syncCamera(initialCamera, mesh.position);
+            }
+          });
         } catch (e) {
           console.warn('[EarthPlanet] Initial camera sync failed:', e);
         }
       }
       this.cesiumExtension.setVisible(true);
       this.cesiumCanvasVisible = true;
-      // 保留 mesh 可见但换成 depth-only 材质：
-      // - 写入深度缓冲，让地球后面的卫星被正确遮挡
-      // - 不写颜色（colorWrite=false），地球区域透明，Cesium 地球从下层透出来
-      // renderOrder=-2000：比天空盒(-1000)更先渲染，确保深度值在天空盒渲染前已写入
-      mesh.visible = true;
-      if (this.originalMaterial) {
-        const depthOnlyMat = new THREE.MeshBasicMaterial({
-          color: 0x000000,
-          transparent: true,
-          opacity: 1,
-          depthWrite: true,
-          side: THREE.FrontSide,
-          // 自定义混合：把地球区域的 RGBA 全部写为 0（完全透明）
-          // 这样 Cesium canvas 从下层透出，而不是被天空盒颜色覆盖
-          blending: THREE.CustomBlending,
-          blendEquation: THREE.AddEquation,
-          blendSrc: THREE.ZeroFactor,
-          blendDst: THREE.ZeroFactor,
-          blendSrcAlpha: THREE.ZeroFactor,
-          blendDstAlpha: THREE.ZeroFactor,
-        });
-        mesh.renderOrder = 0;
-        mesh.material = depthOnlyMat;
-      }
+      
+      // 切换到 depth-only 材质
+      this.switchToDepthOnlyMaterial();
       console.log('[EarthPlanet] Cesium enabled, mesh switched to depth-only');
     } else {
       // 禁用 Cesium: 隐藏 Cesium canvas，恢复 Planet 球体材质
       console.log('[EarthPlanet] Disabling Cesium canvas overlay');
+      
+      // ⚠️ 关键修复：如果正处于 Cesium 主导模式，需要先退出该模式
+      // 这样可以确保 OrbitControls 被重新启用
+      const wasInCesiumPrimaryMode = this.cesiumExtension.getNativeCameraEnabled();
+      if (wasInCesiumPrimaryMode) {
+        console.log('[EarthPlanet] Exiting Cesium primary mode before disabling Cesium');
+        
+        // 1. 禁用 Cesium 原生相机控制
+        this.cesiumExtension.setNativeCameraEnabled(false);
+        
+        // 2. 如果提供了 cameraController，恢复 OrbitControls
+        if (cameraController && typeof cameraController.setCesiumPrimaryMode === 'function') {
+          cameraController.setCesiumPrimaryMode(false);
+          console.log('[EarthPlanet] OrbitControls restored via CameraController');
+        }
+      }
+      
+      // 隐藏 Cesium canvas
       this.cesiumExtension.setVisible(false);
       this.cesiumCanvasVisible = false;
-      if (this.originalMaterial) {
-        mesh.material = this.originalMaterial;
-      }
-      mesh.renderOrder = 0; // 恢复默认渲染顺序
-      mesh.visible = true;
+      
+      // 恢复原始材质
+      this.restoreOriginalMaterial();
       console.log('[EarthPlanet] Cesium disabled, planet mesh restored');
     }
+  }
+  
+  /**
+   * 切换到 depth-only 材质
+   * 用于 Cesium 主导模式，让 Cesium 地球从下层透出
+   */
+  private switchToDepthOnlyMaterial(): void {
+    const mesh = this.getMesh();
+    if (!(mesh instanceof THREE.Mesh)) return;
+    
+    // 保存原始材质（如果还没保存）
+    if (!this.originalMaterial) {
+      this.originalMaterial = mesh.material as THREE.Material;
+    }
+    
+    // 创建 depth-only 材质
+    const depthOnlyMat = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 1,
+      depthWrite: true,
+      side: THREE.FrontSide,
+      // 自定义混合：把地球区域的 RGBA 全部写为 0（完全透明）
+      blending: THREE.CustomBlending,
+      blendEquation: THREE.AddEquation,
+      blendSrc: THREE.ZeroFactor,
+      blendDst: THREE.ZeroFactor,
+      blendSrcAlpha: THREE.ZeroFactor,
+      blendDstAlpha: THREE.ZeroFactor,
+    });
+    
+    mesh.material = depthOnlyMat;
+    mesh.renderOrder = 0;
+    mesh.visible = true;
+  }
+  
+  /**
+   * 恢复原始材质
+   * 用于退出 Cesium 主导模式，恢复 Three.js 地球渲染
+   */
+  private restoreOriginalMaterial(): void {
+    const mesh = this.getMesh();
+    if (!(mesh instanceof THREE.Mesh) || !this.originalMaterial) return;
+    
+    mesh.material = this.originalMaterial;
+    mesh.renderOrder = 0;
+    mesh.visible = true;
+  }
+  
+  /**
+   * 启用或禁用 Cesium 原生相机控制
+   * 
+   * @param enabled - 是否启用 Cesium 原生相机控制
+   */
+  setCesiumNativeCameraEnabled(enabled: boolean): void {
+    if (!this.cesiumExtension) {
+      console.warn('[EarthPlanet] No Cesium extension available');
+      return;
+    }
+    
+    this.cesiumExtension.setNativeCameraEnabled(enabled);
+    
+    // 注意：材质切换由 setCesiumEnabled 控制，这里只切换相机控制权
+    // 无论相机由谁控制，只要 cesiumEnabled=true，就应该显示 Cesium 地球
+    if (this.cesiumEnabled) {
+      // Cesium 已启用时，始终使用 depth-only 材质
+      this.switchToDepthOnlyMaterial();
+    }
+  }
+  
+  /**
+   * 获取当前 Cesium 模式状态
+   * 
+   * @returns 包含 cesiumEnabled 和 nativeCameraEnabled 的状态对象
+   */
+  getCesiumModeState(): {
+    cesiumEnabled: boolean;
+    nativeCameraEnabled: boolean;
+  } {
+    return {
+      cesiumEnabled: this.cesiumEnabled,
+      nativeCameraEnabled: this.cesiumExtension?.getNativeCameraEnabled() || false
+    };
   }
   
   /**

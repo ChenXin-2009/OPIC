@@ -294,12 +294,10 @@ export class CameraSynchronizer {
       }
 
       // 步骤二：赤道惯性系 → 黄道系（逆黄赤交角旋转，绕 X 轴旋转 +ε）
-      // Rx(+ε): y' = y*cos(ε) - z*sin(ε),  z' = y*sin(ε) + z*cos(ε)
-      // 注意：syncViewMatrix 里正变换是 Rx(-ε)，逆变换是 Rx(+ε)
-      // Rx(-ε): y' = y*cos(ε) + z*sin(ε),  z' = -y*sin(ε) + z*cos(ε)
-      // 所以 Rx(+ε) 即逆变换：y' = y*cos(ε) - z*sin(ε),  z' = y*sin(ε) + z*cos(ε)
-      const sy = iy * cosObl - iz * sinObl;
-      const sz = iy * sinObl + iz * cosObl;
+      // 正变换 Rx(-ε): y' = y*cos(ε) - z*sin(ε),  z' = y*sin(ε) + z*cos(ε)
+      // 逆变换 Rx(+ε): y' = y*cos(ε) + z*sin(ε),  z' = -y*sin(ε) + z*cos(ε)
+      const sy = iy * cosObl + iz * sinObl;
+      const sz = -iy * sinObl + iz * cosObl;
 
       return new THREE.Vector3(ix, sy, sz);
     };
