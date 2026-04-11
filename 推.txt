@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 8.2.0: 更新了无缝切换到cesium模式的方式"
+git commit -m "Release 8.2.1: 修BUG"
 git checkout main
 git pull origin main
-git tag v8.2.0
+git tag v8.2.1
 git push origin main
-git push origin v8.2.0
+git push origin v8.2.1

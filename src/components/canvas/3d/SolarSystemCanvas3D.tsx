@@ -998,7 +998,9 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
               // delta = quatAfter * inverse(quatBefore)
               const deltaQ = quatAfter.clone().multiply(quatBefore.clone().invert());
               const earthPos = planet.getMesh().position.clone();
-              cameraControllerRef.current.applyEarthLockDelta(deltaQ, earthPos);
+              if (cameraControllerRef.current) {
+                cameraControllerRef.current.applyEarthLockDelta(deltaQ, earthPos);
+              }
             } else {
               planet.updateRotation(currentTimeInDays, currentState.timeSpeed);
             }
