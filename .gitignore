@@ -51,6 +51,9 @@ next-env.d.ts
 .kiro/
 .vscode/
 
+# Playwright MCP 测试文件
+.playwright-mcp/
+
 # 根目录临时文件
 /*.txt
 /*.bat

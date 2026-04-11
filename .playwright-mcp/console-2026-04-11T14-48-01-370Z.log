@@ -253,3 +253,526 @@
 [  173077ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48716565 -577033702 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
 [  173148ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
 [  174180ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1175293517 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  175246ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48731629 -577032430 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  176276ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117532465 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  177327ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48742779 -577031488 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  178453ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117536667 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  179489ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48757507 -577030244 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  180611ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1175409146 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  181681ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48774380 -577028818 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  182757ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1175448727 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  183796ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48787803 -577027683 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  184877ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117548426 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  185870ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48798953 -577026740 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  186926ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1175514814 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  187973ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48811871 -577025647 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  189080ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11755544 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  190123ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48827061 -577024362 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  191220ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117559653 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  192258ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48841367 -577023152 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  193346ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117563507 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  194412ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48855673 -577021940 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  195442ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1175665855 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  196477ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48866697 -577021007 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  197567ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1175704165 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  198596ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48880373 -577019849 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  199706ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1175743057 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  200708ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48892911 -577018786 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  201792ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1175777083 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  202820ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48906292 -577017652 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  203925ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1175813195 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  204920ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48919083 -577016568 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  205997ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117584676 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  207044ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48932464 -577015434 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  208158ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1175887734 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  208188ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  209200ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48947779 -577014134 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  210286ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117592743 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  211319ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48961370 -577012981 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  212413ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1175966435 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  213508ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48978243 -577011549 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  214620ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11760147 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  215696ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -48994947 -577010131 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  216754ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1176054166 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  217796ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49007822 -577009038 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  218881ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117609259 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  219973ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49023853 -577007676 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  221090ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117614074 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  222173ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49040726 -577006242 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  223252ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1176182986 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  224280ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49053222 -577005180 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  225336ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117621458 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  226392ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49066645 -577004039 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  227453ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117625162 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  228507ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49080067 -577002897 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  229600ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117629236 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  230673ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49094751 -577001648 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  231752ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117633125 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  232792ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49108384 -577000488 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  233849ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1176366434 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  233857ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  234873ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49120375 -576999467 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  235935ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1176399537 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  236976ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49133377 -576998360 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  238078ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1176440627 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  239130ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49148482 -576997074 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  240243ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11764831 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  241346ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49166027 -576995579 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  242443ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11765272 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  243442ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49177219 -576994625 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  244473ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1176552316 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  245534ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49190010 -576993535 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  246642ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11765963 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  247695ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49205662 -576992200 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  248767ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1176635763 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  249826ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49219252 -576991041 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  250860ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1176668517 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  251888ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49230402 -576990090 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  253018ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117670822 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  254019ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49243739 -576988952 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  255158ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1176747223 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  255214ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  256211ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49260569 -576987515 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  257289ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1176786805 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  258342ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49274748 -576986305 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  259451ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117682801 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  260489ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49289264 -576985065 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  261581ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117686678 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  262653ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49303990 -576983807 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  263683ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1176901157 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  264749ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49315561 -576982818 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  265779ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117693102 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  266807ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49325953 -576981929 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  267880ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117696632 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  268907ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49338659 -576980843 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  270015ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177006136 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  271007ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49352207 -576979684 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  271061ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  272167ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177049424 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  273207ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49369542 -576978201 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  274347ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117709421 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  275392ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49385235 -576976858 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  276448ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177127548 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  277522ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49399372 -576975648 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  278602ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11771691 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  279661ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49413929 -576974402 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  280721ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177206826 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  281745ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49426089 -576973360 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  282863ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177246645 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  283903ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49441530 -576972037 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  284987ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177285532 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  286126ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49458906 -576970548 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  287169ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177328588 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  288237ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49472075 -576969419 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  289333ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11773684 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  290334ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49483729 -576968419 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  291426ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117740301 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  292553ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49501063 -576966933 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  293579ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177443056 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  294668ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49514737 -576965759 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  295754ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117748669 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  296779ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49527275 -576964683 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  297810ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177515276 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  298879ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49539602 -576963625 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  299929ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117755116 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  300960ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49551383 -576962613 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  302049ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177585186 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  303041ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49561775 -576961721 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  304070ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11776103 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  305118ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49572461 -576960802 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  306145ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177640045 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  307199ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49584915 -576959732 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  308248ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177676274 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  309318ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49598462 -576958568 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  310399ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177714234 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  311387ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49608728 -576957685 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  312432ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117774109 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  313475ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49620844 -576956643 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  314538ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117777697 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  315587ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49634350 -576955482 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  316675ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177816433 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  317772ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49650716 -576954073 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  318836ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177859493 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  319902ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49665062 -576952839 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  320978ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177897686 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  321975ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49676085 -576951890 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  323061ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177929165 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  324052ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49687781 -576950883 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  325131ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11779625 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  326183ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49700908 -576949752 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  327217ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1177993403 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  328260ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49712772 -576948730 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  329331ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178030325 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  330367ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49725225 -576947657 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  331446ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117806516 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  332502ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49740413 -576946347 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  333555ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117810428 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  334602ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49752572 -576945299 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  335662ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178139006 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  336721ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49766245 -576944120 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  337797ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117817604 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  338813ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49777857 -576943118 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  339891ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178209377 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  340929ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49791235 -576941964 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  341999ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178244096 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  343036ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49803394 -576940914 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  344115ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117828137 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  345167ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49817656 -576939683 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  346252ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117832014 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  347286ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49831287 -576938506 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  348359ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117835683 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  349414ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49845297 -576937295 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  350479ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178394794 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  351525ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49859180 -576936096 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  352640ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117843542 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  353629ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49870834 -576935089 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  354663ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178460997 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  355721ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49883539 -576933990 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  356812ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117850243 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  357857ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  357858ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49897801 -576932757 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  358956ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117854294 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  359991ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49911726 -576931552 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  361040ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117857419 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  362075ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49923927 -576930497 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  363171ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178614004 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  364190ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49937389 -576929332 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  365266ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178647107 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  366264ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49948622 -576928359 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  367344ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178679396 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  368383ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49962169 -576927186 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  369445ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117871285 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  370479ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49973359 -576926217 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  371523ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117874433 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  372590ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -49986738 -576925058 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  373647ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178782405 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  374740ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50001504 -576923778 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  375800ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117882338 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  376828ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50013662 -576922724 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  377894ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11788559 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  378890ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50024601 -576921776 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  379947ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178886574 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  381005ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50038021 -576920612 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  382090ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117892535 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  383132ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50051147 -576919474 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  384166ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178957294 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  385217ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50063599 -576918393 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  386295ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1178994793 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  387293ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50074832 -576917418 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  388361ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1179026044 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  389455ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50090271 -576916078 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  390547ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117906991 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  391575ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50103733 -576914909 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  392657ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1179106827 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  393721ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50117574 -576913707 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  394753ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11791397 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  395813ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50129900 -576912636 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  396877ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117917616 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  397905ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50142269 -576911561 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  398971ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1179210995 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  400001ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50154721 -576910479 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  401099ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117924942 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  402174ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50170497 -576909107 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  403303ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1179296067 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  404320ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50185305 -576907819 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  405386ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1179330326 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  406525ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50202638 -576906311 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  407585ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117937674 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  408617ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50215469 -576905194 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  409726ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117941435 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  410719ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50226701 -576904216 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  411781ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117944236 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  412844ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50240457 -576903019 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  413941ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117948542 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  414982ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50254466 -576901798 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  416064ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117951632 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  417105ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50267129 -576900695 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  417190ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  418243ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117956296 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  419236ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50280717 -576899511 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  420287ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117959051 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  421324ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50293000 -576898440 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  422401ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117962743 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  423463ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50307556 -576897171 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  424528ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1179666435 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  425566ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50320892 -576896008 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  426629ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1179701737 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  427678ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50334017 -576894863 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  428742ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117973866 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  429774ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50346469 -576893777 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  430866ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117977581 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  431887ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50360099 -576892587 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  432971ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117981204 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  434061ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50374949 -576891290 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  435079ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1179845487 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  436097ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50384877 -576890423 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  437207ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117988449 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  438243ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50399895 -576889112 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  439319ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1179920835 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  440359ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50413819 -576887895 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  441440ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.117996065 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  442543ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50430267 -576886457 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  443630ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180005325 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  444682ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50444570 -576885207 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  445794ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118004537 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  446786ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50456012 -576884206 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  447823ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118007072 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  448874ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50468212 -576883139 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  449959ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11801081 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  450958ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50478855 -576882208 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  451990ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118013322 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  453043ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50491096 -576881136 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  453098ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  454170ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180177894 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  455220ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50507082 -576879737 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  456309ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11802169 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  457339ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50520795 -576878536 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  457400ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  458428ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11802559 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  459458ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50533710 -576877405 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  460493ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180284955 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  461535ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50544984 -576876417 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  462597ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118031898 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  463644ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50558150 -576875264 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  464736ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118035845 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  465820ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50574094 -576873866 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  466981ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180409375 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  468027ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50591383 -576872350 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  469109ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118044757 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  470166ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50605769 -576871088 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  471278ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180492477 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  472324ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50620366 -576869808 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  473363ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118052072 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  474385ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50630757 -576868896 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  475476ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180558335 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  475503ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  476519ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50645185 -576867629 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  477583ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180595253 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  478627ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50658562 -576866455 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  479733ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118063507 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  480759ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50672612 -576865221 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  481880ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180674653 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  482874ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50684769 -576864153 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  483901ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.11806978 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  484901ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50693939 -576863347 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  485971ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180729168 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  487004ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50705886 -576862297 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  487020ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  488071ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180761456 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  489119ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50719305 -576861117 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  490201ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180800577 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  491246ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50733271 -576859889 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  492355ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180840507 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  493373ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50746521 -576858724 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  494475ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118087604 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  495519ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50761160 -576857436 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  496600ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180915856 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  497654ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50775420 -576856181 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  497732ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  498740ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1180956364 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  498812ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  499812ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50790858 -576854822 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  500915ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118099803 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  501916ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50803940 -576853670 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  502971ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181030786 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  503996ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50816012 -576852606 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  505076ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181066553 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  506119ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50829726 -576851398 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  507206ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181100346 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  508196ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50839485 -576850538 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  509248ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181125697 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  510251ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50849496 -576849656 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  511326ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118115706 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  512358ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50862746 -576848487 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  513435ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118119491 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  514515ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50877216 -576847211 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  515576ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181232524 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  516631ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50890761 -576846017 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  517718ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181273265 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  518785ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50905189 -576844744 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  519865ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118131192 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  520927ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50919617 -576843470 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  522084ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118135949 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  523081ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50935013 -576842111 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  524176ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181396064 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  525220ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50949861 -576840800 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  526292ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  526312ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118143657 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  527385ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50965761 -576839395 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  528501ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118147963 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  529531ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50980442 -576838098 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  530610ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181518054 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  531639ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -50993650 -576836930 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  532692ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181550347 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  533731ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51004838 -576835941 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  534772ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118157859 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  535750ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51013251 -576835197 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  536801ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181603936 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  537839ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51024777 -576834178 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  539119ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181662385 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  540112ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51044546 -576832429 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  540150ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  541221ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118169514 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  542208ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51055609 -576831450 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  543270ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181722223 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  544319ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51068943 -576830269 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  545428ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118176551 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  546492ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51084590 -576828884 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  547576ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118180428 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  548592ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51096873 -576827796 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  549683ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181839816 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  550765ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51112562 -576826406 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  551875ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118188623 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  553057ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51133678 -576824534 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  554183ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1181942592 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  555181ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51145582 -576823479 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  556214ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118196574 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  557238ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51155761 -576822576 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  558342ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182004167 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  559416ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51171913 -576821144 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  560490ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118204456 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  561530ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51185457 -576819942 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  562604ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182082407 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  562673ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  563674ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51199968 -576818654 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  564762ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182124075 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  565799ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51213933 -576817414 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  566919ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182166436 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  568007ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51231347 -576815868 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  569195ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182221067 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  570188ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51247961 -576814392 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  571293ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118225764 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  572357ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51263524 -576813009 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  573481ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182303126 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  574539ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51280012 -576811544 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  574605ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  575634ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182345604 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  576693ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51295323 -576810182 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  577757ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118238403 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  578838ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51310086 -576808869 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  579966ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182430903 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  580980ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51324934 -576807548 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  582125ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118247442 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  582216ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  583214ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51343609 -576805886 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  584321ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118252176 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  585392ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51358962 -576804519 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  586435ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182555323 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  587515ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51372926 -576803276 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  588542ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182591435 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  589538ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51382137 -576802455 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  590658ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182628935 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  591730ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51398962 -576800956 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  592835ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182672684 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  593908ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51414062 -576799610 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  594949ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182707986 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  594957ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  596022ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51426680 -576798486 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  597048ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118274155 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  598099ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51438625 -576797420 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  599199ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  599223ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182784606 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  600260ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51454608 -576795995 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  601424ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182829975 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  602418ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51469077 -576794704 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  603494ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118286354 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  604568ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51483925 -576793379 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  605632ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182902893 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  606687ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51496837 -576792226 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  607726ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182935187 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  608772ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51508866 -576791152 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  608842ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  609871ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1182975927 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  610929ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51524387 -576789766 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  612019ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118301713 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  613088ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51540159 -576788357 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  614162ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183058335 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  615260ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51555932 -576786947 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  616382ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118310764 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  616496ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  617510ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51574985 -576785244 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  617533ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  618602ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183153936 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  619614ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51587308 -576784142 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  620675ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183186807 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  621721ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51600515 -576782960 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  622771ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118322211 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  623802ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51613049 -576781839 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  624890ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118325926 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  625929ms] [LOG] [CameraSynchronizer] Three.js → Cesium sync: {threePos: Object, threeDir: Object, threeUp: Object, cesiumPos: Object, cesiumDir: Object} @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  625929ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51627013 -576780589 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  626990ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183296065 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  628022ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51639757 -576779448 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  629101ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183333104 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  630133ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51653047 -576778258 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  631302ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118337986 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  632364ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51672311 -576776533 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  633498ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118342963 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  634612ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51691405 -576774822 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  635688ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118347292 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  636683ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51702467 -576773830 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  637785ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183508104 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  638825ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51717145 -576772514 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  639993ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183556365 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  641117ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51737881 -576770655 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  642177ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183600924 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  643210ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51750120 -576769557 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  644307ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118363831 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  645354ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51764588 -576768258 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  646417ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183674885 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  647468ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51778131 -576767043 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  648580ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118371748 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  649726ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51798024 -576765256 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  650799ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183765163 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  651794ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51807866 -576764372 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  652856ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183794327 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  653917ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51821745 -576763126 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  654987ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183833336 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  656048ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51836087 -576761837 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  657144ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183874076 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  658187ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51850513 -576760540 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  659266ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183910766 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  660264ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51861827 -576759523 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  661325ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183942016 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  662367ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51874107 -576758419 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  663426ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183972685 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  664410ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51883318 -576757590 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  665447ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1183995833 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  666448ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51892613 -576756754 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  667548ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1184031945 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  668625ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51907922 -576755376 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  669663ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1184066436 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  670717ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51920581 -576754237 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  671803ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118410764 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  672871ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51935932 -576752855 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  673969ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118415 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  675025ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51951031 -576751495 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  676101ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118418947 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  677179ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51965457 -576750195 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  678221ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1184221874 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  679240ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51974877 -576749346 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  680320ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1184255094 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  681370ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51988840 -576748088 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  682423ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1184286345 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  683441ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -51998892 -576747182 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  684518ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1184321526 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  685575ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -52012308 -576745972 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  686606ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1184353475 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  687644ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -52024126 -576744906 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  688846ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1184404744 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  689971ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -52046669 -576742872 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  691090ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118445509 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  692078ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -52058613 -576741794 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  693168ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1184486807 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  694213ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -52073080 -576740488 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  695355ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118453264 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  696425ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -52089482 -576739007 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  697459ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118456331 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  698447ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -52097894 -576738247 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  699497ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118459097 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  700551ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -52110300 -576737126 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  701642ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.1184628936 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  702705ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -52124599 -576735834 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  703742ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118466215 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231
+[  704797ms] [LOG] [CesiumAdapter] camera altitude (m): 1456636324 near: 1000.0 far: 145663632389 cesiumPos(m): -52136964 -576734717 1343521207 @ https://cxic.cxin.tech/_next/static/chunks/d22827a4a9b7feda.js:583
+[  705901ms] [LOG] getCelestialBodies: Loaded 21 bodies for JD 2461142.118470336 @ https://cxic.cxin.tech/_next/static/chunks/c2b98b5aa142b529.js:231

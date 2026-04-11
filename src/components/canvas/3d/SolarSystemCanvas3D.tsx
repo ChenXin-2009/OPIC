@@ -388,6 +388,17 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       // 2. 启用 Cesium 原生相机控制
       (earthPlanet as any).setCesiumNativeCameraEnabled(true);
       
+      // 2.5. 禁用所有行星标记圈的 pointer-events，避免挡住 Cesium canvas
+      // 在 cesium_primary 模式下，用户需要直接与 Cesium 地球交互
+      // 标记圈会挡住鼠标事件，导致无法旋转/缩放地球
+      planetsRef.current.forEach((planet) => {
+        const markerObject = planet.getMarkerObject?.();
+        if (markerObject && markerObject.element) {
+          markerObject.element.style.pointerEvents = 'none';
+        }
+      });
+      console.log('[RenderingMode] Disabled pointer-events on planet markers for Cesium interaction');
+      
       // 3. 禁用 Three.js 侧控制
       if (cameraControllerRef.current) {
         cameraControllerRef.current.setCesiumPrimaryMode(true);
@@ -518,6 +529,16 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       if (earthPlanet && 'setCesiumNativeCameraEnabled' in earthPlanet) {
         (earthPlanet as any).setCesiumNativeCameraEnabled(false);
       }
+      
+      // 1.5. 恢复所有行星标记圈的 pointer-events
+      // 在 three_primary 模式下，用户需要能够点击标记圈来选择行星
+      planetsRef.current.forEach((planet) => {
+        const markerObject = planet.getMarkerObject?.();
+        if (markerObject && markerObject.element) {
+          markerObject.element.style.pointerEvents = 'auto';
+        }
+      });
+      console.log('[RenderingMode] Restored pointer-events on planet markers');
       
       // 2. 恢复 Three.js 侧控制
       if (cameraControllerRef.current) {
