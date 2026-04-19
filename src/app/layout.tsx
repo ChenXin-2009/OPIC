@@ -8,7 +8,6 @@ import { SpeedInsights } from "@vercel/speed-insights/next"; // ← 新增
 import LanguageDetector from "@/components/LanguageDetector";
 import LanguageButton from "@/components/LanguageButton";
 import Header from "@/components/Header";
-import LoadingPage from "@/components/loading/LoadingPage";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -153,15 +152,6 @@ export default async function RootLayout({
             margin: 0;
             padding: 0;
           }
-          
-          #main-content {
-            opacity: 0;
-            transition: opacity 0.3s;
-          }
-          
-          body.loaded #main-content {
-            opacity: 1;
-          }
         `}} />
       </head>
       <body
@@ -169,15 +159,10 @@ export default async function RootLayout({
         style={{ backgroundColor: '#000' }}
         suppressHydrationWarning
       >
-        {/* React 加载页面 - 唯一的加载界面 */}
-        <LoadingPage />
-        
-        <div id="main-content">
-          <Header />
-          <LanguageButton />
-          <LanguageDetector initialLang={lang} />
-          {children}
-        </div>
+        <Header />
+        <LanguageButton />
+        <LanguageDetector initialLang={lang} />
+        {children}
 
         {/* Vercel Analytics - 网站访问统计 */}
         <Analytics />
