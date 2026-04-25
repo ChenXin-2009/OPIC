@@ -91,7 +91,7 @@ export default function InitializationOverlay({ progress, lang }: Initialization
         {/* Logo */}
         <div className="relative w-32 h-32 animate-pulse">
           <Image
-            src="/CX.svg"
+            src="/LOGO/logolw.svg"
             alt="CXIC Logo"
             fill
             priority
