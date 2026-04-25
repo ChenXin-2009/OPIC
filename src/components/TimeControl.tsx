@@ -94,7 +94,7 @@ const TimeControl = React.memo(() => {
       <div 
         className="absolute left-0 right-0 z-10 flex flex-col items-center px-2 sm:px-4" 
         style={{ 
-          bottom: `${cfg.bottomOffset}px`,
+          bottom: `${cfg.bottomOffset + 80}px`, // 上移 80px 避开 Dock
           gap: `${cfg.gapMobile}px`,
           willChange: 'auto', 
           transform: 'translateZ(0)', 
