@@ -225,9 +225,10 @@ interface SolarSystemCanvas3DProps {
   onEarthPlanetReady?: (earthPlanet: any) => void;
   onCameraReady?: (camera: any) => void;
   earthLockEnabled?: boolean;
+  onInitializationProgress?: (stage: string, progress: number, isComplete: boolean) => void;
 }
 
-export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnabled = false, onEarthPlanetReady, onCameraReady, earthLockEnabled = false }: SolarSystemCanvas3DProps = {}) {
+export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnabled = false, onEarthPlanetReady, onCameraReady, earthLockEnabled = false, onInitializationProgress }: SolarSystemCanvas3DProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneManagerRef = useRef<SceneManager | null>(null);
   const cameraControllerRef = useRef<CameraController | null>(null);
@@ -320,6 +321,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       const currentState = useSolarSystemStore.getState();
       if (currentState.celestialBodies.length === 0) {
         console.log('Waiting for celestial bodies to load...');
+        onInitializationProgress?.('idle', 0, false);
         checkAndInitFrameId = requestAnimationFrame(checkAndInit);
         return;
       }
@@ -327,13 +329,22 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       console.log(`Initializing scene with ${currentState.celestialBodies.length} celestial bodies`);
       isInitialized = true; // 标记已初始化，防止重复
       
+      // 阶段1: 初始化场景 (0-20%)
+      onInitializationProgress?.('scene', 10, false);
+      
       // 容器有尺寸，开始初始化
       const sceneManager = new SceneManager(containerRef.current);
       sceneManagerRef.current = sceneManager;
 
+      onInitializationProgress?.('scene', 20, false);
+
       // 初始化宇宙尺度渲染器（异步加载数据）
+      // 阶段2: 加载宇宙数据 (20-40%)
+      onInitializationProgress?.('universe', 25, false);
       initializeUniverseRenderers(sceneManager).catch(error => {
         console.error('Failed to initialize universe renderers:', error);
+      }).finally(() => {
+        onInitializationProgress?.('universe', 40, false);
       });
 
       // 创建卫星图层
@@ -442,6 +453,9 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       const julianDay = dateToJulianDay(initialState.currentTime);
       const elementsMap = ORBITAL_ELEMENTS;
 
+      // 阶段3: 创建天体 (40-80%)
+      onInitializationProgress?.('celestialBodies', 40, false);
+
       // 创建太阳
       const sunBody = initialState.celestialBodies.find((b: any) => b.isSun);
       if (sunBody) {
@@ -460,7 +474,12 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
 
       }
 
+      onInitializationProgress?.('celestialBodies', 45, false);
+
       // 创建行星和轨道（含卫星）
+      const totalBodies = initialState.celestialBodies.filter((b: any) => !b.isSun).length;
+      let processedBodies = 0;
+      
       initialState.celestialBodies.forEach((body: any) => {
         if (body.isSun) return;
 
@@ -640,7 +659,30 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           scene.add(label.getSprite());
           labelsRef.current.set(body.name.toLowerCase(), label);
         }
+        
+        // 更新进度
+        processedBodies++;
+        const bodyProgress = 45 + (processedBodies / totalBodies) * 35; // 45-80%
+        onInitializationProgress?.('celestialBodies', bodyProgress, false);
       });
+
+      // 阶段4: 加载纹理 (80-95%)
+      onInitializationProgress?.('textures', 80, false);
+      
+      // 纹理加载是异步的,我们模拟进度
+      let textureProgress = 80;
+      const textureInterval = setInterval(() => {
+        textureProgress += 3;
+        if (textureProgress >= 95) {
+          textureProgress = 95;
+          clearInterval(textureInterval);
+          // 标记初始化完成
+          setTimeout(() => {
+            onInitializationProgress?.('complete', 100, true);
+          }, 200);
+        }
+        onInitializationProgress?.('textures', textureProgress, false);
+      }, 100);
 
       // 动画循环
       const animate = () => {

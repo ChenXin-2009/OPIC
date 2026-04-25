@@ -1,0 +1,138 @@
+# 初始化遮罩实现文档
+
+## 概述
+
+在进入页面聚焦到地球之前,添加了一个半透明黑色模糊遮罩,显示Logo和真实的初始化进度。
+
+## 实现方案
+
+采用**方案B**:独立的初始化状态管理,跟踪各个初始化阶段并显示真实进度。
+
+## 核心组件
+
+### 1. InitializationOverlay 组件
+位置: `src/components/InitializationOverlay.tsx`
+
+**功能:**
+- 半透明黑色背景 (85% 不透明度)
+- 模糊效果 (backdrop-filter: blur(10px))
+- 居中显示 CXIC Logo (带脉冲动画)
+- 进度条显示真实初始化进度
+- 进度百分比显示
+- 初始化完成后平滑淡出 (500ms 延迟 + 500ms 淡出)
+
+**Props:**
+```typescript
+interface InitializationProgress {
+  stage: string;      // 当前阶段
+  progress: number;   // 进度 0-100
+  isComplete: boolean; // 是否完成
+}
+```
+
+**支持的阶段:**
+- `idle`: 准备中 (0%)
+- `scene`: 初始化场景 (10-20%)
+- `universe`: 加载宇宙数据 (20-40%)
+- `celestialBodies`: 加载天体数据 (40-80%)
+- `textures`: 加载纹理 (80-95%)
+- `complete`: 初始化完成 (100%)
+
+### 2. SolarSystemCanvas3D 修改
+位置: `src/components/canvas/3d/SolarSystemCanvas3D.tsx`
+
+**新增 Props:**
+```typescript
+onInitializationProgress?: (stage: string, progress: number, isComplete: boolean) => void;
+```
+
+**进度跟踪点:**
+1. **场景初始化** (10-20%): SceneManager 创建
+2. **宇宙数据加载** (20-40%): 异步加载本星系群、近邻星系群等数据
+3. **天体创建** (40-80%): 创建太阳、行星、卫星及其轨道
+4. **纹理加载** (80-95%): 模拟纹理异步加载进度
+5. **完成** (100%): 所有初始化完成
+
+### 3. 主页面集成
+位置: `src/app/page.tsx`
+
+**状态管理:**
+```typescript
+const [initProgress, setInitProgress] = useState({
+  stage: 'idle',
+  progress: 0,
+  isComplete: false,
+});
+```
+
+**组件使用:**
+```tsx
+<InitializationOverlay progress={initProgress} lang={lang} />
+
+<SolarSystemCanvas3D 
+  onInitializationProgress={(stage, progress, isComplete) => {
+    setInitProgress({ stage, progress, isComplete });
+  }}
+/>
+```
+
+## 视觉效果
+
+### 遮罩样式
+- 背景: `rgba(0, 0, 0, 0.85)` + `blur(10px)`
+- z-index: `9999` (最顶层)
+- 全屏覆盖: `fixed inset-0`
+
+### Logo
+- 尺寸: 128x128px
+- 动画: `animate-pulse` (呼吸效果)
+- 图片: `/CX.svg`
+
+### 进度条
+- 宽度: 300px
+- 高度: 4px (容器) + 4px (填充)
+- 颜色: 灰色背景 + 白色填充
+- 效果: 白色光晕 `box-shadow: 0 0 10px rgba(255, 255, 255, 0.5)`
+- 过渡: `transition-all duration-300 ease-out`
+
+### 文字
+- 阶段文本: 16px, 大写, 字母间距 1px
+- 百分比: 14px, 70% 不透明度
+- 字体: Novecento Wide (数字专用字体)
+
+## 动画时序
+
+1. **页面加载**: 遮罩立即显示,进度 0%
+2. **初始化开始**: 进度从 0% 逐步增加到 100%
+3. **初始化完成**: 
+   - 延迟 500ms
+   - 淡出动画 500ms
+   - 移除组件
+4. **总时长**: 约 1-2 秒 (取决于加载速度)
+
+## 多语言支持
+
+阶段名称支持中英文:
+- 中文: 准备中、初始化场景、加载天体数据、加载宇宙数据、加载纹理、初始化完成
+- 英文: Preparing、Initializing Scene、Loading Celestial Bodies、Loading Universe Data、Loading Textures、Initialization Complete
+
+## 性能考虑
+
+1. **异步加载**: 宇宙数据和纹理异步加载,不阻塞主线程
+2. **进度模拟**: 纹理加载使用定时器模拟进度,避免频繁更新
+3. **组件卸载**: 完成后完全移除组件,释放内存
+4. **GPU 加速**: 使用 `backdrop-filter` 和 `transform` 触发 GPU 加速
+
+## 注意事项
+
+1. **z-index 层级**: 遮罩使用 `z-index: 9999`,确保在所有元素之上
+2. **指针事件**: 遮罩期间禁用所有交互 (默认行为)
+3. **响应式**: 自动适配不同屏幕尺寸
+4. **无障碍**: 使用语义化 HTML,支持屏幕阅读器
+
+## 未来优化
+
+1. 可以添加更精确的纹理加载进度跟踪
+2. 可以添加加载失败的错误处理
+3. 可以添加跳过动画的选项
+4. 可以添加自定义主题颜色

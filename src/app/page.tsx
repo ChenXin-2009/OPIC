@@ -20,6 +20,7 @@ import { useModManager } from "@/hooks/useModManager";
 import WeatherDisasterOverlay from "@/components/weather-disaster/WeatherDisasterOverlay";
 import SpaceLaunchOverlay from "@/components/space-launches/SpaceLaunchOverlay";
 import GlobalTrafficOverlay from "@/components/global-traffic/GlobalTrafficOverlay";
+import InitializationOverlay from "@/components/InitializationOverlay";
 
 /**
  * Info button component for top-right corner.
@@ -159,6 +160,13 @@ export default function SolarSystemPage() {
   // 地球是否可见（相机足够近时显示按钮）
   const [earthVisible, setEarthVisible] = useState(false);
   
+  // 初始化进度状态
+  const [initProgress, setInitProgress] = useState({
+    stage: 'idle',
+    progress: 0,
+    isComplete: false,
+  });
+  
   // 获取当前语言
   const lang = useSolarSystemStore((state) => state.lang);
 
@@ -225,6 +233,9 @@ export default function SolarSystemPage() {
         height: '100dvh',
       }}
     >
+      {/* 初始化遮罩 */}
+      <InitializationOverlay progress={initProgress} lang={lang} />
+      
       <InfoButton onClick={() => setIsInfoModalOpen(true)} lang={lang} />
       <EphemerisButton onClick={() => setIsEphemerisStatusOpen(true)} lang={lang} />
       <ModManagerButton lang={lang} />
@@ -282,6 +293,9 @@ export default function SolarSystemPage() {
             earthLockEnabled={earthLockEnabled}
             onEarthPlanetReady={setEarthPlanet}
             onCameraReady={setCamera}
+            onInitializationProgress={(stage, progress, isComplete) => {
+              setInitProgress({ stage, progress, isComplete });
+            }}
           />
         </div>
         <TimeControl />
