@@ -26,6 +26,7 @@ interface InitializationOverlayProps {
 
 const STAGE_NAMES = {
   zh: {
+    loading: '加载资源...',
     idle: '准备中...',
     scene: '初始化场景...',
     celestialBodies: '加载天体数据...',
@@ -34,6 +35,7 @@ const STAGE_NAMES = {
     complete: '初始化完成',
   },
   en: {
+    loading: 'Loading Resources...',
     idle: 'Preparing...',
     scene: 'Initializing Scene...',
     celestialBodies: 'Loading Celestial Bodies...',
