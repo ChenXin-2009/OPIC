@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 8.3.1: 更新许可证信息"
+git commit -m "Release 8.4.0: 优化"
 git checkout main
 git pull origin main
-git tag v8.3.1
+git tag v8.4.0
 git push origin main
-git push origin v8.3.1
+git push origin v8.4.0
