@@ -49,9 +49,10 @@ export default function InitializationOverlay({ progress, lang }: Initialization
   const [isVisible, setIsVisible] = useState(true);
   const [shouldRender, setShouldRender] = useState(true);
 
-  // 当初始化完成时，延迟后开始淡出动画
+  // 当初始化完成或进度达到100%时，延迟后开始淡出动画
   useEffect(() => {
-    if (progress.isComplete) {
+    // 触发条件：isComplete 为 true 或进度达到 100%
+    if (progress.isComplete || progress.progress >= 100) {
       // 延迟500ms后开始淡出
       const fadeTimer = setTimeout(() => {
         setIsVisible(false);
@@ -68,7 +69,7 @@ export default function InitializationOverlay({ progress, lang }: Initialization
       };
     }
     return undefined;
-  }, [progress.isComplete]);
+  }, [progress.isComplete, progress.progress]);
 
   // 如果不应该渲染，直接返回null
   if (!shouldRender) {
@@ -99,6 +100,8 @@ export default function InitializationOverlay({ progress, lang }: Initialization
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         transition: 'background-color 300ms ease-out',
+        // 当不可见或透明度为0时，让点击穿透
+        pointerEvents: (!isVisible || overlayOpacity === 0) ? 'none' : 'auto',
       }}
     >
       {/* Logo - 居中 */}
