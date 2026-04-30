@@ -100,8 +100,8 @@ export default function InitializationOverlay({ progress, lang }: Initialization
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         transition: 'background-color 300ms ease-out',
-        // 当不可见或透明度为0时，让点击穿透
-        pointerEvents: (!isVisible || overlayOpacity === 0) ? 'none' : 'auto',
+        // 始终允许点击穿透，不阻挡用户操作
+        pointerEvents: 'none',
       }}
     >
       {/* Logo - 居中 */}

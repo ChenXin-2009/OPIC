@@ -40,34 +40,13 @@ export default function SolarSystemPage() {
   
   // 初始化进度状态
   const [initProgress, setInitProgress] = useState({
-    stage: 'loading',
+    stage: 'idle',
     progress: 0,
     isComplete: false,
   });
   
   // 获取当前语言
   const lang = useSolarSystemStore((state) => state.lang);
-
-  // 模拟页面加载进度 (0-60%)
-  useEffect(() => {
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 2;
-      if (progress >= 60) {
-        progress = 60;
-        clearInterval(interval);
-      }
-      setInitProgress(prev => {
-        // 只在场景初始化之前更新，且进度只能前进
-        if ((prev.stage === 'loading' || prev.stage === 'idle') && progress > prev.progress) {
-          return { stage: 'loading', progress, isComplete: false };
-        }
-        return prev;
-      });
-    }, 50); // 每50ms增加2%,约1.5秒到达60%
-
-    return () => clearInterval(interval);
-  }, []);
 
   // 从MOD状态读取功能启用状态
   const cesiumModEnabled = useModStore((state) => state.mods['cesium-integration']?.state === 'enabled');
@@ -174,12 +153,11 @@ export default function SolarSystemPage() {
             onEarthPlanetReady={setEarthPlanet}
             onCameraReady={setCamera}
             onInitializationProgress={(stage, progress, isComplete) => {
-              // 将场景初始化进度映射到 60-100% 范围
-              const mappedProgress = 60 + (progress * 0.4);
+              // 直接使用场景初始化进度（0-100%）
               setInitProgress(prev => {
                 // 进度只能前进，不能后退（防止重复初始化导致进度跳回）
-                if (mappedProgress > prev.progress || isComplete) {
-                  return { stage, progress: mappedProgress, isComplete };
+                if (progress > prev.progress || isComplete) {
+                  return { stage, progress, isComplete };
                 }
                 return prev;
               });
