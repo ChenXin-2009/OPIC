@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 9.2.1: 修bug"
+git commit -m "Release 9.2.2: 修bug"
 git checkout main
 git pull origin main
-git tag v9.2.1
+git tag v9.2.2
 git push origin main
-git push origin v9.2.1
+git push origin v9.2.2
