@@ -18,6 +18,13 @@ OPIC is an interactive universe visualization application built with Three.js, C
 
 The project is transitioning to a modular plugin architecture (MOD Manager system), allowing features to be independently loaded, configured, and toggled at runtime without restarting the application.
 
+### Demo
+
+<div align="center">
+  <img src="docs/images/earth-to-universe-zoom.gif" alt="Earth to Universe Zoom Demo" width="800">
+  <p><em>Seamless zoom experience from Earth's surface buildings to the cosmic panorama</em></p>
+</div>
+
 ## Features
 
 ### Earth Visualization (Cesium Integration)
@@ -41,6 +48,11 @@ The project is transitioning to a modular plugin architecture (MOD Manager syste
 - Satellite search and browsing
 - Orbital path visualization
 - Detailed satellite parameters and orbital elements
+
+<div align="center">
+  <img src="docs/images/satellite-tracking-demo.gif" alt="Satellite Tracking Demo" width="800">
+  <p><em>Real-time satellite orbit tracking and information display</em></p>
+</div>
 
 ### Multi-Scale Universe Visualization
 
@@ -68,6 +80,11 @@ A modular plugin architecture that keeps the core system lightweight while allow
 - Versioned API layer: Time, Camera, Celestial, Satellite, Render APIs
 - Error isolation — MOD failures don't affect the core system
 - Configuration persistence across sessions
+
+<div align="center">
+  <img src="docs/images/mod-manager-interface.gif" alt="MOD Manager Interface" width="800">
+  <p><em>MOD Manager interface with example modules</em></p>
+</div>
 
 ### Visual Features
 

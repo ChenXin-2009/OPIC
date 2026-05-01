@@ -13,10 +13,10 @@
 ### 1. InitializationOverlay 组件
 位置: `src/components/InitializationOverlay.tsx`
 
-**功能:**
+**功能：**
 - 半透明黑色背景 (85% 不透明度)
 - 模糊效果 (backdrop-filter: blur(10px))
-- 居中显示 CXIC Logo (带脉冲动画)
+- 居中显示 OPIC Logo (带脉冲动画)
 - 进度条显示真实初始化进度
 - 进度百分比显示
 - 初始化完成后平滑淡出 (500ms 延迟 + 500ms 淡出)

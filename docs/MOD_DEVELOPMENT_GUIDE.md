@@ -2,9 +2,14 @@
 
 ## 简介
 
-欢迎使用 CXIC MOD 系统!本指南将帮助你开发功能强大且安全的 MOD,充分利用 CXIC 提供的企业级插件平台能力。
+欢迎使用 OPIC MOD 系统！本指南将帮助你开发功能强大且安全的 MOD，充分利用 OPIC 提供的企业级插件平台能力。
 
-CXIC MOD 系统提供以下核心功能:
+<div align="center">
+  <img src="images/mod-manager-interface.gif" alt="MOD管理器界面" width="700">
+  <p><em>MOD 管理器界面与示例模组展示</em></p>
+</div>
+
+OPIC MOD 系统提供以下核心功能：
 
 - **权限系统**: 细粒度的 API 访问控制
 - **扩展点机制**: 声明式 UI 扩展(Dock 图标、窗口、命令)

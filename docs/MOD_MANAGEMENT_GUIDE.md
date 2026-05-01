@@ -2,7 +2,12 @@
 
 ## 概述
 
-本指南说明如何在 CXIC 系统中添加、删除和管理 MOD。
+本指南说明如何在 OPIC 系统中添加、删除和管理 MOD。
+
+<div align="center">
+  <img src="images/mod-manager-interface.gif" alt="MOD管理器界面" width="700">
+  <p><em>MOD 管理器提供直观的界面来管理所有模组</em></p>
+</div>
 
 ## 添加新 MOD
 

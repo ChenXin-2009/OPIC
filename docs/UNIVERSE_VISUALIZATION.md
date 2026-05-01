@@ -4,6 +4,11 @@
 
 This document describes the architecture and implementation of the observable universe visualization feature, which extends the solar system visualization from the galaxy scale to the observable universe scale.
 
+<div align="center">
+  <img src="images/earth-to-universe-zoom.gif" alt="从地球到宇宙的缩放演示" width="700">
+  <p><em>多尺度宇宙可视化：从地球表面到可观测宇宙边缘</em></p>
+</div>
+
 ## Architecture
 
 ### Renderer Architecture

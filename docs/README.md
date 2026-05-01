@@ -1,19 +1,35 @@
-# CXIC 项目文档索引
+# OPIC 项目文档索引
 
-本目录包含 CXIC 宇宙集成系统的核心技术文档。
+本目录包含 OPIC (Open Integrated Cosmos) 宇宙集成系统的核心技术文档。
+
+## 项目演示
+
+<div align="center">
+  <img src="images/earth-to-universe-zoom.gif" alt="从地球到宇宙的缩放演示" width="700">
+  <p><em>从地球表面到宇宙全景的无缝缩放</em></p>
+</div>
+
+<div align="center">
+  <img src="images/satellite-tracking-demo.gif" alt="卫星追踪演示" width="700">
+  <p><em>实时卫星轨道追踪与信息展示</em></p>
+</div>
+
+<div align="center">
+  <img src="images/mod-manager-interface.gif" alt="MOD管理器界面" width="700">
+  <p><em>MOD 管理器界面与示例模组</em></p>
+</div>
 
 ## 项目概览
 
 | 文档 | 说明 |
 |------|------|
 | [CODE_QUALITY.md](./CODE_QUALITY.md) | 代码质量标准和最佳实践 |
-| [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) | 项目实现总结 |
+| [NAME_CHANGE_ANNOUNCEMENT.md](./NAME_CHANGE_ANNOUNCEMENT.md) | 项目更名公告（CXIC → OPIC） |
 
 ## 架构与设计
 
 | 文档 | 说明 |
 |------|------|
-| [COORDINATE_SYSTEM_ALIGNMENT.md](./COORDINATE_SYSTEM_ALIGNMENT.md) | 坐标系统对齐说明 |
 | [INTEGRATION_GUIDE.md](./INTEGRATION_GUIDE.md) | 集成指南 |
 | [UNIVERSE_VISUALIZATION.md](./UNIVERSE_VISUALIZATION.md) | 宇宙可视化架构 |
 
@@ -23,57 +39,45 @@
 
 | 文档 | 说明 |
 |------|------|
-| [GALAXY_AXES_GUIDE.md](./GALAXY_AXES_GUIDE.md) | 银河系坐标轴指南 |
 | [GALAXY_COMPLETE_SUMMARY.md](./GALAXY_COMPLETE_SUMMARY.md) | 银河系渲染完整总结 |
-| [GALAXY_ORIENTATION_CALCULATION.md](./GALAXY_ORIENTATION_CALCULATION.md) | 银河系方向计算 |
 
 ### 宇宙尺度
 
 | 文档 | 说明 |
 |------|------|
 | [LANIAKEA_DATA_LIMITATIONS.md](./LANIAKEA_DATA_LIMITATIONS.md) | Laniakea 超星系团数据限制 |
-| [LANIAKEA_FIX_SUMMARY_CN.md](./LANIAKEA_FIX_SUMMARY_CN.md) | Laniakea 修复总结 |
 
-### 太阳系
-
-| 文档 | 说明 |
-|------|------|
-| [JUPITER_MOONS_ACCURACY_ANALYSIS_CN.md](./JUPITER_MOONS_ACCURACY_ANALYSIS_CN.md) | 木星卫星精度分析 |
-| [SUN_IMPLEMENTATION_SUMMARY.md](./SUN_IMPLEMENTATION_SUMMARY.md) | 太阳实现总结 |
-
-### 视觉效果
+## MOD 系统文档
 
 | 文档 | 说明 |
 |------|------|
-| [SKYBOX_ROTATION_FINAL.md](./SKYBOX_ROTATION_FINAL.md) | 天空盒旋转方案 |
-| [WEBP_CONVERSION_COMPLETE.md](./WEBP_CONVERSION_COMPLETE.md) | WebP 转换报告 |
-
-## 性能优化
-
-| 文档 | 说明 |
-|------|------|
-| [LOADING_OPTIMIZATION_SUMMARY.md](./LOADING_OPTIMIZATION_SUMMARY.md) | 加载优化总结 |
+| [MOD_DEVELOPMENT_GUIDE.md](./MOD_DEVELOPMENT_GUIDE.md) | MOD 开发指南 |
+| [MOD_MANAGEMENT_GUIDE.md](./MOD_MANAGEMENT_GUIDE.md) | MOD 管理指南 |
+| [MOD_DYNAMIC_LOADING.md](./MOD_DYNAMIC_LOADING.md) | MOD 动态加载指南 |
+| [MOD_AUTO_DISCOVERY.md](./MOD_AUTO_DISCOVERY.md) | MOD 自动发现机制 |
+| [MOD_PACKAGE_FORMAT.md](./MOD_PACKAGE_FORMAT.md) | MOD 包格式规范 |
+| [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) | MOD 架构迁移指南 |
 
 ---
 
 ## 项目架构
 
 ```
-cxic/
+opic/
 ├── src/
 │   ├── app/                 # Next.js 应用路由
 │   ├── components/          # React 组件
 │   │   ├── canvas/         # 3D 画布组件
 │   │   ├── cesium/         # Cesium 相关组件
 │   │   ├── satellite/      # 卫星追踪组件
-│   │   ├── mod-manager/    # MOD 管理器 UI（开发中）
+│   │   ├── mod-manager/    # MOD 管理器 UI
 │   │   └── ...
 │   ├── lib/
 │   │   ├── 3d/             # Three.js 渲染器
 │   │   ├── cesium/         # Cesium 集成
 │   │   ├── astronomy/      # 天文计算
 │   │   ├── satellite/      # 卫星追踪
-│   │   ├── mod-manager/    # MOD 管理器核心（开发中）
+│   │   ├── mod-manager/    # MOD 管理器核心
 │   │   │   ├── core/       # 注册表、生命周期、依赖解析
 │   │   │   ├── api/        # Time/Camera/Celestial/Satellite/Render API
 │   │   │   ├── persistence/# 配置持久化

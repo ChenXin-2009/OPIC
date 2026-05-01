@@ -1,0 +1,93 @@
+{
+  "endpoints": [
+    {
+      "path": "/api/disasters",
+      "method": "GET",
+      "cacheTTL": 3600,
+      "testParams": {
+        "source": "usgs_earthquake"
+      }
+    },
+    {
+      "path": "/api/launches",
+      "method": "GET",
+      "cacheTTL": 600,
+      "testParams": {
+        "source": "launch_library2"
+      }
+    },
+    {
+      "path": "/api/traffic",
+      "method": "GET",
+      "cacheTTL": 1800,
+      "testParams": {
+        "source": "opensky"
+      }
+    },
+    {
+      "path": "/api/satellites",
+      "method": "GET",
+      "cacheTTL": 7200,
+      "rateLimit": {
+        "requests": 10,
+        "window": 60
+      }
+    },
+    {
+      "path": "/api/satellites/realtime",
+      "method": "GET",
+      "cacheTTL": 5,
+      "rateLimit": {
+        "requests": 10,
+        "window": 60
+      }
+    },
+    {
+      "path": "/api/satellites/passes",
+      "method": "GET",
+      "cacheTTL": 300,
+      "rateLimit": {
+        "requests": 10,
+        "window": 60
+      },
+      "testParams": {
+        "noradId": "25544",
+        "latitude": "39.9042",
+        "longitude": "116.4074"
+      }
+    },
+    {
+      "path": "/api/satellites/metadata",
+      "method": "GET",
+      "cacheTTL": 86400,
+      "rateLimit": {
+        "requests": 10,
+        "window": 60
+      }
+    },
+    {
+      "path": "/api/satellites/groundtrack",
+      "method": "GET",
+      "cacheTTL": 300,
+      "rateLimit": {
+        "requests": 10,
+        "window": 60
+      },
+      "testParams": {
+        "noradId": "25544"
+      }
+    },
+    {
+      "path": "/api/satellites/[noradId]/details",
+      "method": "GET",
+      "cacheTTL": 86400,
+      "rateLimit": {
+        "requests": 10,
+        "window": 60
+      },
+      "testParams": {
+        "noradId": "25544"
+      }
+    }
+  ]
+}

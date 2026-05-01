@@ -1,0 +1,130 @@
+{
+  "dataSources": [
+    {
+      "name": "usgs_earthquake",
+      "category": "disasters",
+      "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+      "requiredFields": ["type", "features"],
+      "cacheTTL": 300
+    },
+    {
+      "name": "emsc_earthquake",
+      "category": "disasters",
+      "url": "https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=100",
+      "requiredFields": ["features"],
+      "cacheTTL": 300
+    },
+    {
+      "name": "gdacs",
+      "category": "disasters",
+      "url": "https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP",
+      "requiredFields": ["features"],
+      "cacheTTL": 3600
+    },
+    {
+      "name": "nasa_firms",
+      "category": "disasters",
+      "url": "https://firms.modaps.eosdis.nasa.gov/api/area/csv/[API_KEY]/VIIRS_SNPP_NRT/world/1",
+      "requiredFields": ["latitude", "longitude", "brightness"],
+      "cacheTTL": 3600
+    },
+    {
+      "name": "noaa_weather",
+      "category": "disasters",
+      "url": "https://api.weather.gov/alerts/active",
+      "requiredFields": ["features"],
+      "cacheTTL": 600
+    },
+    {
+      "name": "noaa_tsunami",
+      "category": "disasters",
+      "url": "https://www.tsunami.gov/events/json/events.json",
+      "requiredFields": ["events"],
+      "cacheTTL": 600
+    },
+    {
+      "name": "reliefweb",
+      "category": "disasters",
+      "url": "https://api.reliefweb.int/v1/disasters?appname=apidoc&limit=100",
+      "requiredFields": ["data"],
+      "cacheTTL": 3600
+    },
+    {
+      "name": "launch_library2",
+      "category": "launches",
+      "url": "https://ll.thespacedevs.com/2.2.0/launch/upcoming/",
+      "requiredFields": ["results"],
+      "cacheTTL": 600
+    },
+    {
+      "name": "spacex_api",
+      "category": "launches",
+      "url": "https://api.spacexdata.com/v4/launches/upcoming",
+      "requiredFields": ["name", "date_utc"],
+      "cacheTTL": 600
+    },
+    {
+      "name": "rocketlaunch_live",
+      "category": "launches",
+      "url": "https://fdo.rocketlaunch.live/json/launches/next/5",
+      "requiredFields": ["result"],
+      "cacheTTL": 600
+    },
+    {
+      "name": "thespacedevs",
+      "category": "launches",
+      "url": "https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=10",
+      "requiredFields": ["results"],
+      "cacheTTL": 600
+    },
+    {
+      "name": "nextspaceflight",
+      "category": "launches",
+      "url": "https://nextspaceflight.com/api/launches/upcoming/",
+      "requiredFields": ["launches"],
+      "cacheTTL": 600
+    },
+    {
+      "name": "opensky",
+      "category": "traffic",
+      "url": "https://opensky-network.org/api/states/all",
+      "requiredFields": ["states"],
+      "cacheTTL": 20
+    },
+    {
+      "name": "adsbexchange",
+      "category": "traffic",
+      "url": "https://adsbexchange.com/api/aircraft/json/",
+      "requiredFields": ["aircraft"],
+      "cacheTTL": 20
+    },
+    {
+      "name": "flightradar24_free",
+      "category": "traffic",
+      "url": "https://data-live.flightradar24.com/zones/fcgi/feed.js",
+      "requiredFields": ["full_count"],
+      "cacheTTL": 20
+    },
+    {
+      "name": "worldports",
+      "category": "traffic",
+      "url": "https://api.worldports.org/v1/ports",
+      "requiredFields": ["ports"],
+      "cacheTTL": 86400
+    },
+    {
+      "name": "celestrak_tle",
+      "category": "satellites",
+      "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json",
+      "requiredFields": ["OBJECT_NAME", "TLE_LINE1", "TLE_LINE2"],
+      "cacheTTL": 7200
+    },
+    {
+      "name": "ucs_satellite_database",
+      "category": "satellites",
+      "url": "https://www.ucsusa.org/resources/satellite-database",
+      "requiredFields": ["Name", "Country"],
+      "cacheTTL": 86400
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "timeout": 5000,
+  "retries": 3,
+  "concurrency": 10,
+  "performanceThreshold": 5000,
+  "performanceIterations": 100,
+  "reportFormat": ["json", "markdown"],
+  "outputPath": "./reports",
+  "enabledChecks": {
+    "health": true,
+    "dataSources": true,
+    "cache": true,
+    "errors": true,
+    "rateLimit": true,
+    "performance": true,
+    "clientAPIs": true
+  }
+}

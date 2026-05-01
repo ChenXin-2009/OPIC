@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 9.0.0: 升级新的MOD架构，项目更名为OPIC(Open Integrated Cosmos)"
+git commit -m "Release 9.1.0: 更新文档，修BUG"
 git checkout main
 git pull origin main
-git tag v9.0.0
+git tag v9.1.0
 git push origin main
-git push origin v9.0.0
+git push origin v9.1.0

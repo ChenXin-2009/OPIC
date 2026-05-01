@@ -37,6 +37,8 @@ export class SatelliteAPIImpl implements ISatelliteAPI {
 
   /**
    * 加载卫星数据
+   * 
+   * 委托给 useSatelliteStore 进行实际的数据加载
    */
   async fetchSatellites(source?: string): Promise<void> {
     if (this._loading) return;
@@ -45,23 +47,37 @@ export class SatelliteAPIImpl implements ISatelliteAPI {
     this._error = null;
 
     try {
-      const response = await fetch(source || '/data/satellites.json');
-      if (!response.ok) {
-        // 404时静默失败，保持空列表
-        if (response.status === 404) {
-          console.warn('[SatelliteAPI] 卫星数据文件不存在，跳过加载');
-          return;
-        }
-        throw new Error(`加载卫星数据失败: ${response.status}`);
+      // 动态导入 useSatelliteStore 以避免循环依赖
+      const { useSatelliteStore } = await import('../../store/useSatelliteStore');
+      const { SatelliteCategory } = await import('../../types/satellite');
+      
+      // 根据 source 参数确定类别，默认为 ACTIVE
+      let category = SatelliteCategory.ACTIVE;
+      if (source) {
+        // 如果 source 是一个类别名称，使用它
+        const categoryMap: Record<string, any> = {
+          'active': SatelliteCategory.ACTIVE,
+          'stations': SatelliteCategory.ISS,
+          'iss': SatelliteCategory.ISS,
+          'gps': SatelliteCategory.GPS,
+          'gps-ops': SatelliteCategory.GPS,
+          'geo': SatelliteCategory.COMMUNICATION,
+          'communication': SatelliteCategory.COMMUNICATION,
+          'weather': SatelliteCategory.WEATHER,
+          'science': SatelliteCategory.SCIENCE,
+          'other': SatelliteCategory.OTHER,
+        };
+        category = categoryMap[source.toLowerCase()] || SatelliteCategory.ACTIVE;
       }
-
-      const data = await response.json();
-      this._satellites = Array.isArray(data) ? data : [];
-
-      this.notifySatellitesUpdate();
+      
+      // 调用 store 的 fetchSatellites 方法
+      await useSatelliteStore.getState().fetchSatellites(category);
+      
+      console.log('[SatelliteAPI] 卫星数据加载完成');
     } catch (error) {
       this._error = error as Error;
       this.eventBus.emit('satellite:error', { error });
+      console.error('[SatelliteAPI] 卫星数据加载失败:', error);
       throw error;
     } finally {
       this._loading = false;
