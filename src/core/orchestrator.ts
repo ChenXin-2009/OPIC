@@ -82,15 +82,15 @@ export class AuditOrchestrator {
     this.concurrencyController = new ConcurrencyController(config.concurrency);
 
     // 初始化所有验证器
-    this.healthChecker = new HealthChecker(config.timeout, config.retries);
-    this.dataSourceValidator = new DataSourceValidator(config.timeout, config.retries);
-    this.cacheValidator = new CacheValidator(config.timeout);
-    this.errorValidator = new ErrorValidator(config.timeout);
-    this.rateLimitValidator = new RateLimitValidator(config.timeout);
-    this.performanceMonitor = new PerformanceMonitor(
-      config.performanceThreshold,
-      config.performanceIterations
-    );
+    this.healthChecker = new HealthChecker({ timeout: config.timeout, retries: config.retries });
+    this.dataSourceValidator = new DataSourceValidator({ timeout: config.timeout, retries: config.retries });
+    this.cacheValidator = new CacheValidator();
+    this.errorValidator = new ErrorValidator({ timeout: config.timeout });
+    this.rateLimitValidator = new RateLimitValidator({ timeout: config.timeout });
+    this.performanceMonitor = new PerformanceMonitor({
+      performanceThreshold: config.performanceThreshold,
+      iterations: config.performanceIterations
+    });
     this.clientAPIValidator = new ClientAPIValidator();
 
     // 初始化报告生成器和报告器
@@ -325,7 +325,7 @@ export class AuditOrchestrator {
     const results: ErrorTestResult[] = [];
     
     for (const endpoint of endpoints.slice(0, 3)) { // 限制测试数量
-      const scenarios = await this.errorValidator.testAllScenarios(endpoint.path);
+      const scenarios = await this.errorValidator.testCommonErrorScenarios(endpoint.path);
       results.push(...scenarios);
     }
 

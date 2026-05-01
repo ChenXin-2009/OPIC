@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+// import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 
@@ -13,15 +13,20 @@ import { DockInitializer } from "@/components/DockInitializer";
 import { DockWindowSync } from "@/components/DockWindowSync";
 import { ModDockSync } from "@/components/ModDockSync";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// 使用系统字体作为fallback
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+//   display: "swap",
+//   fallback: ["system-ui", "arial"],
+// });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+//   display: "swap",
+//   fallback: ["ui-monospace", "monospace"],
+// });
 
 // 多语言 metadata
 const metadataZh: Metadata = {
@@ -159,7 +164,7 @@ export default async function RootLayout({
         `}} />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className="antialiased"
         style={{ backgroundColor: '#000' }}
         suppressHydrationWarning
       >
