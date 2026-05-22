@@ -8,7 +8,7 @@
 
 > **注意**：本项目原名为 CXIC (CXIN Integrated Cosmos)。详见[名称变更公告](docs/NAME_CHANGE_ANNOUNCEMENT.md)。
 
-[English](./README_EN.md)
+[English](./README_EN.md) | [日本語](./README_JA.md) | [한국어](./README_KO.md) | [Français](./README_FR.md) | [Deutsch](./README_DE.md) | [Español](./README_ES.md) | [Русский](./README_RU.md)
 
 ---
 

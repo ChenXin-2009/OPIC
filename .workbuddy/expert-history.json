@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "sessions": {
+    "1add8aded5494002bf62d134f47b4251": [
+      {
+        "expertId": "SeniorProjectManager",
+        "name": "关德豪",
+        "profession": "高级项目经理",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/07-ProjectManagement/SeniorProjectManager/SeniorProjectManager.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/07-ProjectManagement/SeniorProjectManager/SeniorProjectManager_zh.md",
+        "usedAt": 1777877788265,
+        "industryId": "07-ProjectManagement"
+      }
+    ],
+    "d5877b3cba6240379731c012c845e6ee": [
+      {
+        "expertId": "SeniorProjectManager",
+        "name": "关德豪",
+        "profession": "高级项目经理",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/07-ProjectManagement/SeniorProjectManager/SeniorProjectManager.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/07-ProjectManagement/SeniorProjectManager/SeniorProjectManager_zh.md",
+        "usedAt": 1777877788264,
+        "industryId": "07-ProjectManagement"
+      }
+    ]
+  },
+  "lastUpdated": 1777883790677
+}

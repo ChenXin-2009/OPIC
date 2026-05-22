@@ -54,3 +54,6 @@ next-env.d.ts
 # 根目录临时文件
 /*.txt
 /*.bat
+
+# 比赛材料（不上传 GitHub）
+/docs/competition/
