@@ -60,9 +60,12 @@ import { NearbyGroupsRenderer } from '@/lib/3d/NearbyGroupsRenderer';
 import { VirgoSuperclusterRenderer } from '@/lib/3d/VirgoSuperclusterRenderer';
 import { LaniakeaSuperclusterRenderer } from '@/lib/3d/LaniakeaSuperclusterRenderer';
 import { SatelliteLayer } from '@/lib/3d/SatelliteLayer';
+import { ExoplanetRenderer } from '@/lib/3d/ExoplanetRenderer';
 import { UniverseScale } from '@/lib/types/universeTypes';
 import type { GalaxyCluster, GalaxyGroup, LocalGroupGalaxy, SimpleGalaxy, Supercluster } from '@/lib/types/universeTypes';
 import SatelliteDetailModal from '@/components/satellite/SatelliteDetailModal';
+import ExoplanetSystemPanel from '@/components/exoplanets/ExoplanetSystemPanel';
+import { useExoplanetStore } from '@/lib/store/useExoplanetStore';
 
 
 // ==================== 可调参数配置 ====================
@@ -251,6 +254,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const satelliteLayerRef = useRef<SatelliteLayer | null>(null);
+  const exoplanetRendererRef = useRef<ExoplanetRenderer | null>(null);
   // cesiumEnabled ref — 让动画循环（闭包）能读到最新值
   const cesiumEnabledRef = useRef<boolean>(cesiumEnabled);
   // earthLockEnabled ref — 让动画循环能读到最新值
@@ -322,13 +326,142 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
     earthLightEnabledRef.current = earthLightEnabled;
   }, [earthLightEnabled]);
 
+  const prepareDeepSpaceFocus = () => {
+    useSolarSystemStore.getState().selectPlanet(null);
+    useSatelliteStore.getState().setCameraFollowTarget(null);
+
+    const sceneManager = sceneManagerRef.current;
+    const cameraController = cameraControllerRef.current;
+    if (!sceneManager || !cameraController) return;
+
+    cameraController.stopTracking();
+
+    const sceneModeManager = sceneManager.getSceneModeManager();
+    if (sceneModeManager.getCurrentMode() !== SceneMode.THREE_DOMINANT) {
+      sceneModeManager.getTransitionProgress();
+      sceneModeManager.switchMode(SceneMode.THREE_DOMINANT);
+    }
+
+    const earthPlanet = planetsRef.current.get('earth');
+    if (earthPlanet && 'setCesiumNativeCameraMode' in earthPlanet) {
+      (earthPlanet as any).setCesiumNativeCameraMode(false);
+    }
+    if (earthPlanet && 'getCesiumExtension' in earthPlanet) {
+      const cesiumExt = (earthPlanet as any).getCesiumExtension();
+      cesiumExt?.setNativeCameraEnabled?.(false);
+    }
+
+    const controls = cameraController.getControls();
+    controls.enabled = true;
+    const controlsAny = controls as any;
+    controlsAny._sphericalDelta?.set?.(0, 0, 0);
+    controlsAny._panOffset?.set?.(0, 0, 0);
+    controls.update();
+    cameraController.syncStateFromCamera();
+
+    const renderer = sceneManager.getRenderer();
+    renderer.domElement.style.pointerEvents = 'auto';
+    renderer.domElement.style.zIndex = '1';
+  };
+
+  const focusOnExoplanetHost = async (hostname: string) => {
+    const renderer = exoplanetRendererRef.current;
+    const cameraController = cameraControllerRef.current;
+    if (!renderer || !cameraController) return;
+
+    prepareDeepSpaceFocus();
+
+    const hostPosition = renderer.getHostWorldPosition(hostname);
+    if (hostPosition) {
+      const getHostPosition = () => renderer.getHostWorldPosition(hostname) ?? hostPosition.clone();
+
+      cameraController.focusOnTarget(
+        hostPosition,
+        { name: hostname, radius: 0.08, isSun: true },
+        getHostPosition,
+        { distance: 8 }
+      );
+    }
+
+    const system = await useExoplanetStore.getState().selectHost(hostname);
+    if (!system || !exoplanetRendererRef.current || !cameraControllerRef.current) {
+      return;
+    }
+
+    const currentRenderer = exoplanetRendererRef.current;
+    currentRenderer.setSelectedSystem(system);
+    currentRenderer.setSelectedBody({ type: 'star', hostname: system.hostname });
+
+    const systemPosition = currentRenderer.getHostWorldPosition(system.hostname) ?? hostPosition;
+    if (!systemPosition) {
+      return;
+    }
+
+    const getSystemPosition = () => (
+      currentRenderer.getHostWorldPosition(system.hostname) ?? systemPosition.clone()
+    );
+
+    cameraControllerRef.current.focusOnTarget(
+      systemPosition,
+      {
+        name: system.hostname,
+        radius: currentRenderer.getFocusRadiusForSelection({ type: 'star', hostname: system.hostname }),
+        isSun: true,
+      },
+      getSystemPosition,
+      { distance: currentRenderer.getFocusDistanceForSystem(system) }
+    );
+  };
+
+  const focusOnExoplanetPlanet = (hostname: string, planetName: string) => {
+    const renderer = exoplanetRendererRef.current;
+    const cameraController = cameraControllerRef.current;
+    if (!renderer || !cameraController) return;
+
+    prepareDeepSpaceFocus();
+
+    useExoplanetStore.getState().selectPlanet(planetName);
+    renderer.setSelectedBody({ type: 'planet', hostname, planetName });
+
+    const planetPosition = renderer.getPlanetWorldPosition(planetName);
+    if (!planetPosition) {
+      return;
+    }
+
+    const radius = renderer.getFocusRadiusForSelection({ type: 'planet', hostname, planetName });
+    const getPlanetPosition = () => renderer.getPlanetWorldPosition(planetName) ?? planetPosition.clone();
+
+    cameraController.focusOnTarget(
+      planetPosition,
+      { name: planetName, radius },
+      getPlanetPosition,
+      { distance: Math.max(radius * 12, 0.45) }
+    );
+  };
+
   // 初始化场景 - 使用 useLayoutEffect 确保 DOM 准备好
+  React.useEffect(() => {
+    const unsubscribe = useExoplanetStore.subscribe((state) => {
+      const renderer = exoplanetRendererRef.current;
+      if (!renderer) {
+        return;
+      }
+
+      renderer.setIndex(state.systems);
+      renderer.setSelectedSystem(state.selectedSystem);
+      renderer.setSelectedBody(state.selectedBody);
+    });
+
+    return unsubscribe;
+  }, []);
+
   useLayoutEffect(() => {
     if (!containerRef.current) return;
 
     // 确保容器有尺寸
     let checkAndInitFrameId: number | null = null;
     let isInitialized = false; // 防止重复初始化
+    let cleanupScene: (() => void) | null = null;
     
     const checkAndInit = () => {
       if (!containerRef.current || isInitialized) return;
@@ -385,6 +518,21 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       }
       
       const renderer = sceneManager.getRenderer();
+
+      const exoplanetRenderer = new ExoplanetRenderer();
+      exoplanetRenderer.getGroup().quaternion.copy(sceneManager.getStarsAlignmentQuaternion());
+      scene.add(exoplanetRenderer.getGroup());
+      exoplanetRendererRef.current = exoplanetRenderer;
+
+      const exoplanetState = useExoplanetStore.getState();
+      exoplanetRenderer.setIndex(exoplanetState.systems);
+      exoplanetRenderer.setSelectedSystem(exoplanetState.selectedSystem);
+      exoplanetRenderer.setSelectedBody(exoplanetState.selectedBody);
+      void exoplanetState.fetchIndex().then((systems) => {
+        exoplanetRendererRef.current?.setIndex(systems);
+      }).catch((error) => {
+        console.error('[ExoplanetRenderer] Failed to load NASA exoplanet index:', error);
+      });
       
       // 向 MOD 渲染 API 注入 Three.js 上下文，使 MOD 可以访问场景
       getRenderAPI()._setThreeContext(scene, camera, renderer);
@@ -1563,6 +1711,10 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           sceneManagerRef.current.updateMultiScaleView(distanceToSun, deltaTime);
         }
 
+        if (exoplanetRendererRef.current) {
+          exoplanetRendererRef.current.update(distanceToSun, deltaTime);
+        }
+
         // 更新卫星图层
         if (satelliteLayerRef.current) {
           satelliteLayerRef.current.update();
@@ -1666,9 +1818,22 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
             satelliteLayerRef.current.setHoveredOrbit(null);
           }
         }
+        handleExoplanetHover(event, camera);
       };
       
       // 处理鼠标抬起（重置拖动状态）
+      const handleExoplanetHover = (event: MouseEvent, camera: THREE.PerspectiveCamera) => {
+        if (!exoplanetRendererRef.current || !containerRef.current) {
+          return;
+        }
+
+        const target = exoplanetRendererRef.current.pick(event.clientX, event.clientY, camera, containerRef.current);
+        exoplanetRendererRef.current.setHoveredTarget(target);
+        useExoplanetStore.getState().setHoveredHost(target?.type === 'host' ? target.hostname : null);
+        useExoplanetStore.getState().setHoveredPlanet(target?.type === 'planet' ? target.planetName : null);
+        renderer.domElement.style.cursor = target ? 'pointer' : '';
+      };
+
       const handleMouseUp = () => {
         // 不立即重置,让click事件先处理
         // isDragging和mouseDownTime会在click事件中使用后自动失效
@@ -1737,6 +1902,22 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
         }
         
         // 检测所有行星（包括标记圈和标签）
+        if (exoplanetRendererRef.current && containerRef.current) {
+          const exoplanetTarget = exoplanetRendererRef.current.pick(event.clientX, event.clientY, camera, containerRef.current);
+          if (exoplanetTarget?.type === 'host' || exoplanetTarget?.type === 'system-star') {
+            void focusOnExoplanetHost(exoplanetTarget.hostname);
+            isDragging = false;
+            mouseDownTime = 0;
+            return;
+          }
+          if (exoplanetTarget?.type === 'planet') {
+            focusOnExoplanetPlanet(exoplanetTarget.hostname, exoplanetTarget.planetName);
+            isDragging = false;
+            mouseDownTime = 0;
+            return;
+          }
+        }
+
         const intersects: Array<{ planet: Planet; body: any; distance: number; type: 'mesh' | 'marker' | 'label'; isSatellite: boolean }> = [];
         
         // 检测所有天体：行星和卫星
@@ -1981,7 +2162,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       }
 
       // 清理函数（在 checkAndInit 内部，确保能访问所有局部变量）
-    return () => {
+      cleanupScene = () => {
         // 取消 checkAndInit 的递归检查（如果还在等待初始化）
         if (checkAndInitFrameId !== null) {
           cancelAnimationFrame(checkAndInitFrameId);
@@ -2043,6 +2224,11 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           satelliteLayerRef.current.dispose();
           satelliteLayerRef.current = null;
         }
+
+        if (exoplanetRendererRef.current) {
+          exoplanetRendererRef.current.dispose();
+          exoplanetRendererRef.current = null;
+        }
         
         if (cameraControllerRef.current) {
           cameraControllerRef.current.dispose();
@@ -2054,6 +2240,14 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
     };
     
     checkAndInit();
+    return () => {
+      if (cleanupScene) {
+        cleanupScene();
+      } else if (checkAndInitFrameId !== null) {
+        cancelAnimationFrame(checkAndInitFrameId);
+        checkAndInitFrameId = null;
+      }
+    };
   }, []); // 只在挂载时初始化
 
   // 注意：行星位置更新已经在动画循环中处理，这里不需要额外的 useEffect
@@ -2162,6 +2356,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       
       {/* 卫星详情模态框 */}
       <SatelliteDetailModal lang={lang} />
+      <ExoplanetSystemPanel lang={lang} />
     </div>
   );
 }

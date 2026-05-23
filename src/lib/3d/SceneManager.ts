@@ -258,8 +258,11 @@ export class SceneManager {
    * components to the scene based on configuration settings.
    */
   private initializeMultiScaleView(): void {
-    this.initializeNearbyStars();
-    this.initializeGaiaStars();
+    // Replaced by the NASA Exoplanet Archive host renderer in SolarSystemCanvas3D.
+    // Keeping these disabled avoids mixing Gaia/hard-coded nearby stars with the
+    // on-demand exoplanet system visualization.
+    // this.initializeNearbyStars();
+    // this.initializeGaiaStars();
     this.initializeGalaxyRenderer();
     this.createObservableBoundarySphere();
     this.initializeSolarSystemGrid();
@@ -627,6 +630,10 @@ export class SceneManager {
     if (this.nearbyStars) {
       this.nearbyStars.getGroup().quaternion.copy(combinedRotation);
     }
+  }
+
+  getStarsAlignmentQuaternion(): THREE.Quaternion {
+    return this.calculateCombinedRotation();
   }
 
   /**

@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import type { SceneManager } from '../3d/SceneManager';
 import type { CameraController } from '../3d/CameraController';
+import { SceneMode } from '../3d/SceneModeManager';
 import type { SolarSystemState } from '../state';
 import type { IndexedCelestial } from './SearchIndex';
 import { UniverseScale } from '../types/universeTypes';
@@ -36,6 +37,37 @@ export class NavigationHandler {
     this.sceneManager = sceneManager;
     this.cameraController = cameraController;
     this.store = store;
+  }
+
+  private prepareDeepSpaceNavigation(): void {
+    this.cameraController.stopTracking();
+
+    const sceneModeManager = this.sceneManager.getSceneModeManager();
+    if (sceneModeManager.getCurrentMode() !== SceneMode.THREE_DOMINANT) {
+      sceneModeManager.getTransitionProgress();
+      sceneModeManager.switchMode(SceneMode.THREE_DOMINANT);
+    }
+
+    const earthPlanet = this.sceneManager.getEarthPlanet();
+    if (earthPlanet && 'setCesiumNativeCameraMode' in earthPlanet) {
+      earthPlanet.setCesiumNativeCameraMode(false);
+    }
+    if (earthPlanet && 'getCesiumExtension' in earthPlanet) {
+      const cesiumExt = earthPlanet.getCesiumExtension();
+      cesiumExt?.setNativeCameraEnabled?.(false);
+    }
+
+    const controls = this.cameraController.getControls();
+    controls.enabled = true;
+    const controlsAny = controls as any;
+    controlsAny._sphericalDelta?.set?.(0, 0, 0);
+    controlsAny._panOffset?.set?.(0, 0, 0);
+    controls.update();
+    this.cameraController.syncStateFromCamera();
+
+    const renderer = this.sceneManager.getRenderer();
+    renderer.domElement.style.pointerEvents = 'auto';
+    renderer.domElement.style.zIndex = '1';
   }
 
   /**
@@ -142,6 +174,8 @@ export class NavigationHandler {
 
     // 使用 CameraController 的 focusOnTarget 方法进行导航
     // 对于宇宙尺度天体，我们不提供 CelestialObject，让系统使用默认距离
+    this.prepareDeepSpaceNavigation();
+
     const targetPosition = celestial.position.clone();
     
     // 根据天体类型和距离计算合适的观察距离
