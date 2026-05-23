@@ -298,8 +298,14 @@ export class SatelliteRenderer {
       this.geometry.attributes.color.needsUpdate = true;
     }
     
-    // 注意：不再每次都调用 computeBoundingSphere()
-    // 包围球将由 AdaptiveBoundingSphere 管理
+    // 每次位置更新后重新计算包围球
+    // 这对 frustum culling 和 raycasting 至关重要
+    // - 卫星在地球附近（~1 AU），初始包围球在原点 (0,0,0)
+    // - 不更新会导致视锥剔除错误（仅特定角度可见）和射线检测失效
+    // - O(n) 的计算成本对数千个点是可接受的
+    if (positionChanged) {
+      this.geometry.computeBoundingSphere();
+    }
     
     // 显示点云
     this.pointCloud.visible = true;
@@ -632,6 +638,19 @@ export class SatelliteRenderer {
    */
   setVisible(visible: boolean): void {
     this.pointCloud.visible = visible;
+  }
+  
+  /**
+   * 设置点云的世界位置
+   * 
+   * 将整个卫星点云移动到指定世界位置。
+   * 这样卫星位置缓冲区就可以使用地球相对坐标，
+   * 避免 Float32 精度丢失（~1 AU + ~0.0001 AU → 丢失低 4 位小数）。
+   * 
+   * @param position - 世界位置（通常为地球的太阳系坐标）
+   */
+  setWorldPosition(position: THREE.Vector3): void {
+    this.pointCloud.position.copy(position);
   }
   
   /**

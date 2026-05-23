@@ -690,7 +690,14 @@ export class CesiumAdapter {
     
     console.log(`[CesiumAdapter] Setting native camera enabled: ${enabled}`);
     
-    this.viewer.scene.screenSpaceCameraController.enableInputs = enabled;
+    const ssc = this.viewer.scene.screenSpaceCameraController;
+    ssc.enableInputs = enabled;
+    
+    if (enabled) {
+      // 禁用 Cesium 相机惯性，实现即时响应（与 Three.js 层一致）
+      ssc.inertiaTranslate = 0;
+      ssc.inertiaZoom = 0;
+    }
     this.cesiumCanvas.style.pointerEvents = enabled ? 'auto' : 'none';
     this.container.style.pointerEvents = enabled ? 'auto' : 'none';
     

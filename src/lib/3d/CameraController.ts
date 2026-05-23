@@ -2,7 +2,7 @@
  * @module 3d/CameraController
  * @description 3D 相机控制器
  * 
- * 本模块负责管理 Three.js 相机和 OrbitControls,提供平滑缩放、聚焦、跟踪等高级相机功能。
+ * 本模块负责管理 Three.js 相机和 OrbitControls,提供即时缩放、聚焦、跟踪等高级相机功能。
  * 支持多种相机模式（自由、锁定、跟随）和动态配置管理。
  * 
  * @architecture
@@ -18,16 +18,16 @@
  * @renderPipeline
  * 相机控制管线：
  * 1. 输入处理：鼠标滚轮、触摸手势
- * 2. 缩放计算：平滑缩放算法（指数衰减）
+ * 2. 缩放计算：即时缩放（无缓动）
  * 3. 聚焦动画：Lerp 插值平滑移动
  * 4. 跟踪更新：实时跟随目标天体
  * 5. 防穿透约束：限制相机不穿透行星表面
  * 6. 阻尼更新：OrbitControls 惯性效果
  * 
  * @performance
- * - 使用指数衰减算法实现平滑缩放
- * - 使用 Lerp 插值避免突兀的相机移动
- * - 使用阻尼（damping）提供自然的惯性效果
+ * - 使用即时算法实现零延迟缩放
+ * - 使用 Lerp 插值避免突兀的聚焦移动
+ * - 使用阻尼（damping）提供自然的旋转惯性效果
  * - 动态配置管理支持运行时调整参数
  * 
  * @coordinateSystem
@@ -88,10 +88,14 @@ export type CameraMode = 'free' | 'locked' | 'follow';
  * Three.js 相机控制器
  *
  * 封装 OrbitControls，提供太阳系场景所需的相机控制功能，包括：
- * - 鼠标/触摸缩放（指数衰减平滑）
+ * - 鼠标/触摸缩放（即时响应，统一距离缩放，无 FOV 光学变焦层）
  * - 防穿透约束（防止相机进入天体内部）
  * - 相机模式切换（自由/锁定/跟随）
  * - 聚焦目标天体（平滑过渡到目标位置）
+ * 
+ * 缩放架构（2 层）：
+ * - Three.js 距离缩放：所有距离统一行为，灵敏度恒定
+ * - Cesium 原生相机：极近地球时由 SceneModeManager 自动切换
  */
 export class CameraController {
   private controls: OrbitControls;
@@ -107,9 +111,9 @@ export class CameraController {
   private currentConfig: CameraConfigType;
   private configUnsubscribe: (() => void) | null = null;
   
-  // 平滑缩放相关
-  private smoothDistance: number = 0; // 当前平滑的距离
-  private targetDistance: number = 0; // 目标距离
+  // 即时缩放相关
+  private smoothDistance: number = 0; // 当前缩放距离
+  private targetDistance: number = 0; // 目标距离（即时响应）
   private isZooming: boolean = false; // 是否正在缩放
   private lastDistance: number = 0; // 上一帧的距离
   
@@ -677,14 +681,12 @@ export class CameraController {
     };
 
     this.touchEndHandler = (e: TouchEvent) => {
-      // 修复触控缩放惯性问题：不要立即停止缩放状态
-      // 让缩放继续进行直到自然完成（isZooming 会在 update() 中自动清除），这样就有惯性效果
+      // 缩放无缓动：isZooming 会在下一帧 update() 中自动完成
       if (e.touches.length < 2) {
         isPinching = false;
         initialDistance = 0;
         initialSmoothDistance = 0;
         lastUpdateTime = 0;
-        // 注意：不设置 this.isZooming = false，让缩放自然完成（保留惯性）
       }
     };
 
@@ -1143,19 +1145,12 @@ export class CameraController {
   }
 
   /**
-   * 手动缩放相机（带平滑效果和防穿透约束）
+   * 手动缩放相机 — 惯性缓动
    *
-   * 缩放算法：
-   * - 使用距离自适应灵敏度：近距离时降低灵敏度（对数曲线），避免近距离时缩放过快
-   * - 放大方向（delta > 0）：距离乘以 (1 - factor)，指数衰减
-   * - 缩小方向（delta < 0）：距离乘以 (1 + factor)，指数增长
-   * - 当距离被防穿透约束卡住时，自动切换到 FOV 缩放模式（光学变焦）
-   * - 缩小时优先恢复 FOV 到默认值，再拉远距离（与放大方向对称）
-   *
-   * @param delta 缩放增量，正值放大（拉近），负值缩小（拉远）
-   *              典型范围：[-3, 3]（来自滚轮事件的归一化值）
+   * 算法：当前距离 × (1 ± effectiveFactor) → 设置 targetDistance
+   * 实际相机位置由 update() 循环通过 zoomEasingSpeed 平滑插值
+   * 防穿透约束：距离不低于 minSafeDistance
    */
-  // 手动缩放方法（带平滑效果和增强的防穿透）
   zoom(delta: number) {
     if (this.isFocusing) {
       this.isFocusing = false;
@@ -1163,93 +1158,31 @@ export class CameraController {
       this.targetControlsTarget = null;
     }
 
-    const currentDistance = this.isTracking 
-      ? this.smoothDistance || this.camera.position.distanceTo(this.controls.target)
-      : this.camera.position.distanceTo(this.controls.target);
+    // 始终从相机实际位置读取距离，避免 smoothDistance 过时导致跳跃
+    const currentDistance = this.camera.position.distanceTo(this.controls.target);
     
     if (!isFinite(currentDistance) || currentDistance <= 0) return;
     
     const baseFactor = this.currentConfig.zoomBaseFactor;
     const scrollSpeed = Math.min(Math.abs(delta), 2);
-
-    // 缩放灵敏度：优先使用外部曲线，否则用对数距离曲线
-    type CurveT = { anchors: {nx:number;ny:number}[]; yMin:number; yMax:number };
-    const zoomCurve = this._zoomSensitivityCurve as CurveT | undefined;
-    let distanceScale: number;
-    if (zoomCurve && zoomCurve.anchors.length >= 2 && !this.fovZoomActive) {
-      // 曲线只在距离模式下生效，FOV 模式走原有 effectiveFactor 逻辑
-      distanceScale = CameraController.evalSensitivityCurve(zoomCurve, currentDistance);
-    } else {
-      const REF_DISTANCE_AU = 1.0;
-      const LOG_RANGE = 5;
-      const MIN_SCALE = 0.15;
-      const logRatio = Math.log10(Math.max(currentDistance, 1e-12) / REF_DISTANCE_AU);
-      distanceScale = Math.max(MIN_SCALE, Math.min(1.0, logRatio / LOG_RANGE + 1.0));
-    }
-    const effectiveFactor = baseFactor * distanceScale;
-
-    const currentFov = this.camera.fov;
-    const defaultFov = CameraController.FOV_DEFAULT;
-    const minFov = CameraController.FOV_MIN;
+    const effectiveFactor = baseFactor;
 
     if (delta > 0) {
       // 放大方向
-      // 计算如果正常缩放距离会变成多少
       const zoomFactor = 1 - (effectiveFactor * scrollSpeed);
       let newTargetDistance = currentDistance * zoomFactor;
 
-      // 防穿透约束
       if (this.currentTargetRadius) {
         const minSafeDistance = this.currentTargetRadius * CAMERA_PENETRATION_CONFIG.safetyDistanceMultiplier;
         newTargetDistance = Math.max(newTargetDistance, minSafeDistance);
         if (currentDistance < minSafeDistance) {
           newTargetDistance = minSafeDistance;
-          this.smoothDistance = minSafeDistance;
         }
       }
       newTargetDistance = Math.max(CAMERA_CONFIG.minDistance, Math.min(this.controls.maxDistance, newTargetDistance));
-
-      // 检测距离是否被卡住（变化量小于 0.1%）：切换到 FOV 缩放
-      const distanceStuck = newTargetDistance >= currentDistance * 0.999;
-      if (distanceStuck) {
-        this.fovZoomActive = true;
-        // FOV 缩放灵敏度：FOV 越小时每步缩小比例越小，保持对数感知均匀
-        // 使用固定比例缩放：每步缩小 FOV 的固定百分比（类似距离缩放的乘法模型）
-        // 这样 FOV 从 45° 到 0.05° 的感知步数是均匀的
-        const fovZoomFactor = 1 - effectiveFactor * scrollSpeed * this.getFovZoomSpeed();
-        const newFov = Math.max(minFov, currentFov * fovZoomFactor);
-        this.targetFov = newFov;
-        this.isFovTransitioning = true;
-        this.currentFov = currentFov;
-        // 距离保持不变
-        this.targetDistance = currentDistance;
-        this.smoothDistance = currentDistance;
-        this.isZooming = true;
-        if (this.isTracking) this.trackingDistance = this.targetDistance;
-        return;
-      }
-
       this.targetDistance = newTargetDistance;
     } else {
       // 缩小方向
-      if (this.fovZoomActive && currentFov < defaultFov - 0.1) {
-        // 先恢复 FOV，再拉远距离（同样用固定比例，与放大对称）
-        const fovZoomFactor = 1 + effectiveFactor * scrollSpeed * this.getFovZoomSpeed();
-        const newFov = Math.min(defaultFov, currentFov * fovZoomFactor);
-        this.targetFov = newFov;
-        this.isFovTransitioning = true;
-        this.currentFov = currentFov;
-        if (newFov >= defaultFov - 0.1) {
-          this.fovZoomActive = false;
-        }
-        this.targetDistance = currentDistance;
-        this.smoothDistance = currentDistance;
-        this.isZooming = true;
-        if (this.isTracking) this.trackingDistance = this.targetDistance;
-        return;
-      }
-      // FOV 已恢复，正常拉远
-      this.fovZoomActive = false;
       const zoomFactor = 1 + (effectiveFactor * scrollSpeed);
       let newTargetDistance = currentDistance * zoomFactor;
 
@@ -1258,7 +1191,6 @@ export class CameraController {
         newTargetDistance = Math.max(newTargetDistance, minSafeDistance);
         if (currentDistance < minSafeDistance) {
           newTargetDistance = minSafeDistance;
-          this.smoothDistance = minSafeDistance;
         }
       }
 
@@ -1268,33 +1200,34 @@ export class CameraController {
       );
     }
     
-    // 同步平滑距离，确保缩放从当前位置开始
-    this.smoothDistance = currentDistance;
+    // 惯性缓动：仅设置 targetDistance，由 update() 循环平滑插值
+    // smoothDistance 沿当前相机方向逐步逼近 targetDistance，产生惯性缓动效果
     this.isZooming = true;
+    this._justZoomed = true; // 标记本帧刚缩放，防止跟踪 lerp 覆盖
     
-    // 如果正在跟踪，立即更新跟踪距离
     if (this.isTracking) {
       this.trackingDistance = this.targetDistance;
     }
+    // 注意：不在此处直接设置相机位置，由 update() 循环中的平滑缩放逻辑处理实际过渡
   }
 
   /**
    * 每帧更新相机状态（动画循环主入口）
    *
-   * 执行顺序（顺序不可随意调整）：
-   * 1. 更新 FocusManager 的聚焦过渡进度
-   * 2. 处理 FOV 平滑过渡（光学变焦动画）
-   * 3. 应用防穿透约束（确保相机不进入天体内部）
-   * 4. 处理方位角（左右）平滑过渡
-   * 5. 处理极角（上下）平滑过渡
-   * 6. 处理聚焦动画（Lerp 插值移动相机到目标位置）
-   * 7. 处理跟随模式（follow mode）
-   * 8. 执行平滑缩放（指数衰减逼近目标距离）
-   * 9. 处理跟踪模式（持续跟随运动天体）
-   * 10. 同步平滑距离（防止累积误差）
-   * 11. 动态调整旋转/平移速度（基于距离和 FOV 的对数曲线）
-   * 12. 调用 OrbitControls.update()（应用阻尼效果）
-   * 13. 同步地球锁定的四元数（controls.update() 之后）
+ * 执行顺序（顺序不可随意调整）：
+ * 1. 更新 FocusManager 的聚焦过渡进度
+ * 2. FOV 过渡（仅 setFov() 触发）
+ * 3. 应用防穿透约束（确保相机不进入天体内部）
+ * 4. 处理方位角（左右）平滑过渡
+ * 5. 处理极角（上下）平滑过渡
+ * 6. 处理聚焦动画（Lerp 插值移动相机到目标位置）
+ * 7. 处理跟随模式（follow mode）
+ * 8. 执行即时缩放（统一距离缩放，无缓动）
+ * 9. 处理跟踪模式（持续跟随运动天体）
+ * 10. 同步平滑距离（防止累积误差）
+ * 11. 动态调整旋转/平移速度（基于距离和 FOV 的对数曲线）
+ * 12. 调用 OrbitControls.update()（应用阻尼效果）
+ * 13. 同步地球锁定的四元数（controls.update() 之后）
    *
    * @param deltaTime 当前帧时间步长（秒），用于帧率无关的动画计算
    */
@@ -1312,7 +1245,7 @@ export class CameraController {
       this.focusManager.interruptTransition();
     }
     
-    // 处理 FOV 平滑过渡
+    // FOV 过渡（仅 setFov() 触发，缩放不再改变 FOV）
     if (this.isFovTransitioning) {
       const fovDiff = this.targetFov - this.currentFov;
       if (Math.abs(fovDiff) > 0.1) {
@@ -1526,7 +1459,7 @@ export class CameraController {
     }
     
     // ⚠️ 关键优化：只有在真正需要缩放时才执行缩放逻辑
-    // 平滑缩放实现（类似2D版本的缓动效果）
+    // 即时缩放实现（无缓动效果）
     // ⚠️ 重要：缩放逻辑必须在跟踪逻辑之前执行，这样跟踪逻辑才能使用缩放后的距离
     if (this.isZooming) {
       const distanceDiff = this.targetDistance - this.smoothDistance;
@@ -1609,9 +1542,11 @@ export class CameraController {
     if (this.isTracking && this.trackingTargetGetter) {
       const currentTargetPosition = this.trackingTargetGetter();
       if (currentTargetPosition) {
-        // ⚠️ 关键修复：如果正在缩放，不要用 lerp 覆盖缩放效果
-        // 直接使用缩放后的位置，只更新目标位置
-        if (this.isZooming) {
+        // ⚠️ 关键修复：如果刚缩放或正在缩放，不要用 lerp 覆盖缩放效果
+        const justZoomed = this._justZoomed;
+        this._justZoomed = false;
+        
+        if (this.isZooming || justZoomed) {
           // 缩放中：只更新 controls.target，保持相机位置不变（由缩放逻辑控制）
           this.controls.target.lerp(currentTargetPosition, CAMERA_CONFIG.trackingLerpSpeed);
           // 同步更新 trackingDistance，确保缩放完成后使用正确的距离
@@ -1684,9 +1619,7 @@ export class CameraController {
         const logRatio = Math.log10(Math.max(currentDist, 1e-12) / REF_DISTANCE_AU);
         const distScale = Math.max(MIN_SCALE, Math.min(1.0, logRatio / LOG_RANGE + 1.0));
         const fovScale = Math.max(0.005, this.camera.fov / CameraController.FOV_DEFAULT);
-        scale = this.fovZoomActive
-          ? fovScale * (this.currentConfig.fovDragSensitivity ?? 3.0)
-          : Math.max(distScale, fovScale);
+        scale = Math.max(distScale, fovScale);
       }
       this.controls.panSpeed = CAMERA_CONFIG.panSpeed * scale;
       this.controls.rotateSpeed = CAMERA_CONFIG.rotateSpeed * scale;
@@ -1719,13 +1652,13 @@ export class CameraController {
     const logRatio = Math.log10(Math.max(currentDist, 1e-12) / REF_DISTANCE_AU);
     const distScale = Math.max(0.04, Math.min(1.0, logRatio / LOG_RANGE + 1.0));
     const fovScale = Math.max(0.005, this.camera.fov / CameraController.FOV_DEFAULT);
-    const rotateScale = this.fovZoomActive ? fovScale : Math.max(distScale, fovScale);
+    const rotateScale = Math.max(distScale, fovScale);
     return {
       distance: currentDist,
       fov: this.camera.fov,
       fovDefault: CameraController.FOV_DEFAULT,
       fovMin: CameraController.FOV_MIN,
-      fovZoomActive: this.fovZoomActive,
+      fovZoomActive: false, // 已移除 FOV 光学变焦层，始终为 false
       smoothDistance: this.smoothDistance,
       targetDistance: this.targetDistance,
       isZooming: this.isZooming,
@@ -1836,7 +1769,7 @@ export class CameraController {
   private targetFov: number = CAMERA_CONFIG.fov;
   private currentFov: number = CAMERA_CONFIG.fov;
   private isFovTransitioning: boolean = false;
-  private fovTransitionSpeed: number = 0.15; // FOV 过渡速度（0-1，越大越快）
+  private fovTransitionSpeed: number = 1.0; // FOV 过渡速度（1.0 = 立即切换，无缓动）
 
   // 灵敏度曲线配置（由用户调试后固化的参数）
   // X 轴：归一化对数距离（0 = 1e-10 AU，1 = 1 AU）
@@ -1864,11 +1797,14 @@ export class CameraController {
     ],
   };
 
-  // FOV 缩放（光学变焦）相关
-  // 当距离无法继续缩小时（被防穿透或 minDistance 限制），改用 FOV 缩放实现超级放大
+  // FOV（视野角度）相关 — setFov() 保留，用于程序化设置；缩放中不再使用 FOV 光学变焦
+  // 当距离无法继续缩小时（被防穿透或 minDistance 限制），缩放直接停止
   private static readonly FOV_MIN = 0.05; // 最小 FOV（度），约等于 300mm 长焦镜头
   private static readonly FOV_DEFAULT = CAMERA_CONFIG.fov; // 默认 FOV（度）
-  private fovZoomActive: boolean = false; // 是否处于 FOV 缩放模式
+  private fovZoomActive: boolean = false; // 保留字段兼容，始终为 false（已移除 FOV 缩放模式）
+
+  // 缩放-跟踪协调：防止跟踪 lerp 覆盖即时缩放
+  private _justZoomed: boolean = false;
 
   /**
    * 设置相机视野角度（FOV）
@@ -1893,6 +1829,23 @@ export class CameraController {
       this.targetFov = fov;
       this.isFovTransitioning = false;
       this.camera.updateProjectionMatrix();
+    }
+  }
+
+  /**
+   * 从当前相机位置同步内部状态（smoothDistance / targetDistance / trackingDistance）
+   *
+   * 在相机被外部系统修改后（如退出 Cesium 模式后从 Cesium 同步回 Three.js），
+   * 必须调用此方法，否则跟踪 lerp 会基于过时距离将相机拽回错误位置。
+   */
+  syncStateFromCamera(): void {
+    const dist = this.camera.position.distanceTo(this.controls.target);
+    if (isFinite(dist) && dist > 0) {
+      this.smoothDistance = dist;
+      this.targetDistance = dist;
+      if (this.isTracking) {
+        this.trackingDistance = dist;
+      }
     }
   }
 

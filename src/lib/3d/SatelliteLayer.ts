@@ -90,7 +90,11 @@ export class SatelliteLayer {
     this.calculator = new SGP4Calculator();
     
     // 初始化性能优化组件（使用轨道动力学插值器）
-    this.interpolator = new OrbitalInterpolator(true); // 启用轨道动力学
+    // 使用 Slerp 插值而非轨道动力学插值
+    // 轨道动力学插值使用了错误的引力常数（太阳GM而非地球GM），
+    // 导致每帧插值位置偏离正确位置再被blend拽回，产生高频抖动。
+    // SGP4已每2秒提供正确位置，Slerp补间足够平滑。
+    this.interpolator = new OrbitalInterpolator(false);
     this.performanceMonitor = new PerformanceMonitor();
     this.qualityController = new QualityController(this.performanceMonitor);
     
@@ -140,9 +144,12 @@ export class SatelliteLayer {
       return;
     }
 
-    // 检查 satellite-tracking MOD 是否启用，禁用时隐藏所有卫星
+    // 检查 satellite-tracking MOD 是否被用户显式禁用
+    // 注意：仅当 MOD 显式设为 'disabled' 时才隐藏卫星，
+    // 'registered' 和 'loaded' 是自动启用过程中的中间状态，不应阻止渲染。
+    // 这样卫星数据加载完成后会自动显示，无需手动点击 MOD 图标。
     const modState = useModStore.getState().mods['satellite-tracking']?.state;
-    if (modState && modState !== 'enabled') {
+    if (modState === 'disabled') {
       this.renderer.setVisible(false);
       return;
     }
@@ -173,36 +180,38 @@ export class SatelliteLayer {
       if (earthBody) {
         const earthPosition = new THREE.Vector3(earthBody.x, earthBody.y, earthBody.z);
         
-        // 创建旋转矩阵：X轴旋转66.56度
+        // 创建旋转矩阵：X轴旋转66.56度（ECI → 黄道坐标）
         const rotationMatrix = new THREE.Matrix4();
         rotationMatrix.makeRotationX(THREE.MathUtils.degToRad(66.56));
         
-        // 转换为太阳系坐标，并保留完整的卫星状态
-        const adjustedPositions = new Map<number, any>();
+        // 卫星位置保持在地球相对坐标系，不叠加地球绝对位置
+        // 改为通过 pointCloud.position 设置整体偏移，避免 Float32 精度丢失：
+        // Float32 在 ~1 AU 尺度精度仅 ~10⁻⁷ AU，
+        // 卫星轨道半径 ~10⁻⁴ AU，每帧移动 ~10⁻⁹ AU，
+        // 叠加后低 4 位小数丢失 → 位置量化跳跃 → 抖动。
+        const relativePositions = new Map<number, any>();
         interpolatedPositions.forEach((position, noradId) => {
           const rotatedPosition = position.clone().applyMatrix4(rotationMatrix);
-          const adjustedPosition = rotatedPosition.add(earthPosition);
           
-          // 从保存的状态获取完整的卫星信息
           const savedState = this.satelliteStates.get(noradId);
           if (savedState) {
-            adjustedPositions.set(noradId, {
+            relativePositions.set(noradId, {
               ...savedState,
-              position: adjustedPosition,
+              position: rotatedPosition,
             });
           } else {
-            // 如果没有保存的状态，创建一个基本状态
-            adjustedPositions.set(noradId, {
+            relativePositions.set(noradId, {
               noradId,
-              position: adjustedPosition,
-              orbitType: 'LEO' as any, // 默认轨道类型
+              position: rotatedPosition,
+              orbitType: 'LEO' as any,
             });
           }
         });
         
-        // 更新渲染器
+        // 更新渲染器：先设世界位置再传相对坐标
+        this.renderer.setWorldPosition(earthPosition);
         const uploadStart = performance.now();
-        this.renderer.updatePositions(adjustedPositions as any);
+        this.renderer.updatePositions(relativePositions as any);
         this.performanceMonitor.recordGPUUpload(performance.now() - uploadStart);
         
         // 更新相机距离相关的透明度和大小

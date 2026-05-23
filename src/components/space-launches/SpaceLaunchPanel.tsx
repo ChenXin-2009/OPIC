@@ -13,6 +13,7 @@ import type { DataSourceId, LaunchEvent } from './types';
 import type { LaunchRenderer, LaunchPoint } from '@/lib/mods/space-launches/LaunchRenderer';
 import { useSolarSystemStore } from '@/lib/state';
 
+/** 发射追踪面板属性：渲染器、语言、配置回调等 */
 interface Props {
   renderer?: LaunchRenderer | null;
   onClose?: () => void;
@@ -22,10 +23,12 @@ interface Props {
   asWindowContent?: boolean; // 是否作为窗口内容显示(macOS风格)
 }
 
+/** 所有可用数据源的 ID 列表（启用"全部数据源"时使用） */
 const ALL_SOURCE_IDS: DataSourceId[] = [
   'launch_library2', 'spacex_api', 'rocketlaunch_live', 'thespacedevs', 'nextspaceflight',
 ];
 
+/** 格式化发射倒计时：返回"T-2h30m"或"3天前"等可读文本 */
 function formatCountdown(net: string, lang: 'zh' | 'en'): string {
   const diff = new Date(net).getTime() - Date.now();
   if (diff < 0) {
@@ -46,6 +49,7 @@ function formatCountdown(net: string, lang: 'zh' | 'en'): string {
   return lang === 'zh' ? `T-${m}m${s}s` : `T-${m}m ${s}s`;
 }
 
+/** 格式化发射时间为本地化日期字符串 */
 function formatDate(iso: string, lang: 'zh' | 'en'): string {
   try {
     return new Date(iso).toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US', {

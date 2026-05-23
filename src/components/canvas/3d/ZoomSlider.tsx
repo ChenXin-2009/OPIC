@@ -8,7 +8,6 @@
  * - 向上拖动 → 加速放大（靠近焦点）
  * - 向下拖动 → 加速缩小（远离焦点）
  * - 松手后滑块惯性回弹到中心，速度归零
- * - 兼容 FOV 放大模式（fovZoomActive 时变蓝）
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -37,7 +36,6 @@ function calcZoomDelta(normalizedOffset: number): number {
 export default function ZoomSlider({ cameraController }: ZoomSliderProps) {
   // thumbOffset: 相对轨道中心的像素偏移，负值向上（放大），正值向下（缩小）
   const [thumbOffset, setThumbOffset] = useState(0);
-  const [isFovMode, setIsFovMode] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   const dragStartY = useRef(0);
@@ -47,18 +45,6 @@ export default function ZoomSlider({ cameraController }: ZoomSliderProps) {
   const thumbOffsetRef = useRef(0);
 
   // 同步 ref，供 rAF 回调读取
-  useEffect(() => { isDraggingRef.current = isDragging; }, [isDragging]);
-  useEffect(() => { thumbOffsetRef.current = thumbOffset; }, [thumbOffset]);
-
-  // 轮询 FOV 模式状态
-  useEffect(() => {
-    if (!cameraController) return;
-    const id = setInterval(() => {
-      const info = cameraController.getDebugInfo();
-      setIsFovMode(!!info?.fovZoomActive);
-    }, 100);
-    return () => clearInterval(id);
-  }, [cameraController]);
 
   // 主循环：拖动期间每帧根据滑块位置调用 zoom
   useEffect(() => {
@@ -128,8 +114,8 @@ export default function ZoomSlider({ cameraController }: ZoomSliderProps) {
   const normalized = thumbOffset / maxOffset;
   const inDeadZone = Math.abs(normalized) < DEAD_ZONE;
 
-  const accentColor = isFovMode ? 'rgba(100,200,255,0.9)' : 'rgba(255,255,255,0.8)';
-  const trackColor = isFovMode ? 'rgba(100,200,255,0.25)' : 'rgba(255,255,255,0.15)';
+  const accentColor = 'rgba(255,255,255,0.8)';
+  const trackColor = 'rgba(255,255,255,0.15)';
 
   // 激活段高亮：从中心到滑块位置
   const highlightHeight = Math.abs(thumbOffset);
@@ -179,9 +165,7 @@ export default function ZoomSlider({ cameraController }: ZoomSliderProps) {
             transform: 'translateX(-50%)',
             width: '1px',
             height: `${highlightHeight}px`,
-            background: isFovMode
-              ? 'rgba(100,200,255,0.7)'
-              : (thumbOffset < 0 ? 'rgba(255,255,255,0.6)' : 'rgba(255,180,80,0.6)'),
+            background: thumbOffset < 0 ? 'rgba(255,255,255,0.6)' : 'rgba(255,180,80,0.6)',
             transition: isDragging ? 'none' : 'height 0.05s, top 0.05s',
           }} />
         )}
@@ -194,9 +178,7 @@ export default function ZoomSlider({ cameraController }: ZoomSliderProps) {
           transform: 'translate(-50%, -50%)',
           width: '7px',
           height: '1px',
-          background: inDeadZone
-            ? (isFovMode ? 'rgba(100,200,255,0.5)' : 'rgba(255,255,255,0.4)')
-            : accentColor,
+          background: inDeadZone ? accentColor : 'rgba(255,255,255,0.4)',
           transition: 'background 0.2s',
         }} />
 
@@ -210,10 +192,8 @@ export default function ZoomSlider({ cameraController }: ZoomSliderProps) {
           height: `${THUMB_SIZE}px`,
           borderRadius: '50%',
           border: `1.5px solid ${accentColor}`,
-          background: isDragging && !inDeadZone
-            ? (isFovMode ? 'rgba(100,200,255,0.2)' : 'rgba(255,255,255,0.1)')
-            : 'transparent',
-          boxShadow: (!inDeadZone || isFovMode) ? `0 0 5px ${accentColor}` : 'none',
+          background: isDragging && !inDeadZone ? 'rgba(255,255,255,0.1)' : 'transparent',
+          boxShadow: !inDeadZone ? `0 0 5px ${accentColor}` : 'none',
           transition: isDragging ? 'none' : 'top 0.05s linear, box-shadow 0.2s, border-color 0.3s',
           pointerEvents: 'none',
         }} />

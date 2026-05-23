@@ -13,6 +13,7 @@ import { DEMO_TRADE_ROUTES, DEMO_AIR_ROUTES, MAJOR_PORTS, MAJOR_AIRPORTS } from 
 import type { DataSourceId, GlobalTrafficConfig } from '@/lib/mods/global-traffic/types';
 import { DEFAULT_CONFIG } from '@/lib/mods/global-traffic/types';
 
+/** 面板属性：渲染器、语言、配置回调、窗口模式等 */
 interface GlobalTrafficPanelProps {
   renderer: TrafficRenderer | null;
   lang?: 'zh' | 'en';
@@ -22,6 +23,7 @@ interface GlobalTrafficPanelProps {
   asWindowContent?: boolean; // 是否作为窗口内容显示(macOS风格)
 }
 
+/** 中/英文界面文本映射 */
 const T = {
   zh: {
     title: '全球货运与贸易路线',
@@ -101,31 +103,35 @@ export const GlobalTrafficPanel: React.FC<GlobalTrafficPanelProps> = ({
 
   const { states, vessels, flights, totalLoading, refetch } = useTrafficData(config.enabledSources);
 
-  // Sync renderer when data changes
+  // 数据变化时同步到 3D 渲染器：船舶图层
   useEffect(() => {
     if (!renderer) return;
     if (config.showVessels) renderer.updateVessels(vessels, config.opacity);
     else renderer.setLayerVisible('vessels', false);
   }, [vessels, renderer, config.showVessels, config.opacity]);
 
+  // 数据变化时同步到 3D 渲染器：航班图层（限制最大数量）
   useEffect(() => {
     if (!renderer) return;
     if (config.showFlights) renderer.updateFlights(flights.slice(0, config.maxFlights), config.opacity);
     else renderer.setLayerVisible('flights', false);
   }, [flights, renderer, config.showFlights, config.maxFlights, config.opacity]);
 
+  // 数据变化时同步到 3D 渲染器：贸易路线
   useEffect(() => {
     if (!renderer) return;
     const routes = config.showTradeRoutes ? [...DEMO_TRADE_ROUTES, ...DEMO_AIR_ROUTES] : [];
     renderer.updateTradeRoutes(routes, config.opacity);
   }, [renderer, config.showTradeRoutes, config.opacity]);
 
+  // 数据变化时同步到 3D 渲染器：港口/机场标记
   useEffect(() => {
     if (!renderer) return;
     const ports = config.showPorts ? [...MAJOR_PORTS, ...MAJOR_AIRPORTS] : [];
     renderer.updatePorts(ports, config.opacity);
   }, [renderer, config.showPorts, config.opacity]);
 
+  // 合并配置变更并向上通知父组件
   const updateConfig = useCallback((patch: Partial<GlobalTrafficConfig>) => {
     setConfig(prev => {
       const next = { ...prev, ...patch };
@@ -134,6 +140,7 @@ export const GlobalTrafficPanel: React.FC<GlobalTrafficPanelProps> = ({
     });
   }, [onConfigChange]);
 
+  // 切换单个数据源的启用状态
   const toggleSource = (id: DataSourceId) => {
     const enabled = config.enabledSources.includes(id);
     updateConfig({

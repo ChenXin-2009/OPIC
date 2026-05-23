@@ -1121,6 +1121,13 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
               if (newMode === SceneMode.CESIUM_DOMINANT) {
                 // 切换到 Cesium 主导模式
                 console.log('[SceneMode] Switching to CESIUM_DOMINANT mode');
+
+                // 0. 把 OrbitControls 的旋转中心搬到地球（进入时做，退出时不改）
+                //    进入时相机已经在地球附近，target 搬到地球几乎不改变视角
+                if (cameraControllerRef.current) {
+                  const controls = cameraControllerRef.current.getControls();
+                  controls.target.copy(earthPos);
+                }
                 
                 // 1. 确保 Cesium 渲染已启用
                 if (earthPlanet && 'setCesiumEnabled' in earthPlanet) {
@@ -1193,16 +1200,23 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
                   }
                 }
                 
-                // 4. 启用 Three.js OrbitControls，并将旋转中心对准地球
+                // 4. 启用 Three.js OrbitControls（controls.target 已在进入 Cesium 时设到地球）
                 if (cameraControllerRef.current) {
                   const controls = cameraControllerRef.current.getControls();
                   controls.enabled = true;
-                  // 将 OrbitControls 的旋转中心设置为地球位置，
-                  // 避免相机以旧目标点（如太阳系中心）为轴旋转
-                  controls.target.copy(earthPos);
-                  // 更新 controls 以使用新的相机位置和目标点
+
+                  // 清除进入 Cesium 前残留的旋转/平移惯性
+                  // OrbitControls._sphericalDelta 和 _panOffset 在 enabled=false 期间不会衰减
+                  const ctrlAny = controls as any;
+                  if (ctrlAny._sphericalDelta) ctrlAny._sphericalDelta.set(0, 0, 0);
+                  if (ctrlAny._panOffset) ctrlAny._panOffset.set(0, 0, 0);
+
                   controls.update();
-                  console.log('[SceneMode] Three.js OrbitControls enabled, target set to Earth');
+                  console.log('[SceneMode] Three.js OrbitControls enabled');
+
+                  // 同步 CameraController 内部状态到当前相机位置
+                  // 防止 trackingDistance/smoothDistance 过时导致回弹
+                  cameraControllerRef.current.syncStateFromCamera();
                 }
                 
                 // 5. 恢复 Three.js canvas 事件处理和层级

@@ -8,6 +8,7 @@ import type { DisasterPoint } from '@/lib/mods/weather-disaster/DisasterRenderer
 
 // ── 数据源 & 类别定义 ─────────────────────────────────────────────────────────
 
+/** 数据源配置项：标识符、名称、描述、分类、颜色、图标和刷新间隔 */
 interface SrcDef { id: DataSourceId; name: string; desc: string; cat: string; color: string; icon: string; interval: number }
 
 const SOURCES: SrcDef[] = [
@@ -20,6 +21,7 @@ const SOURCES: SrcDef[] = [
   { id: 'noaa_tsunami',    name: 'NOAA 海啸事件库',     desc: 'NOAA国家环境信息中心2020年以来海啸历史事件',                  cat: 'tsunami',    color: '#00ccff', icon: '🌊', interval: 3600 },
 ];
 
+/** 灾害类别元数据：中文名称、配色和图标 */
 const CAT: Record<string, { zh: string; color: string; icon: string }> = {
   multi:      { zh: '综合',  color: '#00ff88', icon: '🌐' },
   earthquake: { zh: '地震',  color: '#ff6600', icon: '🌋' },
@@ -32,14 +34,19 @@ const CAT: Record<string, { zh: string; color: string; icon: string }> = {
   drought:    { zh: '干旱',  color: '#cc8800', icon: '☀️' },
 };
 
+/** 严重程度等级配色 */
 const SEV_COLOR: Record<string, string> = { extreme: '#ff2222', high: '#ff8800', medium: '#ffcc00', low: '#44cc44' };
+/** 严重程度中文标签 */
 const SEV_ZH:    Record<string, string> = { extreme: '极端',    high: '高',      medium: '中',      low: '低'      };
+/** 严重程度排序（从高到低） */
 const SEV_ORDER = ['extreme', 'high', 'medium', 'low'];
 
+/** 格式化刷新间隔：将秒数转换为可读的 s/m/h 格式 */
 const fmtInterval = (s: number) => s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s/60)}m` : `${Math.round(s/3600)}h`;
 
 // ── 子组件 ────────────────────────────────────────────────────────────────────
 
+/** 标签页切换按钮：文字大写、底部活动指示条 */
 function Tab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
@@ -57,6 +64,7 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
   );
 }
 
+/** 严重程度徽章：根据等级显示对应颜色和文字 */
 function SevBadge({ sev }: { sev: string }) {
   const color = SEV_COLOR[sev] || '#888';
   return (
@@ -67,6 +75,7 @@ function SevBadge({ sev }: { sev: string }) {
   );
 }
 
+/** 数据源卡片：显示名称、描述、状态，点击切换启用/禁用 */
 function SourceCard({ src, enabled, state, onToggle }: {
   src: SrcDef;
   enabled: boolean;
@@ -110,6 +119,7 @@ function SourceCard({ src, enabled, state, onToggle }: {
   );
 }
 
+/** 事件行：左侧严重程度色条、图标、标题、时间和分类 */
 function EventRow({ e }: { e: DisasterPoint }) {
   const catInfo = CAT[e.category] || { zh: e.category, color: '#888', icon: '📊' };
   const sevColor = SEV_COLOR[e.severity] || '#888';
@@ -148,21 +158,29 @@ interface Props {
 }
 
 export const WeatherDisasterPanel: React.FC<Props> = ({ renderer, onClose, onConfigChange, initialConfig, asWindowContent = false, lang = 'zh' }) => {
+  // 已启用的数据源列表
   const [enabledSources, setEnabledSources] = useState<DataSourceId[]>(
     initialConfig?.enabledSources ?? ['usgs_earthquake', 'gdacs']
   );
+  // 3D 图层透明度
   const [opacity, setOpacity]       = useState(initialConfig?.opacity ?? 0.9);
+  // 隐藏的灾害类别（为空的类别显示）
   const [hiddenCats, setHiddenCats] = useState<string[]>(initialConfig?.hiddenCategories ?? []);
+  // 当前激活的标签页
   const [tab, setTab]               = useState<'sources' | 'layers' | 'events'>('sources');
+  // 严重程度筛选：all 或具体等级
   const [sevFilter, setSevFilter]   = useState('all');
 
+  // 获取所有启用的数据源状态和灾害事件点
   const { states, allPoints, totalLoading, totalCount, refetch } = useDisasterData(enabledSources);
 
+  // 将未被隐藏的事件点同步到 3D 渲染器
   useEffect(() => {
     if (!renderer) return;
     renderer.updatePoints(allPoints.filter(p => !hiddenCats.includes(p.category)), opacity);
   }, [renderer, allPoints, hiddenCats, opacity]);
 
+  // 合并配置变更并向上通知父组件
   const pushConfig = useCallback((patch: Partial<{ enabledSources: DataSourceId[]; opacity: number; hiddenCategories: string[] }>) => {
     onConfigChange?.({
       enabledSources:   patch.enabledSources   ?? enabledSources,
@@ -171,12 +189,14 @@ export const WeatherDisasterPanel: React.FC<Props> = ({ renderer, onClose, onCon
     });
   }, [enabledSources, opacity, hiddenCats, onConfigChange]);
 
+  // 切换单个数据源的启用状态
   const toggleSrc = (id: DataSourceId) => {
     const next = enabledSources.includes(id) ? enabledSources.filter(s => s !== id) : [...enabledSources, id];
     setEnabledSources(next);
     pushConfig({ enabledSources: next });
   };
 
+  // 切换灾害类别的显示/隐藏
   const toggleCat = (cat: string) => {
     const next = hiddenCats.includes(cat) ? hiddenCats.filter(c => c !== cat) : [...hiddenCats, cat];
     setHiddenCats(next);
@@ -184,12 +204,14 @@ export const WeatherDisasterPanel: React.FC<Props> = ({ renderer, onClose, onCon
     renderer?.setLayerVisible(cat, hiddenCats.includes(cat));
   };
 
+  // 将数据源按灾害类别分组
   const grouped = useMemo(() => {
     const m = new Map<string, SrcDef[]>();
     SOURCES.forEach(s => { if (!m.has(s.cat)) m.set(s.cat, []); m.get(s.cat)!.push(s); });
     return m;
   }, []);
 
+  // 筛选并排序后的事件列表（按严重程度过滤、按时间降序、最多 300 条）
   const events = useMemo(() =>
     allPoints
       .filter(e => (sevFilter === 'all' || e.severity === sevFilter) && !hiddenCats.includes(e.category))
@@ -198,12 +220,14 @@ export const WeatherDisasterPanel: React.FC<Props> = ({ renderer, onClose, onCon
     [allPoints, sevFilter, hiddenCats]
   );
 
+  // 各灾害类别的事件计数
   const catCounts = useMemo(() => {
     const m: Record<string, number> = {};
     allPoints.forEach(p => { m[p.category] = (m[p.category] || 0) + 1; });
     return m;
   }, [allPoints]);
 
+  // 各严重程度的事件计数
   const sevCounts = useMemo(() => {
     const m: Record<string, number> = {};
     allPoints.forEach(p => { m[p.severity] = (m[p.severity] || 0) + 1; });

@@ -47,7 +47,7 @@ const DEFAULT_CONFIG: SceneModeConfig = {
   // 0.0002 AU ≈ 30,000 km（避免频繁切换的滞后阈值）
   threeModeDistanceThreshold: 0.0002,
   autoSwitch: true,
-  transitionDuration: 1000,
+  transitionDuration: 0, // 即时切换，无过渡动画
 };
 
 /**

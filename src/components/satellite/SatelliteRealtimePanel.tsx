@@ -12,6 +12,7 @@ import { OrbitType } from '@/lib/types/satellite';
 import type { RealtimePosition } from '@/app/api/satellites/realtime/route';
 import type { PassEvent } from '@/app/api/satellites/passes/route';
 
+/** 暗色主题配色常量 */
 const C = {
   dark: '#0a0a0a',
   darkLight: '#141414',
@@ -28,6 +29,7 @@ const C = {
   heo: '#cc88ff',
 };
 
+/** 根据轨道类型返回对应配色 */
 function orbitColor(type: string) {
   switch (type) {
     case 'LEO': return C.leo;
@@ -38,22 +40,26 @@ function orbitColor(type: string) {
   }
 }
 
+/** 格式化秒数为 m s 格式 */
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}m ${s}s`;
 }
 
+/** 格式化 ISO 时间为 HH:MM:SS */
 function formatTime(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
+/** 格式化 ISO 时间为 MM/DD */
 function formatDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
 }
 
+/** 将方位角（度）转换为方向标签（N/NE/E/SE/S/SW/W/NW） */
 function azimuthLabel(az: number): string {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   return dirs[Math.round(az / 45) % 8];
@@ -107,20 +113,30 @@ interface SatelliteRealtimePanelProps {
   lang?: 'zh' | 'en';
 }
 
+/** 卫星实时数据面板：显示位置、轨道、过境预测等 */
 export function SatelliteRealtimePanel({ lang = 'zh' }: SatelliteRealtimePanelProps) {
   const { selectedSatellite, satellites, showOrbits, selectSatellite, toggleOrbit } = useSatelliteStore();
 
+  // 实时位置数据（来自后端实时计算）
   const [realtime, setRealtime] = useState<RealtimePosition | null>(null);
+  // 过境预测事件列表
   const [passes, setPasses] = useState<PassEvent[]>([]);
+  // 实时数据加载状态
   const [loadingRealtime, setLoadingRealtime] = useState(false);
+  // 过境预测加载状态
   const [loadingPasses, setLoadingPasses] = useState(false);
+  // 当前激活的标签页
   const [activeTab, setActiveTab] = useState<'info' | 'passes' | 'orbit'>('info');
+  // 过境观测者纬度（默认北京）
   const [observerLat, setObserverLat] = useState(39.9);
+  // 过境观测者经度（默认北京）
   const [observerLon, setObserverLon] = useState(116.4);
+  // 是否显示观测点配置面板
   const [showPassConfig, setShowPassConfig] = useState(false);
 
   const satellite = selectedSatellite ? satellites.get(selectedSatellite) : null;
 
+  // 获取卫星实时位置（API 调用）
   const fetchRealtime = useCallback(async () => {
     if (!selectedSatellite) return;
     setLoadingRealtime(true);
@@ -135,6 +151,7 @@ export function SatelliteRealtimePanel({ lang = 'zh' }: SatelliteRealtimePanelPr
     }
   }, [selectedSatellite]);
 
+  // 获取卫星过境预测（API 调用，基于观测者经纬度）
   const fetchPasses = useCallback(async () => {
     if (!selectedSatellite) return;
     setLoadingPasses(true);
