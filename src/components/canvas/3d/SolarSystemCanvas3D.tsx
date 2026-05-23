@@ -66,6 +66,7 @@ import type { GalaxyCluster, GalaxyGroup, LocalGroupGalaxy, SimpleGalaxy, Superc
 import SatelliteDetailModal from '@/components/satellite/SatelliteDetailModal';
 import ExoplanetSystemPanel from '@/components/exoplanets/ExoplanetSystemPanel';
 import { useExoplanetStore } from '@/lib/store/useExoplanetStore';
+import { useEarthControlStore } from '@/lib/state/earthControlStore';
 
 
 // ==================== 可调参数配置 ====================
@@ -521,6 +522,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
 
       const exoplanetRenderer = new ExoplanetRenderer();
       exoplanetRenderer.getGroup().quaternion.copy(sceneManager.getStarsAlignmentQuaternion());
+      exoplanetRenderer.setCamera(camera); // 设置相机引用以支持标签更新
       scene.add(exoplanetRenderer.getGroup());
       exoplanetRendererRef.current = exoplanetRenderer;
 
@@ -1077,6 +1079,32 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
         
         // 更新全局状态中的相机距离
         useSolarSystemStore.getState().setCameraDistance(distanceToSun);
+        
+        // ==================== 自动管理地球锁定模式 ====================
+        // 离开太阳系或进入系外行星系统时，自动禁用地球锁定
+        // 回到太阳系时，恢复用户原始设置
+        const SOLAR_SYSTEM_BOUNDARY = 5000; // AU，超过此距离视为离开太阳系
+        const exoplanetState = useExoplanetStore.getState();
+        const hasExoplanetSelection = !!exoplanetState.selectedHostName;
+        const earthControlState = useEarthControlStore.getState();
+        
+        // 判断是否应该禁用地球锁定
+        const shouldDisableEarthLock = distanceToSun > SOLAR_SYSTEM_BOUNDARY || hasExoplanetSelection;
+        
+        // 只在状态需要改变时才更新（避免每帧都调用）
+        if (shouldDisableEarthLock && earthControlState.earthLockEnabled) {
+          // 离开太阳系或进入系外行星系统：禁用地球锁定
+          earthControlState.setEarthLockEnabledAuto(false);
+          if (cameraControllerRef.current) {
+            cameraControllerRef.current.setEarthLockMode(false);
+          }
+        } else if (!shouldDisableEarthLock && !earthControlState.earthLockEnabled && earthControlState.userEarthLockPreference) {
+          // 回到太阳系且用户偏好是开启：恢复地球锁定
+          earthControlState.setEarthLockEnabledAuto(true);
+          if (cameraControllerRef.current) {
+            cameraControllerRef.current.setEarthLockMode(true);
+          }
+        }
         
         // 计算远距离时的行星、轨道、标签透明度
         let farViewPlanetOpacity = 1.0;

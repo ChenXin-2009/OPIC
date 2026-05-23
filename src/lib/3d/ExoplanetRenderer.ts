@@ -13,6 +13,7 @@ import {
   ExoplanetSelection,
   ExoplanetSystemDetails,
 } from '@/lib/types/exoplanet';
+import { OrbitLabel } from './OrbitLabel';
 
 type PickTarget =
   | { type: 'host'; hostname: string; distancePx: number }
@@ -22,8 +23,9 @@ type PickTarget =
 interface PlanetVisual {
   planet: ExoplanetPlanet;
   pivot: THREE.Group;
-  mesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
+  mesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshStandardMaterial>;
   orbit: THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial>;
+  label: OrbitLabel | null;
   orbitRadius: number;
   visualRadius: number;
   phase: number;
@@ -54,7 +56,11 @@ export class ExoplanetRenderer {
   private selectedBody: ExoplanetSelection | null = null;
   private planetVisuals: PlanetVisual[] = [];
   private systemStarMesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
+  private systemStarLight: THREE.PointLight | null = null;
+  private systemStarGlow: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
+  private systemStarLabel: OrbitLabel | null = null;
   private elapsed = 0;
+  private camera: THREE.Camera | null = null;
 
   constructor() {
     this.group.name = 'ExoplanetRenderer';
@@ -64,6 +70,10 @@ export class ExoplanetRenderer {
 
   getGroup(): THREE.Group {
     return this.group;
+  }
+  
+  setCamera(camera: THREE.Camera): void {
+    this.camera = camera;
   }
 
   setIndex(systems: ExoplanetHostIndex[]): void {
@@ -86,8 +96,9 @@ export class ExoplanetRenderer {
       const position = exoplanetEquatorialToCartesian(system.raDeg, system.decDeg, system.distancePc);
       const color = stellarColorFromTemperature(system.stellarTemperatureK);
       const luminosity = system.stellarLuminosityLogSolar ?? 0;
-      const planetsBoost = Math.min(system.planetCount, 8) * 0.35;
-      const size = THREE.MathUtils.clamp(4 + luminosity * 1.2 + planetsBoost, 2.5, 15);
+      const planetsBoost = Math.min(system.planetCount, 8) * 0.5;
+      // 增大基础大小从4到8，增大光度影响从1.2到2.0，增大最大值从15到28
+      const size = THREE.MathUtils.clamp(8 + luminosity * 2.0 + planetsBoost, 5, 28);
 
       positions[index * 3] = position.x;
       positions[index * 3 + 1] = position.y;
@@ -127,7 +138,8 @@ export class ExoplanetRenderer {
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
           gl_Position = projectionMatrix * mvPosition;
           float distanceScale = 2600000.0 / max(-mvPosition.z, 1.0);
-          gl_PointSize = clamp(size * distanceScale, 2.0, 20.0);
+          // 增大点大小范围从2.0-20.0到4.0-40.0
+          gl_PointSize = clamp(size * distanceScale, 4.0, 40.0);
         }
       `,
       fragmentShader: `
@@ -183,31 +195,67 @@ export class ExoplanetRenderer {
 
     const starColor = stellarColorFromTemperature(system.star.stellarTemperatureK);
     const starRadius = this.getVisualStarRadius(system);
+    
+    // 创建恒星主体（使用更亮的颜色）
     const starGeometry = new THREE.SphereGeometry(starRadius, 32, 16);
     const starMaterial = new THREE.MeshBasicMaterial({
       color: starColor,
       transparent: true,
-      opacity: 0.96,
+      opacity: 1.0,
     });
     this.systemStarMesh = new THREE.Mesh(starGeometry, starMaterial);
     this.systemStarMesh.userData.exoplanetTarget = { type: 'system-star', hostname: system.hostname };
     systemGroup.add(this.systemStarMesh);
 
-    const haloGeometry = new THREE.SphereGeometry(starRadius * 2.2, 32, 16);
-    const haloMaterial = new THREE.MeshBasicMaterial({
+    // 创建恒星光晕（多层，类似太阳系的实现）
+    const haloGeometry1 = new THREE.SphereGeometry(starRadius * 2.2, 32, 16);
+    const haloMaterial1 = new THREE.MeshBasicMaterial({
       color: starColor,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.25,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
-    systemGroup.add(new THREE.Mesh(haloGeometry, haloMaterial));
+    this.systemStarGlow = new THREE.Mesh(haloGeometry1, haloMaterial1);
+    systemGroup.add(this.systemStarGlow);
+    
+    // 第二层光晕（更大更淡）
+    const haloGeometry2 = new THREE.SphereGeometry(starRadius * 3.5, 32, 16);
+    const haloMaterial2 = new THREE.MeshBasicMaterial({
+      color: starColor,
+      transparent: true,
+      opacity: 0.12,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    systemGroup.add(new THREE.Mesh(haloGeometry2, haloMaterial2));
+    
+    // 创建点光源（照亮行星）
+    const luminosity = system.star.stellarLuminosityLogSolar ?? 0;
+    const lightIntensity = THREE.MathUtils.clamp(Math.pow(10, luminosity) * 2, 0.5, 10);
+    this.systemStarLight = new THREE.PointLight(starColor, lightIntensity, 0, 2);
+    this.systemStarLight.position.set(0, 0, 0);
+    systemGroup.add(this.systemStarLight);
+
+    // 创建恒星标签
+    const starLabel = new OrbitLabel({
+      textEn: system.hostname,
+      textZh: system.hostname,
+      color: '#' + starColor.getHexString(),
+      orbitRadius: starRadius * 3,
+      orbitSpacing: starRadius * 6,
+    });
+    this.systemStarLabel = starLabel;
+    systemGroup.add(starLabel.getSprite());
 
     system.planets.forEach((planet, index) => {
       const visual = this.createPlanetVisual(planet, system, index);
       this.planetVisuals.push(visual);
       systemGroup.add(visual.orbit);
       systemGroup.add(visual.pivot);
+      if (visual.label) {
+        systemGroup.add(visual.label.getSprite());
+      }
     });
 
     this.systemGroup = systemGroup;
@@ -231,6 +279,36 @@ export class ExoplanetRenderer {
     this.elapsed += deltaTime;
     this.updateOpacity(cameraDistance, deltaTime);
     this.updateSystemPlanets();
+    this.updateLabels();
+  }
+  
+  private updateLabels(): void {
+    if (!this.camera || !this.systemGroup) {
+      return;
+    }
+    
+    // 更新恒星标签
+    if (this.systemStarLabel && this.systemStarMesh) {
+      const starPos = this.systemStarMesh.getWorldPosition(new THREE.Vector3());
+      const orbitNormal = new THREE.Vector3(0, 1, 0);
+      this.systemStarLabel.updatePositionWithCamera(
+        new THREE.Vector3(0, 0, 0), // 恒星在系统中心
+        orbitNormal,
+        this.camera,
+        false
+      );
+      this.systemStarLabel.setOpacity(1.0);
+    }
+    
+    // 更新行星标签
+    this.planetVisuals.forEach((visual) => {
+      if (visual.label) {
+        const planetPos = visual.mesh.position.clone();
+        const orbitNormal = new THREE.Vector3(0, 1, 0);
+        visual.label.updatePositionWithCamera(planetPos, orbitNormal, this.camera, true);
+        visual.label.setOpacity(1.0);
+      }
+    });
   }
 
   pick(clientX: number, clientY: number, camera: THREE.Camera, container: HTMLElement): PickTarget | null {
@@ -295,8 +373,16 @@ export class ExoplanetRenderer {
     const orbitRadius = Math.max(0.035 + index * 0.012, semiMajorAxis * SYSTEM_ORBIT_SCALE);
     const visualRadius = THREE.MathUtils.clamp((planet.radiusEarth ?? 1) * 0.018, 0.018, 0.18);
     const color = planetColorFromRadius(planet.radiusEarth, planet.equilibriumTemperatureK);
+    
+    // 使用 MeshStandardMaterial 以支持光照
     const planetGeometry = new THREE.SphereGeometry(visualRadius, 20, 12);
-    const planetMaterial = new THREE.MeshBasicMaterial({ color });
+    const planetMaterial = new THREE.MeshStandardMaterial({ 
+      color,
+      emissive: color,
+      emissiveIntensity: 0.15, // 轻微自发光
+      roughness: 0.8,
+      metalness: 0.1,
+    });
     const mesh = new THREE.Mesh(planetGeometry, planetMaterial);
     const phase = this.hashToPhase(planet.name);
 
@@ -312,12 +398,22 @@ export class ExoplanetRenderer {
     pivot.add(mesh);
 
     const orbit = this.createOrbitLine(orbitRadius, color, planet.inclinationDeg);
+    
+    // 创建行星标签
+    const planetLabel = new OrbitLabel({
+      textEn: planet.name,
+      textZh: planet.letter ? `${system.hostname} ${planet.letter}` : planet.name,
+      color: '#' + color.getHexString(),
+      orbitRadius: orbitRadius,
+      orbitSpacing: orbitRadius * 0.3,
+    });
 
     return {
       planet,
       pivot,
       mesh,
       orbit,
+      label: planetLabel,
       orbitRadius,
       visualRadius,
       phase,
@@ -339,10 +435,20 @@ export class ExoplanetRenderer {
     }
 
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    
+    // 创建渐变透明度效果
+    const alphas = new Float32Array(segments + 1);
+    for (let i = 0; i <= segments; i++) {
+      // 使用正弦函数创建渐变效果
+      const t = i / segments;
+      alphas[i] = 0.3 + 0.3 * Math.sin(t * Math.PI * 2);
+    }
+    geometry.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
+    
     const material = new THREE.LineBasicMaterial({
       color,
       transparent: true,
-      opacity: 0.36,
+      opacity: 0.45,
       blending: THREE.AdditiveBlending,
     });
     const line = new THREE.Line(geometry, material);
@@ -558,9 +664,18 @@ export class ExoplanetRenderer {
     }
 
     const baseColor = planetColorFromRadius(visual.planet.radiusEarth, visual.planet.equilibriumTemperatureK);
-    visual.mesh.material.color.copy(highlighted ? baseColor.clone().lerp(new THREE.Color(0xffffff), 0.6) : baseColor);
+    const material = visual.mesh.material as THREE.MeshStandardMaterial;
+    
+    if (highlighted) {
+      material.color.copy(baseColor.clone().lerp(new THREE.Color(0xffffff), 0.6));
+      material.emissiveIntensity = 0.35;
+    } else {
+      material.color.copy(baseColor);
+      material.emissiveIntensity = 0.15;
+    }
+    
     visual.mesh.scale.setScalar(highlighted ? 1.55 : 1);
-    visual.orbit.material.opacity = highlighted ? 0.78 : 0.36;
+    visual.orbit.material.opacity = highlighted ? 0.78 : 0.45;
   }
 
   private applySelectedBody(selection: ExoplanetSelection | null): void {
@@ -571,14 +686,29 @@ export class ExoplanetRenderer {
     this.planetVisuals.forEach((visual) => {
       const selected = selection?.type === 'planet' && selection.planetName === visual.planet.name;
       const baseColor = planetColorFromRadius(visual.planet.radiusEarth, visual.planet.equilibriumTemperatureK);
-      visual.mesh.material.color.copy(selected ? baseColor.clone().lerp(new THREE.Color(0xffffff), 0.45) : baseColor);
+      const material = visual.mesh.material as THREE.MeshStandardMaterial;
+      
+      if (selected) {
+        material.color.copy(baseColor.clone().lerp(new THREE.Color(0xffffff), 0.45));
+        material.emissiveIntensity = 0.3;
+      } else {
+        material.color.copy(baseColor);
+        material.emissiveIntensity = 0.15;
+      }
+      
       visual.mesh.scale.setScalar(selected ? 1.35 : 1);
-      visual.orbit.material.opacity = selected ? 0.68 : 0.36;
+      visual.orbit.material.opacity = selected ? 0.68 : 0.45;
     });
 
     if (this.systemStarMesh) {
       const selectedStar = !selection || selection.type === 'star';
       this.systemStarMesh.scale.setScalar(selectedStar ? 1.18 : 1);
+      
+      // 调整恒星光晕的亮度
+      if (this.systemStarGlow) {
+        const glowMaterial = this.systemStarGlow.material as THREE.MeshBasicMaterial;
+        glowMaterial.opacity = selectedStar ? 0.35 : 0.25;
+      }
     }
   }
 
@@ -621,6 +751,18 @@ export class ExoplanetRenderer {
       return;
     }
 
+    // 清理标签
+    if (this.systemStarLabel) {
+      this.systemStarLabel.dispose();
+      this.systemStarLabel = null;
+    }
+    
+    this.planetVisuals.forEach((visual) => {
+      if (visual.label) {
+        visual.label.dispose();
+      }
+    });
+
     this.systemGroup.traverse((object) => {
       if (object instanceof THREE.Mesh || object instanceof THREE.Line) {
         object.geometry.dispose();
@@ -635,6 +777,9 @@ export class ExoplanetRenderer {
 
     this.group.remove(this.systemGroup);
     this.systemGroup = null;
+    this.systemStarMesh = null;
+    this.systemStarLight = null;
+    this.systemStarGlow = null;
   }
 }
 

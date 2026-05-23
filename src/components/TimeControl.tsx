@@ -31,6 +31,23 @@ const TimeControl = React.memo(() => {
   const { t, lang } = useTranslation();
   const cameraDistance = useSolarSystemStore((state) => state.cameraDistance);
   
+  // Check if an exoplanet system is selected
+  const [hasExoplanetSelection, setHasExoplanetSelection] = React.useState(false);
+  
+  React.useEffect(() => {
+    // Import dynamically to avoid circular dependencies
+    import('@/lib/store/useExoplanetStore').then(({ useExoplanetStore }) => {
+      const unsubscribe = useExoplanetStore.subscribe((state) => {
+        setHasExoplanetSelection(!!state.selectedHostName);
+      });
+      
+      // Set initial state
+      setHasExoplanetSelection(!!useExoplanetStore.getState().selectedHostName);
+      
+      return () => unsubscribe();
+    });
+  }, []);
+  
   // Refs
   const calendarButtonRef = useRef<HTMLButtonElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -53,7 +70,7 @@ const TimeControl = React.memo(() => {
   const displayTime = useThrottledTime(currentTime, 100);
   
   // Calculations
-  const timeControlOpacity = calculateTimeControlOpacity(cameraDistance);
+  const timeControlOpacity = calculateTimeControlOpacity(cameraDistance, hasExoplanetSelection);
   const timeDiff = calculateTimeDiff(displayTime, realTime);
   const absTimeDiff = Math.abs(timeDiff);
   const showPrecisionWarning = shouldShowPrecisionWarning(timeDiff);

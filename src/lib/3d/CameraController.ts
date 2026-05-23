@@ -1578,9 +1578,16 @@ export class CameraController {
             .copy(currentTargetPosition)
             .add(currentDirection.multiplyScalar(trackingDist));
           
+          // ⚠️ 关键修复：使用更小的 lerp 速度，减少抖动
+          // 对于远距离恒星，使用更小的跟踪速度以减少抖动
+          const distance = this.camera.position.distanceTo(currentTargetPosition);
+          const adaptiveTrackingSpeed = distance > 10000 
+            ? CAMERA_CONFIG.trackingLerpSpeed * 0.3  // 远距离：降低到30%
+            : CAMERA_CONFIG.trackingLerpSpeed;
+          
           // 平滑移动相机和目标（跟随目标）
-          this.camera.position.lerp(newCameraPosition, CAMERA_CONFIG.trackingLerpSpeed);
-          this.controls.target.lerp(currentTargetPosition, CAMERA_CONFIG.trackingLerpSpeed);
+          this.camera.position.lerp(newCameraPosition, adaptiveTrackingSpeed);
+          this.controls.target.lerp(currentTargetPosition, adaptiveTrackingSpeed);
         }
         
         // 更新 controls

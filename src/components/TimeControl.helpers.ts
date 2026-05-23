@@ -4,13 +4,20 @@
  */
 
 /**
- * Calculates time control opacity based on camera distance
- * Fades out between 3000AU and 5000AU
+ * Calculates time control opacity based on camera distance and exoplanet selection
+ * - Fades out between 3000AU and 5000AU when in solar system
+ * - Reappears when an exoplanet system is selected
  * 
  * @param cameraDistance - Current camera distance in AU
+ * @param hasExoplanetSelection - Whether an exoplanet system is currently selected
  * @returns Opacity value between 0 and 1
  */
-export function calculateTimeControlOpacity(cameraDistance: number): number {
+export function calculateTimeControlOpacity(cameraDistance: number, hasExoplanetSelection: boolean = false): number {
+  // If an exoplanet system is selected, always show time control
+  if (hasExoplanetSelection) {
+    return 1;
+  }
+  
   const FADE_START = 3000;
   const FADE_END = 5000;
   

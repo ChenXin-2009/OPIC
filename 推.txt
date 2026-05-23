@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 10.0.0: 添加系外星系"
+git commit -m "Release 10.0.1: 优化系外星系体验"
 git checkout main
 git pull origin main
-git tag v10.0.0
+git tag v10.0.1
 git push origin main
-git push origin v10.0.0
+git push origin v10.0.1
