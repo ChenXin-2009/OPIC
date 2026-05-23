@@ -14,6 +14,7 @@ import {
   ExoplanetSystemDetails,
 } from '@/lib/types/exoplanet';
 import { OrbitLabel } from './OrbitLabel';
+import { ExoplanetSystemRenderer } from './ExoplanetSystemRenderer';
 
 type PickTarget =
   | { type: 'host'; hostname: string; distancePx: number }
@@ -61,6 +62,7 @@ export class ExoplanetRenderer {
   private systemStarLabel: OrbitLabel | null = null;
   private elapsed = 0;
   private camera: THREE.Camera | null = null;
+  public systemRenderer: ExoplanetSystemRenderer | null = null; // 暴露给调试面板
 
   constructor() {
     this.group.name = 'ExoplanetRenderer';
@@ -74,6 +76,21 @@ export class ExoplanetRenderer {
   
   setCamera(camera: THREE.Camera): void {
     this.camera = camera;
+    if (this.systemRenderer) {
+      this.systemRenderer.setCamera(camera);
+    }
+  }
+  
+  setTime(time: Date): void {
+    if (this.systemRenderer) {
+      this.systemRenderer.setTime(time);
+    }
+  }
+  
+  setTimeSpeed(speed: number): void {
+    if (this.systemRenderer) {
+      this.systemRenderer.setTimeSpeed(speed);
+    }
   }
 
   setIndex(systems: ExoplanetHostIndex[]): void {
@@ -178,89 +195,32 @@ export class ExoplanetRenderer {
     this.selectedSystem = system;
     this.planetVisuals = [];
     this.systemStarMesh = null;
-
+    
     if (!system) {
+      // 清理系统渲染器
+      if (this.systemRenderer) {
+        this.systemRenderer.dispose();
+        this.group.remove(this.systemRenderer.getGroup());
+        this.systemRenderer = null;
+      }
       return;
     }
 
+    // 使用新的系统渲染器
+    this.systemRenderer = new ExoplanetSystemRenderer();
+    if (this.camera) {
+      this.systemRenderer.setCamera(this.camera);
+    }
+    this.systemRenderer.setSystem(system);
+    
+    // 定位到恒星位置
     const hostPosition = exoplanetEquatorialToCartesian(
       system.star.raDeg,
       system.star.decDeg,
       system.star.distancePc
     );
-
-    const systemGroup = new THREE.Group();
-    systemGroup.name = `ExoplanetSystem:${system.hostname}`;
-    systemGroup.position.copy(hostPosition);
-
-    const starColor = stellarColorFromTemperature(system.star.stellarTemperatureK);
-    const starRadius = this.getVisualStarRadius(system);
-    
-    // 创建恒星主体（使用更亮的颜色）
-    const starGeometry = new THREE.SphereGeometry(starRadius, 32, 16);
-    const starMaterial = new THREE.MeshBasicMaterial({
-      color: starColor,
-      transparent: true,
-      opacity: 1.0,
-    });
-    this.systemStarMesh = new THREE.Mesh(starGeometry, starMaterial);
-    this.systemStarMesh.userData.exoplanetTarget = { type: 'system-star', hostname: system.hostname };
-    systemGroup.add(this.systemStarMesh);
-
-    // 创建恒星光晕（多层，类似太阳系的实现）
-    const haloGeometry1 = new THREE.SphereGeometry(starRadius * 2.2, 32, 16);
-    const haloMaterial1 = new THREE.MeshBasicMaterial({
-      color: starColor,
-      transparent: true,
-      opacity: 0.25,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    this.systemStarGlow = new THREE.Mesh(haloGeometry1, haloMaterial1);
-    systemGroup.add(this.systemStarGlow);
-    
-    // 第二层光晕（更大更淡）
-    const haloGeometry2 = new THREE.SphereGeometry(starRadius * 3.5, 32, 16);
-    const haloMaterial2 = new THREE.MeshBasicMaterial({
-      color: starColor,
-      transparent: true,
-      opacity: 0.12,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    systemGroup.add(new THREE.Mesh(haloGeometry2, haloMaterial2));
-    
-    // 创建点光源（照亮行星）
-    const luminosity = system.star.stellarLuminosityLogSolar ?? 0;
-    const lightIntensity = THREE.MathUtils.clamp(Math.pow(10, luminosity) * 2, 0.5, 10);
-    this.systemStarLight = new THREE.PointLight(starColor, lightIntensity, 0, 2);
-    this.systemStarLight.position.set(0, 0, 0);
-    systemGroup.add(this.systemStarLight);
-
-    // 创建恒星标签
-    const starLabel = new OrbitLabel({
-      textEn: system.hostname,
-      textZh: system.hostname,
-      color: '#' + starColor.getHexString(),
-      orbitRadius: starRadius * 3,
-      orbitSpacing: starRadius * 6,
-    });
-    this.systemStarLabel = starLabel;
-    systemGroup.add(starLabel.getSprite());
-
-    system.planets.forEach((planet, index) => {
-      const visual = this.createPlanetVisual(planet, system, index);
-      this.planetVisuals.push(visual);
-      systemGroup.add(visual.orbit);
-      systemGroup.add(visual.pivot);
-      if (visual.label) {
-        systemGroup.add(visual.label.getSprite());
-      }
-    });
-
-    this.systemGroup = systemGroup;
-    this.group.add(systemGroup);
-    this.applySelectedBody(this.selectedBody);
+    this.systemRenderer.getGroup().position.copy(hostPosition);
+    this.group.add(this.systemRenderer.getGroup());
   }
 
   setSelectedBody(selection: ExoplanetSelection | null): void {
@@ -278,38 +238,13 @@ export class ExoplanetRenderer {
   update(cameraDistance: number, deltaTime: number): void {
     this.elapsed += deltaTime;
     this.updateOpacity(cameraDistance, deltaTime);
-    this.updateSystemPlanets();
-    this.updateLabels();
-  }
-  
-  private updateLabels(): void {
-    if (!this.camera || !this.systemGroup) {
-      return;
-    }
     
-    // 更新恒星标签
-    if (this.systemStarLabel && this.systemStarMesh) {
-      const starPos = this.systemStarMesh.getWorldPosition(new THREE.Vector3());
-      const orbitNormal = new THREE.Vector3(0, 1, 0);
-      this.systemStarLabel.updatePositionWithCamera(
-        new THREE.Vector3(0, 0, 0), // 恒星在系统中心
-        orbitNormal,
-        this.camera,
-        false
-      );
-      this.systemStarLabel.setOpacity(1.0);
+    // 更新系统渲染器
+    if (this.systemRenderer) {
+      this.systemRenderer.update(deltaTime);
     }
-    
-    // 更新行星标签
-    this.planetVisuals.forEach((visual) => {
-      if (visual.label) {
-        const planetPos = visual.mesh.position.clone();
-        const orbitNormal = new THREE.Vector3(0, 1, 0);
-        visual.label.updatePositionWithCamera(planetPos, orbitNormal, this.camera, true);
-        visual.label.setOpacity(1.0);
-      }
-    });
   }
+
 
   pick(clientX: number, clientY: number, camera: THREE.Camera, container: HTMLElement): PickTarget | null {
     this.group.updateMatrixWorld(true);
@@ -362,112 +297,7 @@ export class ExoplanetRenderer {
     this.group.clear();
   }
 
-  private createPlanetVisual(
-    planet: ExoplanetPlanet,
-    system: ExoplanetSystemDetails,
-    index: number
-  ): PlanetVisual {
-    const semiMajorAxis = planet.semiMajorAxisAU
-      ?? estimateSemiMajorAxisAU(planet.orbitalPeriodDays, system.star.stellarMassSolar)
-      ?? (0.08 + index * 0.08);
-    const orbitRadius = Math.max(0.035 + index * 0.012, semiMajorAxis * SYSTEM_ORBIT_SCALE);
-    const visualRadius = THREE.MathUtils.clamp((planet.radiusEarth ?? 1) * 0.018, 0.018, 0.18);
-    const color = planetColorFromRadius(planet.radiusEarth, planet.equilibriumTemperatureK);
-    
-    // 使用 MeshStandardMaterial 以支持光照
-    const planetGeometry = new THREE.SphereGeometry(visualRadius, 20, 12);
-    const planetMaterial = new THREE.MeshStandardMaterial({ 
-      color,
-      emissive: color,
-      emissiveIntensity: 0.15, // 轻微自发光
-      roughness: 0.8,
-      metalness: 0.1,
-    });
-    const mesh = new THREE.Mesh(planetGeometry, planetMaterial);
-    const phase = this.hashToPhase(planet.name);
 
-    mesh.position.set(Math.cos(phase) * orbitRadius, 0, Math.sin(phase) * orbitRadius);
-    mesh.userData.exoplanetTarget = {
-      type: 'planet',
-      hostname: system.hostname,
-      planetName: planet.name,
-    };
-
-    const pivot = new THREE.Group();
-    pivot.rotation.x = THREE.MathUtils.degToRad((planet.inclinationDeg ?? 0) - 90) * 0.25;
-    pivot.add(mesh);
-
-    const orbit = this.createOrbitLine(orbitRadius, color, planet.inclinationDeg);
-    
-    // 创建行星标签
-    const planetLabel = new OrbitLabel({
-      textEn: planet.name,
-      textZh: planet.letter ? `${system.hostname} ${planet.letter}` : planet.name,
-      color: '#' + color.getHexString(),
-      orbitRadius: orbitRadius,
-      orbitSpacing: orbitRadius * 0.3,
-    });
-
-    return {
-      planet,
-      pivot,
-      mesh,
-      orbit,
-      label: planetLabel,
-      orbitRadius,
-      visualRadius,
-      phase,
-      periodDays: Math.max(planet.orbitalPeriodDays ?? (20 + index * 30), 0.5),
-    };
-  }
-
-  private createOrbitLine(
-    radius: number,
-    color: THREE.Color,
-    inclinationDeg?: number
-  ): THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial> {
-    const points: THREE.Vector3[] = [];
-    const segments = 160;
-
-    for (let i = 0; i <= segments; i++) {
-      const angle = (i / segments) * Math.PI * 2;
-      points.push(new THREE.Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius));
-    }
-
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    
-    // 创建渐变透明度效果
-    const alphas = new Float32Array(segments + 1);
-    for (let i = 0; i <= segments; i++) {
-      // 使用正弦函数创建渐变效果
-      const t = i / segments;
-      alphas[i] = 0.3 + 0.3 * Math.sin(t * Math.PI * 2);
-    }
-    geometry.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
-    
-    const material = new THREE.LineBasicMaterial({
-      color,
-      transparent: true,
-      opacity: 0.45,
-      blending: THREE.AdditiveBlending,
-    });
-    const line = new THREE.Line(geometry, material);
-    line.rotation.x = THREE.MathUtils.degToRad((inclinationDeg ?? 0) - 90) * 0.25;
-    return line;
-  }
-
-  private updateSystemPlanets(): void {
-    const daysPerSecond = 4;
-
-    this.planetVisuals.forEach((visual) => {
-      const angle = visual.phase + (this.elapsed * daysPerSecond * Math.PI * 2) / visual.periodDays;
-      visual.mesh.position.set(
-        Math.cos(angle) * visual.orbitRadius,
-        0,
-        Math.sin(angle) * visual.orbitRadius
-      );
-    });
-  }
 
   private updateOpacity(cameraDistance: number, deltaTime: number): void {
     const showStart = SCALE_VIEW_CONFIG.nearbyStarsShowStart;
@@ -747,6 +577,13 @@ export class ExoplanetRenderer {
   }
 
   private disposeSystem(): void {
+    // 清理系统渲染器
+    if (this.systemRenderer) {
+      this.systemRenderer.dispose();
+      this.group.remove(this.systemRenderer.getGroup());
+      this.systemRenderer = null;
+    }
+    
     if (!this.systemGroup) {
       return;
     }

@@ -887,6 +887,11 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           state.tick(deltaTime);
         }
         
+        // ==================== 检查是否应该暂停太阳系计算 ====================
+        const exoplanetState = useExoplanetStore.getState();
+        const hasExoplanetSelection = !!exoplanetState.selectedHostName;
+        const shouldPauseSolarSystem = hasExoplanetSelection;
+        
         // 获取最新的天体数据（tick 会更新 celestialBodies）
         const currentState = useSolarSystemStore.getState();
         const currentBodies = currentState.celestialBodies;
@@ -896,56 +901,59 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           ? new THREE.Vector3(0, 0, 0) 
           : new THREE.Vector3(1000000, 1000000, 1000000); // 远离太阳位置以禁用光照
         
-        // 更新行星位置、自转和 LOD
-        currentBodies.forEach((body: any) => {
-          const key = body.name.toLowerCase();
-          const planet = planetsRef.current.get(key);
-          if (planet) {
-            planet.updatePosition(body.x, body.y, body.z);
-            
-            // 更新太阳位置（用于光照计算）
-            planet.updateSunPosition(sunPosition);
-            
-            // 更新星球自转 - 使用当前时间和时间速度
-            const currentTimeInDays = dateToJulianDay(currentState.currentTime) - 2451545.0; // Days since J2000.0
-            
-            // 地球锁定模式：记录自转前的四元数，自转后计算 delta 并旋转相机
-            if (key === 'earth' && earthLockEnabledRef.current && cameraControllerRef.current) {
-              const quatBefore = planet.getRotationQuaternion();
-              planet.updateRotation(currentTimeInDays, currentState.timeSpeed);
-              const quatAfter = planet.getRotationQuaternion();
+        // 只有在未选中系外行星系统时才更新太阳系
+        if (!shouldPauseSolarSystem) {
+          // 更新行星位置、自转和 LOD
+          currentBodies.forEach((body: any) => {
+            const key = body.name.toLowerCase();
+            const planet = planetsRef.current.get(key);
+            if (planet) {
+              planet.updatePosition(body.x, body.y, body.z);
               
-              // delta = quatAfter * inverse(quatBefore)
-              const deltaQ = quatAfter.clone().multiply(quatBefore.clone().invert());
-              const earthPos = planet.getMesh().position.clone();
-              cameraControllerRef.current.applyEarthLockDelta(deltaQ, earthPos);
-            } else {
-              planet.updateRotation(currentTimeInDays, currentState.timeSpeed);
-            }
-            
-            // 计算相机到星球的距离并更新 LOD
-            const planetWorldPos = new THREE.Vector3(body.x, body.y, body.z);
-            const cameraPos = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
-            const distance = planetWorldPos.distanceTo(cameraPos);
-            planet.updateLOD(distance);
-            
-            // 更新网格可见性
-            planet.updateGridVisibility(distance);
-            
-            // 更新轨道渐变和自适应分辨率（如果轨道存在）
-            const orbit = orbitsRef.current.get(key);
-            if (orbit) {
-              const planetPosition = new THREE.Vector3(body.x, body.y, body.z);
-              orbit.updatePlanetPosition(planetPosition);
+              // 更新太阳位置（用于光照计算）
+              planet.updateSunPosition(sunPosition);
               
-              // Update adaptive orbit curve resolution based on camera distance
-              const orbitCenterDistance = cameraPos.distanceTo(planetPosition);
-              if (orbit.updateCurveResolution) {
-                orbit.updateCurveResolution(orbitCenterDistance);
+              // 更新星球自转 - 使用当前时间和时间速度
+              const currentTimeInDays = dateToJulianDay(currentState.currentTime) - 2451545.0; // Days since J2000.0
+              
+              // 地球锁定模式：记录自转前的四元数，自转后计算 delta 并旋转相机
+              if (key === 'earth' && earthLockEnabledRef.current && cameraControllerRef.current) {
+                const quatBefore = planet.getRotationQuaternion();
+                planet.updateRotation(currentTimeInDays, currentState.timeSpeed);
+                const quatAfter = planet.getRotationQuaternion();
+                
+                // delta = quatAfter * inverse(quatBefore)
+                const deltaQ = quatAfter.clone().multiply(quatBefore.clone().invert());
+                const earthPos = planet.getMesh().position.clone();
+                cameraControllerRef.current.applyEarthLockDelta(deltaQ, earthPos);
+              } else {
+                planet.updateRotation(currentTimeInDays, currentState.timeSpeed);
+              }
+              
+              // 计算相机到星球的距离并更新 LOD
+              const planetWorldPos = new THREE.Vector3(body.x, body.y, body.z);
+              const cameraPos = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
+              const distance = planetWorldPos.distanceTo(cameraPos);
+              planet.updateLOD(distance);
+              
+              // 更新网格可见性
+              planet.updateGridVisibility(distance);
+              
+              // 更新轨道渐变和自适应分辨率（如果轨道存在）
+              const orbit = orbitsRef.current.get(key);
+              if (orbit) {
+                const planetPosition = new THREE.Vector3(body.x, body.y, body.z);
+                orbit.updatePlanetPosition(planetPosition);
+                
+                // Update adaptive orbit curve resolution based on camera distance
+                const orbitCenterDistance = cameraPos.distanceTo(planetPosition);
+                if (orbit.updateCurveResolution) {
+                  orbit.updateCurveResolution(orbitCenterDistance);
+                }
               }
             }
-          }
-        });
+          });
+        }
 
         // 播放时的相机跟踪逻辑：同时更新相机和目标点位置，保持相对偏移
         // 这样在播放时，行星始终保持在屏幕中心，且视角不会被锁定
@@ -1084,8 +1092,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
         // 离开太阳系或进入系外行星系统时，自动禁用地球锁定
         // 回到太阳系时，恢复用户原始设置
         const SOLAR_SYSTEM_BOUNDARY = 5000; // AU，超过此距离视为离开太阳系
-        const exoplanetState = useExoplanetStore.getState();
-        const hasExoplanetSelection = !!exoplanetState.selectedHostName;
+        // exoplanetState 和 hasExoplanetSelection 已在上面声明
         const earthControlState = useEarthControlStore.getState();
         
         // 判断是否应该禁用地球锁定
@@ -1667,6 +1674,58 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           }
         });
         
+        // 5. 系外行星系统的标记圈重叠检测
+        if (exoplanetRendererRef.current?.systemRenderer && containerRef.current) {
+          const systemRenderer = exoplanetRendererRef.current.systemRenderer;
+          const planetPositions = systemRenderer.getPlanetScreenPositions(
+            camera,
+            containerRef.current.clientWidth,
+            containerRef.current.clientHeight
+          );
+          
+          // 检测重叠
+          for (let i = 0; i < planetPositions.length; i++) {
+            const pos1 = planetPositions[i];
+            if (!pos1) continue;
+            
+            let hasOverlap = false;
+            
+            // 检查与其他行星的重叠
+            for (let j = 0; j < planetPositions.length; j++) {
+              if (i === j) continue;
+              const pos2 = planetPositions[j];
+              if (!pos2) continue;
+              
+              const distanceX = Math.abs(pos1.screenX - pos2.screenX);
+              const distanceY = Math.abs(pos1.screenY - pos2.screenY);
+              const markerSize = pos1.markerSize;
+              
+              if (distanceX < markerSize && distanceY < markerSize) {
+                // 有重叠，根据距离中心的距离决定隐藏哪个
+                const centerX = containerRef.current!.clientWidth / 2;
+                const centerY = containerRef.current!.clientHeight / 2;
+                const dist1 = Math.sqrt(
+                  Math.pow(pos1.screenX - centerX, 2) + 
+                  Math.pow(pos1.screenY - centerY, 2)
+                );
+                const dist2 = Math.sqrt(
+                  Math.pow(pos2.screenX - centerX, 2) + 
+                  Math.pow(pos2.screenY - centerY, 2)
+                );
+                
+                // 距离中心更远的隐藏
+                if (dist1 > dist2 || (Math.abs(dist1 - dist2) < 1 && i > j)) {
+                  hasOverlap = true;
+                  break;
+                }
+              }
+            }
+            
+            // 设置目标透明度
+            systemRenderer.setMarkerTargetOpacity(pos1.name, hasOverlap ? 0.0 : 1.0);
+          }
+        }
+        
         } // 结束标签更新节流块
 
         // 5. 更新卫星轨道的中心（使卫星轨道跟随母行星位置）并控制卫星可见性
@@ -1741,6 +1800,12 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
 
         if (exoplanetRendererRef.current) {
           exoplanetRendererRef.current.update(distanceToSun, deltaTime);
+          
+          // 同步时间控制到系外行星系统
+          if (hasExoplanetSelection) {
+            exoplanetRendererRef.current.setTime(currentState.currentTime);
+            exoplanetRendererRef.current.setTimeSpeed(currentState.timeSpeed);
+          }
         }
 
         // 更新卫星图层
@@ -1943,6 +2008,38 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
             isDragging = false;
             mouseDownTime = 0;
             return;
+          }
+          
+          // 检测系外行星系统的标记圈点击
+          const systemRenderer = exoplanetRendererRef.current.systemRenderer;
+          if (systemRenderer) {
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+            const markerSize = 20; // MARKER_CONFIG.size
+            
+            const planetPositions = systemRenderer.getPlanetScreenPositions(
+              camera,
+              containerRef.current.clientWidth,
+              containerRef.current.clientHeight
+            );
+            
+            for (const pos of planetPositions) {
+              const distance = Math.sqrt(
+                Math.pow(clickX - pos.screenX, 2) + 
+                Math.pow(clickY - pos.screenY, 2)
+              );
+              
+              if (distance <= markerSize / 2) {
+                // 点击了标记圈，聚焦到该行星
+                const selectedSystem = useExoplanetStore.getState().selectedSystem;
+                if (selectedSystem) {
+                  focusOnExoplanetPlanet(selectedSystem.hostname, pos.name);
+                  isDragging = false;
+                  mouseDownTime = 0;
+                  return;
+                }
+              }
+            }
           }
         }
 
