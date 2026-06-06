@@ -6,24 +6,20 @@
 
 ## 1. 准备数据文件
 
-首先，需要处理真实天文数据并生成二进制文件：
+项目已预生成宇宙结构二进制数据文件，位于 `public/data/universe/`：
 
-```bash
-# 安装 Python 依赖
-pip install astropy numpy
-
-# 运行数据准备脚本
-python scripts/prepare-universe-data.py \
-  --raw-data public/data/universe/raw-data \
-  --output public/data/universe
-```
-
-这将生成以下文件：
 - `public/data/universe/local-group.bin` - 本星系群数据
 - `public/data/universe/nearby-groups.bin` - 近邻星系群数据
 - `public/data/universe/virgo-supercluster.bin` - 室女座超星系团数据
 - `public/data/universe/laniakea.bin` - 拉尼亚凯亚超星系团数据
 - `public/data/universe/metadata.json` - 元数据
+
+如需从原始数据重新生成，请使用 Python 脚本：
+
+```bash
+pip install astropy numpy
+python scripts/cluster_superclusters.py
+```
 
 ## 2. 在 SceneManager 中初始化渲染器
 
@@ -84,28 +80,13 @@ useEffect(() => {
 }, [sceneManager]);
 ```
 
-## 3. 添加尺度指示器 UI
+## 3. 查看距离显示
 
-在主页面组件中添加 `UniverseScaleIndicator`：
+距离和尺度信息通过 `DistanceDisplay` 和 `ScaleRuler` 组件展示：
 
 ```typescript
-import { UniverseScaleIndicator } from '@/components/UniverseScaleIndicator';
-
-export default function Page() {
-  const [cameraDistance, setCameraDistance] = useState(0);
-  
-  return (
-    <div className="relative w-full h-screen">
-      {/* 3D Canvas */}
-      <SolarSystemCanvas3D onCameraDistanceChange={setCameraDistance} />
-      
-      {/* 尺度指示器 */}
-      <UniverseScaleIndicator cameraDistance={cameraDistance} />
-      
-      {/* 其他 UI 组件 */}
-    </div>
-  );
-}
+import { DistanceDisplay } from '@/components/canvas/3d/DistanceDisplay';
+import { ScaleRuler } from '@/components/canvas/3d/ScaleRuler';
 ```
 
 ## 4. 传递相机距离
@@ -372,5 +353,4 @@ export default function Home() {
 ## 参考资料
 
 - [技术文档](./UNIVERSE_VISUALIZATION.md)
-- [API 文档](./API.md)
-- [性能优化指南](./PERFORMANCE.md)
+- [集成指南（英文）](../README_EN.md)

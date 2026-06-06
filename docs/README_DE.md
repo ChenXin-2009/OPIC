@@ -1,14 +1,12 @@
 # OPIC — Open Integrated Cosmos (Offener Integrierter Kosmos)
 
 <div align="center">
-  <img src="public/LOGO/logolwBG.svg" alt="OPIC Logo" width="300">
+  <img src="../public/LOGO/logolwBG.svg" alt="OPIC Logo" width="300">
 </div>
 
 **Ein webbasiertes Multi-Skalen-Universum-Visualisierungs- und astronomisches Datenintegrationssystem**
 
-> **Hinweis**: Dieses Projekt hieß ursprünglich CXIC (CXIN Integrated Cosmos). Siehe [Namensänderungsankündigung](docs/NAME_CHANGE_ANNOUNCEMENT.md).
-
-[English](./README_EN.md) | [中文](./README.md) | [日本語](./README_JA.md) | [한국어](./README_KO.md) | [Français](./README_FR.md) | [Deutsch](./README_DE.md) | [Español](./README_ES.md) | [Русский](./README_RU.md)
+[English](../README_EN.md) | [中文](../README.md) | [日本語](./README_JA.md) | [한국어](./README_KO.md) | [Français](./README_FR.md) | [Español](./README_ES.md) | [Русский](./README_RU.md)
 
 ---
 
@@ -21,7 +19,7 @@ Das Projekt entwickelt sich zu einer modularen Plugin-Architektur (MOD Manager),
 ### Demonstration
 
 <div align="center">
-  <img src="docs/images/earth-to-universe-zoom.gif" alt="Demonstration des Zooms von der Erde zum Universum" width="300">
+  <img src="./images/earth-to-universe-zoom.gif" alt="Demonstration des Zooms von der Erde zum Universum" width="300">
   <p><em>Nahtlose Zoom-Erfahrung von Gebäuden auf der Erdoberfläche bis zum Panorama des Universums</em></p>
 </div>
 
@@ -50,7 +48,7 @@ Das Projekt entwickelt sich zu einer modularen Plugin-Architektur (MOD Manager),
 - Detaillierte Informationen: Anzeige von Satellitenparametern, Bahnelementen und Status
 
 <div align="center">
-  <img src="docs/images/satellite-tracking-demo.gif" alt="Demonstration der Satellitenverfolgung" width="300">
+  <img src="./images/satellite-tracking-demo.gif" alt="Demonstration der Satellitenverfolgung" width="300">
   <p><em>Echtzeit-Satellitenbahn-Verfolgung und Informationsanzeige</em></p>
 </div>
 
@@ -82,7 +80,7 @@ Modulare Plugin-Architektur, die das Kernsystem leicht hält und gleichzeitig op
 - Konfigurationspersistenz über Sitzungen hinweg
 
 <div align="center">
-  <img src="docs/images/mod-manager-interface.gif" alt="MOD Manager-Oberfläche" width="300">
+  <img src="./images/mod-manager-interface.gif" alt="MOD Manager-Oberfläche" width="300">
   <p><em>MOD Manager-Oberfläche und Beispiel-Mod-Demonstration</em></p>
 </div>
 

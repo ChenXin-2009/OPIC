@@ -267,5 +267,5 @@ A: 可以通过事件总线（`context.emit` 和 `context.on`）进行通信。
 ## 相关文档
 
 - [MOD开发指南](./MOD_DEVELOPMENT_GUIDE.md)
-- [MOD架构总结](./MOD_ARCHITECTURE_SUMMARY.md)
+- [MOD管理指南](./MOD_MANAGEMENT_GUIDE.md)
 - [MOD包格式](./MOD_PACKAGE_FORMAT.md)

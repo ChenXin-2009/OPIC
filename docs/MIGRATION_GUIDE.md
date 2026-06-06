@@ -1,27 +1,27 @@
 # MOD 架构迁移指南
 
-## 简介
+## 简�?
 
-本指南帮助你将现有的 OPIC MOD 迁移到新的企业级插件架构。新架构引入了权限系统、扩展点机制、配置 Schema 等功能，同时保持向后兼容性。
+本指南帮助你将现有的 OPIC MOD 迁移到新的企业级插件架构。新架构引入了权限系统、扩展点机制、配�?Schema 等功能，同时保持向后兼容性�?
 
-**重要提示**：现有 MOD 无需立即迁移即可继续工作，但我们强烈建议尽快迁移以获得更好的安全性和功能。
+**重要提示**：现�?MOD 无需立即迁移即可继续工作，但我们强烈建议尽快迁移以获得更好的安全性和功能�?
 
-## 向后兼容性
+## 向后兼容�?
 
-新架构完全向后兼容现有 MOD：
+新架构完全向后兼容现�?MOD�?
 
-- ✅ 未声明权限的 MOD 自动获得所有权限
-- ✅ 未使用扩展点的 MOD 保留原有注册方式
-- ✅ 未声明配置 Schema 的 MOD 使用默认配置 UI
-- ✅ 所有现有 API 保持不变
+- �?未声明权限的 MOD 自动获得所有权�?
+- �?未使用扩展点�?MOD 保留原有注册方式
+- �?未声明配�?Schema �?MOD 使用默认配置 UI
+- �?所有现�?API 保持不变
 
-系统会在控制台输出向后兼容性警告,建议迁移到新 API。
+系统会在控制台输出向后兼容性警�?建议迁移到新 API�?
 
 ## 迁移步骤
 
 ### 步骤 1: 添加权限声明
 
-#### 旧方式(自动授予所有权限)
+#### 旧方�?自动授予所有权�?
 
 \`\`\`json
 {
@@ -31,7 +31,7 @@
 }
 \`\`\`
 
-#### 新方式(显式声明权限)
+#### 新方�?显式声明权限)
 
 \`\`\`json
 {
@@ -46,10 +46,10 @@
 }
 \`\`\`
 
-#### 如何确定需要哪些权限?
+#### 如何确定需要哪些权�?
 
-1. 查看 MOD 使用的 API
-2. 根据 API 类别和操作类型声明权限
+1. 查看 MOD 使用�?API
+2. 根据 API 类别和操作类型声明权�?
 
 **API 到权限的映射**:
 
@@ -63,23 +63,23 @@
 | \`context.api.celestial.getPlanets()\` | \`celestial:read\` |
 | \`context.api.satellite.getSatellites()\` | \`satellite:read\` |
 
-**通配符权限**:
+**通配符权�?*:
 
-如果 MOD 需要某个类别的所有权限,可以使用通配符:
+如果 MOD 需要某个类别的所有权�?可以使用通配�?
 
 \`\`\`json
 {
   "permissions": [
-    "time:*",      // 所有时间 API
-    "camera:*",    // 所有相机 API
-    "render:*"     // 所有渲染 API
+    "time:*",      // 所有时�?API
+    "camera:*",    // 所有相�?API
+    "render:*"     // 所有渲�?API
   ]
 }
 \`\`\`
 
 ### 步骤 2: 迁移 UI 扩展到扩展点
 
-#### 旧方式(手动注册 UI)
+#### 旧方�?手动注册 UI)
 
 \`\`\`typescript
 export default {
@@ -98,7 +98,7 @@ export default {
 };
 \`\`\`
 
-#### 新方式(声明式扩展点)
+#### 新方�?声明式扩展点)
 
 \`\`\`json
 {
@@ -127,7 +127,7 @@ export default {
 
 \`\`\`typescript
 export default {
-  // 命令处理器
+  // 命令处理�?
   openWindow(context: ModContext) {
     // 打开窗口逻辑
   },
@@ -135,14 +135,14 @@ export default {
 \`\`\`
 
 **优势**:
-- ✅ 无需手动管理 DOM
-- ✅ 系统自动处理注册和注销
-- ✅ 支持国际化
-- ✅ 支持键盘快捷键
+- �?无需手动管理 DOM
+- �?系统自动处理注册和注销
+- �?支持国际�?
+- �?支持键盘快捷�?
 
 ### 步骤 3: 添加配置 Schema
 
-#### 旧方式(手动配置 UI)
+#### 旧方�?手动配置 UI)
 
 \`\`\`typescript
 export default {
@@ -171,7 +171,7 @@ export default {
 };
 \`\`\`
 
-#### 新方式(配置 Schema)
+#### 新方�?配置 Schema)
 
 \`\`\`json
 {
@@ -187,7 +187,7 @@ export default {
       "interval": {
         "type": "number",
         "title": "Refresh Interval (seconds)",
-        "titleZh": "刷新间隔(秒)",
+        "titleZh": "刷新间隔(�?",
         "default": 60,
         "minimum": 10,
         "maximum": 3600
@@ -206,22 +206,22 @@ export default {
   
   onConfigChange(context: ModContext, newConfig: any) {
     console.log('Config updated:', newConfig);
-    // 应用新配置
+    // 应用新配�?
   },
 };
 \`\`\`
 
 **优势**:
-- ✅ 自动生成 UI
-- ✅ 自动验证配置
-- ✅ 支持国际化
-- ✅ 无需手动编写表单代码
+- �?自动生成 UI
+- �?自动验证配置
+- �?支持国际�?
+- �?无需手动编写表单代码
 
-### 步骤 4: 使用服务注册表(可选)
+### 步骤 4: 使用服务注册�?可�?
 
-如果你的 MOD 需要与其他 MOD 通信,可以使用服务注册表。
+如果你的 MOD 需要与其他 MOD 通信,可以使用服务注册表�?
 
-#### 旧方式(全局变量或事件)
+#### 旧方�?全局变量或事�?
 
 \`\`\`typescript
 // MOD A
@@ -231,7 +231,7 @@ window.myModData = { data: 'example' };
 const data = window.myModData;
 \`\`\`
 
-#### 新方式(服务注册表)
+#### 新方�?服务注册�?
 
 \`\`\`json
 // MOD A 清单
@@ -280,14 +280,14 @@ export default {
 \`\`\`
 
 **优势**:
-- ✅ 类型安全
-- ✅ 权限控制
-- ✅ 避免全局污染
-- ✅ 自动依赖管理
+- �?类型安全
+- �?权限控制
+- �?避免全局污染
+- �?自动依赖管理
 
-### 步骤 5: 添加资源配额(可选)
+### 步骤 5: 添加资源配额(可�?
 
-如果你的 MOD 需要更多资源,可以在清单中声明:
+如果你的 MOD 需要更多资�?可以在清单中声明:
 
 \`\`\`json
 {
@@ -305,7 +305,7 @@ export default {
 
 ### 示例 1: satellite-tracking MOD
 
-#### 迁移前
+#### 迁移�?
 
 \`\`\`json
 {
@@ -315,7 +315,7 @@ export default {
 }
 \`\`\`
 
-#### 迁移后
+#### 迁移�?
 
 \`\`\`json
 {
@@ -363,7 +363,7 @@ export default {
       "updateInterval": {
         "type": "number",
         "title": "Update Interval (seconds)",
-        "titleZh": "更新间隔(秒)",
+        "titleZh": "更新间隔(�?",
         "default": 60,
         "minimum": 10
       }
@@ -374,7 +374,7 @@ export default {
 
 ### 示例 2: weather-disaster MOD
 
-#### 迁移前
+#### 迁移�?
 
 \`\`\`json
 {
@@ -384,7 +384,7 @@ export default {
 }
 \`\`\`
 
-#### 迁移后
+#### 迁移�?
 
 \`\`\`json
 {
@@ -436,24 +436,24 @@ export default {
 }
 \`\`\`
 
-## 迁移检查清单
+## 迁移检查清�?
 
-使用以下检查清单确保迁移完整:
+使用以下检查清单确保迁移完�?
 
-- [ ] 添加了 \`permissions\` 字段
-- [ ] 测试了所有 API 调用是否有对应权限
-- [ ] 将手动 UI 注册迁移到 \`contributes\` 扩展点
-- [ ] 添加了 \`configSchema\` 替代手动配置 UI
+- [ ] 添加�?\`permissions\` 字段
+- [ ] 测试了所�?API 调用是否有对应权�?
+- [ ] 将手�?UI 注册迁移�?\`contributes\` 扩展�?
+- [ ] 添加�?\`configSchema\` 替代手动配置 UI
 - [ ] 测试了配置的验证规则
-- [ ] 添加了中文翻译(\`labelZh\`、\`titleZh\` 等)
-- [ ] 更新了 MOD 版本号
-- [ ] 测试了 MOD 在新架构下的功能
-- [ ] 更新了 MOD 文档
-- [ ] 清理了旧的手动注册代码
+- [ ] 添加了中文翻�?\`labelZh\`、\`titleZh\` �?
+- [ ] 更新�?MOD 版本�?
+- [ ] 测试�?MOD 在新架构下的功能
+- [ ] 更新�?MOD 文档
+- [ ] 清理了旧的手动注册代�?
 
 ## 常见迁移问题
 
-### Q: 迁移后 MOD 无法访问 API,提示权限错误?
+### Q: 迁移�?MOD 无法访问 API,提示权限错误?
 
 A: 检查清单中是否声明了对应的权限:
 
@@ -467,18 +467,18 @@ A: 检查清单中是否声明了对应的权限:
 }
 \`\`\`
 
-### Q: 如何保持与旧版本的兼容性?
+### Q: 如何保持与旧版本的兼容�?
 
-A: 使用版本检查:
+A: 使用版本检�?
 
 \`\`\`typescript
 export default {
   onEnable(context: ModContext) {
     if (context.apiVersion >= '1.0.0') {
-      // 使用新 API
+      // 使用�?API
       context.api.time.setCurrentTime(new Date());
     } else {
-      // 使用旧 API
+      // 使用�?API
       legacySetTime(new Date());
     }
   },
@@ -487,14 +487,14 @@ export default {
 
 ### Q: 迁移后配置丢失了?
 
-A: 配置会自动迁移,但如果配置结构变化,需要提供迁移逻辑:
+A: 配置会自动迁�?但如果配置结构变�?需要提供迁移逻辑:
 
 \`\`\`typescript
 export default {
   onEnable(context: ModContext) {
     const config = context.getConfig();
     
-    // 迁移旧配置
+    // 迁移旧配�?
     if (config.oldField !== undefined) {
       context.updateConfig({
         newField: config.oldField,
@@ -508,33 +508,33 @@ export default {
 
 A: 
 1. 在开发环境中启用 MOD
-2. 检查控制台是否有权限警告
-3. 测试所有功能是否正常
-4. 检查配置 UI 是否正确生成
-5. 测试扩展点(Dock 图标、命令等)
+2. 检查控制台是否有权限警�?
+3. 测试所有功能是否正�?
+4. 检查配�?UI 是否正确生成
+5. 测试扩展�?Dock 图标、命令等)
 
 ### Q: 迁移是否会影响性能?
 
-A: 不会。新架构的权限验证开销 < 1ms,对性能影响可忽略不计。
+A: 不会。新架构的权限验证开销 < 1ms,对性能影响可忽略不计�?
 
-## 迁移时间表
+## 迁移时间�?
 
 我们建议按以下时间表迁移:
 
 - **立即**: 添加权限声明(最重要)
-- **1 个月内**: 迁移 UI 扩展到扩展点
-- **2 个月内**: 添加配置 Schema
-- **3 个月内**: 使用服务注册表(如果需要)
+- **1 个月�?*: 迁移 UI 扩展到扩展点
+- **2 个月�?*: 添加配置 Schema
+- **3 个月�?*: 使用服务注册�?如果需�?
 
-**重要**: 旧 API 将在 6 个月后开始废弃,12 个月后完全移除。
+**重要**: �?API 将在 6 个月后开始废�?12 个月后完全移除�?
 
-## 自动化迁移工具
+## 自动化迁移工�?
 
-我们提供了自动化迁移工具来简化迁移过程:
+我们提供了自动化迁移工具来简化迁移过�?
 
 \`\`\`bash
 # 安装迁移工具
-npm install -g @cxic/mod-migration-tool
+npm install -g @opic/mod-migration-tool
 
 # 运行迁移
 mod-migrate --input ./my-mod --output ./my-mod-migrated
@@ -543,11 +543,11 @@ mod-migrate --input ./my-mod --output ./my-mod-migrated
 mod-validate ./my-mod-migrated
 \`\`\`
 
-迁移工具会:
-- ✅ 分析 MOD 代码,自动推断需要的权限
-- ✅ 生成扩展点配置
-- ✅ 生成配置 Schema
-- ✅ 生成迁移报告
+迁移工具�?
+- �?分析 MOD 代码,自动推断需要的权限
+- �?生成扩展点配�?
+- �?生成配置 Schema
+- �?生成迁移报告
 
 ## 获取帮助
 
@@ -555,15 +555,15 @@ mod-validate ./my-mod-migrated
 
 1. 查看[MOD 开发指南](./MOD_DEVELOPMENT_GUIDE.md)
 2. 查看[API 参考文档](./API_REFERENCE.md)
-3. 在 GitHub 上提交 Issue
-4. 加入开发者社区讨论
+3. �?GitHub 上提�?Issue
+4. 加入开发者社区讨�?
 
 ## 迁移示例代码
 
-完整的迁移示例可以在 \`examples/migration/\` 目录中找到:
+完整的迁移示例可以在 \`examples/migration/\` 目录中找�?
 
 - \`examples/migration/before/\`: 迁移前的 MOD
 - \`examples/migration/after/\`: 迁移后的 MOD
-- \`examples/migration/diff.md\`: 详细的变更对比
+- \`examples/migration/diff.md\`: 详细的变更对�?
 
 祝你迁移顺利! 🚀

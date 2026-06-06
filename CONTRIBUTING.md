@@ -57,7 +57,8 @@ src/
 │   ├── satellite/         # 卫星追踪 UI
 │   ├── search/            # 搜索功能
 │   ├── mod-manager/       # MOD 管理器 UI（开发中）
-│   └── debug/             # 调试面板（仅开发环境）
+│   ├── exoplanets/        # 系外行星系统
+│   └── ...
 ├── lib/                    # 核心逻辑
 │   ├── 3d/                # Three.js 渲染器
 │   │   ├── SceneManager.ts
@@ -81,7 +82,8 @@ src/
 │   │   └── performance/   # 性能监控
 │   ├── data/              # 数据加载器
 │   └── config/            # 配置文件
-└── stores/                # Zustand 状态管理
+├── lib/store/             # Zustand 数据存储（卫星、星历、系外行星）
+└── lib/state/             # Zustand 状态管理（窗口、场景、地球控制）
 ```
 
 ## 开发指南
@@ -175,7 +177,7 @@ npm run test:coverage
 - 配置持久化
 - MOD 管理 UI
 
-详见 `.kiro/specs/mod-manager/` 中的需求和设计文档。
+详见 `docs/` 目录中的 MOD 系统文档。
 
 ## 数据文件
 
@@ -194,9 +196,7 @@ npm run test:coverage
 
 开发环境下，调试组件仅在 `NODE_ENV=development` 时渲染：
 
-```tsx
-import { CesiumDebugPanel } from '@/components/debug/CesiumDebugPanel';
-```
+*调试面板在开发环境下可用。*
 
 ### 常见问题
 

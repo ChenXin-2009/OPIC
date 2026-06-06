@@ -1,14 +1,12 @@
 # OPIC — Open Integrated Cosmos (Cosmos Intégré Ouvert)
 
 <div align="center">
-  <img src="public/LOGO/logolwBG.svg" alt="OPIC Logo" width="300">
+  <img src="../public/LOGO/logolwBG.svg" alt="OPIC Logo" width="300">
 </div>
 
 **Un système de visualisation de l'univers multi-échelles et d'intégration de données astronomiques basé sur le Web**
 
-> **Note** : Ce projet s'appelait à l'origine CXIC (CXIN Integrated Cosmos). Voir l'[Annonce de Changement de Nom](docs/NAME_CHANGE_ANNOUNCEMENT.md).
-
-[English](./README_EN.md) | [中文](./README.md) | [日本語](./README_JA.md) | [한국어](./README_KO.md) | [Français](./README_FR.md) | [Deutsch](./README_DE.md) | [Español](./README_ES.md) | [Русский](./README_RU.md)
+[English](../README_EN.md) | [中文](../README.md) | [日本語](./README_JA.md) | [한국어](./README_KO.md) | [Deutsch](./README_DE.md) | [Español](./README_ES.md) | [Русский](./README_RU.md)
 
 ---
 
@@ -21,7 +19,7 @@ Le projet évolue vers une architecture de plugins modulaire (MOD Manager), perm
 ### Démonstration
 
 <div align="center">
-  <img src="docs/images/earth-to-universe-zoom.gif" alt="Démonstration du zoom de la Terre à l'univers" width="300">
+  <img src="./images/earth-to-universe-zoom.gif" alt="Démonstration du zoom de la Terre à l'univers" width="300">
   <p><em>Expérience de zoom sans interruption des bâtiments à la surface terrestre au panorama de l'univers</em></p>
 </div>
 
@@ -50,7 +48,7 @@ Le projet évolue vers une architecture de plugins modulaire (MOD Manager), perm
 - Informations détaillées : voir les paramètres des satellites, les éléments orbitaux et l'état
 
 <div align="center">
-  <img src="docs/images/satellite-tracking-demo.gif" alt="Démonstration du suivi de satellites" width="300">
+  <img src="./images/satellite-tracking-demo.gif" alt="Démonstration du suivi de satellites" width="300">
   <p><em>Suivi des orbites de satellites en temps réel et affichage des informations</em></p>
 </div>
 
@@ -82,7 +80,7 @@ Architecture de plugins modulaire qui maintient le système central léger tout 
 - Persistance de la configuration entre les sessions
 
 <div align="center">
-  <img src="docs/images/mod-manager-interface.gif" alt="Interface du MOD Manager" width="300">
+  <img src="./images/mod-manager-interface.gif" alt="Interface du MOD Manager" width="300">
   <p><em>Interface du MOD Manager et démonstration de mods d'exemple</em></p>
 </div>
 

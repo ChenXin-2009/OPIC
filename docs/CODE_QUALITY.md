@@ -55,15 +55,9 @@ npm run quality:check
 ### 生成质量报告
 
 ```bash
-# 生成详细的质量报告
-npm run quality:report
+# 运行质量检查（lint + 类型检查）
+npm run quality:check
 ```
-
-报告将生成在 `reports/` 目录下：
-- `complexity-report.json` - 复杂度详细报告
-- `documentation-report.json` - 文档覆盖率报告
-- `quality-summary.json` - 质量汇总
-- `quality-report.md` - Markdown 格式的可读报告
 
 ### 运行测试
 
@@ -169,6 +163,4 @@ function calculateDistance(x1: number, y1: number, x2: number, y2: number): numb
 
 ## 相关文档
 
-- [需求文档](.kiro/specs/code-quality-improvement/requirements.md)
-- [设计文档](.kiro/specs/code-quality-improvement/design.md)
-- [任务列表](.kiro/specs/code-quality-improvement/tasks.md)
+- [贡献指南](../CONTRIBUTING.md)

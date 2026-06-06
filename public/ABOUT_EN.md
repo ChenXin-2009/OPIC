@@ -117,7 +117,7 @@ Apache License 2.0
 ## Contact
 
 - GitHub: [@ChenXin-2009](https://github.com/ChenXin-2009)
-- Project: [https://github.com/ChenXin-2009/somap](https://github.com/ChenXin-2009/somap)
+- Project: [https://github.com/ChenXin-2009/OPIC](https://github.com/ChenXin-2009/OPIC)
 
 ---
 

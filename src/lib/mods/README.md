@@ -112,7 +112,7 @@ export function getMyModMod() {
 
 - [MOD自动发现详细文档](../../../docs/MOD_AUTO_DISCOVERY.md)
 - [MOD开发指南](../../../docs/MOD_DEVELOPMENT_GUIDE.md)
-- [MOD架构总结](../../../docs/MOD_ARCHITECTURE_SUMMARY.md)
+- [MOD管理指南](../../../docs/MOD_MANAGEMENT_GUIDE.md)
 
 ## 🎯 当前已注册的MOD
 

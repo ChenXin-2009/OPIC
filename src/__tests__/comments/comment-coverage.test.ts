@@ -35,8 +35,6 @@ const TARGET_FILES: string[] = [
   'src/components/EarthLockButton.tsx',
   'src/components/cesium/CesiumMapSourcePanel.tsx',
   'src/components/satellite/SatelliteMenu.tsx',
-  'src/components/debug/CesiumDebugPanel.tsx',
-  'src/components/debug/ClippingTestPanel.tsx',
 ];
 
 // ─── 项目根目录 ──────────────────────────────────────────────────────────────

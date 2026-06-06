@@ -117,7 +117,7 @@ Apache License 2.0
 ## 联系方式
 
 - GitHub: [@ChenXin-2009](https://github.com/ChenXin-2009)
-- 项目地址: [https://github.com/ChenXin-2009/somap](https://github.com/ChenXin-2009/somap)
+- 项目地址: [https://github.com/ChenXin-2009/OPIC](https://github.com/ChenXin-2009/OPIC)
 
 ---
 

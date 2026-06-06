@@ -1,6 +1,6 @@
 # All-Bodies Ephemeris System
 
-High-precision positioning system for 20 celestial bodies (8 planets + 12 major satellites) using precomputed JPL SPICE ephemeris data with polynomial segment architecture.
+High-precision positioning system for 27 celestial bodies (8 planets + 19 major satellites) using precomputed JPL SPICE ephemeris data with polynomial segment architecture.
 
 ## Features
 
@@ -12,58 +12,46 @@ High-precision positioning system for 20 celestial bodies (8 planets + 12 major 
 - **Automatic fallback**: Uses analytical model when ephemeris data unavailable
 - **Efficient evaluation**: Fast polynomial evaluation with Clenshaw algorithm
 - **Chunked loading**: On-demand loading of ephemeris data chunks
-- **Compact storage**: ~31 MB compressed for all bodies (30 years)
+- **Compact storage**: ~50 MB compressed for all bodies (30 years)
 
 ## Supported Bodies
 
 ### Planets (8)
 - Mercury, Venus, Earth, Mars
 - Jupiter, Saturn, Neptune
-- (Uranus data not available - kernel missing)
+- (Uranus data available via URA111 kernel)
 
-### Satellites (12)
+### Satellites (19)
 - **Earth**: Moon
 - **Jupiter**: Io, Europa, Ganymede, Callisto
 - **Saturn**: Titan, Rhea, Iapetus, Dione, Tethys, Enceladus, Mimas, Hyperion
+- **Uranus**: Miranda, Ariel, Umbriel, Titania, Oberon
 - **Neptune**: Triton
 
 ### Time Coverage
 - **Planets**: 2009-2039 (30 years)
 - **Satellites**: 2009-2039 (30 years)
-- **Earth/Moon**: 2009-2059 (50 years)
+- **Earth/Moon**: 2009-2109 (100 years)
 
 ## Quick Start
 
 ```typescript
-import { 
-  AllBodiesCalculator,
-  EphemerisManager
-} from './lib/astronomy/ephemeris';
+import { AllBodiesCalculator } from './lib/astronomy/ephemeris/all-bodies-calculator';
 
-// Create ephemeris manager
-const manager = new EphemerisManager();
+// Create calculator (EphemerisManager created internally)
+const calculator = new AllBodiesCalculator({
+  baseUrl: '/data/ephemeris'
+});
 
-// Register bodies (automatically done in constructor)
-// manager.registerBody(599, 'jupiter', '/data/ephemeris/jupiter-ephemeris.bin.gz');
+// Calculate position for any body (returns PositionResult)
+const jupiterResult = await calculator.calculatePosition(599, 2451545.0);  // Jupiter at J2000.0
+const ioResult = await calculator.calculatePosition(501, 2451545.0);       // Io at J2000.0
 
-// Create calculator
-const calculator = new AllBodiesCalculator(manager);
+console.log(jupiterResult.position);  // Vector3 in heliocentric ICRF frame
+console.log(ioResult.usingEphemeris); // true if ephemeris data was used
 
-// Calculate position for any body
-const jupiterPos = await calculator.calculatePosition(599, 2451545.0);  // Jupiter at J2000.0
-const ioPos = await calculator.calculatePosition(501, 2451545.0);       // Io at J2000.0
-
-console.log(jupiterPos);  // Vector3 in heliocentric ICRF frame
-console.log(ioPos);       // Vector3 in Jovicentric frame
-
-// Check if data is loaded
-const isLoaded = manager.isLoaded(599, 2451545.0);
-
-// Preload time range
-await manager.preloadRange(599, 2451545.0, 2451645.0);
-
-// Get ephemeris status
-const status = manager.getStatus(599);
+// Check ephemeris status
+const status = await calculator.getStatus(599);
 console.log(status.dataSource);  // 'ephemeris' or 'analytical'
 console.log(status.accuracy);    // Estimated accuracy in degrees
 ```
@@ -82,8 +70,9 @@ new AllBodiesCalculator(manager: EphemerisManager)
 
 #### Methods
 
-**`async calculatePosition(bodyId: number, jd_tdb: number): Promise<Vector3>`**
+**`async calculatePosition(bodyId: number, jd: number): Promise<PositionResult>`**
 - Calculate body position at given time
+- Returns `PositionResult` containing `position: Vector3`, `usingEphemeris: boolean`, `source: string`, `accuracy: number`
 - Returns heliocentric position for planets, planetcentric for satellites
 - Automatically loads ephemeris data if needed
 - Falls back to analytical model if data unavailable
@@ -96,7 +85,7 @@ Manages ephemeris data loading and caching.
 
 **`registerBody(naifId: number, name: string, dataUrl: string): void`**
 - Register a body with its ephemeris data URL
-- Called automatically in constructor for all 20 bodies
+- Called automatically in constructor for all 27 bodies
 
 **`async getPosition(bodyId: number, jd_tdb: number): Promise<Vector3 | null>`**
 - Get position from ephemeris data
@@ -247,7 +236,7 @@ Ephemeris data uses a polynomial segment format:
 - **Data load time**: < 1 second per chunk on typical broadband
 - **Position calculation**: < 1 millisecond (polynomial evaluation)
 - **Memory usage**: < 10 MB for cached chunks (LRU eviction)
-- **Frame rate**: ≥ 60 FPS with all bodies visible
+- **Frame rate**: �?60 FPS with all bodies visible
 - **Chunk size**: 400-2200 KB per body (compressed)
 
 ## Accuracy
@@ -361,7 +350,6 @@ npm test -- manifest-loader.test.ts
 
 - Improve accuracy for fast-orbiting Saturn satellites
 - Add Mars data (requires kernel time range adjustment)
-- Add Uranus and its satellites (requires kernel)
 - Implement chunking by time period (5-year chunks)
 - Add relativistic corrections for extreme precision
 - Support for additional minor satellites

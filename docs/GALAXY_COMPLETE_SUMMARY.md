@@ -15,7 +15,7 @@
 - 自动淡出：在 30,000 AU 到 1 光年之间
 
 **纹理：**
-- `8k_stars_milky_way.jpg`（圆柱投影）
+- `8k_stars_milky_way.webp`（圆柱投影）
 
 **配置位置：**
 - 文件：`src/lib/3d/SceneManager.ts`
@@ -24,15 +24,11 @@
 **最终配置：**
 ```typescript
 const MILKY_WAY_ORIENTATION = {
-  rotationX: 180,    // 俯仰角度
-  rotationY: 152,    // 偏航角度
-  rotationZ: 84.5,   // 翻滚角度
+  rotationX: -141.5, // 俯仰角度
+  rotationY: 8,      // 偏航角度
+  rotationZ: 123.4,  // 翻滚角度
 };
 ```
-
-**调试工具：**
-- 按钮：🌠 天空盒调试（靛蓝色，右下角）
-- 组件：`src/components/SkyboxRotationDebugger.tsx`
 
 ---
 
@@ -45,7 +41,7 @@ const MILKY_WAY_ORIENTATION = {
 - 完全显示：> 2000 光年
 
 **纹理：**
-- 俯视图：`MilkyWayTop_Gaia_2100.jpg`
+- 俯视图：`Milky_Way_map_by_Gaia_labelled.jpg`
 - 侧视图：`MilkyWaySide_Gaia_5000_2.jpg`
 
 **配置位置：**
@@ -56,16 +52,12 @@ const MILKY_WAY_ORIENTATION = {
 ```typescript
 export const GALAXY_CONFIG = {
   // ...
-  rotationX: -64,   // 俯仰角度
-  rotationY: 12,    // 偏航角度
-  rotationZ: 103,   // 翻滚角度
+  rotationX: -60.2,  // 俯仰角度
+  rotationY: 13.4,   // 偏航角度
+  rotationZ: 103.0,  // 翻滚角度
   // ...
 };
 ```
-
-**调试工具：**
-- 按钮：🔧 银河系调试（紫色，右下角上方）
-- 组件：`src/components/GalaxyRotationDebugger.tsx`
 
 ## 配置对比
 
@@ -162,13 +154,7 @@ src/components/canvas/3d/SolarSystemCanvas3D.tsx  # 集成两个调试器
 
 ### 文档
 ```
-docs/SKYBOX_ROTATION_GUIDE.md       # 天空盒调整指南
-docs/SKYBOX_ROTATION_FINAL.md       # 天空盒最终配置
-docs/GALAXY_ROTATION_ADJUSTMENT.md  # 大银河系调整指南
-docs/GALAXY_ROTATION_FINAL.md       # 大银河系最终配置
-docs/GALAXY_ROTATION_EXPLANATION.md # 旋转效果解释
-docs/GALAXY_AXES_GUIDE.md           # 坐标轴使用指南
-docs/GALAXY_COMPLETE_SUMMARY.md     # 本文档
+docs/GALAXY_COMPLETE_SUMMARY.md     # 本文档（银河系渲染完整总结）
 ```
 
 ## 快速参考
@@ -284,7 +270,7 @@ gr?.setRotation(-64, 12, 103);
 **Bug 修复：**
 - 修复了调试器在挂载时覆盖配置文件值的问题
 - 使用 useRef 跟踪首次渲染，跳过初始化时的回调
-- 详见 `docs/DEBUGGER_FIX.md`
+- 调试器相关问题已修复
 
 **文档完善：**
 - 创建了 10+ 个详细文档

@@ -24,7 +24,6 @@
 | 文档 | 说明 |
 |------|------|
 | [CODE_QUALITY.md](./CODE_QUALITY.md) | 代码质量标准和最佳实践 |
-| [NAME_CHANGE_ANNOUNCEMENT.md](./NAME_CHANGE_ANNOUNCEMENT.md) | 项目更名公告（CXIC → OPIC） |
 
 ## 架构与设计
 
@@ -108,8 +107,9 @@ opic/
 | NearbyGroupsRenderer.ts | 近邻星系群渲染 |
 | VirgoSuperclusterRenderer.ts | 室女座超星系团渲染 |
 | LaniakeaSuperclusterRenderer.ts | 拉尼亚凯亚渲染 |
+| ExoplanetRenderer.ts | 系外行星渲染 |
+| ExoplanetSystemRenderer.ts | 系外行星系统渲染 |
 | LODManager.ts | 细节层次管理 |
-| FrustumCullingOptimizer.ts | 视锥剔除 |
 | MemoryManager.ts | 内存管理 |
 | OptimizedParticleSystem.ts | 自定义着色器粒子系统 |
 
@@ -161,6 +161,7 @@ opic/
 - Karachentsev 2013（近邻星系）
 - 2MRS Survey（室女座超星系团）
 - Cosmicflows-3（拉尼亚凯亚）
+- NASA Exoplanet Archive（系外行星）
 
 ---
 

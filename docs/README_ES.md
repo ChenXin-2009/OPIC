@@ -1,14 +1,12 @@
 # OPIC — Open Integrated Cosmos (Cosmos Integrado Abierto)
 
 <div align="center">
-  <img src="public/LOGO/logolwBG.svg" alt="OPIC Logo" width="300">
+  <img src="../public/LOGO/logolwBG.svg" alt="OPIC Logo" width="300">
 </div>
 
 **Un sistema de visualización del universo a múltiples escalas e integración de datos astronómicos basado en Web**
 
-> **Nota**: Este proyecto se llamaba originalmente CXIC (CXIN Integrated Cosmos). Consulte el [Anuncio de Cambio de Nombre](docs/NAME_CHANGE_ANNOUNCEMENT.md).
-
-[English](./README_EN.md) | [中文](./README.md) | [日本語](./README_JA.md) | [한국어](./README_KO.md) | [Français](./README_FR.md) | [Deutsch](./README_DE.md) | [Español](./README_ES.md) | [Русский](./README_RU.md)
+[English](../README_EN.md) | [中文](../README.md) | [日本語](./README_JA.md) | [한국어](./README_KO.md) | [Français](./README_FR.md) | [Deutsch](./README_DE.md) | [Русский](./README_RU.md)
 
 ---
 
@@ -21,7 +19,7 @@ El proyecto está evolucionando hacia una arquitectura de plugins modular (MOD M
 ### Demostración
 
 <div align="center">
-  <img src="docs/images/earth-to-universe-zoom.gif" alt="Demostración de zoom desde la Tierra al universo" width="300">
+  <img src="./images/earth-to-universe-zoom.gif" alt="Demostración de zoom desde la Tierra al universo" width="300">
   <p><em>Experiencia de zoom sin interrupciones desde edificios en la superficie terrestre hasta el panorama del universo</em></p>
 </div>
 
@@ -50,7 +48,7 @@ El proyecto está evolucionando hacia una arquitectura de plugins modular (MOD M
 - Información detallada: ver parámetros de satélites, elementos orbitales y estado
 
 <div align="center">
-  <img src="docs/images/satellite-tracking-demo.gif" alt="Demostración de seguimiento de satélites" width="300">
+  <img src="./images/satellite-tracking-demo.gif" alt="Demostración de seguimiento de satélites" width="300">
   <p><em>Seguimiento de órbitas de satélites en tiempo real y visualización de información</em></p>
 </div>
 
@@ -82,7 +80,7 @@ Arquitectura de plugins modular que mantiene el sistema central ligero mientras 
 - Persistencia de configuración entre sesiones
 
 <div align="center">
-  <img src="docs/images/mod-manager-interface.gif" alt="Interfaz del MOD Manager" width="300">
+  <img src="./images/mod-manager-interface.gif" alt="Interfaz del MOD Manager" width="300">
   <p><em>Interfaz del MOD Manager y demostración de mods de ejemplo</em></p>
 </div>
 

@@ -70,7 +70,8 @@ export class CameraSynchronizer {
     threeCamera: THREE.PerspectiveCamera,
     cesiumCamera: Cesium.Camera,
     earthPosition: THREE.Vector3,
-    currentTime?: Cesium.JulianDate
+    currentTime?: Cesium.JulianDate,
+    bodyRadiusMeters: number = 6371000
   ): void {
     // ─────────────────────────────────────────────────────────────────────────
     // 完整变换链：黄道惯性系 → 赤道惯性系(ICRF) → ECEF(ITRF)
@@ -225,9 +226,8 @@ export class CameraSynchronizer {
       // 值（如 1e-5 AU ≈ 1500m）远大于地球表面细节所需的近裁剪距离。
       //
       // EARTH_RADIUS_M：地球平均半径，约 6,371,000 米（WGS84 椭球体长半轴 6,378,137m 的近似值）
-      const EARTH_RADIUS_M = 6371000;
       // 相机到地球表面的高度（米），最小为 0（防止地下相机产生负值）
-      const cameraAltitude = Math.max(0, Cesium.Cartesian3.magnitude(cesiumCamera.position) - EARTH_RADIUS_M);
+      const cameraAltitude = Math.max(0, Cesium.Cartesian3.magnitude(cesiumCamera.position) - bodyRadiusMeters);
       
       // near = 相机高度的 0.01%，最小 0.1m，最大 1000m
       //   - 最小值 0.1m：允许贴近地面查看建筑细节

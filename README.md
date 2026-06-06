@@ -6,9 +6,7 @@
 
 **一个基于 Web 的多尺度宇宙可视化与天文数据集成系统**
 
-> **注意**：本项目原名为 CXIC (CXIN Integrated Cosmos)。详见[名称变更公告](docs/NAME_CHANGE_ANNOUNCEMENT.md)。
-
-[English](./README_EN.md) | [日本語](./README_JA.md) | [한국어](./README_KO.md) | [Français](./README_FR.md) | [Deutsch](./README_DE.md) | [Español](./README_ES.md) | [Русский](./README_RU.md)
+[English](./README_EN.md) | [日本語](./docs/README_JA.md) | [한국어](./docs/README_KO.md) | [Français](./docs/README_FR.md) | [Deutsch](./docs/README_DE.md) | [Español](./docs/README_ES.md) | [Русский](./docs/README_RU.md)
 
 ---
 
@@ -30,8 +28,8 @@ OPIC 是一个使用 Three.js、Cesium 和 Next.js 构建的交互式宇宙可�
 ### 地球可视化（Cesium 集成）
 
 - 高精度瓦片地球：基于 Cesium 的全球地形和影像瓦片渲染
+- 真实地球地形高程数据与地形显示
 - 多源地图切换：支持 Bing Maps、OpenStreetMap、ArcGIS、天地图等多种影像源
-- 真实地球地形高程数据
 - 距离自适应：近距使用 Cesium 瓦片，远距切换 Three.js 球体，平滑过渡
 - Three.js 与 Cesium 相机状态实时同步
 
@@ -53,6 +51,16 @@ OPIC 是一个使用 Three.js、Cesium 和 Next.js 构建的交互式宇宙可�
   <img src="docs/images/satellite-tracking-demo.gif" alt="卫星追踪演示" width="300">
   <p><em>实时卫星轨道追踪与信息展示</em></p>
 </div>
+
+### 系外行星系统（新功能）
+
+基于 NASA Exoplanet Archive 真实数据，在三维空间中探索已知的系外行星系统：
+
+- **真实数据**：从 NASA Exoplanet Archive 实时获取已确认的系外行星及其主恒星数据
+- **三维星图**：主恒星在三维空间中精确定位（基于赤经/赤纬/距离坐标转换）
+- **沉浸式探索**：点击任意主恒星，飞入其行星系统，观察行星绕恒星公转
+- **详细信息面板**：展示恒星参数（温度、质量、半径）和行星参数（轨道周期、半径、质量、平衡温度等）
+- **时间模拟**：行星以各自真实速度绕恒星运行，支持时间加速/减速
 
 ### 多尺度宇宙可视化
 
@@ -167,6 +175,10 @@ npm start
 - 近邻星系群：Karachentsev et al. (2013)
 - 室女座超星系团：2MRS Survey Data
 - 拉尼亚凯亚超星系团：Cosmicflows-3 Dataset
+
+### 系外行星数据
+
+- 系外行星数据：NASA Exoplanet Archive（实时 API 查询）
 
 ### 卫星数据
 

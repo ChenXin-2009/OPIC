@@ -35,6 +35,7 @@ import { getRenderAPI } from '@/lib/mod-manager/api/RenderAPI';
 import { CameraController } from '@/lib/3d/CameraController';
 import { Planet } from '@/lib/3d/Planet';
 import { EarthPlanet } from '@/lib/3d/EarthPlanet';
+import { CesiumMappedPlanet } from '@/lib/3d/CesiumMappedPlanet';
 import { OrbitCurve } from '@/lib/3d/OrbitCurve';
 import { OrbitLabel } from '@/lib/3d/OrbitLabel';
 import { SatelliteOrbit } from '@/lib/3d/SatelliteOrbit';
@@ -43,7 +44,7 @@ import { dateToJulianDay } from '@/lib/astronomy/time';
 import { ORBITAL_ELEMENTS } from '@/lib/astronomy/orbit';
 import { planetNames } from '@/lib/astronomy/names';
 import { CELESTIAL_BODIES } from '@/lib/types/celestialTypes';
-import { IMAGERY_SOURCES } from '@/lib/cesium/imageryProviders';
+import { IMAGERY_SOURCES, LUNAR_IMAGERY_SOURCES } from '@/lib/cesium/imageryProviders';
 import * as THREE from 'three';
 import { Raycaster } from 'three';
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
@@ -241,6 +242,17 @@ interface SolarSystemCanvas3DProps {
   onInitializationProgress?: (stage: string, progress: number, isComplete: boolean) => void;
 }
 
+function setCesiumPlanetEnabled(
+  planet: Planet | undefined,
+  enabled: boolean,
+  camera?: THREE.PerspectiveCamera
+): void {
+  const cesiumPlanet = planet as (Planet & {
+    setCesiumEnabled?: (enabled: boolean, camera?: THREE.PerspectiveCamera) => void;
+  }) | undefined;
+  cesiumPlanet?.setCesiumEnabled?.(enabled, camera);
+}
+
 export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnabled = false, onEarthPlanetReady, onCameraReady, earthLockEnabled = false, earthLightEnabled = true, onInitializationProgress }: SolarSystemCanvas3DProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneManagerRef = useRef<SceneManager | null>(null);
@@ -312,6 +324,9 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
         console.log(`[SolarSystemCanvas3D] OrbitControls always enabled`);
       }
     }
+
+    const camera = cesiumEnabled ? (cameraRef.current as THREE.PerspectiveCamera ?? undefined) : undefined;
+    (planetsRef.current.get('moon') as any)?.setCesiumEnabled?.(cesiumEnabled, camera);
   }, [cesiumEnabled]);
 
   // 监听 earthLockEnabled 变化，切换地球锁定相机模式
@@ -666,9 +681,9 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
         const bodyKey = body.name.toLowerCase();
         const celestialConfig = CELESTIAL_BODIES[bodyKey];
         
-        // 如果是地球,使用 EarthPlanet 启用 Cesium 集成
-        const planet = bodyKey === 'earth' 
-          ? new EarthPlanet({
+        let planet: Planet;
+        if (bodyKey === 'earth') {
+          planet = new EarthPlanet({
               body,
               ...(celestialConfig && { config: celestialConfig }),
               rotationSpeed: ROTATION_SPEEDS[bodyKey] || 0,
@@ -694,12 +709,39 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
               cesiumVisibleDistance: 2000,
               transitionStartDistance: 1800,
               transitionEndDistance: 2500,
-            })
-          : new Planet({
+            });
+        } else if (bodyKey === 'moon') {
+          planet = new CesiumMappedPlanet({
+              body,
+              ...(celestialConfig && { config: celestialConfig }),
+              rotationSpeed: ROTATION_SPEEDS[bodyKey] || 0,
+              enableCesiumTiles: true,
+              cesiumConfig: {
+                cesiumContainerId: 'cesium-moon-canvas',
+                parentElement: containerRef.current ?? undefined,
+                canvasResolutionScale: 0.85,
+                maximumScreenSpaceError: 3.5,
+                maximumNumberOfLoadedTiles: 350,
+                enableTerrain: false,
+                terrainProviderSource: 'none',
+                requestTerrainVertexNormals: false,
+                requestTerrainWaterMask: false,
+                terrainExaggeration: 1,
+                terrainExaggerationRelativeHeight: 0,
+                ellipsoid: 'moon',
+                bodyRadiusMeters: 1737400,
+                exposeViewerToWindow: false,
+              },
+              cesiumVisibleDistanceAu: 0.0015,
+              logLabel: 'MoonPlanet',
+            });
+        } else {
+          planet = new Planet({
               body,
               ...(celestialConfig && { config: celestialConfig }),
               rotationSpeed: ROTATION_SPEEDS[bodyKey] || 0,
             });
+        }
         planet.updatePosition(body.x, body.y, body.z);
         const planetMesh = planet.getMesh();
         scene.add(planetMesh);
@@ -734,6 +776,25 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           }
           
           // 设置初始 Cesium 状态(默认禁用)
+          if ('setCesiumEnabled' in planet) {
+            (planet as any).setCesiumEnabled(cesiumEnabled);
+          }
+        }
+
+        if (bodyKey === 'moon') {
+          const lunarSource = LUNAR_IMAGERY_SOURCES.find(s => s.id === 'moon-trek-lro-wac-global');
+          if (lunarSource) {
+            lunarSource.create().then((provider) => {
+              const cesiumExt = (planet as CesiumMappedPlanet).getCesiumExtension();
+              if (cesiumExt && provider) {
+                cesiumExt.setImageryProvider(provider);
+                console.log('[SolarSystemCanvas3D] NASA Moon Trek lunar imagery provider loaded');
+              }
+            }).catch((error) => {
+              console.error('[SolarSystemCanvas3D] Failed to load lunar imagery provider:', error);
+            });
+          }
+
           if ('setCesiumEnabled' in planet) {
             (planet as any).setCesiumEnabled(cesiumEnabled);
           }
@@ -1186,8 +1247,8 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
             const key = body.name.toLowerCase();
             const planet = planetsRef.current.get(key);
             if (planet) {
-              // 如果是 EarthPlanet 且 Cesium 已启用，跳过（由 EarthPlanet 自己管理可见性）
-              if (key === 'earth' && cesiumEnabledRef.current) return;
+              // Cesium-mapped bodies manage their own depth-only mesh visibility.
+              if (cesiumEnabledRef.current && 'getCesiumExtension' in planet) return;
               const mesh = planet.getMesh();
               mesh.visible = true;
             }
@@ -1242,6 +1303,11 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
         if (sceneManagerRef.current) {
           sceneManagerRef.current.updateEarthPlanet(deltaTime);
         }
+        planetsRef.current.forEach((planet, key) => {
+          if (key !== 'earth' && typeof (planet as any).update === 'function') {
+            (planet as any).update(camera, deltaTime);
+          }
+        });
 
         if (sceneManagerRef.current) {
           sceneManagerRef.current.updateSkyboxPosition(camera.position);

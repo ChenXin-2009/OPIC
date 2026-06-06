@@ -76,6 +76,12 @@ export interface CesiumAdapterConfig {
   terrainExaggeration?: number;
   /** Reference height for vertical terrain exaggeration. */
   terrainExaggerationRelativeHeight?: number;
+  /** Ellipsoid used by Cesium's globe. Defaults to WGS84 Earth. */
+  ellipsoid?: 'wgs84' | 'moon' | { x: number; y: number; z: number };
+  /** Mean body radius in meters, used for camera clipping and altitude logs. */
+  bodyRadiusMeters?: number;
+  /** Expose this viewer as window.__cesiumViewer for earth-specific MOD integrations. */
+  exposeViewerToWindow?: boolean;
 
   /**
    * Canvas 分辨率缩放系数（默认 1.0，范围 0.1 ~ 2.0）
@@ -214,8 +220,21 @@ export class CesiumAdapter {
       requestTerrainVertexNormals: withDefault(config.requestTerrainVertexNormals, true),
       requestTerrainWaterMask: withDefault(config.requestTerrainWaterMask, true),
       terrainExaggeration: clampDefault(config.terrainExaggeration, 1.5, 0.1, 10),
-      terrainExaggerationRelativeHeight: withDefault(config.terrainExaggerationRelativeHeight, 0)
+      terrainExaggerationRelativeHeight: withDefault(config.terrainExaggerationRelativeHeight, 0),
+      bodyRadiusMeters: withDefault(config.bodyRadiusMeters, 6371000),
+      exposeViewerToWindow: withDefault(config.exposeViewerToWindow, true)
     };
+  }
+
+  private createEllipsoid(): Cesium.Ellipsoid {
+    const ellipsoid = this.config.ellipsoid;
+    if (ellipsoid === 'moon') {
+      return Cesium.Ellipsoid.MOON;
+    }
+    if (ellipsoid && typeof ellipsoid === 'object') {
+      return new Cesium.Ellipsoid(ellipsoid.x, ellipsoid.y, ellipsoid.z);
+    }
+    return Cesium.Ellipsoid.WGS84;
   }
   
   /**
@@ -244,6 +263,8 @@ export class CesiumAdapter {
     const parent = this.config.parentElement ?? document.body;
     parent.appendChild(this.container);
     
+    const ellipsoid = this.createEllipsoid();
+
     // 创建 Cesium Viewer
     this.viewer = new Cesium.Viewer(this.container, {
       // 基础配置
@@ -264,6 +285,7 @@ export class CesiumAdapter {
       
       // 渲染配置
       scene3DOnly: true,
+      ellipsoid,
       // 关闭顺序无关半透明（OIT）：OIT 会引入额外的 FBO pass，与透明背景合成冲突
       orderIndependentTranslucency: false,
       contextOptions: {
@@ -353,6 +375,12 @@ export class CesiumAdapter {
     
     // 通知 Cesium 场景尺寸已更改
     this.viewer.resize();
+
+    this.exposeViewerToWindow();
+  }
+
+  private exposeViewerToWindow(): void {
+    if (!this.config.exposeViewerToWindow) return;
 
     // 将 viewer 暴露到 window，供 MOD 系统访问
     (window as unknown as Record<string, unknown>).__cesiumViewer = this.viewer;
@@ -534,14 +562,20 @@ export class CesiumAdapter {
     if (!this.isAvailable) return;
     
     try {
-      CameraSynchronizer.syncViewMatrix(threeCamera, this.viewer.camera, earthPosition, this.viewer.clock.currentTime);
+      CameraSynchronizer.syncViewMatrix(
+        threeCamera,
+        this.viewer.camera,
+        earthPosition,
+        this.viewer.clock.currentTime,
+        this.config.bodyRadiusMeters
+      );
       
       // 临时调试：每隔2秒输出一次相机高度，确认位置同步是否正确
       const now = Date.now();
       if (!this._lastDebugTime || now - this._lastDebugTime > 2000) {
         this._lastDebugTime = now;
         const camPos = this.viewer.camera.position;
-        const altitude = Cesium.Cartesian3.magnitude(camPos) - 6371000;
+        const altitude = Cesium.Cartesian3.magnitude(camPos) - (this.config.bodyRadiusMeters ?? 6371000);
         const frustum = this.viewer.camera.frustum as any;
         console.log('[CesiumAdapter] camera altitude (m):', altitude.toFixed(0), 
           'near:', frustum?.near?.toFixed(1), 'far:', frustum?.far?.toFixed(0),

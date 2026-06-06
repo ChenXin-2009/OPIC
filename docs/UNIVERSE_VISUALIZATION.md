@@ -21,8 +21,8 @@ SceneManager
 ├── NearbyGroupsRenderer - 近邻星系群 (8 groups, ~150 galaxies)
 ├── VirgoSuperclusterRenderer - 室女座超星系团 (30 clusters, ~600 galaxies)
 ├── LaniakeaSuperclusterRenderer - 拉尼亚凯亚超星系团 (15 superclusters, ~200 galaxies)
-├── NearbySuperclusterRenderer - 近邻超星系团 (20 superclusters, ~200 galaxies)
-└── ObservableUniverseRenderer - 可观测宇宙 (cosmic web structures)
+├── ExoplanetRenderer - 系外行星主恒星
+└── ExoplanetSystemRenderer - 系外行星系统
 ```
 
 All renderers implement the `UniverseScaleRenderer` interface:
@@ -47,7 +47,7 @@ All data uses the **Supergalactic Coordinate System** as the primary reference f
 - **Advantages**: Best suited for visualizing local universe structures
 - **Conversion**: J2000.0 Equatorial → Galactic → Supergalactic
 
-The `CoordinateConverter` utility class handles all coordinate transformations.
+坐标转换由 `src/lib/3d/utils/coordinates.ts` 中的工具函数处理。
 
 ### Data Strategy
 
@@ -94,7 +94,7 @@ The `OptimizedParticleSystem` uses custom shaders for efficient rendering:
 
 ### 3. Instanced Rendering
 
-For the Local Group (detailed galaxies), `InstancedGalaxyRenderer` uses THREE.InstancedMesh to reduce draw calls.
+实例化渲染技术用于减少绘制调用，提高性能。
 
 ### 4. Memory Management
 

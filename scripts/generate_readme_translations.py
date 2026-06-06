@@ -11,7 +11,7 @@ translations = {
     'es': {
         'title': 'OPIC — Open Integrated Cosmos (Cosmos Integrado Abierto)',
         'subtitle': 'Un sistema de visualización del universo a múltiples escalas e integración de datos astronómicos basado en web',
-        'note': '**Nota**: Este proyecto era anteriormente conocido como CXIC (CXIN Integrated Cosmos). Ver [Anuncio de cambio de nombre](docs/NAME_CHANGE_ANNOUNCEMENT.md) para más detalles.',
+        'note': '',
         'overview_title': '## Descripción del proyecto',
         'overview': 'OPIC es una aplicación de visualización interactiva del universo construida con Three.js, Cesium y Next.js. Utilizando datos astronómicos reales y cálculos orbitales precisos, presenta una simulación dinámica desde la superficie de la Tierra hasta el borde del universo observable.\n\nEl proyecto está evolucionando hacia una arquitectura modular de plugins (MOD Manager), permitiendo que las funciones se carguen, configuren y cambien independientemente en tiempo de ejecución sin reiniciar la aplicación.',
     },

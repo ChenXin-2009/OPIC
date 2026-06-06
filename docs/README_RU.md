@@ -1,14 +1,12 @@
 # OPIC — Open Integrated Cosmos (Открытый Интегрированный Космос)
 
 <div align="center">
-  <img src="public/LOGO/logolwBG.svg" alt="OPIC Logo" width="300">
+  <img src="../public/LOGO/logolwBG.svg" alt="OPIC Logo" width="300">
 </div>
 
 **Веб-система визуализации вселенной в нескольких масштабах и интеграции астрономических данных**
 
-> **Примечание**: Этот проект изначально назывался CXIC (CXIN Integrated Cosmos). См. [Объявление об изменении названия](docs/NAME_CHANGE_ANNOUNCEMENT.md).
-
-[English](./README_EN.md) | [中文](./README.md) | [日本語](./README_JA.md) | [한국어](./README_KO.md) | [Français](./README_FR.md) | [Deutsch](./README_DE.md) | [Español](./README_ES.md) | [Русский](./README_RU.md)
+[English](../README_EN.md) | [中文](../README.md) | [日本語](./README_JA.md) | [한국어](./README_KO.md) | [Français](./README_FR.md) | [Deutsch](./README_DE.md) | [Español](./README_ES.md)
 
 ---
 
@@ -21,7 +19,7 @@ OPIC — это интерактивное приложение для визу�
 ### Демонстрация
 
 <div align="center">
-  <img src="docs/images/earth-to-universe-zoom.gif" alt="Демонстрация масштабирования от Земли до вселенной" width="300">
+  <img src="./images/earth-to-universe-zoom.gif" alt="Демонстрация масштабирования от Земли до вселенной" width="300">
   <p><em>Бесшовное масштабирование от зданий на поверхности Земли до панорамы вселенной</em></p>
 </div>
 
@@ -50,7 +48,7 @@ OPIC — это интерактивное приложение для визу�
 - Подробная информация: просмотр параметров спутников, орбитальных элементов и состояния
 
 <div align="center">
-  <img src="docs/images/satellite-tracking-demo.gif" alt="Демонстрация отслеживания спутников" width="300">
+  <img src="./images/satellite-tracking-demo.gif" alt="Демонстрация отслеживания спутников" width="300">
   <p><em>Отслеживание орбит спутников в реальном времени и отображение информации</em></p>
 </div>
 
@@ -82,7 +80,7 @@ OPIC — это интерактивное приложение для визу�
 - Сохранение конфигурации между сеансами
 
 <div align="center">
-  <img src="docs/images/mod-manager-interface.gif" alt="Интерфейс MOD Manager" width="300">
+  <img src="./images/mod-manager-interface.gif" alt="Интерфейс MOD Manager" width="300">
   <p><em>Интерфейс MOD Manager и демонстрация примеров модов</em></p>
 </div>
 

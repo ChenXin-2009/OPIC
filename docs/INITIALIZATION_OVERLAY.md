@@ -124,14 +124,14 @@ const [initProgress, setInitProgress] = useState({
 - 全屏覆盖: `fixed inset-0`
 
 ### Logo
-- 尺寸: 128x128px
+- 尺寸: 384x384px (w-96 h-96)
 - 动画: `animate-pulse` (呼吸效果)
-- 图片: `/CX.svg`
+- 图片: `/LOGO/logolw.svg`
 
 ### 进度条
-- 宽度: 300px
-- 高度: 4px (容器) + 4px (填充)
-- 颜色: 灰色背景 + 白色填充
+- 宽度: 全宽 (w-full)
+- 高度: 8px (h-2)
+- 颜色: 深灰背景 (#1f1f1f) + 白色填充
 - 效果: 白色光晕 `box-shadow: 0 0 10px rgba(255, 255, 255, 0.5)`
 - 过渡: `transition-all duration-300 ease-out`
 

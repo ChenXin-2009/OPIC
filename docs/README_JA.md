@@ -1,14 +1,12 @@
 # OPIC — Open Integrated Cosmos（オープン統合宇宙）
 
 <div align="center">
-  <img src="public/LOGO/logolwBG.svg" alt="OPIC Logo" width="300">
+  <img src="../public/LOGO/logolwBG.svg" alt="OPIC Logo" width="300">
 </div>
 
 **Webベースのマルチスケール宇宙可視化と天文データ統合システム**
 
-> **注意**：このプロジェクトは以前CXIC (CXIN Integrated Cosmos)として知られていました。詳細は[名称変更のお知らせ](docs/NAME_CHANGE_ANNOUNCEMENT.md)をご覧ください。
-
-[English](./README_EN.md) | [中文](./README.md) | [한국어](./README_KO.md) | [Français](./README_FR.md) | [Deutsch](./README_DE.md) | [Español](./README_ES.md) | [Русский](./README_RU.md)
+[English](../README_EN.md) | [中文](../README.md) | [한국어](./README_KO.md) | [Français](./README_FR.md) | [Deutsch](./README_DE.md) | [Español](./README_ES.md) | [Русский](./README_RU.md)
 
 ---
 
@@ -21,7 +19,7 @@ OPICは、Three.js、Cesium、Next.jsを使用して構築されたインタラ�
 ### デモ
 
 <div align="center">
-  <img src="docs/images/earth-to-universe-zoom.gif" alt="地球から宇宙へのズームデモ" width="300">
+  <img src="./images/earth-to-universe-zoom.gif" alt="地球から宇宙へのズームデモ" width="300">
   <p><em>地球表面の建物から宇宙全景へのシームレスなズーム体験</em></p>
 </div>
 
@@ -50,7 +48,7 @@ OPICは、Three.js、Cesium、Next.jsを使用して構築されたインタラ�
 - 詳細情報：衛星パラメータ、軌道要素、状態の表示
 
 <div align="center">
-  <img src="docs/images/satellite-tracking-demo.gif" alt="衛星追跡デモ" width="300">
+  <img src="./images/satellite-tracking-demo.gif" alt="衛星追跡デモ" width="300">
   <p><em>リアルタイム衛星軌道追跡と情報表示</em></p>
 </div>
 
@@ -82,7 +80,7 @@ OPICは、Three.js、Cesium、Next.jsを使用して構築されたインタラ�
 - セッション間での設定の永続化
 
 <div align="center">
-  <img src="docs/images/mod-manager-interface.gif" alt="MODマネージャーインターフェース" width="300">
+  <img src="./images/mod-manager-interface.gif" alt="MODマネージャーインターフェース" width="300">
   <p><em>MODマネージャーインターフェースとサンプルモジュール表示</em></p>
 </div>
 

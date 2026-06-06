@@ -6,9 +6,7 @@
 
 **A web-based multi-scale universe visualization and astronomical data integration system**
 
-> **Note**: This project was formerly known as CXIC (CXIN Integrated Cosmos). See [Name Change Announcement](docs/NAME_CHANGE_ANNOUNCEMENT.md) for details.
-
-[中文](./README.md) | [日本語](./README_JA.md) | [한국어](./README_KO.md) | [Français](./README_FR.md) | [Deutsch](./README_DE.md) | [Español](./README_ES.md) | [Русский](./README_RU.md)
+[中文](./README.md) | [日本語](./docs/README_JA.md) | [한국어](./docs/README_KO.md) | [Français](./docs/README_FR.md) | [Deutsch](./docs/README_DE.md) | [Español](./docs/README_ES.md) | [Русский](./docs/README_RU.md)
 
 ---
 
@@ -30,8 +28,8 @@ The project is transitioning to a modular plugin architecture (MOD Manager syste
 ### Earth Visualization (Cesium Integration)
 
 - High-precision tile-based Earth rendering with global terrain and imagery
+- Real terrain elevation data with terrain display
 - Multiple map sources: Bing Maps, OpenStreetMap, ArcGIS, Tianditu
-- Real terrain elevation data
 - Distance-adaptive rendering: seamless transition between Cesium tiles (close range) and Three.js sphere (far range)
 - Real-time camera synchronization between Three.js and Cesium
 
@@ -53,6 +51,16 @@ The project is transitioning to a modular plugin architecture (MOD Manager syste
   <img src="docs/images/satellite-tracking-demo.gif" alt="Satellite Tracking Demo" width="300">
   <p><em>Real-time satellite orbit tracking and information display</em></p>
 </div>
+
+### Exoplanet System (New)
+
+Explore known exoplanet systems in 3D space using real data from the NASA Exoplanet Archive:
+
+- **Real data**: Fetches confirmed exoplanets and their host stars from the NASA Exoplanet Archive in real-time
+- **3D star map**: Host stars accurately positioned in 3D space (RA/Dec/distance coordinate conversion)
+- **Immersive exploration**: Click any host star to fly into its planetary system and watch planets orbit
+- **Detailed info panel**: Star parameters (temperature, mass, radius) and planet parameters (orbital period, radius, mass, equilibrium temperature, etc.)
+- **Time simulation**: Planets orbit at their true velocities, with support for time acceleration/deceleration
 
 ### Multi-Scale Universe Visualization
 
@@ -167,6 +175,10 @@ npm start
 - Nearby Galaxy Groups: Karachentsev et al. (2013)
 - Virgo Supercluster: 2MRS Survey Data
 - Laniakea Supercluster: Cosmicflows-3 Dataset
+
+### Exoplanet Data
+
+- Exoplanet data: NASA Exoplanet Archive (real-time API query)
 
 ### Satellite Data
 

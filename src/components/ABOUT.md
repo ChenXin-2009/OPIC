@@ -125,7 +125,7 @@ OPIC 是一个基于 Web 的多尺度宇宙可视化与天文数据集成系统�
 
 如果这个项目对你有帮助，欢迎通过微信赞赏支持：
 
-![微信赞赏码](../public/textures/wechat-donate.png)
+![微信赞赏码](/textures/wechat-donate.png)
 
 你的支持是项目持续更新的动力！
 

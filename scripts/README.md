@@ -11,13 +11,18 @@ scripts/
 ├── generate-all-bodies-ephemeris.py  # 主生成脚本 / Main generation script
 ├── generate-manifest.py              # 生成manifest.json
 ├── download_kernels.py               # 下载SPICE内核 / Download SPICE kernels
-├── EPHEMERIS_DATA_GENERATION.md      # 详细文档 / Detailed documentation
 ├── README.md                         # 本文件 / This file
 └── tests/                            # 测试和验证脚本 / Test and validation scripts
-    ├── check-de440-bodies.py
-    ├── test-ephemeris-file.py
-    ├── verify-triton-orbit.py
-    └── ...
+    ├── check-de440-bodies.py          # 检查DE440内核中的天体
+    ├── check-jd-dates.py              # 检查儒略日日期
+    ├── test-enceladus-orbit.py        # 测试Enceladus轨道
+    ├── test-ephemeris-file.py         # 测试星历文件读取
+    ├── test-mars-spice.py             # 测试火星SPICE数据
+    ├── test-sampling-aliasing.py      # 测试采样混叠
+    ├── test-satellite-orbits.py       # 测试卫星轨道
+    ├── verify-new-ranges.py           # 验证新时间范围
+    ├── verify-triton-orbit.py         # 验证Triton轨道
+    └── visualize-enceladus-orbit.py   # 可视化Enceladus轨道
 ```
 
 ## 前置要求 / Prerequisites

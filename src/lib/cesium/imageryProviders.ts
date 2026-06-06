@@ -31,6 +31,7 @@
  */
 
 export type ImageryCategory = 'general' | 'nasa';
+export type LunarImageryCategory = 'nasa-moon-trek';
 
 /**
  * 影像图源定义接口
@@ -63,6 +64,17 @@ export interface ImagerySourceDef {
    */
   create: (date?: string) => Promise<any>;
 }
+
+export interface LunarImagerySourceDef {
+  id: string;
+  name: { zh: string; en: string };
+  description: { zh: string; en: string };
+  category: LunarImageryCategory;
+  previewUrl: string;
+  create: () => Promise<any>;
+}
+
+const MOON_TREK_REST = 'https://trek.nasa.gov/tiles/Moon/EQ';
 
 // NASA GIBS WMTS 基础配置
 const GIBS_BASE = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/wmts.cgi';
@@ -307,6 +319,34 @@ export const IMAGERY_SOURCES: ImagerySourceDef[] = [
         maximumLevel: 8,
         tilingScheme: new Cesium.WebMercatorTilingScheme(),
         credit: 'NASA GIBS',
+      });
+    },
+  },
+];
+
+export const LUNAR_IMAGERY_SOURCES: LunarImagerySourceDef[] = [
+  {
+    id: 'moon-trek-lro-wac-global',
+    name: { zh: 'NASA Moon Trek LRO WAC 全球月面', en: 'NASA Moon Trek LRO WAC Global' },
+    description: {
+      zh: 'NASA Moon Trek 的 LRO WAC 全球月面影像，真实月表数据',
+      en: 'NASA Moon Trek LRO WAC global lunar mosaic from real lunar surface data',
+    },
+    category: 'nasa-moon-trek',
+    previewUrl: `${MOON_TREK_REST}/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/default/default028mm/2/1/2.jpg`,
+    create: async () => {
+      const Cesium = await import('cesium');
+      return new Cesium.UrlTemplateImageryProvider({
+        url: `${MOON_TREK_REST}/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/default/default028mm/{z}/{y}/{x}.jpg`,
+        tilingScheme: new Cesium.GeographicTilingScheme({
+          ellipsoid: Cesium.Ellipsoid.MOON,
+          numberOfLevelZeroTilesX: 2,
+          numberOfLevelZeroTilesY: 1,
+        }),
+        rectangle: Cesium.Rectangle.fromDegrees(-180, -90, 180, 90),
+        minimumLevel: 0,
+        maximumLevel: 9,
+        credit: 'NASA Moon Trek / LRO WAC',
       });
     },
   },
