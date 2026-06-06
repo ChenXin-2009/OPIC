@@ -683,6 +683,12 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
                 canvasResolutionScale: 1.0,
                 maximumScreenSpaceError: 2,
                 maximumNumberOfLoadedTiles: 1000,
+                enableTerrain: true,
+                terrainProviderSource: 'arcgis-world-elevation',
+                requestTerrainVertexNormals: true,
+                requestTerrainWaterMask: true,
+                terrainExaggeration: 1.5,
+                terrainExaggerationRelativeHeight: 0,
               },
               // 距离阈值 - 不再使用,Cesium 在所有距离都可用
               cesiumVisibleDistance: 2000,

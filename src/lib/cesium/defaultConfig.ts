@@ -19,6 +19,13 @@ export const DEFAULT_CESIUM_ADAPTER_CONFIG: Partial<CesiumAdapterConfig> = {
   // 限制内存使用，防止加载过多瓦片
   maximumNumberOfLoadedTiles: 1000,
 
+  enableTerrain: true,
+  terrainProviderSource: 'arcgis-world-elevation',
+  requestTerrainVertexNormals: true,
+  requestTerrainWaterMask: true,
+  terrainExaggeration: 1.5,
+  terrainExaggerationRelativeHeight: 0,
+
   // 深度合成策略
   // 'render-order': 渲染顺序法（先渲染地球，后渲染卫星）
   // 'satellite-always-front': 卫星始终在前（暂未实现）
