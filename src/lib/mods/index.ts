@@ -4,7 +4,7 @@
  */
 
 import { registerMod } from '@/lib/mod-manager/init';
-import { getAllRegisteredMods, getModCount } from './auto-registry';
+import { getAllRegisteredMods } from './auto-registry';
 
 /**
  * 注册所有核心MOD - 自动从注册表加载

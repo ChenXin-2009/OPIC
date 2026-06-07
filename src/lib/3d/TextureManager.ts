@@ -61,7 +61,6 @@
 import * as THREE from 'three';
 import { 
   PLANET_TEXTURE_CONFIG, 
-  type PlanetTextureConfig,
   TEXTURE_MANAGER_CONFIG 
 } from '@/lib/config/visualConfig';
 

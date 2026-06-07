@@ -28,7 +28,6 @@
  */
 
 import * as THREE from 'three';
-import { OrbitCurve } from './OrbitCurve';
 import { satelliteConfig } from '../config/satelliteConfig';
 import type { OrbitType, SatelliteState } from '../types/satellite';
 import type { SceneManager } from './SceneManager';
@@ -79,7 +78,6 @@ interface OrbitLine {
  */
 export class SatelliteRenderer {
   private scene: THREE.Scene;
-  private camera: THREE.PerspectiveCamera;
   private pointCloud: THREE.Points;
   private geometry: THREE.BufferGeometry;
   private material: THREE.PointsMaterial;
@@ -106,7 +104,7 @@ export class SatelliteRenderer {
    */
   constructor(sceneManager: SceneManager) {
     this.scene = sceneManager.getScene();
-    this.camera = sceneManager.getCamera();
+
     this.satellites = new Map();
     this.selectedSatellite = null;
     this.hoveredSatellite = null;
@@ -396,17 +394,7 @@ export class SatelliteRenderer {
    * 
    * @param orbitLine - 轨道线对象
    */
-  private returnOrbitLineToPool(orbitLine: OrbitLine): void {
-    // 从场景中移除
-    this.scene.remove(orbitLine.line);
-    
-    // 标记为未使用
-    orbitLine.inUse = false;
-    
-    // 清空几何体数据(但不销毁对象)
-    // 注意: setFromPoints需要至少一个点,所以使用原点
-    orbitLine.geometry.setFromPoints([new THREE.Vector3(0, 0, 0)]);
-  }
+
   
   /**
    * 射线投射检测点击
@@ -456,7 +444,7 @@ export class SatelliteRenderer {
    * @param cameraDistance - 相机距离(可选,当前未使用)
    * @returns 被点击的卫星NORAD ID,如果没有点击到卫星则返回null
    */
-  raycast(raycaster: THREE.Raycaster, cameraDistance?: number): number | null {
+  raycast(raycaster: THREE.Raycaster, _cameraDistance?: number): number | null {
     // 设置射线投射器的点阈值
     // ⚠️ 关键: 由于场景使用AU单位,此值必须极小(0.0000001)
     raycaster.params.Points = raycaster.params.Points || {};

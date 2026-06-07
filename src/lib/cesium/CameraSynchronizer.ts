@@ -38,7 +38,7 @@
 
 import * as THREE from 'three';
 import * as Cesium from 'cesium';
-import { CoordinateTransformer, debugRotationOffset } from './CoordinateTransformer';
+import { debugRotationOffset } from './CoordinateTransformer';
 
 /**
  * CameraSynchronizer - 相机同步工具类

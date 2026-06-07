@@ -1,0 +1,146 @@
+{
+  "common": {
+    "now": "Jetzt",
+    "loading": "Laden...",
+    "error": "FEHLER",
+    "retry": "WIEDERHOLEN",
+    "search": "SUCHEN",
+    "searching": "Suchen...",
+    "version": "VERSION",
+    "author": "AUTOR",
+    "show": "ANZEIGEN",
+    "hide": "AUSBLENDEN",
+    "refresh": "AKTUALISIEREN",
+    "refreshing": "AKTUALISIERUNG...",
+    "close": "Schließen",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "save": "Speichern",
+    "delete": "Löschen"
+  },
+  "settings": {
+    "title": "EINSTELLUNGEN",
+    "language": "SPRACHE",
+    "ephemerisStatus": "EPHEMERIDENSTATUS",
+    "unitSystem": "EINHEITENSYSTEM",
+    "metric": "Metrisch",
+    "imperial": "Imperial",
+    "temperature": "Temperatur",
+    "celsius": "Celsius",
+    "fahrenheit": "Fahrenheit",
+    "accessibility": "BARRIEREFREIHEIT",
+    "highContrast": "Hoher Kontrast",
+    "reducedMotion": "Reduzierte Bewegung",
+    "keyboardShortcuts": "Tastaturkürzel"
+  },
+  "celestialBodies": {
+    "sun": "Sonne",
+    "mercury": "Merkur",
+    "venus": "Venus",
+    "earth": "Erde",
+    "mars": "Mars",
+    "jupiter": "Jupiter",
+    "saturn": "Saturn",
+    "uranus": "Uranus",
+    "neptune": "Neptun",
+    "moon": "Mond"
+  },
+  "timeControl": {
+    "jumpToNow": "Zum aktuellen Zeitpunkt",
+    "selectDate": "Datum auswählen",
+    "accuracyWarning": "Genauigkeit kann reduziert sein",
+    "paused": "Pausiert",
+    "future": "Zukunft",
+    "past": "Vergangenheit",
+    "year": "J",
+    "month": "Mo",
+    "day": "T",
+    "hour": "Std",
+    "minute": "Min",
+    "second": "S"
+  },
+  "search": {
+    "title": "SUCHE",
+    "placeholder": "Himmelsobjekte suchen (Ctrl+K oder /)",
+    "noResults": "Keine passenden Himmelsobjekte gefunden"
+  },
+  "satellite": {
+    "title": "SATELLITEN",
+    "control": "SATELLITENSTEUERUNG",
+    "searchPlaceholder": "Name oder NORAD-ID...",
+    "visible": "SICHTBAR",
+    "updated": "AKTUALISIERT",
+    "notUpdated": "Nicht aktualisiert",
+    "justNow": "Gerade eben",
+    "minutesAgo": "Min. vergangen",
+    "hoursAgo": "Std. vergangen",
+    "daysAgo": "Tage vergangen",
+    "info": "SATELLITENINFO",
+    "basicInfo": "BASISINFO",
+    "altitude": "HÖHE",
+    "velocity": "GESCHWINDIGKEIT",
+    "orbitalParams": "ORBITALPARAMETER",
+    "inclination": "INKLINATION",
+    "eccentricity": "EXZENTRIZITÄT",
+    "period": "PERIODE",
+    "semiMajorAxis": "GROSSE HALBACHSE",
+    "minutes": "Min",
+    "statistics": "STATISTIK",
+    "byCategory": "NACH KATEGORIE",
+    "performance": "LEISTUNG",
+    "renderTime": "RENDERZEIT",
+    "showSatellites": "SATELLITEN ANZEIGEN",
+    "hideSatellites": "SATELLITEN AUSBLENDEN",
+    "showOrbit": "ORBITE ANZEIGEN",
+    "hideOrbit": "ORBITE AUSBLENDEN",
+    "visualizationError": "Fehler bei der Satellitenvisualisierung"
+  },
+  "celestialTypes": {
+    "star": "Stern",
+    "planet": "Planet",
+    "satellite": "Satellit",
+    "galaxy": "Galaxie",
+    "group": "Gruppe",
+    "cluster": "Cluster",
+    "supercluster": "Supercluster"
+  },
+  "galaxy": {
+    "milkyWay": "Milchstraße",
+    "laniakea": "Laniakea-Supercluster"
+  },
+  "zoomLevels": {
+    "solarSystem": "Sonnensystem",
+    "innerPlanets": "Innere Planeten",
+    "earthMoon": "Erde-Mond",
+    "jupiterSystem": "Jupitersystem",
+    "saturnSystem": "Saturnsystem"
+  },
+  "language": {
+    "switch": "Sprache wechseln",
+    "chinese": "Chinesisch",
+    "english": "Englisch",
+    "spanish": "Spanisch",
+    "french": "Französisch",
+    "german": "Deutsch",
+    "japanese": "Japanisch"
+  },
+  "errors": {
+    "initializationFailed": "Initialisierung Fehlgeschlagen",
+    "networkError": "Netzwerkfehler",
+    "loadingFailed": "Laden Fehlgeschlagen",
+    "unexpectedError": "Unerwarteter Fehler"
+  },
+  "loading": {
+    "assets": "Ressourcen Laden",
+    "data": "Dateninitialisierung",
+    "rendering": "Rendering-Vorbereitung",
+    "complete": "Initialisierung Abgeschlossen",
+    "timeoutWarning": "Die Initialisierung dauert länger als erwartet",
+    "suggestions": {
+      "checkNetwork": "Überprüfen Sie Ihre Netzwerkverbindung",
+      "refresh": "Versuchen Sie, die Seite zu aktualisieren",
+      "clearCache": "Leeren Sie den Browser-Cache",
+      "checkConsole": "Überprüfen Sie die Browser-Konsole auf Fehler"
+    }
+  }
+}

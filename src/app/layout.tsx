@@ -11,7 +11,8 @@ import { WindowManager } from "@/components/window-manager";
 import { Dock } from "@/components/dock";
 import { DockInitializer } from "@/components/DockInitializer";
 import { DockWindowSync } from "@/components/DockWindowSync";
-import { ModDockSync } from "@/components/ModDockSync";
+// import { ModDockSync } from "@/components/ModDockSync"; // Unused - migrated to DockInitializer
+import { PerformanceInitializer } from "@/components/PerformanceInitializer";
 
 // 使用系统字体作为fallback
 // const geistSans = Geist({
@@ -170,6 +171,9 @@ export default async function RootLayout({
       >
         <Header />
         <LanguageDetector initialLang={lang} />
+        
+        {/* Performance Monitoring - 性能监控 */}
+        <PerformanceInitializer />
         
         {/* Dock 初始化器 */}
         <DockInitializer />

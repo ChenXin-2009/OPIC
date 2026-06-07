@@ -36,9 +36,12 @@ export {
   ORBITAL_ELEMENTS,
   SATELLITE_DEFINITIONS,
   calculatePosition,
+} from './orbit';
+
+export {
   getCelestialBodies,
   initializeAllBodiesCalculator
-} from './orbit';
+} from './orbit-coordinator';
 
 // Time conversions
 export {
@@ -56,4 +59,36 @@ export {
 } from './names';
 
 // Utility functions
-export * from './utils';
+export {
+  solveKeplerEquation,
+  eccentricToTrueAnomaly,
+  heliocentricDistance,
+  orbitalToEcliptic,
+  argumentOfPeriapsis,
+  meanAnomaly,
+  normalizeAngle,
+  distance3D,
+  J2000_JD,
+  DAYS_PER_CENTURY,
+  AU_IN_KM,
+  SPEED_OF_LIGHT_KM_S,
+  GM_SUN,
+  OBLIQUITY_J2000_RAD,
+  OBLIQUITY_J2000_DEG,
+  DEG_TO_RAD,
+  RAD_TO_DEG,
+  ARCSEC_TO_RAD,
+  RAD_TO_ARCSEC,
+  SECONDS_PER_DAY,
+  MILLISECONDS_PER_DAY,
+  KEPLER_TOLERANCE,
+  KEPLER_MAX_ITERATIONS,
+  TWO_PI,
+  HALF_PI,
+  kmToAU,
+  auToKM,
+  degreesToRadians,
+  radiansToDegrees,
+} from './utils';
+
+export type { Position3D, OrbitalOrientation } from './utils';

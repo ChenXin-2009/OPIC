@@ -29,25 +29,6 @@ import {
 // 系统缩放因子（使轨道可见）
 const SYSTEM_ORBIT_SCALE = 8;
 
-// 行星视觉配置
-const PLANET_VISUAL_CONFIG = {
-  minRadius: 0.018,
-  maxRadius: 0.18,
-  radiusScale: 0.018,
-};
-
-// 恒星视觉配置
-const STAR_VISUAL_CONFIG = {
-  minRadius: 0.05,
-  maxRadius: 0.55,
-  radiusScale: 10,
-  glowLayers: [
-    { scale: 2.2, opacity: 0.35, blending: THREE.AdditiveBlending },
-    { scale: 3.5, opacity: 0.18, blending: THREE.AdditiveBlending },
-    { scale: 5.0, opacity: 0.08, blending: THREE.AdditiveBlending },
-  ],
-};
-
 interface PlanetVisual {
   planet: ExoplanetPlanet;
   mesh: THREE.Mesh;
@@ -450,7 +431,7 @@ export class ExoplanetSystemRenderer {
   /**
    * 创建标记圈（与太阳系完全相同的实现）
    */
-  private createMarkerRing(planetRadius: number, color: THREE.Color): CSS2DObject {
+  private createMarkerRing(_planetRadius: number, color: THREE.Color): CSS2DObject {
     // 使用与太阳系完全相同的配置和样式
     const MARKER_CONFIG = {
       size: 20,
@@ -488,7 +469,7 @@ export class ExoplanetSystemRenderer {
     return markerObject;
   }
   
-  private createOrbitElements(radius: number, inclinationDeg?: number): any {
+  private createOrbitElements(radius: number, _inclinationDeg?: number): any {
     // 创建简化的轨道元素（圆形轨道，水平放置）
     // 注意：轨道默认在 XY 平面生成，需要通过旋转移到 XZ 平面（水平面）
     return {
@@ -514,16 +495,7 @@ export class ExoplanetSystemRenderer {
     return Math.max(realRadiusAU, 0.001);
   }
   
-  private getSystemMaxOrbit(system: ExoplanetSystemDetails): number {
-    return Math.max(
-      0.12,
-      ...system.planets.map((planet, index) => (
-        planet.semiMajorAxisAU
-        ?? estimateSemiMajorAxisAU(planet.orbitalPeriodDays, system.star.stellarMassSolar)
-        ?? (0.08 + index * 0.08)
-      ))
-    );
-  }
+
   
   private hashToAngle(input: string): number {
     let hash = 0;

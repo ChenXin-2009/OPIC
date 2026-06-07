@@ -12,8 +12,6 @@
  * - 距离地球 > THREE_MODE_DISTANCE_THRESHOLD 时自动切换回 THREE_DOMINANT
  */
 
-import * as THREE from 'three';
-
 /**
  * 场景模式枚举
  */

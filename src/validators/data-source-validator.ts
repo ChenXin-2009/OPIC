@@ -147,7 +147,7 @@ export class DataSourceValidator {
    * @param source 数据源配置
    * @returns 记录数量
    */
-  private calculateRecordCount(data: any, source: DataSourceConfig): number {
+  private calculateRecordCount(data: any, _source: DataSourceConfig): number {
     if (!data) {
       return 0;
     }

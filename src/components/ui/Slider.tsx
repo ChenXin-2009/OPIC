@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 export interface SliderProps {
   value: number;
   onChange: (value: number) => void;

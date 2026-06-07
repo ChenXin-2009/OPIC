@@ -14,7 +14,7 @@
 
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import SearchBox from './SearchBox';
 import SuggestionList, { type SearchResult } from './SuggestionList';
 import { SearchEngine } from '@/lib/search/SearchEngine';
@@ -223,7 +223,7 @@ export default function CelestialSearch({
       // 执行搜索
       const startTime = Date.now();
       const results = searchEngineRef.current.search(query, MAX_SEARCH_RESULTS);
-      const searchTime = Date.now() - startTime;
+      void (Date.now() - startTime); // timing measurement
 
       setState((prev) => ({
         ...prev,

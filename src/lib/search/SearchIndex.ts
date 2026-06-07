@@ -17,10 +17,7 @@ import { UniverseScale } from '../types/universeTypes';
 import { planetNames } from '../astronomy/names';
 import { 
   getChineseName, 
-  LANIAKEA_SUPERCLUSTER_NAMES, 
-  LOCAL_GROUP_NAMES, 
-  NEARBY_GROUPS_NAMES,
-  VIRGO_SUPERCLUSTER_NAMES 
+  LOCAL_GROUP_NAMES 
 } from '../astronomy/universeNames';
 import { MEGAPARSEC_TO_AU } from '../config/universeConfig';
 
@@ -182,7 +179,7 @@ export class SearchIndex {
   /**
    * 索引近邻星系群
    */
-  private indexNearbyGroups(groups?: GalaxyGroup[], galaxies?: any[]): void {
+  private indexNearbyGroups(groups?: GalaxyGroup[], _galaxies?: any[]): void {
     if (!groups) return;
 
     groups.forEach(group => {
@@ -215,7 +212,7 @@ export class SearchIndex {
   /**
    * 索引室女座超星系团
    */
-  private indexVirgoSupercluster(clusters?: GalaxyCluster[], galaxies?: any[]): void {
+  private indexVirgoSupercluster(clusters?: GalaxyCluster[], _galaxies?: any[]): void {
     if (!clusters) return;
 
     clusters.forEach(cluster => {

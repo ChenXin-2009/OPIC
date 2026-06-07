@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import type { GalaxyType, LocalGroupGalaxy, UniverseScaleRenderer } from '../types/universeTypes';
-import { LOCAL_GROUP_CONFIG, MEGAPARSEC_TO_AU, UNIVERSE_SCALE_CONFIG } from '../config/universeConfig';
+import type { LocalGroupGalaxy, UniverseScaleRenderer } from '../types/universeTypes';
+import { MEGAPARSEC_TO_AU, UNIVERSE_SCALE_CONFIG } from '../config/universeConfig';
 import { type LabelData, UniverseLabelManager } from './UniverseLabelManager';
 import { getNamePriorityBonus, LOCAL_GROUP_LABEL_CONFIG } from '../config/universeLabelConfig';
 import { getChineseName } from '../astronomy/universeNames';
@@ -10,14 +10,12 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
   private galaxies: LocalGroupGalaxy[] = [];
   private opacity: number = 0;
   private isVisible: boolean = false;
-  private config: typeof LOCAL_GROUP_CONFIG;
   private galaxyMeshes: THREE.Mesh[] = [];
   private labelManager: UniverseLabelManager | null = null;
 
   constructor() {
     this.group = new THREE.Group();
     this.group.name = 'LocalGroup';
-    this.config = LOCAL_GROUP_CONFIG;
   }
 
   /**
@@ -190,7 +188,7 @@ export class LocalGroupRenderer implements UniverseScaleRenderer {
     return mesh;
   }
 
-  update(cameraDistance: number, deltaTime: number): void {
+  update(cameraDistance: number, _deltaTime: number): void {
     const newOpacity = this.calculateOpacity(cameraDistance);
     const opacityChanged = Math.abs(newOpacity - this.opacity) > 0.01;
     this.opacity = newOpacity;

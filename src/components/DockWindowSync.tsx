@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useDockStore } from '@/lib/state/dockStore';
+import { useDockStore } from '@/lib/state/DockStore';
 import { useWindowManagerStore } from '@/lib/state/windowManagerStore';
 
 /**

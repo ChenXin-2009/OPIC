@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useDockStore } from '@/lib/state/dockStore';
+import { useDockStore } from '@/lib/state/DockStore';
 import { useWindowManagerStore } from '@/lib/state/windowManagerStore';
-import { useSceneStore } from '@/lib/state/sceneStore';
+import { useSceneStore } from '@/lib/state/SceneStore';
 import { defaultDockItems } from '@/lib/config/defaultDockItems';
 import { SettingsWindow } from './windows/SettingsWindow';
 import { SearchWindow } from './windows/SearchWindow';
@@ -212,28 +212,17 @@ export function DockInitializer() {
     loadModDockIcons();
 
     // 监听 MOD 启用事件
-    const handleModEnabled = (data: unknown) => {
+    const handleModEnabled = (_data: unknown) => {
       // 重新加载 Dock 图标
       loadModDockIcons();
     };
 
     // 监听 MOD 禁用事件
-    const handleModDisabled = (data: unknown) => {
-      // 移除该 MOD 的所有 Dock 图标
-      const modDockIcons = contributionRegistry.getDockIcons();
-      const remainingIconIds = new Set(
-        modDockIcons.map(icon => `mod-${icon.modId}-${icon.id}`)
-      );
-
+    const handleModDisabled = (_data: unknown) => {
       // 移除不再存在的图标
       // 注意:这里需要遍历所有 mod- 开头的项目
       // 由于 dockStore 没有提供 getAllItems,我们只能在禁用时移除特定 MOD 的图标
-      if (data && typeof data === 'object' && 'modId' in data) {
-        const modId = (data as { modId: string }).modId;
-        const dockItemId = `mod-${modId}-`;
-        // 这里简化处理,实际应该遍历所有项目
-        // 暂时不实现完整的移除逻辑,因为需要修改 dockStore
-      }
+      // 暂时不实现完整的移除逻辑,因为需要修改 dockStore
     };
 
     // 监听 MOD 打开窗口事件

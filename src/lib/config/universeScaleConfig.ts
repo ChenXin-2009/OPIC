@@ -6,7 +6,7 @@
  */
 
 import { LIGHT_YEAR_TO_AU, SCALE_VIEW_CONFIG } from './galaxyConfig';
-import { GIGAPARSEC_TO_AU, MEGAPARSEC_TO_AU, PARSEC_TO_AU } from '../constants/units';
+import { GIGAPARSEC_TO_AU, MEGAPARSEC_TO_AU } from '../constants/units';
 
 // 重新导出单位转换常量以保持向后兼容
 export { MEGAPARSEC_TO_AU, GIGAPARSEC_TO_AU };

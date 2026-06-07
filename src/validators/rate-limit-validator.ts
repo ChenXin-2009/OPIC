@@ -143,7 +143,6 @@ export class RateLimitValidator {
         timestamp: new Date(),
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
       this.validatorLogger.error('Rate limit test failed', error as Error, { endpoint });
 
       return {

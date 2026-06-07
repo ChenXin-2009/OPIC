@@ -14,7 +14,6 @@ import * as THREE from 'three';
 import { useModStore } from '@/lib/mod-manager/store';
 import { getRenderAPI } from '@/lib/mod-manager/api/RenderAPI';
 import { LaunchRenderer } from '@/lib/mods/space-launches/LaunchRenderer';
-import SpaceLaunchPanel from './SpaceLaunchPanel';
 import { useSolarSystemStore } from '@/lib/state';
 import { rendererStore } from '@/lib/mods/rendererStore';
 
@@ -28,10 +27,8 @@ function findEarthMesh(scene: THREE.Scene): THREE.Object3D | null {
   return scene.getObjectByName('earth') ?? null;
 }
 
-export const SpaceLaunchOverlay: React.FC<Props> = ({ lang = 'zh', onClose }) => {
+export const SpaceLaunchOverlay: React.FC<Props> = ({ lang: _lang = 'zh', onClose: _onClose }) => {
   const modState  = useModStore(s => s.mods['space-launches']?.state);
-  const modConfig = useModStore(s => s.mods['space-launches']?.config);
-  const setModConfig = useModStore(s => s.setModConfig);
 
   const [renderer, setRenderer] = useState<LaunchRenderer | null>(null);
 

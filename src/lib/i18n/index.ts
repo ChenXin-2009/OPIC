@@ -7,6 +7,33 @@ import { Language, TranslationKey, translations } from './translations';
 export type { Language, TranslationKey };
 export { translations };
 
+// Export formatter utilities
+export {
+  formatDate,
+  formatRelativeTime,
+  formatNumber,
+  formatScientific,
+  convertDistance,
+  formatDistance,
+  convertTemperature,
+  convertTimeDuration,
+  formatTimeDuration,
+  type DistanceUnit,
+  type TimeUnit,
+  type TemperatureUnit,
+} from './formatters';
+
+// Export locale manager
+export {
+  LocaleManager,
+  getLocaleManager,
+  initializeLocaleManager,
+  type SupportedLocale,
+  type UnitSystem,
+  type DateFormatStyle,
+  type LocalePreferences,
+} from './locale-manager';
+
 /**
  * 获取翻译文本
  * @param key 翻译键，使用点号分隔，如 'common.now'

@@ -1,8 +1,9 @@
 {
   "name": "opic",
-  "version": "1.1.0",
-  "description": "一个基于 Web 的多尺度宇宙可视化与天文数据集成系统 - Open Integrated Cosmos",
+  "version": "11.2.3",
+  "description": "A Web-based multi-scale universe visualization and astronomical data integration system - Open Integrated Cosmos",
   "private": true,
+  "type": "commonjs",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,10 +14,15 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "quality:check": "npm run lint && tsc --noEmit",
+    "test:ci": "jest --ci --coverage --maxWorkers=2",
+    "quality:check": "npm run lint && tsc --noEmit && npm test",
     "convert-ucs-data": "npx tsx scripts/convert-ucs-data.ts",
     "generate-mods": "node scripts/generate-mod-registry.js",
-    "prepare": "node -e \"try { require('husky').install() } catch (e) {}\""
+    "release": "npx standard-version",
+    "release:major": "npx standard-version --release-as major",
+    "release:minor": "npx standard-version --release-as minor",
+    "release:patch": "npx standard-version --release-as patch",
+    "prepare": "husky"
   },
   "dependencies": {
     "@cesium/engine": "^23.0.1",
@@ -39,12 +45,16 @@
     "sharp": "^0.34.5",
     "three": "^0.170.0",
     "troika-three-text": "^0.52.4",
+    "web-vitals": "^5.3.0",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/pako": "^2.0.4",
@@ -59,8 +69,21 @@
     "husky": "^9.1.7",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
+    "lint-staged": "^17.0.7",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
     "typescript": "^5"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx}": [
+      "eslint --fix --max-warnings 200",
+      "prettier --write"
+    ],
+    "**/*.{json,md}": [
+      "prettier --write"
+    ],
+    "**/*.{css,scss}": [
+      "prettier --write"
+    ]
   }
 }

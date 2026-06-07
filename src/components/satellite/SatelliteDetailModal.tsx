@@ -35,9 +35,6 @@ function SatelliteDetailModal({ lang = 'zh' }: SatelliteDetailModalProps) {
   // 模态框是否显示
   const isOpen = selectedSatellite !== null;
 
-  // 当前卫星的轨道是否显示
-  const isOrbitVisible = selectedSatellite ? showOrbits.has(selectedSatellite) : false;
-
   // 当模态框打开时，自动显示轨道（仅首次，不重复触发）
   const hasAutoToggledRef = useRef<number | null>(null);
   useEffect(() => {

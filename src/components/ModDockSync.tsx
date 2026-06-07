@@ -7,7 +7,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useDockStore } from '@/lib/state/dockStore';
+import { useDockStore } from '@/lib/state/DockStore';
 import { useWindowManagerStore } from '@/lib/state/windowManagerStore';
 import { useModStore } from '@/lib/mod-manager/store';
 import { SatelliteWindow } from './windows/SatelliteWindow';

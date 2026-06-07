@@ -3,7 +3,7 @@
  * 负责验证缓存机制的正确性和有效性
  */
 
-import { timedRequest, logger, type HttpRequestResult } from '../utils';
+import { timedRequest, logger } from '../utils';
 import type { CacheTestResult } from '../models/health-models';
 
 /**
@@ -127,7 +127,6 @@ export class CacheValidator {
         timestamp: new Date(),
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
       this.validatorLogger.error('Cache test failed', error as Error, { endpoint });
 
       // 返回失败结果

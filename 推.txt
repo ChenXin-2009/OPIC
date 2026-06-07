@@ -8,9 +8,9 @@
 ==================
 git status
 git add .
-git commit -m "Release 11.0.1: 添加测试和注释"
+git commit -m "Release 11.1.0: 大幅增加测试覆盖率，添加或修复大量文档，增加大量注释，优化系统，优化移动端操作"
 git checkout main
 git pull origin main
-git tag v11.0.1
+git tag v11.1.0
 git push origin main
-git push origin v11.0.1
+git push origin v11.1.0

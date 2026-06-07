@@ -67,8 +67,9 @@
  */
 
 import { create } from 'zustand';
-import { CelestialBody, getCelestialBodies, initializeAllBodiesCalculator } from './astronomy/orbit';
+import { CelestialBody, getCelestialBodies } from './astronomy/orbit';
 import { dateToJulianDay } from './astronomy/time';
+import { logger } from '@/utils/logger';
 
 // NOTE: Ephemeris calculator initialization is now on-demand
 // It will be initialized only when user enables high-precision mode for a body
@@ -748,11 +749,11 @@ export const useSolarSystemStore = create<SolarSystemState>((set, get) => {
   // CRITICAL: This must complete before the loading page disappears
   // to avoid black screen on mobile devices
   if (typeof window !== 'undefined') {
-    console.log('Initializing celestial bodies...');
+    logger.debug('Initializing celestial bodies...');
     
     // Start loading immediately (don't await here to avoid blocking store creation)
     getCelestialBodies(initialJD).then(bodies => {
-      console.log(`Loaded ${bodies.length} celestial bodies`);
+      logger.debug(`Loaded ${bodies.length} celestial bodies`);
       set({ celestialBodies: bodies });
       
       // Note: The ephemeris:bodies:ready event is already emitted

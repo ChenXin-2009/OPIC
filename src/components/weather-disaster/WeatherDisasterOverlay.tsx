@@ -15,8 +15,6 @@ import * as THREE from 'three';
 import { useModStore } from '@/lib/mod-manager/store';
 import { getRenderAPI } from '@/lib/mod-manager/api/RenderAPI';
 import { DisasterRenderer } from '@/lib/mods/weather-disaster/DisasterRenderer';
-import { WeatherDisasterPanel } from './WeatherDisasterPanel';
-import type { DataSourceId } from '@/lib/mods/weather-disaster/useDisasterData';
 import { useSolarSystemStore } from '@/lib/state';
 import { rendererStore } from '@/lib/mods/rendererStore';
 
@@ -29,13 +27,11 @@ function findEarthMesh(scene: THREE.Scene): THREE.Object3D | null {
   return scene.getObjectByName('earth') ?? null;
 }
 
-export const WeatherDisasterOverlay: React.FC<Props> = ({ lang = 'zh' }) => {
+export const WeatherDisasterOverlay: React.FC<Props> = ({ lang: _lang = 'zh' }) => {
   const modState     = useModStore(s => s.mods['weather-disaster']?.state);
-  const modConfig    = useModStore(s => s.mods['weather-disaster']?.config);
-  const setModConfig = useModStore(s => s.setModConfig);
 
   const [renderer, setRenderer] = useState<DisasterRenderer | null>(null);
-  const [showPanel, setShowPanel] = useState(true);
+  const [, setShowPanel] = useState(true);
 
   useEffect(() => {
     if (modState !== 'enabled') {

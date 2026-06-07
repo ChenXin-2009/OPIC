@@ -45,7 +45,7 @@ export interface ModStoreState {
 /**
  * MOD状态Store
  */
-export const useModStore = create<ModStoreState>((set, get) => ({
+export const useModStore = create<ModStoreState>((set, _get) => ({
   mods: {},
   isLoading: false,
   error: null,

@@ -271,7 +271,7 @@ export class PositionInterpolator {
   getInterpolatedPositions(currentTime: number): Map<number, Vector3> {
     const positions = new Map<number, Vector3>();
     
-    this.states.forEach((state, noradId) => {
+    this.states.forEach((_state, noradId) => {
       const position = this.getInterpolatedPosition(noradId, currentTime);
       positions.set(noradId, position);
     });

@@ -4,7 +4,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useModStore } from '@/lib/mod-manager/store';
 import { WeatherDisasterPanel } from '../weather-disaster/WeatherDisasterPanel';
 import type { DataSourceId } from '@/lib/mods/weather-disaster/useDisasterData';

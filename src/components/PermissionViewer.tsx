@@ -5,8 +5,6 @@
  */
 
 'use client';
-
-import React from 'react';
 import { PermissionParser } from '@/lib/mod-manager/permission/PermissionParser';
 
 /**

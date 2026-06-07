@@ -6,11 +6,9 @@
  */
 
 import { EphemerisManager } from './manager';
-import { AberrationCorrector, LightTimeCorrector } from './corrections';
-import { CoordinateTransformer } from './coordinates';
+import { AberrationCorrector } from './corrections';
 import { 
   AberrationMode, 
-  BodyType,
   ObserverMode,
   PositionResult,
   Vector3
@@ -49,18 +47,14 @@ export interface AllBodiesCalculatorConfig {
  */
 export class AllBodiesCalculator {
   private manager: EphemerisManager;
-  private lightTimeCorrector: LightTimeCorrector;
   private aberrationCorrector: AberrationCorrector;
-  private coordinateTransformer: CoordinateTransformer;
   private observerMode: ObserverMode;
   private config: AllBodiesCalculatorConfig;
 
   constructor(config: AllBodiesCalculatorConfig = {}) {
     this.config = config;
     this.manager = new EphemerisManager(config.baseUrl);
-    this.lightTimeCorrector = new LightTimeCorrector();
     this.aberrationCorrector = new AberrationCorrector();
-    this.coordinateTransformer = new CoordinateTransformer();
     this.observerMode = config.initialObserverMode || ObserverMode.HELIOCENTRIC;
   }
 
@@ -213,7 +207,7 @@ export class AllBodiesCalculator {
    * @returns Transformed position
    */
   private transformCoordinates(
-    bodyId: number,
+    _bodyId: number,
     jd: number,
     position: Vector3
   ): Vector3 {

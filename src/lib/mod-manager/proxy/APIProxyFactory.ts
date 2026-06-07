@@ -593,7 +593,7 @@ export class APIProxyFactory {
    */
   private async disableMod(modId: string): Promise<void> {
     try {
-      const registry = getRegistry();
+      getRegistry();
       const { getModLifecycle } = await import('../core/ModLifecycle');
       const lifecycle = getModLifecycle();
       

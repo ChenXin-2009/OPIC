@@ -26,14 +26,11 @@ export interface EarthPlanetConfig extends PlanetConfig {
 /**
  * AU 到千米的转换常量
  */
-const AU_TO_KM = 149597870.7;
-
 /**
  * EarthPlanet - 地球行星类
  */
 export class EarthPlanet extends Planet {
   private cesiumExtension: CesiumEarthExtension | null = null;
-  private config: EarthPlanetConfig;
   private originalMaterial: THREE.Material | null = null;
   private cesiumEnabled: boolean = false;
   private cesiumCanvasVisible: boolean = false;
@@ -41,13 +38,6 @@ export class EarthPlanet extends Planet {
   
   constructor(config: EarthPlanetConfig) {
     super(config);
-    
-    this.config = {
-      cesiumVisibleDistance: 2000, // km - 恢复设计规范
-      transitionStartDistance: 1800, // km
-      transitionEndDistance: 2500, // km
-      ...config
-    };
 
     
     // 初始化 Cesium 扩展
@@ -102,7 +92,7 @@ export class EarthPlanet extends Planet {
    * @param camera - Three.js 相机
    * @param deltaTime - 时间增量（秒）
    */
-  update(camera: THREE.Camera, deltaTime: number): void {
+  update(camera: THREE.Camera, _deltaTime: number): void {
     if (this.cesiumExtension && this.cesiumEnabled) {
       if (camera instanceof THREE.PerspectiveCamera) {
         const earthPos = this.getMesh().position;
@@ -172,14 +162,6 @@ export class EarthPlanet extends Planet {
     }
   }
 
-  
-  /**
-   * 更新渲染模式（不再根据距离控制，完全由 setCesiumEnabled 控制）
-   */
-  private updateRenderMode(distanceKm: number): void {
-    // 不再根据距离自动切换渲染模式
-    // 渲染模式完全由用户通过 setCesiumEnabled() 控制
-  }
   
   /**
    * 降级到 Planet 球体渲染

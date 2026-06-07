@@ -13,11 +13,10 @@ import * as THREE from 'three';
 import { 
   OrbitType, 
   SatelliteCategory, 
-  SatelliteState,
   TLEData 
 } from '../src/lib/types/satellite';
 import { satelliteConfig } from '../src/lib/config/satelliteConfig';
-import { CelestrakClient } from '../src/lib/server/celestrakClient';
+
 
 // 测试数据 - ISS的真实TLE数据
 const TEST_TLE: TLEData = {
@@ -50,7 +49,6 @@ console.log(`✓ 最大轨道数: ${satelliteConfig.ui.maxOrbits}`);
 
 // 验证3: Celestrak客户端
 console.log('\n[验证3] Celestrak客户端');
-const client = new CelestrakClient();
 console.log('✓ CelestrakClient实例化成功');
 
 // 测试基本的TLE格式检查(不使用严格的正则验证)

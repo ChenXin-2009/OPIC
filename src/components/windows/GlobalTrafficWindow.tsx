@@ -4,7 +4,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useModStore } from '@/lib/mod-manager/store';
 import { GlobalTrafficPanel } from '../global-traffic/GlobalTrafficPanel';
 import type { GlobalTrafficConfig } from '@/lib/mods/global-traffic/types';

@@ -8,7 +8,7 @@ import InfoModal from "@/components/InfoModal";
 import { HEADER_CONFIG } from "@/lib/config/visualConfig";
 import EphemerisStatusPanel from "@/components/EphemerisStatusPanel";
 import { useSolarSystemStore } from "@/lib/state";
-import { useEarthControlStore } from "@/lib/state/earthControlStore";
+import { useEarthControlStore } from "@/lib/state/EarthControlStore";
 import { initModManager, autoEnableMods } from "@/lib/mod-manager";
 import { registerCoreMods } from "@/lib/mods";
 import { useModStore } from "@/lib/mod-manager/store";
@@ -16,7 +16,7 @@ import { useModManager } from "@/hooks/useModManager";
 import WeatherDisasterOverlay from "@/components/weather-disaster/WeatherDisasterOverlay";
 import SpaceLaunchOverlay from "@/components/space-launches/SpaceLaunchOverlay";
 import GlobalTrafficOverlay from "@/components/global-traffic/GlobalTrafficOverlay";
-import InitializationOverlay from "@/components/InitializationOverlay";
+import InitializationOverlay, { type InitializationProgress } from "@/components/InitializationOverlay";
 
 export default function SolarSystemPage() {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -28,18 +28,20 @@ export default function SolarSystemPage() {
     earthLockEnabled,
     earthLightEnabled,
     earthPlanet,
-    setCesiumEnabled: setUserCesiumEnabled,
-    setEarthLockEnabled,
-    setEarthLightEnabled,
+    // Unused setters - keeping state read-only for now
+    // setCesiumEnabled: setUserCesiumEnabled,
+    // setEarthLockEnabled,
+    // setEarthLightEnabled,
     setEarthPlanet,
   } = useEarthControlStore();
   
   const [camera, setCamera] = useState<any>(null);
   // 地球是否可见（相机足够近时显示按钮）
-  const [earthVisible, setEarthVisible] = useState(false);
+  const [_earthVisible, setEarthVisible] = useState(false);
   
   // 初始化进度状态
-  const [initProgress, setInitProgress] = useState({
+  const [initProgress, setInitProgress] = useState<InitializationProgress>({
+    phase: 'assets',
     stage: 'idle',
     progress: 0,
     isComplete: false,
@@ -49,8 +51,6 @@ export default function SolarSystemPage() {
   const lang = useSolarSystemStore((state) => state.lang);
 
   // 从MOD状态读取功能启用状态
-  const cesiumModEnabled = useModStore((state) => state.mods['cesium-integration']?.state === 'enabled');
-  const satelliteModEnabled = useModStore((state) => state.mods['satellite-tracking']?.state === 'enabled');
   const weatherDisasterModEnabled = useModStore((state) => state.mods['weather-disaster']?.state === 'enabled');
   const globalTrafficModEnabled = useModStore((state) => state.mods['global-traffic']?.state === 'enabled');
   const spaceLaunchesModEnabled = useModStore((state) => state.mods['space-launches']?.state === 'enabled');
@@ -58,7 +58,7 @@ export default function SolarSystemPage() {
   // cesiumEnabled 直接由用户控制，不受 MOD 限制
   const cesiumEnabled = userCesiumEnabled;
 
-  const { enableMod, disableMod } = useModManager();
+  const { enableMod: _enableMod, disableMod: _disableMod } = useModManager();
 
   // 初始化MOD管理器
   useEffect(() => {
@@ -157,7 +157,7 @@ export default function SolarSystemPage() {
               setInitProgress(prev => {
                 // 进度只能前进，不能后退（防止重复初始化导致进度跳回）
                 if (progress > prev.progress || isComplete) {
-                  return { stage, progress, isComplete };
+                  return { ...prev, stage, progress, isComplete };
                 }
                 return prev;
               });

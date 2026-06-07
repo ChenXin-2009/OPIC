@@ -5,9 +5,9 @@
  */
 
 import type { Theme } from './tokens';
-import { designTokens, getThemeColor } from './tokens';
+import { designTokens } from './tokens';
 export type { Theme } from './tokens';
-export { designTokens, getThemeColor } from './tokens';
+export { designTokens } from './tokens';
 
 /**
  * 主题配置接口

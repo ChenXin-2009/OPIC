@@ -3,7 +3,7 @@
  * 负责验证API的错误处理和降级机制
  */
 
-import { timedRequest, logger, type HttpRequestResult } from '../utils';
+import { timedRequest, logger } from '../utils';
 import type { ErrorTestResult } from '../models/health-models';
 
 /**

@@ -13,12 +13,10 @@
 import { Vector3 } from 'three';
 import {
   OrbitalElements,
-  OrbitType,
   PropagationResult,
   SatelliteState,
   TLEData,
-  WorkerMessage,
-  WorkerResponse
+  WorkerMessage
 } from '../types/satellite';
 import { EARTH_RADIUS, getOrbitType, satelliteConfig } from '../config/satelliteConfig';
 
@@ -176,8 +174,8 @@ export class SGP4Calculator {
    * 计算轨道参数
    */
   private calculateOrbitalElements(
-    position: Vector3,
-    velocity: Vector3,
+    _position: Vector3,
+    _velocity: Vector3,
     tle: TLEData
   ): OrbitalElements {
     // 从TLE第二行解析轨道参数
@@ -353,7 +351,7 @@ export class SGP4Calculator {
   async calculateOrbit(
     noradId: number,
     startTime: number,
-    duration: number,
+    _duration: number,
     steps: number = 100
   ): Promise<Vector3[]> {
     const record = this.tleCache.get(noradId);

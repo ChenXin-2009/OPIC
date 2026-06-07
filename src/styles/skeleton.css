@@ -1,0 +1,73 @@
+/**
+ * Skeleton 组件动画样式
+ * 
+ * 定义了两种动画效果：
+ * 1. pulse - 脉冲动画（不透明度变化）
+ * 2. wave - 波浪动画（闪烁效果）
+ */
+
+/* Pulse 动画 - 不透明度脉冲 */
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-skeleton-pulse {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* Wave 动画 - 闪烁效果 */
+@keyframes skeleton-wave {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-skeleton-wave {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-wave 1.5s linear infinite;
+}
+
+/* 确保骨架屏快速显示（<100ms） */
+.skeleton {
+  will-change: opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* 骨架屏组容器优化 */
+.skeleton-group {
+  position: relative;
+  min-height: 50px; /* 防止布局抖动 */
+}
+
+.skeleton-layer,
+.content-layer {
+  width: 100%;
+  will-change: opacity;
+}
+
+/* 响应式调整 */
+@media (prefers-reduced-motion: reduce) {
+  .animate-skeleton-pulse,
+  .animate-skeleton-wave {
+    animation: none;
+  }
+  
+  .skeleton {
+    opacity: 0.7;
+  }
+}

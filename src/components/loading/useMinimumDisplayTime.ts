@@ -36,9 +36,6 @@ export function useMinimumDisplayTime(
   const [isMinTimeElapsed, setIsMinTimeElapsed] = useState(false);
 
   useEffect(() => {
-    // Record the component mount time (Requirement 4.1)
-    const startTime = Date.now();
-
     // Set up a timer to mark minimum time as elapsed
     // This ensures the loading page displays for at least minTime milliseconds
     // (Requirements 4.2, 4.3, 4.4)

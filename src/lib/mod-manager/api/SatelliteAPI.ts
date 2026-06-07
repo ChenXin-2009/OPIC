@@ -98,7 +98,7 @@ export class SatelliteAPIImpl implements ISatelliteAPI {
    */
   calculateSatellitePosition(
     noradId: number,
-    time: Date
+    _time: Date
   ): { x: number; y: number; z: number } | null {
     const satellite = this.selectSatellite(noradId);
     if (!satellite?.tle) return null;

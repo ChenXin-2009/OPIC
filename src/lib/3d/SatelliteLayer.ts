@@ -95,7 +95,7 @@ export class SatelliteLayer {
     // 导致每帧插值位置偏离正确位置再被blend拽回，产生高频抖动。
     // SGP4已每2秒提供正确位置，Slerp补间足够平滑。
     this.interpolator = new OrbitalInterpolator(false);
-    this.performanceMonitor = new PerformanceMonitor();
+    this.performanceMonitor = PerformanceMonitor.getInstance();
     this.qualityController = new QualityController(this.performanceMonitor);
     
     // 初始化卫星状态存储

@@ -67,7 +67,7 @@ function getStateLabel(state: ModState, lang: 'zh' | 'en'): string {
  * MOD列表项组件
  */
 export const ModListItem: React.FC<ModListItemProps> = ({
-  modId,
+  modId: _modId,
   manifest,
   state,
   errorCount = 0,

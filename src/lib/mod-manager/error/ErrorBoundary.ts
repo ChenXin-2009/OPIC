@@ -4,7 +4,7 @@
  */
 
 import type { ModContext } from '../types';
-import { ModError, LifecycleError } from './ModError';
+import { LifecycleError } from './ModError';
 import { ERROR_THRESHOLD } from '../types';
 
 /**
@@ -49,7 +49,7 @@ export class ModErrorBoundary {
     hookName: string,
     hook: () => T | Promise<T>,
     fallback: T,
-    context?: ModContext
+    _context?: ModContext
   ): T | Promise<T> {
     try {
       const result = hook();
@@ -77,7 +77,7 @@ export class ModErrorBoundary {
     hookName: string,
     hook: () => Promise<T>,
     fallback: T,
-    context?: ModContext
+    _context?: ModContext
   ): Promise<T> {
     try {
       return await hook();
@@ -159,17 +159,17 @@ export class ModErrorBoundary {
  */
 export const defaultRecoveryStrategy: ErrorRecoveryStrategy = {
   // onEnable失败 → 回退到loaded状态
-  onEnable: (error, modId, context) => {
+  onEnable: (_error, modId, _context) => {
     console.warn(`[MOD ${modId}] onEnable失败，已回退到loaded状态`);
   },
 
   // onDisable失败 → 仍转换到disabled状态
-  onDisable: (error, modId, context) => {
+  onDisable: (_error, modId, _context) => {
     console.warn(`[MOD ${modId}] onDisable失败，但仍已禁用`);
   },
 
   // 渲染错误 → 注销渲染器
-  render: (error, modId, context) => {
+  render: (_error, modId, _context) => {
     console.warn(`[MOD ${modId}] 渲染错误，应注销渲染器`);
   },
 };

@@ -11,7 +11,7 @@
  * - 自动与手动锁定的区别
  */
 
-import { useEarthControlStore } from '../earthControlStore';
+import { useEarthControlStore } from '../EarthControlStore';
 
 describe('useEarthControlStore', () => {
   beforeEach(() => {

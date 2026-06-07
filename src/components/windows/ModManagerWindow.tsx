@@ -6,9 +6,8 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useModManager } from '@/hooks/useModManager';
-import { ModList } from '../mod-manager/ModList';
 import { ModConfigPanel } from '../mod-manager/ModConfigPanel';
 import { ModPerformancePanel } from '../mod-manager/ModPerformancePanel';
 

@@ -267,7 +267,7 @@ export class ModDiscovery {
 
       // 5. 检查版本兼容性
       if (checkVersion) {
-        const versionChecker = getVersionChecker();
+    const versionChecker = getVersionChecker();
         const compatibility = versionChecker.checkCompatibility(packageInfo.apiVersion);
         
         if (!compatibility.compatible) {
@@ -375,7 +375,7 @@ export class ModDiscovery {
   /**
    * 解压MOD包
    */
-  private async extractPackage(packageData: ArrayBuffer): Promise<{
+  private async extractPackage(_packageData: ArrayBuffer): Promise<{
     packageInfo: ModPackageFile;
     manifest: ModManifest;
     code: string;
@@ -395,7 +395,6 @@ export class ModDiscovery {
    * 检查依赖是否满足
    */
   private async checkDependencies(dependencies: Record<string, string>): Promise<void> {
-    const versionChecker = getVersionChecker();
     const missingDeps: string[] = [];
     const incompatibleDeps: string[] = [];
 
@@ -426,7 +425,7 @@ export class ModDiscovery {
   /**
    * 在沙箱中加载代码
    */
-  private async loadCodeInSandbox(code: string, modId: string): Promise<{
+  private async loadCodeInSandbox(_code: string, _modId: string): Promise<{
     manifest: ModManifest;
     hooks?: ModLifecycleHooks;
   }> {

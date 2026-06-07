@@ -30,7 +30,7 @@ export class JSONReporter {
    * JSON序列化替换器
    * 处理特殊类型（如Date）的序列化
    */
-  private jsonReplacer(key: string, value: any): any {
+  private jsonReplacer(_key: string, value: any): any {
     // 将Date对象转换为ISO字符串
     if (value instanceof Date) {
       return value.toISOString();

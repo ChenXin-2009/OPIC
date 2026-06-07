@@ -25,32 +25,6 @@ async function safeFetch(url: string, init?: RequestInit, timeoutMs = 9000): Pro
   }
 }
 
-// ── 航班：OpenSky 全量（服务端无限速，匿名 10s/次限制仅针对浏览器 IP）──────────
-
-async function fetchOpenSky(): Promise<unknown[]> {
-  const res = await safeFetch('https://opensky-network.org/api/states/all', {
-    headers: { 'Accept': 'application/json' },
-  });
-  if (res.status === 429) throw new Error('OpenSky 限速，请稍后重试');
-  if (!res.ok) throw new Error(`OpenSky HTTP ${res.status}`);
-  const json = await res.json();
-  return ((json.states as unknown[][]) || [])
-    .filter(s => s[5] != null && s[6] != null && s[8] === false)
-    .slice(0, 3000)
-    .map(s => ({
-      icao24:       String(s[0]),
-      callsign:     String(s[1] || '').trim(),
-      lat:          s[6] as number,
-      lon:          s[5] as number,
-      altitude:     (s[7] as number) || 0,
-      velocity:     (s[9] as number) || 0,
-      heading:      (s[10] as number) || 0,
-      verticalRate: (s[11] as number) || 0,
-      timestamp:    ((s[3] as number) || 0) * 1000,
-      sourceId:     'opensky',
-    }));
-}
-
 // ── 航班：adsb.fi（完全免费，无 key，Vercel 友好）────────────────────────────
 
 async function fetchAdsbFi(): Promise<unknown[]> {
@@ -226,7 +200,7 @@ async function fetchWorldPorts(): Promise<unknown[]> {
 
 // ── 航班：多源瀑布（依次尝试，第一个成功即返回）─────────────────────────────
 
-async function fetchFlightsCascade(sourceId: string): Promise<unknown[]> {
+async function fetchFlightsCascade(_sourceId: string): Promise<unknown[]> {
   const errors: string[] = [];
 
   // 1. adsb.fi（最稳定）

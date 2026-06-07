@@ -31,7 +31,7 @@ import { CesiumAdapter, CesiumAdapterConfig } from './CesiumAdapter';
 export class CesiumEarthExtension {
   private adapter: CesiumAdapter;
   private errorCallback?: (error: Error) => void;
-  private logCallback?: (level: 'info' | 'warn' | 'error', message: string) => void;
+
   
   /**
    * 创建 CesiumEarthExtension 实例
@@ -178,7 +178,6 @@ export class CesiumEarthExtension {
    * @param callback - 日志处理函数，接收日志级别和消息文本
    */
   onLog(callback: (level: 'info' | 'warn' | 'error', message: string) => void): void {
-    this.logCallback = callback;
     this.adapter.onLog(callback);
   }
   

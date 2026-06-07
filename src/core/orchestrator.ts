@@ -74,6 +74,7 @@ import {
 } from '../models/health-models';
 import * as fs from 'fs';
 import * as path from 'path';
+import { logger } from '@/utils/logger';
 
 /**
  * 审查目标类型
@@ -189,7 +190,7 @@ export class AuditOrchestrator {
    */
   public async runFullAudit(): Promise<AuditReport> {
     const startTime = Date.now();
-    console.log('开始执行完整API审查...');
+    logger.debug('开始执行完整API审查...');
 
     const config = this.configManager.getAuditConfig();
     const enabledChecks = config.enabledChecks;
@@ -210,48 +211,48 @@ export class AuditOrchestrator {
     try {
       // 1. 健康检查
       if (enabledChecks.health) {
-        console.log('执行健康检查...');
+        logger.debug('执行健康检查...');
         results.endpoints = await this.runHealthCheck();
       }
 
       // 2. 数据源验证
       if (enabledChecks.dataSources) {
-        console.log('执行数据源验证...');
+        logger.debug('执行数据源验证...');
         results.dataSources = await this.runDataSourceValidation();
       }
 
       // 3. 缓存验证
       if (enabledChecks.cache) {
-        console.log('执行缓存验证...');
+        logger.debug('执行缓存验证...');
         results.cache = await this.runCacheValidation();
       }
 
       // 4. 错误处理验证
       if (enabledChecks.errors) {
-        console.log('执行错误处理验证...');
+        logger.debug('执行错误处理验证...');
         results.errors = await this.runErrorValidation();
       }
 
       // 5. 速率限制验证
       if (enabledChecks.rateLimit) {
-        console.log('执行速率限制验证...');
+        logger.debug('执行速率限制验证...');
         results.rateLimit = await this.runRateLimitValidation();
       }
 
       // 6. 性能监控
       if (enabledChecks.performance) {
-        console.log('执行性能监控...');
+        logger.debug('执行性能监控...');
         results.performance = await this.runPerformanceMonitoring();
       }
 
       // 7. 客户端API验证
       if (enabledChecks.clientAPIs) {
-        console.log('执行客户端API验证...');
+        logger.debug('执行客户端API验证...');
         results.clientAPIs = await this.runClientAPIValidation();
       }
 
       // 生成报告
-      console.log('生成审查报告...');
+      logger.debug('生成审查报告...');
       const report = this.reportGenerator.generateReport(results);
 
       // 导出报告
@@ -261,9 +262,9 @@ export class AuditOrchestrator {
       const duration = Date.now() - startTime;
       this.recordAuditHistory(report, duration);
 
-      console.log(`审查完成！耗时: ${(duration / 1000).toFixed(2)}秒`);
-      console.log(`整体健康评分: ${report.healthScore}/100`);
-      console.log(`发现问题: ${report.issues.length}个`);
+      logger.debug(`审查完成！耗时: ${(duration / 1000).toFixed(2)}秒`);
+      logger.debug(`整体健康评分: ${report.healthScore}/100`);
+      logger.debug(`发现问题: ${report.issues.length}个`);
 
       return report;
     } catch (error) {
@@ -313,7 +314,7 @@ export class AuditOrchestrator {
    */
   public async runSelectiveAudit(targets: AuditTarget[]): Promise<AuditReport> {
     const startTime = Date.now();
-    console.log(`开始执行选择性审查: ${targets.join(', ')}`);
+    logger.debug(`开始执行选择性审查: ${targets.join(', ')}`);
 
     const results: AuditResults = {
       endpoints: [],
@@ -330,31 +331,31 @@ export class AuditOrchestrator {
       for (const target of targets) {
         switch (target) {
           case 'health':
-            console.log('执行健康检查...');
+            logger.debug('执行健康检查...');
             results.endpoints = await this.runHealthCheck();
             break;
           case 'dataSources':
-            console.log('执行数据源验证...');
+            logger.debug('执行数据源验证...');
             results.dataSources = await this.runDataSourceValidation();
             break;
           case 'cache':
-            console.log('执行缓存验证...');
+            logger.debug('执行缓存验证...');
             results.cache = await this.runCacheValidation();
             break;
           case 'errors':
-            console.log('执行错误处理验证...');
+            logger.debug('执行错误处理验证...');
             results.errors = await this.runErrorValidation();
             break;
           case 'rateLimit':
-            console.log('执行速率限制验证...');
+            logger.debug('执行速率限制验证...');
             results.rateLimit = await this.runRateLimitValidation();
             break;
           case 'performance':
-            console.log('执行性能监控...');
+            logger.debug('执行性能监控...');
             results.performance = await this.runPerformanceMonitoring();
             break;
           case 'clientAPIs':
-            console.log('执行客户端API验证...');
+            logger.debug('执行客户端API验证...');
             results.clientAPIs = await this.runClientAPIValidation();
             break;
         }
@@ -364,7 +365,7 @@ export class AuditOrchestrator {
       await this.exportReports(report);
 
       const duration = Date.now() - startTime;
-      console.log(`选择性审查完成！耗时: ${(duration / 1000).toFixed(2)}秒`);
+      logger.debug(`选择性审查完成！耗时: ${(duration / 1000).toFixed(2)}秒`);
 
       return report;
     } catch (error) {

@@ -156,7 +156,7 @@ export interface UniverseScaleRenderer {
    * Get object data for interaction (optional)
    * @returns Array of objects with position and metadata
    */
-  getObjectData?(): any[];
+  getObjectData?(): any;
 }
 
 /**

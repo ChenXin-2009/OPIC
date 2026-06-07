@@ -43,39 +43,7 @@ export interface PassesResponse {
   passes: PassEvent[];
 }
 
-/**
- * 将ECI坐标转换为地理坐标(经纬度高度)
- */
-function eciToGeodetic(
-  x: number, y: number, z: number,
-  gmst: number
-): { lat: number; lon: number; alt: number } {
-  const r = Math.sqrt(x * x + y * y);
-  let lon = Math.atan2(y, x) - gmst;
-  // 归一化到 [-π, π]
-  while (lon < -Math.PI) lon += 2 * Math.PI;
-  while (lon > Math.PI) lon -= 2 * Math.PI;
 
-  // 迭代求纬度(考虑地球扁率)
-  const f = 1 / 298.257223563; // 地球扁率
-  const e2 = 2 * f - f * f;
-  let lat = Math.atan2(z, r);
-  for (let i = 0; i < 5; i++) {
-    const sinLat = Math.sin(lat);
-    const N = EARTH_RADIUS_KM / Math.sqrt(1 - e2 * sinLat * sinLat);
-    lat = Math.atan2(z + e2 * N * sinLat, r);
-  }
-
-  const sinLat = Math.sin(lat);
-  const N = EARTH_RADIUS_KM / Math.sqrt(1 - e2 * sinLat * sinLat);
-  const alt = r / Math.cos(lat) - N;
-
-  return {
-    lat: lat * RAD_TO_DEG,
-    lon: lon * RAD_TO_DEG,
-    alt,
-  };
-}
 
 /**
  * 计算格林尼治恒星时(GMST)

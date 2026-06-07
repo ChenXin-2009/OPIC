@@ -7,8 +7,6 @@
  * - 支持优先级处理
  */
 
-import * as THREE from 'three';
-
 /**
  * 标签信息接口
  */

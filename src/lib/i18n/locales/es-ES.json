@@ -1,0 +1,146 @@
+{
+  "common": {
+    "now": "Ahora",
+    "loading": "Cargando...",
+    "error": "ERROR",
+    "retry": "REINTENTAR",
+    "search": "BUSCAR",
+    "searching": "Buscando...",
+    "version": "VERSIÓN",
+    "author": "AUTOR",
+    "show": "MOSTRAR",
+    "hide": "OCULTAR",
+    "refresh": "ACTUALIZAR DATOS",
+    "refreshing": "ACTUALIZANDO...",
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Eliminar"
+  },
+  "settings": {
+    "title": "CONFIGURACIÓN",
+    "language": "IDIOMA",
+    "ephemerisStatus": "ESTADO DE EFEMÉRIDES",
+    "unitSystem": "SISTEMA DE UNIDADES",
+    "metric": "Métrico",
+    "imperial": "Imperial",
+    "temperature": "Temperatura",
+    "celsius": "Celsius",
+    "fahrenheit": "Fahrenheit",
+    "accessibility": "ACCESIBILIDAD",
+    "highContrast": "Modo de Alto Contraste",
+    "reducedMotion": "Movimiento Reducido",
+    "keyboardShortcuts": "Atajos de Teclado"
+  },
+  "celestialBodies": {
+    "sun": "Sol",
+    "mercury": "Mercurio",
+    "venus": "Venus",
+    "earth": "Tierra",
+    "mars": "Marte",
+    "jupiter": "Júpiter",
+    "saturn": "Saturno",
+    "uranus": "Urano",
+    "neptune": "Neptuno",
+    "moon": "Luna"
+  },
+  "timeControl": {
+    "jumpToNow": "Ir al ahora",
+    "selectDate": "Seleccionar fecha",
+    "accuracyWarning": "La precisión puede ser reducida",
+    "paused": "En pausa",
+    "future": "futuro",
+    "past": "pasado",
+    "year": "a",
+    "month": "m",
+    "day": "d",
+    "hour": "h",
+    "minute": "m",
+    "second": "s"
+  },
+  "search": {
+    "title": "BUSCAR",
+    "placeholder": "Buscar objetos celestes (Ctrl+K o /)",
+    "noResults": "No se encontraron objetos celestes"
+  },
+  "satellite": {
+    "title": "SATÉLITES",
+    "control": "CONTROL DE SATÉLITES",
+    "searchPlaceholder": "Nombre o ID NORAD...",
+    "visible": "VISIBLE",
+    "updated": "ACTUALIZADO",
+    "notUpdated": "No actualizado",
+    "justNow": "Ahora mismo",
+    "minutesAgo": "m hace",
+    "hoursAgo": "h hace",
+    "daysAgo": "d hace",
+    "info": "INFORMACIÓN DEL SATÉLITE",
+    "basicInfo": "INFO BÁSICA",
+    "altitude": "ALTITUD",
+    "velocity": "VELOCIDAD",
+    "orbitalParams": "PARÁMETROS ORBITALES",
+    "inclination": "INCLINACIÓN",
+    "eccentricity": "EXCENTRICIDAD",
+    "period": "PERIODO",
+    "semiMajorAxis": "SEMIEJE MAYOR",
+    "minutes": "min",
+    "statistics": "ESTADÍSTICAS",
+    "byCategory": "POR CATEGORÍA",
+    "performance": "RENDIMIENTO",
+    "renderTime": "TIEMPO DE RENDER",
+    "showSatellites": "MOSTRAR SATÉLITES",
+    "hideSatellites": "OCULTAR SATÉLITES",
+    "showOrbit": "MOSTRAR ÓRBITA",
+    "hideOrbit": "OCULTAR ÓRBITA",
+    "visualizationError": "Error de visualización de satélites"
+  },
+  "celestialTypes": {
+    "star": "Estrella",
+    "planet": "Planeta",
+    "satellite": "Satélite",
+    "galaxy": "Galaxia",
+    "group": "Grupo",
+    "cluster": "Cúmulo",
+    "supercluster": "Supercúmulo"
+  },
+  "galaxy": {
+    "milkyWay": "Vía Láctea",
+    "laniakea": "Supercúmulo de Laniakea"
+  },
+  "zoomLevels": {
+    "solarSystem": "Sistema Solar",
+    "innerPlanets": "Planetas Interiores",
+    "earthMoon": "Tierra-Luna",
+    "jupiterSystem": "Sistema de Júpiter",
+    "saturnSystem": "Sistema de Saturno"
+  },
+  "language": {
+    "switch": "Cambiar idioma",
+    "chinese": "Chino",
+    "english": "Inglés",
+    "spanish": "Español",
+    "french": "Francés",
+    "german": "Alemán",
+    "japanese": "Japonés"
+  },
+  "errors": {
+    "initializationFailed": "Inicialización Fallida",
+    "networkError": "Error de Red",
+    "loadingFailed": "Carga Fallida",
+    "unexpectedError": "Error Inesperado"
+  },
+  "loading": {
+    "assets": "Carga de Recursos",
+    "data": "Inicialización de Datos",
+    "rendering": "Preparación de Renderizado",
+    "complete": "Inicialización Completa",
+    "timeoutWarning": "La inicialización está tardando más de lo esperado",
+    "suggestions": {
+      "checkNetwork": "Verifica tu conexión de red",
+      "refresh": "Intenta actualizar la página",
+      "clearCache": "Limpia la caché del navegador",
+      "checkConsole": "Revisa la consola del navegador para ver errores"
+    }
+  }
+}

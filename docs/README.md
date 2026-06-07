@@ -23,12 +23,15 @@
 
 | 文档 | 说明 |
 |------|------|
+| [../AGENTS.md](../AGENTS.md) | **AI Agent 开发指南**（项目结构 / 命名规范 / 导入约定 / 测试规范） |
+| [../CHANGELOG.md](../CHANGELOG.md) | 版本历史 |
 | [CODE_QUALITY.md](./CODE_QUALITY.md) | 代码质量标准和最佳实践 |
 
 ## 架构与设计
 
 | 文档 | 说明 |
 |------|------|
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | **系统架构概览**（引擎架构 / MOD 系统 / 数据流 / 设计决策） |
 | [INTEGRATION_GUIDE.md](./INTEGRATION_GUIDE.md) | 集成指南 |
 | [UNIVERSE_VISUALIZATION.md](./UNIVERSE_VISUALIZATION.md) | 宇宙可视化架构 |
 | [CESIUM_MAP_SOURCES.md](./CESIUM_MAP_SOURCES.md) | Cesium 地图源配置指南 |
@@ -57,6 +60,22 @@
 | [MOD_AUTO_DISCOVERY.md](./MOD_AUTO_DISCOVERY.md) | MOD 自动发现机制 |
 | [MOD_PACKAGE_FORMAT.md](./MOD_PACKAGE_FORMAT.md) | MOD 包格式规范 |
 | [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) | MOD 架构迁移指南 |
+| [API_REFERENCE.md](./API_REFERENCE.md) | **MOD API 参考**（Time / Camera / Celestial / Render / Satellite） |
+
+## 测试与部署
+
+| 文档 | 说明 |
+|------|------|
+| [TESTING_GUIDE.md](./TESTING_GUIDE.md) | **测试指南**（运行 / 编写 / Mock / 覆盖率） |
+| [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | **部署指南**（环境变量 / Vercel / Docker / 自托管） |
+
+## 子系统文档
+
+| 文档 | 说明 |
+|------|------|
+| [../src/lib/astronomy/ephemeris/README.md](../src/lib/astronomy/ephemeris/README.md) | 全天体历表系统参考 |
+| [../src/lib/mods/README.md](../src/lib/mods/README.md) | MOD 目录指南 |
+| [../scripts/README.md](../scripts/README.md) | 数据生成脚本 |
 
 ---
 

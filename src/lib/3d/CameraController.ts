@@ -65,24 +65,16 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import {
   CAMERA_CONFIG,
-  CAMERA_PENETRATION_CONFIG,
-  QUICK_CAMERA_SETTINGS
+  CAMERA_PENETRATION_CONFIG
 } from '@/lib/config/cameraConfig';
 import { cameraConfigManager, type CameraConfigType } from '@/lib/config/CameraConfigManager';
 
-// Enhanced focus management
 import { FocusManager, type CelestialObject, type FocusOptions } from './FocusManager';
+import type { CameraMode } from './camera/CameraTypes';
+import { evalSensitivityCurve, DEFAULT_DRAG_CURVE } from './camera/SensitivityCurve';
+import { easeOutQuart, preventPenetrationDuringInput } from './camera/PenetrationUtils';
 
-// 兼容旧代码中对单一 CAMERA_CONFIG 的使用（现在直接使用新的统一配置）
-
-/**
- * 相机控制模式枚举
- *
- * - `'free'`：自由模式，用户可自由旋转和缩放
- * - `'locked'`：锁定模式，相机跟随目标天体但不自动旋转
- * - `'follow'`：跟随模式，相机平滑跟随目标天体移动
- */
-export type CameraMode = 'free' | 'locked' | 'follow';
+export type { CameraMode } from './camera/CameraTypes';
 
 /**
  * Three.js 相机控制器
@@ -115,7 +107,6 @@ export class CameraController {
   private smoothDistance: number = 0; // 当前缩放距离
   private targetDistance: number = 0; // 目标距离（即时响应）
   private isZooming: boolean = false; // 是否正在缩放
-  private lastDistance: number = 0; // 上一帧的距离
   
   // 事件监听器引用，用于清理
   private wheelHandler: ((e: WheelEvent) => void) | null = null;
@@ -192,7 +183,6 @@ export class CameraController {
     // 步骤 6：初始化平滑缩放距离状态（三个变量保持同步，避免初始跳跃）
     this.smoothDistance = this.camera.position.distanceTo(this.controls.target);
     this.targetDistance = this.smoothDistance;
-    this.lastDistance = this.smoothDistance;
     
     // 步骤 5c：配置距离限制
     // 将 minDistance 设为 0，避免在聚焦/滚轮时被瞬间限制回较远距离
@@ -495,6 +485,29 @@ export class CameraController {
    *
    * @param domElement 绑定事件的 DOM 元素（renderer.domElement）
    */
+  private interruptFocusZoom(): void {
+    if (!this.isFocusing) return;
+    this.isFocusing = false;
+    this.targetCameraPosition = null;
+    this.targetControlsTarget = null;
+    const currentDist = this.camera.position.distanceTo(this.controls.target);
+    if (isFinite(currentDist) && currentDist > 0) {
+      this.smoothDistance = currentDist;
+      this.targetDistance = currentDist;
+    }
+    this.resetMinDistance();
+  }
+
+  private interruptTrackingZoom(): void {
+    if (!this.isTracking) return;
+    const currentDist = this.smoothDistance || this.camera.position.distanceTo(this.controls.target);
+    if (isFinite(currentDist) && currentDist > 0) {
+      this.smoothDistance = currentDist;
+      this.targetDistance = currentDist;
+      this.trackingDistance = currentDist;
+    }
+  }
+
   private setupWheelZoom(domElement: HTMLElement) {
     // 如果已经绑定过，先移除旧的监听器（防止重复绑定导致缩放速度翻倍）
     if (this.wheelHandler) {
@@ -506,35 +519,8 @@ export class CameraController {
       e.preventDefault();
       e.stopPropagation();
       
-      // 中断聚焦动画：用户开始滚轮操作时，立即停止正在进行的聚焦过渡
-      // 这样用户可以在聚焦动画未完成时就开始缩放，提升响应性
-      if (this.isFocusing) {
-        this.isFocusing = false;
-        this.targetCameraPosition = null;
-        this.targetControlsTarget = null;
-        // 同步当前距离，确保缩放从当前位置开始（而非聚焦目标位置）
-        const currentDist = this.camera.position.distanceTo(this.controls.target);
-        if (isFinite(currentDist) && currentDist > 0) {
-          this.smoothDistance = currentDist;
-          this.targetDistance = currentDist;
-        }
-        // 重置最小距离（允许用户自由缩放）
-        this.resetMinDistance();
-      }
-      
-      // 跟踪模式下的缩放处理：不停止跟踪，允许在跟踪的同时调整距离
-      // 同步 smoothDistance 和 trackingDistance，确保缩放从当前距离开始
-      if (this.isTracking) {
-        const currentDist = this.smoothDistance || this.camera.position.distanceTo(this.controls.target);
-        if (isFinite(currentDist) && currentDist > 0) {
-          this.smoothDistance = currentDist;
-          this.targetDistance = currentDist;
-          // 同步 trackingDistance，确保跟踪逻辑使用正确的距离
-          this.trackingDistance = currentDist;
-        }
-      }
-      
-      // 标记缩放状态（确保 update() 中的缩放逻辑被激活）
+      this.interruptFocusZoom();
+      this.interruptTrackingZoom();
       this.isZooming = true;
       
       // 计算缩放增量：
@@ -572,7 +558,6 @@ export class CameraController {
     }
     
     let initialDistance = 0;       // 双指触摸开始时的指间距离（像素）
-    let initialSmoothDistance = 0; // 双指触摸开始时的相机平滑距离（AU）
     let isPinching = false;        // 是否正在进行捏合缩放
     let lastUpdateTime = 0;        // 上次处理 touchmove 的时间戳（用于限频）
 
@@ -586,33 +571,11 @@ export class CameraController {
           Math.pow(touch2.clientX - touch1.clientX, 2) +
           Math.pow(touch2.clientY - touch1.clientY, 2)
         );
-        initialSmoothDistance = this.smoothDistance;
         isPinching = true;
         lastUpdateTime = performance.now(); // 重置更新时间戳
         
-        // 中断聚焦动画（与滚轮处理逻辑保持一致）
-        if (this.isFocusing) {
-          this.isFocusing = false;
-          this.targetCameraPosition = null;
-          this.targetControlsTarget = null;
-          const currentDist = this.camera.position.distanceTo(this.controls.target);
-          if (isFinite(currentDist) && currentDist > 0) {
-            this.smoothDistance = currentDist;
-            this.targetDistance = currentDist;
-          }
-          this.resetMinDistance();
-        }
-        
-        // 跟踪模式下同步距离（允许跟踪时缩放）
-        if (this.isTracking) {
-          const currentDist = this.smoothDistance || this.camera.position.distanceTo(this.controls.target);
-          if (isFinite(currentDist) && currentDist > 0) {
-            this.smoothDistance = currentDist;
-            this.targetDistance = currentDist;
-            this.trackingDistance = currentDist;
-          }
-        }
-        
+        this.interruptFocusZoom();
+        this.interruptTrackingZoom();
         this.isZooming = true;
       } else {
         // 非双指触摸时重置捏合状态（如单指触摸开始）
@@ -671,7 +634,6 @@ export class CameraController {
           
           // 更新初始距离，实现连续缩放（每帧相对上一帧计算，而非相对触摸开始位置）
           initialDistance = currentDistance;
-          initialSmoothDistance = this.smoothDistance;
         }
       } else if (e.touches.length !== 2) {
         // 触摸点数量变化时重置捏合状态
@@ -685,7 +647,6 @@ export class CameraController {
       if (e.touches.length < 2) {
         isPinching = false;
         initialDistance = 0;
-        initialSmoothDistance = 0;
         lastUpdateTime = 0;
       }
     };
@@ -922,7 +883,7 @@ export class CameraController {
 
     const camPos = this.camera.position.clone();
     const dir = new THREE.Vector3().subVectors(camPos, center);
-    let distToCenter = dir.length();
+    const distToCenter = dir.length();
     if (!isFinite(distToCenter) || distToCenter <= 0) return;
 
     const minAllowedFromCenter = this.currentTargetRadius * CAMERA_PENETRATION_CONFIG.safetyDistanceMultiplier;
@@ -963,7 +924,7 @@ export class CameraController {
       const adaptiveSmoothness = baseSmoothness * (1 + penetrationRatio);
       const factor = Math.min(1, adaptiveSmoothness * Math.max(0.0001, deltaTime * 60));
       
-      const easedFactor = this.easeOutQuart(factor);
+      const easedFactor = easeOutQuart(factor);
       const safeCamPos = center.clone().add(dirNorm.clone().multiplyScalar(minAllowedFromCenter));
       this.camera.position.lerp(safeCamPos, easedFactor);
       
@@ -998,10 +959,6 @@ export class CameraController {
    * @param t 插值参数，范围 [0, 1]
    * @returns 缓动后的插值系数，范围 [0, 1]
    */
-  private easeOutQuart(t: number): number {
-    return 1 - Math.pow(1 - t, 4);
-  }
-
   /**
    * 输入操作期间的实时防穿透检测（缩放和旋转时调用）
    *
@@ -1014,25 +971,12 @@ export class CameraController {
    * @returns 经过防穿透约束后的安全相机位置
    */
   private preventPenetrationDuringInput(proposedCameraPosition: THREE.Vector3, center: THREE.Vector3): THREE.Vector3 {
-    if (!this.currentTargetRadius) return proposedCameraPosition;
-
-    const minSafeDistance = this.currentTargetRadius * CAMERA_PENETRATION_CONFIG.safetyDistanceMultiplier;
-    const distanceToCenter = proposedCameraPosition.distanceTo(center);
-
-    if (distanceToCenter < minSafeDistance) {
-      // Calculate safe position on the ray from center to proposed position
-      const direction = new THREE.Vector3()
-        .subVectors(proposedCameraPosition, center)
-        .normalize();
-      
-      if (direction.length() < 0.001) {
-        direction.set(0, 0.5, 1).normalize();
-      }
-
-      return center.clone().add(direction.multiplyScalar(minSafeDistance));
-    }
-
-    return proposedCameraPosition;
+    return preventPenetrationDuringInput(
+      proposedCameraPosition,
+      center,
+      this.currentTargetRadius,
+      CAMERA_PENETRATION_CONFIG.safetyDistanceMultiplier,
+    );
   }
   
   /**
@@ -1235,8 +1179,6 @@ export class CameraController {
     // Update focus manager transitions
     const focusProgress = this.focusManager.updateFocusTransition(deltaTime);
     if (focusProgress >= 0 && focusProgress < 1) {
-      // Apply easing to focus transition
-      const easedProgress = FocusManager.easeInOutCubic(focusProgress);
       // Focus transition is handled by existing isFocusing logic below
     }
     
@@ -1616,9 +1558,8 @@ export class CameraController {
       type CurveT = { anchors: {nx:number;ny:number}[]; yMin:number; yMax:number };
       const dragCurve = this._dragSensitivityCurve as CurveT | undefined;
       let scale: number;
-      if (dragCurve && dragCurve.anchors.length >= 2 && !this.fovZoomActive) {
-        // 曲线只在距离模式下生效，FOV 模式走原有逻辑
-        scale = CameraController.evalSensitivityCurve(dragCurve, currentDist);
+      if (dragCurve && dragCurve.anchors.length >= 2) {
+        scale = evalSensitivityCurve(dragCurve, currentDist);
       } else {
         const REF_DISTANCE_AU = 1.0;
         const LOG_RANGE = 5;
@@ -1729,41 +1670,6 @@ export class CameraController {
   }
 
   /**
-   * 根据灵敏度曲线配置和当前距离计算灵敏度倍率（Catmull-Rom 插值）
-   * 与 SensitivityCurvePanel 的 querySensitivity 逻辑保持一致
-   */
-  static evalSensitivityCurve(
-    curve: { anchors: { nx: number; ny: number }[]; yMin: number; yMax: number },
-    distanceAU: number
-  ): number {
-    const LOG_MIN = -10, LOG_MAX = 0;
-    const nx = Math.max(0, Math.min(1, (Math.log10(Math.max(distanceAU, 1e-12)) - LOG_MIN) / (LOG_MAX - LOG_MIN)));
-    const sorted = [...curve.anchors].sort((a, b) => a.nx - b.nx);
-    // 对数 Y 映射：ny(0~1) → 10^(logMin + ny*(logMax-logMin))
-    const logMin = Math.log10(Math.max(curve.yMin, 1e-9));
-    const logMax = Math.log10(Math.max(curve.yMax, 1e-9));
-    const nyToVal = (ny: number) => Math.pow(10, logMin + Math.max(0, Math.min(1, ny)) * (logMax - logMin));
-    if (sorted.length === 0) return 1;
-    if (sorted.length === 1) return nyToVal(sorted[0].ny);
-    if (nx <= sorted[0].nx) return nyToVal(sorted[0].ny);
-    if (nx >= sorted[sorted.length - 1].nx) return nyToVal(sorted[sorted.length - 1].ny);
-
-    let i = 1;
-    while (i < sorted.length - 1 && sorted[i].nx < nx) i++;
-    const p1 = sorted[i - 1], p2 = sorted[i];
-    const p0 = sorted[i - 2] ?? { nx: p1.nx - (p2.nx - p1.nx), ny: p1.ny };
-    const p3 = sorted[i + 1] ?? { nx: p2.nx + (p2.nx - p1.nx), ny: p2.ny };
-    const t = (nx - p1.nx) / (p2.nx - p1.nx), t2 = t * t, t3 = t2 * t;
-    const ny = Math.max(0, Math.min(1, 0.5 * (
-      2 * p1.ny +
-      (-p0.ny + p2.ny) * t +
-      (2 * p0.ny - 5 * p1.ny + 4 * p2.ny - p3.ny) * t2 +
-      (-p0.ny + 3 * p1.ny - 3 * p2.ny + p3.ny) * t3
-    )));
-    return nyToVal(ny);
-  }
-
-  /**
    * 获取底层 OrbitControls 实例（供外部直接访问控制器属性）
    *
    * @returns Three.js OrbitControls 实例
@@ -1778,38 +1684,12 @@ export class CameraController {
   private isFovTransitioning: boolean = false;
   private fovTransitionSpeed: number = 1.0; // FOV 过渡速度（1.0 = 立即切换，无缓动）
 
-  // 灵敏度曲线配置（由用户调试后固化的参数）
-  // X 轴：归一化对数距离（0 = 1e-10 AU，1 = 1 AU）
-  // Y 轴：归一化对数灵敏度（0~1，映射到 yMin~yMax 的对数空间）
-  private _zoomSensitivityCurve = {
-    yMin: 0.001, yMax: 2,
-    anchors: [
-      { nx: 0.0024, ny: 0 },
-      { nx: 0.5607, ny: 0.0102 },
-      { nx: 0.5704, ny: 0.5765 },
-      { nx: 0.6165, ny: 0.7449 },
-      { nx: 0.7888, ny: 0.898 },
-      { nx: 1,      ny: 1 },
-    ],
-  };
-  private _dragSensitivityCurve = {
-    yMin: 0.001, yMax: 2,
-    anchors: [
-      { nx: 0,      ny: 0.08 },
-      { nx: 0.5583, ny: 0.2041 },
-      { nx: 0.5728, ny: 0.5408 },
-      { nx: 0.5922, ny: 0.7194 },
-      { nx: 0.7816, ny: 0.9082 },
-      { nx: 1,      ny: 1 },
-    ],
-  };
+  private _dragSensitivityCurve = DEFAULT_DRAG_CURVE;
 
   // FOV（视野角度）相关 — setFov() 保留，用于程序化设置；缩放中不再使用 FOV 光学变焦
   // 当距离无法继续缩小时（被防穿透或 minDistance 限制），缩放直接停止
   private static readonly FOV_MIN = 0.05; // 最小 FOV（度），约等于 300mm 长焦镜头
   private static readonly FOV_DEFAULT = CAMERA_CONFIG.fov; // 默认 FOV（度）
-  private fovZoomActive: boolean = false; // 保留字段兼容，始终为 false（已移除 FOV 缩放模式）
-
   // 缩放-跟踪协调：防止跟踪 lerp 覆盖即时缩放
   private _justZoomed: boolean = false;
 

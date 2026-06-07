@@ -43,7 +43,6 @@ export function SatelliteWindow({ lang = 'zh' }: SatelliteWindowProps) {
     setSearchQuery,
     setShowSatellites,
     fetchSatellites,
-    clearAllOrbits,
   } = useSatelliteStore();
 
   // 搜索防抖

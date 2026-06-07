@@ -157,7 +157,7 @@ interface Props {
   lang?: 'zh' | 'en';
 }
 
-export const WeatherDisasterPanel: React.FC<Props> = ({ renderer, onClose, onConfigChange, initialConfig, asWindowContent = false, lang = 'zh' }) => {
+export const WeatherDisasterPanel: React.FC<Props> = ({ renderer, onClose, onConfigChange, initialConfig, asWindowContent = false, lang: _lang = 'zh' }) => {
   // 已启用的数据源列表
   const [enabledSources, setEnabledSources] = useState<DataSourceId[]>(
     initialConfig?.enabledSources ?? ['usgs_earthquake', 'gdacs']

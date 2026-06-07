@@ -10,7 +10,6 @@ import type {
   ServiceRegistrationOptions,
   ServiceCallLog,
   ServiceStats,
-  ServiceVisibility,
 } from './types';
 import {
   ServiceNotFoundError,
@@ -39,7 +38,7 @@ export class ServiceRegistry {
 
   constructor(
     private permissionSystem: PermissionSystem,
-    private modRegistry: ModRegistry
+    _modRegistry: ModRegistry
   ) {}
 
   /**
@@ -107,7 +106,6 @@ export class ServiceRegistry {
    * ```
    */
   getService<T = unknown>(callerId: string, serviceId: string): T {
-    const startTime = Date.now();
     let success = false;
     let error: Error | undefined;
 

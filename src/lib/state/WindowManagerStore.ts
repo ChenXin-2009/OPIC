@@ -47,12 +47,19 @@ export const useWindowManagerStore = create<WindowManagerStore>((set, get) => ({
     }
     
     // 创建新窗口状态
+    const viewportW = typeof globalThis.window !== 'undefined' ? globalThis.window.innerWidth : 1920;
+    const viewportH = typeof globalThis.window !== 'undefined' ? globalThis.window.innerHeight : 1080;
+    const defaultSize = config.defaultSize || DEFAULT_WINDOW_CONFIG.defaultSize;
+    const clampedSize = {
+      width: Math.min(defaultSize.width, viewportW - 20),
+      height: Math.min(defaultSize.height, viewportH - 20),
+    };
     const newWindow: WindowState = {
       id: config.id,
       title: config.title,
       content: config.content,
       position: config.defaultPosition || DEFAULT_WINDOW_CONFIG.defaultPosition,
-      size: config.defaultSize || DEFAULT_WINDOW_CONFIG.defaultSize,
+      size: clampedSize,
       minSize: config.minSize || DEFAULT_WINDOW_CONFIG.minSize,
       maxSize: config.maxSize,
       zIndex: maxZIndex + 1,

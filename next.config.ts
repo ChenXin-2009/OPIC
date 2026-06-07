@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import path from 'path';
+import packageJson from './package.json';
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -10,6 +11,11 @@ const nextConfig: NextConfig = {
   
   // 添加空 turbopack 配置以消除警告
   turbopack: {},
+  
+  // 环境变量 - 从 package.json 读取版本号
+  env: {
+    NEXT_PUBLIC_APP_VERSION: packageJson.version,
+  },
   
   // Cesium 配置
   webpack: (config, { isServer }) => {

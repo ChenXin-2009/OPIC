@@ -5,7 +5,7 @@
  * 直接渲染 SpaceLaunchOverlay（含 3D 渲染器集成）
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import SpaceLaunchOverlay from './SpaceLaunchOverlay';
 
 interface Props {

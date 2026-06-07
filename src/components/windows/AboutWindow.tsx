@@ -5,17 +5,12 @@
  */
 
 'use client';
-
-import React from 'react';
 import AboutContent from '../AboutContent';
-import { useTranslation } from '@/hooks/useTranslation';
-
 interface AboutWindowProps {
   lang?: 'zh' | 'en';
 }
 
-export function AboutWindow({ lang = 'zh' }: AboutWindowProps) {
-  const { t } = useTranslation();
+export function AboutWindow({ lang: _lang = 'zh' }: AboutWindowProps) {
 
   return (
     <div className="h-full overflow-auto bg-white/5">

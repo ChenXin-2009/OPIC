@@ -14,9 +14,7 @@ import * as THREE from 'three';
 import { useModStore } from '@/lib/mod-manager/store';
 import { getRenderAPI } from '@/lib/mod-manager/api/RenderAPI';
 import { TrafficRenderer } from '@/lib/mods/global-traffic/TrafficRenderer';
-import { GlobalTrafficPanel } from './GlobalTrafficPanel';
 import { useSolarSystemStore } from '@/lib/state';
-import type { GlobalTrafficConfig } from '@/lib/mods/global-traffic/types';
 import { rendererStore } from '@/lib/mods/rendererStore';
 
 interface Props {
@@ -28,13 +26,10 @@ function findEarthMesh(scene: THREE.Scene): THREE.Object3D | null {
   return scene.getObjectByName('earth') ?? null;
 }
 
-export const GlobalTrafficOverlay: React.FC<Props> = ({ lang = 'zh' }) => {
+export const GlobalTrafficOverlay: React.FC<Props> = ({ lang: _lang = 'zh' }) => {
   const modState     = useModStore(s => s.mods['global-traffic']?.state);
-  const modConfig    = useModStore(s => s.mods['global-traffic']?.config);
-  const setModConfig = useModStore(s => s.setModConfig);
 
   const [renderer, setRenderer] = useState<TrafficRenderer | null>(null);
-  const [showPanel, setShowPanel] = useState(true);
 
   useEffect(() => {
     if (modState !== 'enabled') {
@@ -66,7 +61,6 @@ export const GlobalTrafficOverlay: React.FC<Props> = ({ lang = 'zh' }) => {
     }
 
     setRenderer(r);
-    setShowPanel(true);
     rendererStore.setGlobalTrafficRenderer(r); // 存储到全局store
 
     let earthMeshCache: THREE.Object3D | null = null;

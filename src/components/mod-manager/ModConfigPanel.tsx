@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useModStore } from '@/lib/mod-manager/store';
-import type { ModManifest } from '@/lib/mod-manager/types';
+// import type { ModManifest } from '@/lib/mod-manager/types';
 
 export interface ModConfigPanelProps {
   /** MOD ID */
@@ -73,11 +73,6 @@ export const ModConfigPanel: React.FC<ModConfigPanelProps> = ({
       </div>
     );
   }
-
-  const handleConfigChange = (key: string, value: unknown) => {
-    setConfig((prev) => ({ ...prev, [key]: value }));
-    setHasChanges(true);
-  };
 
   const handleSave = () => {
     setModConfig(modId, config);

@@ -225,7 +225,6 @@ export class VersionChecker {
    * 设置系统API版本
    */
   setSystemVersion(version: string): void {
-    const parsed = this.parseVersion(version);
     (this as any).systemApiVersion = version;
   }
 }

@@ -70,37 +70,12 @@
 
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
-import type { CelestialBody } from '@/lib/astronomy/orbit';
-import { calculateRotationAxis, CELESTIAL_BODIES, CelestialBodyConfig, rotationPeriodToSpeed } from '@/lib/types/celestialTypes';
-import { getCelestialMaterialParams, MARKER_CONFIG, PLANET_GRID_CONFIG, PLANET_LIGHTING_CONFIG, PLANET_LOD_CONFIG, SATURN_RING_CONFIG, SUN_GLOW_CONFIG, SUN_RAINBOW_LAYERS, SUN_SHADER_CONFIG, SUN_STAR_SPIKES_CONFIG } from '@/lib/config/visualConfig';
+import { calculateRotationAxis, CELESTIAL_BODIES, type CelestialBodyConfig, rotationPeriodToSpeed } from '@/lib/types/celestialTypes';
+import { MARKER_CONFIG, PLANET_GRID_CONFIG, PLANET_LOD_CONFIG, SATURN_RING_CONFIG, SUN_GLOW_CONFIG, SUN_RAINBOW_LAYERS, SUN_SHADER_CONFIG, SUN_STAR_SPIKES_CONFIG } from '@/lib/config/visualConfig';
+import { type PlanetConfig, REAL_PLANET_RADII } from './planet/PlanetTypes';
+import { createSunShaderMaterial, createPlanetShaderMaterial } from './planet/planetShaders';
 
-// 真实行星半径（AU单位）
-// 1 AU = 149,597,870 km
-// 地球半径 = 6,371 km ≈ 0.0000426 AU
-// 太阳半径 = 696,340 km ≈ 0.00465 AU
-const REAL_PLANET_RADII: Record<string, number> = {
-  sun: 0.00465,      // 太阳半径（AU）
-  mercury: 0.000015, // 水星半径（AU）
-  venus: 0.000037,   // 金星半径（AU）
-  earth: 0.000043,   // 地球半径（AU）
-  mars: 0.000023,    // 火星半径（AU）
-  jupiter: 0.000477, // 木星半径（AU）
-  saturn: 0.000402,  // 土星半径（AU）
-  uranus: 0.000170,  // 天王星半径（AU）
-  neptune: 0.000165, // 海王星半径（AU）
-};
-
-export interface PlanetConfig {
-  body?: CelestialBody; // Optional for backward compatibility
-  config?: CelestialBodyConfig; // Optional celestial body configuration with rotation period
-  rotationSpeed?: number; // 弧度/秒 (deprecated, use config.rotationPeriod instead)
-  
-  // Direct CelestialBodyConfig properties (for test compatibility)
-  name?: string;
-  radius?: number;
-  color?: string;
-  rotationPeriod?: number;
-}
+export type { PlanetConfig } from './planet/PlanetTypes';
 
 export class Planet {
   private mesh: THREE.Mesh | THREE.Object3D;
@@ -134,7 +109,7 @@ export class Planet {
   
   // 夜间贴图支持（仅地球）
   private nightTexture: THREE.Texture | null = null;
-  private hasNightMap: boolean = false;
+
   
   // 土星环支持
   private ringMesh: THREE.Mesh | null = null;
@@ -219,16 +194,13 @@ export class Planet {
       this.targetSegments = 64;
       this.currentSegments = 64;
       this.geometry = new THREE.SphereGeometry(radius, this.currentSegments, this.currentSegments);
-      // 太阳使用专门的着色器材质，模拟光球层效果
-      this.material = this.createSunShaderMaterial();
-      // 创建网格
+      this.material = createSunShaderMaterial();
       this.mesh = new THREE.Mesh(this.geometry, this.material);
     } else {
-      // 行星创建正常的几何体和材质
       this.targetSegments = PLANET_LOD_CONFIG.baseSegments;
       this.currentSegments = PLANET_LOD_CONFIG.baseSegments;
       this.geometry = new THREE.SphereGeometry(radius, this.currentSegments, this.currentSegments);
-      this.material = this.createPlanetShaderMaterial(bodyInfo.color || '#ffffff');
+      this.material = createPlanetShaderMaterial(this.planetName, bodyInfo.color || '#ffffff');
       // 创建网格
       this.mesh = new THREE.Mesh(this.geometry, this.material);
     }
@@ -255,120 +227,6 @@ export class Planet {
     if (this.planetName === 'saturn' && SATURN_RING_CONFIG.enabled) {
       this.createSaturnRing();
     }
-  }
-
-  /**
-   * 创建太阳着色器材质
-   * 模拟真实的光球层效果：
-   * - 科学的太阳颜色（接近白色，色温5778K）
-   * - 边缘变暗效果（limb darkening）
-   * - 动态的表面扰动（模拟对流层）
-   * - 发光效果
-   */
-  private createSunShaderMaterial(): THREE.ShaderMaterial {
-    const vertexShader = `
-      varying vec3 vNormal;
-      varying vec3 vPosition;
-      varying vec2 vUv;
-      
-      void main() {
-        vUv = uv;
-        vPosition = position;
-        vNormal = normalize(normalMatrix * normal);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `;
-    
-    const fragmentShader = `
-      uniform float uTime;
-      uniform vec3 uSunColor;
-      uniform float uIntensity;
-      uniform float uLimbDarkeningStrength;
-      uniform float uTurbulenceStrength;
-      uniform float uGranuleStrength;
-      
-      varying vec3 vNormal;
-      varying vec3 vPosition;
-      varying vec2 vUv;
-      
-      // 简化的噪声函数（用于表面扰动）
-      float hash(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-      }
-      
-      float noise(vec2 p) {
-        vec2 i = floor(p);
-        vec2 f = fract(p);
-        f = f * f * (3.0 - 2.0 * f);
-        
-        float a = hash(i);
-        float b = hash(i + vec2(1.0, 0.0));
-        float c = hash(i + vec2(0.0, 1.0));
-        float d = hash(i + vec2(1.0, 1.0));
-        
-        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-      }
-      
-      // 分形布朗运动（用于更复杂的纹理）
-      float fbm(vec2 p) {
-        float value = 0.0;
-        float amplitude = 0.5;
-        float frequency = 1.0;
-        
-        for (int i = 0; i < 4; i++) {
-          value += amplitude * noise(p * frequency);
-          frequency *= 2.0;
-          amplitude *= 0.5;
-        }
-        
-        return value;
-      }
-      
-      void main() {
-        // 计算视线方向与法线的夹角（用于边缘变暗）
-        vec3 viewDirection = normalize(cameraPosition - vPosition);
-        float fresnel = dot(viewDirection, vNormal);
-        
-        // 边缘变暗效果（limb darkening）
-        // 太阳边缘看起来比中心暗
-        float limbDarkening = pow(fresnel, uLimbDarkeningStrength);
-        
-        // 添加动态表面扰动（模拟对流层）
-        vec2 uvDistorted = vUv * 8.0 + uTime;
-        float turbulence = fbm(uvDistorted) * uTurbulenceStrength;
-        
-        // 添加更细小的颗粒感（模拟米粒组织）
-        vec2 uvGranules = vUv * 40.0 + uTime * 2.0;
-        float granules = noise(uvGranules) * uGranuleStrength;
-        
-        // 组合所有效果
-        float brightness = limbDarkening + turbulence + granules;
-        brightness = clamp(brightness, 0.7, 1.3);
-        
-        // 应用亮度和强度
-        vec3 finalColor = uSunColor * brightness * uIntensity;
-        
-        // 添加轻微的发光效果（边缘更亮）
-        float edgeGlow = pow(1.0 - fresnel, 3.0) * 0.3;
-        finalColor += vec3(edgeGlow);
-        
-        gl_FragColor = vec4(finalColor, 1.0);
-      }
-    `;
-    
-    return new THREE.ShaderMaterial({
-      vertexShader,
-      fragmentShader,
-      uniforms: {
-        uTime: { value: 0.0 },
-        uSunColor: { value: new THREE.Color(SUN_SHADER_CONFIG.color) },
-        uIntensity: { value: SUN_SHADER_CONFIG.intensity },
-        uLimbDarkeningStrength: { value: SUN_SHADER_CONFIG.limbDarkeningStrength },
-        uTurbulenceStrength: { value: SUN_SHADER_CONFIG.turbulenceStrength },
-        uGranuleStrength: { value: SUN_SHADER_CONFIG.granuleStrength },
-      },
-      side: THREE.FrontSide,
-    });
   }
 
   /**
@@ -413,258 +271,6 @@ export class Planet {
     
     this.axialTiltApplied = true;
   }  /**
-   * 创建行星着色器材质
-   * 实现真实的太阳光照效果：
-   * - 向阳面亮，背阳面暗
-   * - 昼夜交界处平滑渐变
-   * - 支持地球夜间贴图
-   * - 修复极点条纹问题
-   * - 对比度、饱和度、伽马校正
-   * - 菲涅尔边缘光照效果
-   * - 每个天体使用独立的材质参数
-   */
-  private createPlanetShaderMaterial(color: string): THREE.ShaderMaterial {
-    // 获取该天体的特定材质参数
-    const params = getCelestialMaterialParams(this.planetName);
-    
-    const vertexShader = `
-      #include <common>
-      #include <logdepthbuf_pars_vertex>
-      
-      varying vec3 vNormal;
-      varying vec3 vWorldPosition;
-      varying vec2 vUv;
-      varying vec3 vWorldNormal;
-      varying vec3 vPosition;
-      varying vec3 vViewDirection;
-      
-      void main() {
-        vUv = uv;
-        vPosition = position;
-        // 计算世界空间中的法线（考虑模型旋转）
-        vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
-        vNormal = normalize(normalMatrix * normal);
-        vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-        vWorldPosition = worldPosition.xyz;
-        
-        // 计算视线方向（用于菲涅尔效果）
-        vViewDirection = normalize(cameraPosition - worldPosition.xyz);
-        
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        
-        #include <logdepthbuf_vertex>
-      }
-    `;
-    
-    const fragmentShader = `
-      #include <common>
-      #include <logdepthbuf_pars_fragment>
-      
-      uniform vec3 uColor;
-      uniform vec3 uSunPosition;
-      uniform sampler2D uDayTexture;
-      uniform sampler2D uNightTexture;
-      uniform float uHasTexture;
-      uniform float uHasNightTexture;
-      uniform float uAmbientIntensity;
-      uniform float uTerminatorWidth;
-      uniform float uNightMapIntensity;
-      
-      // 对比度、饱和度、伽马参数
-      uniform float uContrastBoost;
-      uniform float uSaturationBoost;
-      uniform float uGamma;
-      uniform float uMaxDaylightIntensity;
-      uniform float uMinNightIntensity;
-      
-      // 菲涅尔效果参数
-      uniform float uEnableFresnel;
-      uniform float uFresnelIntensity;
-      uniform vec3 uFresnelColor;
-      uniform float uFresnelPower;
-      
-      // 极点修复参数
-      uniform float uPoleBlendStart;
-      uniform float uPoleBlendEnd;
-      uniform float uPoleSampleCount;
-      uniform float uPoleSampleRadius;
-      
-      varying vec3 vNormal;
-      varying vec3 vWorldPosition;
-      varying vec2 vUv;
-      varying vec3 vWorldNormal;
-      varying vec3 vPosition;
-      varying vec3 vViewDirection;
-      
-      // 辅助函数：调整对比度
-      vec3 adjustContrast(vec3 color, float contrast) {
-        return (color - 0.5) * contrast + 0.5;
-      }
-      
-      // 辅助函数：调整饱和度
-      vec3 adjustSaturation(vec3 color, float saturation) {
-        float luminance = dot(color, vec3(0.299, 0.587, 0.114));
-        return mix(vec3(luminance), color, saturation);
-      }
-      
-      // 辅助函数：伽马校正
-      vec3 applyGamma(vec3 color, float gamma) {
-        return pow(max(color, vec3(0.0)), vec3(1.0 / gamma));
-      }
-      
-      void main() {
-        #include <logdepthbuf_fragment>
-        
-        // 计算从行星表面点到太阳的方向（世界空间）
-        vec3 sunDirection = normalize(uSunPosition - vWorldPosition);
-        
-        // 使用世界空间法线计算光照
-        float dotNL = dot(vWorldNormal, sunDirection);
-        
-        // 使用 smoothstep 创建平滑的昼夜过渡
-        float dayFactor = smoothstep(-uTerminatorWidth, uTerminatorWidth, dotNL);
-        
-        // 修复极点条纹：在极点附近使用极点颜色混合
-        // 计算到极点的距离（基于 Y 坐标，假设 Y 轴是极轴）
-        vec3 normalizedPos = normalize(vPosition);
-        float poleDistance = abs(normalizedPos.y); // 0 = 赤道, 1 = 极点
-        
-        // 使用配置参数进行极点混合
-        float poleFactor = smoothstep(uPoleBlendStart, uPoleBlendEnd, poleDistance);
-        
-        // 获取白天颜色
-        vec3 dayColor;
-        if (uHasTexture > 0.5) {
-          // 采样贴图
-          vec3 texColor = texture2D(uDayTexture, vUv).rgb;
-          
-          // 在极点附近，采样周围的颜色进行平均，减少条纹
-          if (poleFactor > 0.0) {
-            // 在极点使用多个采样点的平均值
-            vec3 poleColor = vec3(0.0);
-            for (float i = 0.0; i < 16.0; i++) {
-              if (i >= uPoleSampleCount) break;
-              float angle = i * 3.14159265 * 2.0 / uPoleSampleCount;
-              vec2 offset = vec2(cos(angle), sin(angle)) * uPoleSampleRadius;
-              vec2 sampleUv = vec2(vUv.x + offset.x, vUv.y);
-              // 确保 UV 在有效范围内
-              sampleUv.x = fract(sampleUv.x);
-              poleColor += texture2D(uDayTexture, sampleUv).rgb;
-            }
-            poleColor /= uPoleSampleCount;
-            
-            // 混合原始颜色和极点平均颜色
-            texColor = mix(texColor, poleColor, poleFactor);
-          }
-          
-          dayColor = texColor;
-        } else {
-          dayColor = uColor;
-        }
-        
-        // 计算最终颜色
-        vec3 finalColor;
-        
-        if (uHasNightTexture > 0.5) {
-          // 地球：混合白天和夜间贴图
-          vec3 nightColor = texture2D(uNightTexture, vUv).rgb * uNightMapIntensity;
-          
-          // 在极点也应用相同的混合
-          if (poleFactor > 0.0) {
-            vec3 poleNightColor = vec3(0.0);
-            for (float i = 0.0; i < 16.0; i++) {
-              if (i >= uPoleSampleCount) break;
-              float angle = i * 3.14159265 * 2.0 / uPoleSampleCount;
-              vec2 offset = vec2(cos(angle), sin(angle)) * uPoleSampleRadius;
-              vec2 sampleUv = vec2(vUv.x + offset.x, vUv.y);
-              sampleUv.x = fract(sampleUv.x);
-              poleNightColor += texture2D(uNightTexture, sampleUv).rgb;
-            }
-            poleNightColor /= uPoleSampleCount;
-            nightColor = mix(nightColor, poleNightColor * uNightMapIntensity, poleFactor);
-          }
-          
-          vec3 nightBase = dayColor * uAmbientIntensity + nightColor;
-          finalColor = mix(nightBase, dayColor * uMaxDaylightIntensity, dayFactor);
-        } else {
-          // 其他行星：使用配置的亮度范围
-          float lightIntensity = mix(uAmbientIntensity, uMaxDaylightIntensity, dayFactor);
-          finalColor = dayColor * lightIntensity;
-        }
-        
-        // 确保颜色不会太暗
-        finalColor = max(finalColor, vec3(uMinNightIntensity));
-        
-        // 应用对比度增强
-        finalColor = adjustContrast(finalColor, uContrastBoost);
-        
-        // 应用饱和度增强
-        finalColor = adjustSaturation(finalColor, uSaturationBoost);
-        
-        // 应用伽马校正
-        finalColor = applyGamma(finalColor, uGamma);
-        
-        // 菲涅尔边缘光照效果（模拟大气散射）
-        if (uEnableFresnel > 0.5) {
-          float fresnel = pow(1.0 - max(dot(vWorldNormal, vViewDirection), 0.0), uFresnelPower);
-          // 只在向阳面和边缘添加菲涅尔效果
-          float fresnelMask = max(dayFactor * 0.5 + 0.5, 0.3); // 背面也有一点边缘光
-          finalColor += uFresnelColor * fresnel * uFresnelIntensity * fresnelMask;
-        }
-        
-        // 确保颜色在有效范围内
-        finalColor = clamp(finalColor, vec3(0.0), vec3(1.0));
-        
-        // 输出完全不透明的颜色
-        gl_FragColor = vec4(finalColor, 1.0);
-      }
-    `;
-    
-    // 使用天体特定的菲涅尔颜色
-    const fresnelColor = new THREE.Color(params.fresnelColor);
-    
-    const material = new THREE.ShaderMaterial({
-      uniforms: {
-        uColor: { value: new THREE.Color(color) },
-        uSunPosition: { value: new THREE.Vector3(0, 0, 0) },
-        uDayTexture: { value: null },
-        uNightTexture: { value: null },
-        uHasTexture: { value: 0.0 },
-        uHasNightTexture: { value: 0.0 },
-        // 使用天体特定参数
-        uAmbientIntensity: { value: params.ambientIntensity },
-        uTerminatorWidth: { value: params.terminatorWidth },
-        uNightMapIntensity: { value: params.nightMapIntensity },
-        uContrastBoost: { value: params.contrastBoost },
-        uSaturationBoost: { value: params.saturationBoost },
-        uGamma: { value: params.gamma },
-        uMaxDaylightIntensity: { value: params.maxDaylightIntensity },
-        uMinNightIntensity: { value: params.minNightIntensity },
-        // 菲涅尔效果
-        uEnableFresnel: { value: params.enableFresnelEffect ? 1.0 : 0.0 },
-        uFresnelIntensity: { value: params.fresnelIntensity },
-        uFresnelColor: { value: fresnelColor },
-        uFresnelPower: { value: params.fresnelPower },
-        // 极点修复参数（全局配置）
-        uPoleBlendStart: { value: PLANET_LIGHTING_CONFIG.poleBlendStart },
-        uPoleBlendEnd: { value: PLANET_LIGHTING_CONFIG.poleBlendEnd },
-        uPoleSampleCount: { value: PLANET_LIGHTING_CONFIG.poleSampleCount },
-        uPoleSampleRadius: { value: PLANET_LIGHTING_CONFIG.poleSampleRadius },
-      },
-      vertexShader,
-      fragmentShader,
-      // 确保完全不透明
-      transparent: false,
-      depthWrite: true,
-      depthTest: true,
-      side: THREE.FrontSide,
-      blending: THREE.NormalBlending,
-    });
-    
-    return material;
-  }
-
-  /**
    * 更新太阳位置（用于光照计算）
    * 每帧调用以更新着色器中的太阳位置
    */
@@ -1370,7 +976,7 @@ export class Planet {
    * earth.updateRotation(currentTime, timeSpeed, isPlaying);
    * ```
    */
-  updateRotation(currentTimeInDays: number, timeSpeed: number = 1, isPlaying: boolean = true): void {
+  updateRotation(currentTimeInDays: number, _timeSpeed: number = 1, _isPlaying: boolean = true): void {
     // 更新太阳着色器的时间参数（用于动画效果）
     if (this.isSun && this.material instanceof THREE.ShaderMaterial) {
       this.material.uniforms.uTime.value = currentTimeInDays * SUN_SHADER_CONFIG.animationSpeed;
@@ -1635,7 +1241,7 @@ export class Planet {
       this.material.uniforms.uHasNightTexture.value = 1.0;
       this.material.needsUpdate = true;
       this.nightTexture = texture;
-      this.hasNightMap = true;
+
     }
   }
 
@@ -1670,7 +1276,7 @@ export class Planet {
     // 清除夜间贴图引用
     if (this.nightTexture) {
       this.nightTexture = null;
-      this.hasNightMap = false;
+
     }
     
     if (this.markerObject && this.markerObject.parent) {

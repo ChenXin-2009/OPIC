@@ -28,7 +28,7 @@ declare global {
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useSolarSystemStore } from '@/lib/state';
 import { useSatelliteStore } from '@/lib/store/useSatelliteStore';
-import { useSceneStore } from '@/lib/state/sceneStore';
+import { useSceneStore } from '@/lib/state/SceneStore';
 import { SceneManager } from '@/lib/3d/SceneManager';
 import { SceneMode } from '@/lib/3d/SceneModeManager';
 import { getRenderAPI } from '@/lib/mod-manager/api/RenderAPI';
@@ -39,9 +39,8 @@ import { CesiumMappedPlanet } from '@/lib/3d/CesiumMappedPlanet';
 import { OrbitCurve } from '@/lib/3d/OrbitCurve';
 import { OrbitLabel } from '@/lib/3d/OrbitLabel';
 import { SatelliteOrbit } from '@/lib/3d/SatelliteOrbit';
-import { SATELLITE_DEFINITIONS } from '@/lib/astronomy/orbit';
+import { SATELLITE_DEFINITIONS, ORBITAL_ELEMENTS } from '@/lib/astronomy/orbit';
 import { dateToJulianDay } from '@/lib/astronomy/time';
-import { ORBITAL_ELEMENTS } from '@/lib/astronomy/orbit';
 import { planetNames } from '@/lib/astronomy/names';
 import { CELESTIAL_BODIES } from '@/lib/types/celestialTypes';
 import { IMAGERY_SOURCES, LUNAR_IMAGERY_SOURCES } from '@/lib/cesium/imageryProviders';
@@ -52,185 +51,19 @@ import ScaleRuler from './ScaleRuler';
 import GridScaleRuler from './GridScaleRuler';
 import DistanceDisplay from './DistanceDisplay';
 import ZoomSlider from './ZoomSlider';
-import SearchErrorBoundary from '@/components/search/SearchErrorBoundary';
 import { FAR_VIEW_CONFIG, ORBIT_COLORS, ORBIT_CURVE_POINTS, ORBIT_FADE_CONFIG, SATELLITE_CONFIG, SUN_LIGHT_CONFIG } from '@/lib/config/visualConfig';
 import { CAMERA_CONFIG } from '@/lib/config/cameraConfig';
 import { TextureManager } from '@/lib/3d/TextureManager';
-import { LocalGroupRenderer } from '@/lib/3d/LocalGroupRenderer';
-import { NearbyGroupsRenderer } from '@/lib/3d/NearbyGroupsRenderer';
-import { VirgoSuperclusterRenderer } from '@/lib/3d/VirgoSuperclusterRenderer';
-import { LaniakeaSuperclusterRenderer } from '@/lib/3d/LaniakeaSuperclusterRenderer';
 import { SatelliteLayer } from '@/lib/3d/SatelliteLayer';
 import { ExoplanetRenderer } from '@/lib/3d/ExoplanetRenderer';
-import { UniverseScale } from '@/lib/types/universeTypes';
-import type { GalaxyCluster, GalaxyGroup, LocalGroupGalaxy, SimpleGalaxy, Supercluster } from '@/lib/types/universeTypes';
+import { ROTATION_SPEEDS, CAMERA_ANGLE_CONFIG } from '@/lib/config/solarSystem3dConfig';
+import { initializeUniverseRenderers } from './universeRenderers';
 import SatelliteDetailModal from '@/components/satellite/SatelliteDetailModal';
 import ExoplanetSystemPanel from '@/components/exoplanets/ExoplanetSystemPanel';
 import { useExoplanetStore } from '@/lib/store/useExoplanetStore';
-import { useEarthControlStore } from '@/lib/state/earthControlStore';
+import { useEarthControlStore } from '@/lib/state/EarthControlStore';
+import { logger } from '@/utils/logger';
 
-
-// ==================== 可调参数配置 ====================
-// ⚙️ 以下参数可在文件顶部调整，影响 3D 场景显示效果
-
-// 轨道颜色使用集中配置 `ORBIT_COLORS`（位于 src/lib/config/visualConfig.ts）
-
-// 行星自转速度（弧度/秒，简化值）
-const ROTATION_SPEEDS: Record<string, number> = {
-  mercury: 0.000000124, // 约 58.6 天/转
-  venus: -0.000000116,  // 约 243 天/转（逆行，负值表示反向旋转）
-  earth: 0.0000727,     // 约 24 小时/转
-  mars: 0.0000709,      // 约 24.6 小时/转
-  jupiter: 0.000175,    // 约 9.9 小时/转
-  saturn: 0.000164,     // 约 10.7 小时/转
-  uranus: 0.000101,     // 约 17.2 小时/转
-  neptune: 0.000108,    // 约 16.1 小时/转
-  sun: 0.000000725,     // 约 27 天/转
-};
-
-// 标签配置（字体粗细通过 CSS 变量可调）
-const LABEL_CONFIG = {
-  // 🔧 行星标签相对于标记圈中心的X轴偏移（像素，右侧）
-  offsetX: 25,
-  
-  // 🔧 行星标签相对于标记圈中心的Y轴偏移（像素，上方）
-  offsetY: -8,
-  
-  // 🔧 太阳标签在太阳上方的像素偏移（CSS 像素，而不是 3D 空间单位）
-  sunOffsetY: -20,
-  
-  // 🔧 字体大小
-  fontSize: '16px',
-  
-  // 🔧 字体族（全站统一使用无衬线字体）
-  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif',
-  
-  // 🔧 字体粗细（行星/太阳标签字重，可在 globals.css 中调整）
-  fontWeight: 'var(--font-weight-label)',
-  
-  // 🔧 渐隐速度（0-1，值越大变化越快）
-  fadeSpeed: 0.2,
-  
-  // 🔧 最小缩放级别（低于此值不显示任何标签，除了选中的）
-  minZoomToShow: 10,
-};
-
-// 🔧 相机初始角度配置（度）
-// 注意：
-// - 上下角度（polarAngle）：0度 = 俯视（垂直于轨道平面），90度 = 水平视角，180度 = 仰视
-// - 左右角度（azimuthalAngle）：0度 = 正前方，90度 = 右侧，-90度 = 左侧，180度/-180度 = 正后方
-const CAMERA_ANGLE_CONFIG = {
-  initialPolarAngle: 90,
-  
-  // 🔧 初始左右角度（度）：页面加载时的相机左右角度，0度 = 正前方
-  initialAzimuthalAngle: 90,
-  
-  // 🔧 过渡目标上下角度（度）：从初始角度平滑过渡到的上下角度，45度 = 从俯视倾斜45度
-  targetPolarAngle: 160,
-  
-  // 🔧 过渡目标左右角度（度）：从初始角度平滑过渡到的左右角度，0度 = 保持正前方
-  targetAzimuthalAngle: 0,
-  
-  // 🔧 过渡延迟时间（毫秒）：页面加载后多久开始角度过渡
-  transitionDelay: 500,
-  
-  // 🔧 是否启用平滑过渡（true = 平滑过渡，false = 立即切换）
-  smoothTransition: true,
-};
-
-// 太阳光与轨道点数配置已集中到 `src/lib/config/visualConfig.ts`
-
-/**
- * 初始化宇宙尺度渲染器
- * 异步加载真实天文数据并设置到 SceneManager
- */
-async function initializeUniverseRenderers(sceneManager: SceneManager) {
-  try {
-    const dataLoader = (await import('@/lib/data/UniverseDataLoader')).UniverseDataLoader.getInstance();
-    
-    // 1. 本星系群 - 从真实数据加载
-    try {
-      const localGroupBuffer = await dataLoader.loadDataForScale(UniverseScale.LocalGroup);
-      const localGroupGalaxies = dataLoader.parseLocalGroupData(localGroupBuffer);
-      
-      const localGroupRenderer = new LocalGroupRenderer();
-      await localGroupRenderer.loadData(localGroupGalaxies);
-      
-      // 初始化标签管理器
-      const camera = sceneManager.getCamera();
-      const canvas = sceneManager.getRenderer().domElement;
-      localGroupRenderer.initLabelManager(camera, canvas);
-      
-      sceneManager.setLocalGroupRenderer(localGroupRenderer);
-      console.log('LocalGroupRenderer initialized with', localGroupGalaxies.length, 'galaxies');
-    } catch (error) {
-      console.warn('Failed to load LocalGroup data:', error);
-    }
-    
-    // 2. 近邻星系群 - 从真实数据加载
-    try {
-      const nearbyGroupsBuffer = await dataLoader.loadDataForScale(UniverseScale.NearbyGroups);
-      const { groups, galaxies } = dataLoader.parseNearbyGroupsData(nearbyGroupsBuffer);
-      
-      const nearbyGroupsRenderer = new NearbyGroupsRenderer();
-      await nearbyGroupsRenderer.loadData(groups, galaxies);
-      
-      // 初始化标签管理器
-      const camera = sceneManager.getCamera();
-      const canvas = sceneManager.getRenderer().domElement;
-      nearbyGroupsRenderer.initLabelManager(camera, canvas);
-      
-      sceneManager.setNearbyGroupsRenderer(nearbyGroupsRenderer);
-      console.log('NearbyGroupsRenderer initialized with', groups.length, 'groups and', galaxies.length, 'galaxies');
-    } catch (error) {
-      console.warn('Failed to load NearbyGroups data:', error);
-    }
-    
-    // 3. 室女座超星系团 - 从真实数据加载
-    try {
-      const virgoBuffer = await dataLoader.loadDataForScale(UniverseScale.VirgoSupercluster);
-      const { clusters, galaxies } = dataLoader.parseVirgoSuperclusterData(virgoBuffer);
-      
-      const virgoRenderer = new VirgoSuperclusterRenderer();
-      await virgoRenderer.loadData(clusters, galaxies);
-      
-      // 初始化标签管理器
-      const camera = sceneManager.getCamera();
-      const canvas = sceneManager.getRenderer().domElement;
-      virgoRenderer.initLabelManager(camera, canvas);
-      
-      sceneManager.setVirgoSuperclusterRenderer(virgoRenderer);
-      console.log('VirgoSuperclusterRenderer initialized with', clusters.length, 'clusters and', galaxies.length, 'galaxies');
-    } catch (error) {
-      console.warn('Failed to load VirgoSupercluster data:', error);
-    }
-    
-    // 4. 拉尼亚凯亚超星系团 - 从真实数据加载
-    try {
-      const laniakeaBuffer = await dataLoader.loadDataForScale(UniverseScale.LaniakeaSupercluster);
-      const { superclusters, galaxies } = dataLoader.parseLaniakeaData(laniakeaBuffer);
-      
-      const laniakeaRenderer = new LaniakeaSuperclusterRenderer();
-      await laniakeaRenderer.loadData(superclusters, galaxies);
-      
-      // 初始化标签管理器
-      const camera = sceneManager.getCamera();
-      const canvas = sceneManager.getRenderer().domElement;
-      laniakeaRenderer.initLabelManager(camera, canvas);
-      
-      sceneManager.setLaniakeaSuperclusterRenderer(laniakeaRenderer);
-      console.log('LaniakeaSuperclusterRenderer initialized with', superclusters.length, 'superclusters and', galaxies.length, 'galaxies');
-    } catch (error) {
-      console.warn('Failed to load Laniakea data:', error);
-    }
-    
-    
-    console.log('Universe renderers initialization complete');
-  } catch (error) {
-    console.error('Error initializing universe renderers:', error);
-    throw error;
-  }
-}
 
 interface SolarSystemCanvas3DProps {
   onCameraDistanceChange?: (distance: number) => void;
@@ -242,16 +75,16 @@ interface SolarSystemCanvas3DProps {
   onInitializationProgress?: (stage: string, progress: number, isComplete: boolean) => void;
 }
 
-function setCesiumPlanetEnabled(
-  planet: Planet | undefined,
-  enabled: boolean,
-  camera?: THREE.PerspectiveCamera
-): void {
-  const cesiumPlanet = planet as (Planet & {
-    setCesiumEnabled?: (enabled: boolean, camera?: THREE.PerspectiveCamera) => void;
-  }) | undefined;
-  cesiumPlanet?.setCesiumEnabled?.(enabled, camera);
-}
+// 渲染循环复用的 Vector3 对象池（避免每帧 GC 压力）
+const _v3Pool = {
+  sun: new THREE.Vector3(),
+  planetWorld: new THREE.Vector3(),
+  camera: new THREE.Vector3(),
+  target: new THREE.Vector3(),
+  offset: new THREE.Vector3(),
+  parentPos: new THREE.Vector3(),
+  parentPos2: new THREE.Vector3(),
+};
 
 export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnabled = false, onEarthPlanetReady, onCameraReady, earthLockEnabled = false, earthLightEnabled = true, onInitializationProgress }: SolarSystemCanvas3DProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -310,7 +143,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
 
     const earthPlanet = planetsRef.current.get('earth');
     if (earthPlanet && 'setCesiumEnabled' in earthPlanet) {
-      console.log(`[SolarSystemCanvas3D] Setting Cesium enabled: ${cesiumEnabled}`);
+      logger.debug(`[SolarSystemCanvas3D] Setting Cesium enabled: ${cesiumEnabled}`);
       
       // 把当前 Three.js 相机传给 setCesiumEnabled，启用时会自动做初始同步
       const camera = cesiumEnabled ? (cameraRef.current as THREE.PerspectiveCamera ?? undefined) : undefined;
@@ -321,7 +154,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       if (cameraControllerRef.current) {
         const controls = cameraControllerRef.current.getControls();
         controls.enabled = true;
-        console.log(`[SolarSystemCanvas3D] OrbitControls always enabled`);
+        logger.debug(`[SolarSystemCanvas3D] OrbitControls always enabled`);
       }
     }
 
@@ -489,13 +322,13 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       // Wait for celestial bodies to load
       const currentState = useSolarSystemStore.getState();
       if (currentState.celestialBodies.length === 0) {
-        console.log('Waiting for celestial bodies to load...');
+        logger.debug('Waiting for celestial bodies to load...');
         onInitializationProgress?.('idle', 0, false);
         checkAndInitFrameId = requestAnimationFrame(checkAndInit);
         return;
       }
       
-      console.log(`Initializing scene with ${currentState.celestialBodies.length} celestial bodies`);
+      logger.debug(`Initializing scene with ${currentState.celestialBodies.length} celestial bodies`);
       isInitialized = true; // 标记已初始化，防止重复
       
       // 阶段1: 初始化场景 (0-20%)
@@ -522,7 +355,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       // 创建卫星图层
       const satelliteLayer = new SatelliteLayer(sceneManager);
       satelliteLayerRef.current = satelliteLayer;
-      console.log('SatelliteLayer initialized');
+      logger.debug('SatelliteLayer initialized');
 
       const scene = sceneManager.getScene();
       const camera = sceneManager.getCamera();
@@ -590,22 +423,6 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       // 设置初始相机角度（使用配置中的角度）
       cameraController.setPolarAngle(CAMERA_ANGLE_CONFIG.initialPolarAngle, false);
       cameraController.setAzimuthalAngle(CAMERA_ANGLE_CONFIG.initialAzimuthalAngle, false);
-      /*
-      // 延迟后平滑过渡到目标角度
-      setTimeout(() => {
-        if (cameraControllerRef.current) {
-          cameraControllerRef.current.setPolarAngle(
-            CAMERA_ANGLE_CONFIG.targetPolarAngle,
-            CAMERA_ANGLE_CONFIG.smoothTransition
-          );
-          cameraControllerRef.current.setAzimuthalAngle(
-            CAMERA_ANGLE_CONFIG.targetAzimuthalAngle,
-            CAMERA_ANGLE_CONFIG.smoothTransition
-          );
-        }
-      }, CAMERA_ANGLE_CONFIG.transitionDelay);
-      */
-
 
       // 触发设置菜单的重新渲染
       setIsCameraControllerReady(true);
@@ -768,7 +585,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
               const cesiumExt = (planet as EarthPlanet).getCesiumExtension();
               if (cesiumExt && provider) {
                 cesiumExt.setImageryProvider(provider);
-                console.log('[SolarSystemCanvas3D] Default ESRI imagery provider loaded');
+                logger.debug('[SolarSystemCanvas3D] Default ESRI imagery provider loaded');
               }
             }).catch((error) => {
               console.error('[SolarSystemCanvas3D] Failed to load default imagery provider:', error);
@@ -788,7 +605,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
               const cesiumExt = (planet as CesiumMappedPlanet).getCesiumExtension();
               if (cesiumExt && provider) {
                 cesiumExt.setImageryProvider(provider);
-                console.log('[SolarSystemCanvas3D] NASA Moon Trek lunar imagery provider loaded');
+                logger.debug('[SolarSystemCanvas3D] NASA Moon Trek lunar imagery provider loaded');
               }
             }).catch((error) => {
               console.error('[SolarSystemCanvas3D] Failed to load lunar imagery provider:', error);
@@ -964,9 +781,8 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
         const currentBodies = currentState.celestialBodies;
 
         // 太阳位置（用于光照计算）
-        const sunPosition = earthLightEnabledRef.current 
-          ? new THREE.Vector3(0, 0, 0) 
-          : new THREE.Vector3(1000000, 1000000, 1000000); // 远离太阳位置以禁用光照
+        const sunPosition = _v3Pool.sun.set(0, 0, 0);
+        if (!earthLightEnabledRef.current) sunPosition.set(1000000, 1000000, 1000000);
         
         // 只有在未选中系外行星系统时才更新太阳系
         if (!shouldPauseSolarSystem) {
@@ -998,8 +814,8 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
               }
               
               // 计算相机到星球的距离并更新 LOD
-              const planetWorldPos = new THREE.Vector3(body.x, body.y, body.z);
-              const cameraPos = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
+              const planetWorldPos = _v3Pool.planetWorld.set(body.x, body.y, body.z);
+              const cameraPos = _v3Pool.camera.set(camera.position.x, camera.position.y, camera.position.z);
               const distance = planetWorldPos.distanceTo(cameraPos);
               planet.updateLOD(distance);
               
@@ -1029,11 +845,9 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           const selectedBody = currentBodies.find((b: any) => b.name === state.selectedPlanet);
           if (selectedBody && cameraControllerRef.current) {
             const controls = cameraControllerRef.current.getControls();
-            const targetPos = new THREE.Vector3(selectedBody.x, selectedBody.y, selectedBody.z);
+            const targetPos = _v3Pool.target.set(selectedBody.x, selectedBody.y, selectedBody.z);
             
-            // 计算相机相对于当前目标的偏移向量（保持距离和方向）
-            const cameraOffset = new THREE.Vector3()
-              .subVectors(camera.position, controls.target);
+            const cameraOffset = _v3Pool.offset.subVectors(camera.position, controls.target);
             
             // 同时更新目标和相机位置，保持相对关系
             controls.target.copy(targetPos);
@@ -1201,14 +1015,6 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
             const range = FAR_VIEW_CONFIG.orbitFadeEndDistance - FAR_VIEW_CONFIG.orbitFadeStartDistance;
             farViewOrbitOpacity = 1 - (distanceToSun - FAR_VIEW_CONFIG.orbitFadeStartDistance) / range;
           }
-          
-          // 标签淡出 - TODO: Apply farViewLabelOpacity to labels
-          // if (distanceToSun >= FAR_VIEW_CONFIG.labelFadeEndDistance) {
-          //   farViewLabelOpacity = 0;
-          // } else if (distanceToSun > FAR_VIEW_CONFIG.labelFadeStartDistance) {
-          //   const range = FAR_VIEW_CONFIG.labelFadeEndDistance - FAR_VIEW_CONFIG.labelFadeStartDistance;
-          //   farViewLabelOpacity = 1 - (distanceToSun - FAR_VIEW_CONFIG.labelFadeStartDistance) / range;
-          // }
         }
         
         // 合并远距离透明度到轨道透明度
@@ -1292,9 +1098,8 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           
           // 每帧更新太阳的屏幕空间光晕（如果 Planet 实例提供该方法）
           try {
-            // @ts-ignore - updateGlow 可能未在类型定义中声明
             sunPlanet.updateGlow(camera);
-          } catch (err) {
+          } catch {
             // 忽略错误，保持渲染循环稳定
           }
         }
@@ -1351,14 +1156,14 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           if (sceneManagerRef.current) {
             // 添加调试日志
             const sceneModeManager = sceneManagerRef.current.getSceneModeManager();
-            let currentMode = sceneModeManager.getCurrentMode();
+            const currentMode = sceneModeManager.getCurrentMode();
             const config = sceneModeManager.getConfig();
             
             // 每2秒输出一次距离和模式信息
             const now = Date.now();
             if (!window._lastModeDebugTime || now - window._lastModeDebugTime > 2000) {
               window._lastModeDebugTime = now;
-              console.log(`[SceneMode] Distance: ${(distToEarth * 149597870.7).toFixed(0)} km (${distToEarth.toFixed(6)} AU), Mode: ${currentMode}, Thresholds: enter=${(config.cesiumModeDistanceThreshold * 149597870.7).toFixed(0)}km, exit=${(config.threeModeDistanceThreshold * 149597870.7).toFixed(0)}km`);
+              logger.debug(`[SceneMode] Distance: ${(distToEarth * 149597870.7).toFixed(0)} km (${distToEarth.toFixed(6)} AU), Mode: ${currentMode}, Thresholds: enter=${(config.cesiumModeDistanceThreshold * 149597870.7).toFixed(0)}km, exit=${(config.threeModeDistanceThreshold * 149597870.7).toFixed(0)}km`);
             }
             
             const modeChanged = sceneManagerRef.current.updateSceneMode(distToEarth);
@@ -1366,16 +1171,16 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
             if (modeChanged) {
               const newMode = sceneModeManager.getCurrentMode();
               
-              console.log(`[SceneMode] ========== MODE CHANGED ==========`);
-              console.log(`[SceneMode] Switched to: ${newMode}`);
-              console.log(`[SceneMode] Distance: ${(distToEarth * 149597870.7).toFixed(0)} km`);
+              logger.debug(`[SceneMode] ========== MODE CHANGED ==========`);
+              logger.debug(`[SceneMode] Switched to: ${newMode}`);
+              logger.debug(`[SceneMode] Distance: ${(distToEarth * 149597870.7).toFixed(0)} km`);
               
               // 处理模式切换
               const earthPlanet = planetsRef.current.get('earth');
               
               if (newMode === SceneMode.CESIUM_DOMINANT) {
                 // 切换到 Cesium 主导模式
-                console.log('[SceneMode] Switching to CESIUM_DOMINANT mode');
+                logger.debug('[SceneMode] Switching to CESIUM_DOMINANT mode');
 
                 // 0. 把 OrbitControls 的旋转中心搬到地球（进入时做，退出时不改）
                 //    进入时相机已经在地球附近，target 搬到地球几乎不改变视角
@@ -1400,7 +1205,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
                   if (cesiumExt) {
                     // 同步当前 Three.js 相机位置到 Cesium
                     cesiumExt.syncCamera(camera, earthPos);
-                    console.log('[SceneMode] Initial camera sync: Three.js → Cesium');
+                    logger.debug('[SceneMode] Initial camera sync: Three.js → Cesium');
                   }
                 }
                 
@@ -1409,7 +1214,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
                   const cesiumExt = (earthPlanet as any).getCesiumExtension();
                   if (cesiumExt) {
                     cesiumExt.setNativeCameraEnabled(true);
-                    console.log('[SceneMode] Cesium native camera enabled');
+                    logger.debug('[SceneMode] Cesium native camera enabled');
                   }
                 }
                 
@@ -1417,7 +1222,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
                 if (cameraControllerRef.current) {
                   const controls = cameraControllerRef.current.getControls();
                   controls.enabled = false;
-                  console.log('[SceneMode] Three.js OrbitControls disabled');
+                  logger.debug('[SceneMode] Three.js OrbitControls disabled');
                 }
                 
                 // 6. 调整 canvas 层级：Three.js 在上层但透明，Cesium 在下层
@@ -1425,11 +1230,11 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
                 renderer.domElement.style.pointerEvents = 'none'; // Three.js 不接收事件
                 renderer.domElement.style.zIndex = '1'; // Three.js 在上层（渲染卫星等）
                 
-                console.log('[SceneMode] Canvas layers adjusted for CESIUM_DOMINANT');
+                logger.debug('[SceneMode] Canvas layers adjusted for CESIUM_DOMINANT');
                 
               } else {
                 // 切换回 Three.js 主导模式
-                console.log('[SceneMode] Switching to THREE_DOMINANT mode');
+                logger.debug('[SceneMode] Switching to THREE_DOMINANT mode');
                 
                 // 1. 在切换前，先从 Cesium 同步一次相机位置到 Three.js
                 //    确保 Three.js 相机从 Cesium 的最终位置开始
@@ -1437,7 +1242,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
                   const cesiumExt = (earthPlanet as any).getCesiumExtension();
                   if (cesiumExt) {
                     cesiumExt.syncCameraFromCesium(camera, earthPos);
-                    console.log('[SceneMode] Final camera sync: Cesium → Three.js');
+                    logger.debug('[SceneMode] Final camera sync: Cesium → Three.js');
                   }
                 }
                 
@@ -1451,7 +1256,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
                   const cesiumExt = (earthPlanet as any).getCesiumExtension();
                   if (cesiumExt) {
                     cesiumExt.setNativeCameraEnabled(false);
-                    console.log('[SceneMode] Cesium native camera disabled');
+                    logger.debug('[SceneMode] Cesium native camera disabled');
                   }
                 }
                 
@@ -1467,7 +1272,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
                   if (ctrlAny._panOffset) ctrlAny._panOffset.set(0, 0, 0);
 
                   controls.update();
-                  console.log('[SceneMode] Three.js OrbitControls enabled');
+                  logger.debug('[SceneMode] Three.js OrbitControls enabled');
 
                   // 同步 CameraController 内部状态到当前相机位置
                   // 防止 trackingDistance/smoothDistance 过时导致回弹
@@ -1479,7 +1284,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
                 renderer.domElement.style.pointerEvents = 'auto'; // Three.js 接收事件
                 renderer.domElement.style.zIndex = '1'; // Three.js 在上层
                 
-                console.log('[SceneMode] Canvas layers adjusted for THREE_DOMINANT');
+                logger.debug('[SceneMode] Canvas layers adjusted for THREE_DOMINANT');
               }
             }
             
@@ -1604,7 +1409,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
             const parentKey = body.parent as string;
             const parentPlanet = planetsRef.current.get(parentKey.toLowerCase());
             if (!parentPlanet) return;
-            const parentPos = new THREE.Vector3();
+            const parentPos = _v3Pool.parentPos;
             parentPlanet.getMesh().getWorldPosition(parentPos);
             const cameraPosVec = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
             const distanceToParent = cameraPosVec.distanceTo(parentPos);
@@ -1812,7 +1617,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           const parentPlanet = planetsRef.current.get(parentKey.toLowerCase());
           if (!parentPlanet) return;
           
-          const parentPos = new THREE.Vector3();
+          const parentPos = _v3Pool.parentPos2;
           parentPlanet.getMesh().getWorldPosition(parentPos);
           const cameraPosVec = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
           const distanceToParent = cameraPosVec.distanceTo(parentPos);
@@ -1855,12 +1660,11 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
           
           // 更新轨道中心位置
           try {
-            // @ts-ignore
             orbit.updatePlanetPosition(parentPos);
             
             // 注意：轨道朝向在创建时已设置，不需要每帧更新
             // 这避免了轨道持续旋转的问题
-          } catch (err) {
+          } catch {
             // 忽略错误
           }
         });
@@ -2242,7 +2046,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
             
             // Log the type of object clicked
             const objectType = target.isSatellite ? 'satellite' : 'planet';
-            console.log(`Focusing on ${objectType}: ${selectedPlanetName} (clicked ${target.type})`);
+            logger.debug(`Focusing on ${objectType}: ${selectedPlanetName} (clicked ${target.type})`);
             
             // 平滑移动相机到行星位置（放大显示）
             const targetPosition = new THREE.Vector3(target.body.x, target.body.y, target.body.z);
@@ -2334,7 +2138,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
               trackingTargetGetter
             );
             
-            console.log('Auto-focused on Earth');
+            logger.debug('Auto-focused on Earth');
           }
         }
       }, 500); // 延迟500ms，确保场景完全初始化
@@ -2496,10 +2300,7 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       ref={containerRef} 
       className="w-full h-full relative"
       style={{ 
-        // ⚠️ 修复：移除 touchAction: 'none'（已在 Canvas 元素上设置）
-        // ⚠️ 修复：移除 transform: 'translateZ(0)'（会创建新的 stacking context，导致 fixed 定位失效）
-        // ⚠️ 修复：移除 isolation: 'isolate'（会创建新的 stacking context，导致 fixed 定位的 z-index 失效，Firefox 平板特别敏感）
-        // 防止移动端默认手势干扰
+        touchAction: 'none',
         WebkitTouchCallout: 'none',
         WebkitUserSelect: 'none',
         userSelect: 'none',
@@ -2509,16 +2310,6 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
         opacity: opacity,
         transition: 'opacity 1s ease-in-out',
       } as React.CSSProperties}
-      onTouchStart={() => {
-        // 让相机控制器完全处理所有触摸事件
-        // 不在这里阻止默认行为，避免与相机控制器冲突
-      }}
-      onTouchMove={() => {
-        // 让相机控制器完全处理所有触摸事件
-      }}
-      onTouchEnd={() => {
-        // 让相机控制器完全处理所有触摸事件
-      }}
     >
       {/* 左侧面板：尺度信息 + 缩放滑块 */}
       <div

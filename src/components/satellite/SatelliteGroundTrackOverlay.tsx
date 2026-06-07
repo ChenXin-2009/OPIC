@@ -31,7 +31,7 @@ const TRACK_COLOR_FUTURE = 'rgba(74, 158, 255, 0.9)';
 const CURRENT_COLOR = '#4a9eff';
 const COVERAGE_COLOR = 'rgba(74, 158, 255, 0.08)';
 
-export function SatelliteGroundTrackOverlay({ width = 800, height = 400, lang = 'zh' }: SatelliteGroundTrackOverlayProps) {
+export function SatelliteGroundTrackOverlay({ width = 800, height = 400, lang: _lang = 'zh' }: SatelliteGroundTrackOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const trackDataRef = useRef<GroundTrackResponse | null>(null);
   const { selectedSatellite } = useSatelliteStore();

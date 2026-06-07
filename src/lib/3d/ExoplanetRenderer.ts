@@ -54,10 +54,8 @@ export class ExoplanetRenderer {
   private hoveredHostName: string | null = null;
   private hoveredPlanetName: string | null = null;
   private selectedSystem: ExoplanetSystemDetails | null = null;
-  private selectedBody: ExoplanetSelection | null = null;
   private planetVisuals: PlanetVisual[] = [];
   private systemStarMesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
-  private systemStarLight: THREE.PointLight | null = null;
   private systemStarGlow: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
   private systemStarLabel: OrbitLabel | null = null;
   private elapsed = 0;
@@ -224,7 +222,6 @@ export class ExoplanetRenderer {
   }
 
   setSelectedBody(selection: ExoplanetSelection | null): void {
-    this.selectedBody = selection;
     this.applySelectedBody(selection);
   }
 
@@ -559,13 +556,7 @@ export class ExoplanetRenderer {
     );
   }
 
-  private hashToPhase(input: string): number {
-    let hash = 0;
-    for (let i = 0; i < input.length; i++) {
-      hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
-    }
-    return (hash / 0xffffffff) * Math.PI * 2;
-  }
+
 
   private disposeHosts(): void {
     if (this.pointCloud) {
@@ -615,7 +606,6 @@ export class ExoplanetRenderer {
     this.group.remove(this.systemGroup);
     this.systemGroup = null;
     this.systemStarMesh = null;
-    this.systemStarLight = null;
     this.systemStarGlow = null;
   }
 }

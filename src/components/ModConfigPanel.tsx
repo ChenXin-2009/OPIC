@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { ConfigUIGenerator } from '@/lib/mod-manager/config/ConfigUIGenerator';
 import type { JSONSchema } from '@/lib/mod-manager/config/types';
 

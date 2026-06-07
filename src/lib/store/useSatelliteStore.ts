@@ -270,7 +270,7 @@ export const useSatelliteStore = create<SatelliteStore>()(
        * 
        * 根据搜索查询筛选可见卫星
        */
-      updateSatellitePositions: (time: number) => {
+      updateSatellitePositions: (_time: number) => {
         const { tleData, searchQuery } = get();
 
         // 筛选可见卫星

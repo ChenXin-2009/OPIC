@@ -8,12 +8,10 @@
 
 import pako from 'pako';
 import { 
-  ChebyshevSegment, 
   ChunkMetadata, 
   EphemerisChunk, 
   EphemerisData,
   EphemerisHeader,
-  HermiteSegment,
   PolynomialSegment,
   PolynomialType,
   SatelliteId,

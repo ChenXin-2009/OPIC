@@ -13,7 +13,7 @@
 
 import * as THREE from 'three';
 import type { OrbitalElements } from '@/lib/astronomy/orbit';
-import { ORBIT_FADE_CONFIG, ORBIT_GRADIENT_CONFIG, ORBIT_RENDER_CONFIG, ORBIT_STYLE_CONFIG } from '@/lib/config/visualConfig';
+import { ORBIT_GRADIENT_CONFIG, ORBIT_RENDER_CONFIG, ORBIT_STYLE_CONFIG } from '@/lib/config/visualConfig';
 
 export class OrbitCurve {
   private root: THREE.Group;
@@ -401,13 +401,6 @@ export class OrbitCurve {
   }
 
   /**
-   * Update orbit visibility based on camera distance
-   */
-  private updateDiscVisibility(cameraDistance: number): void {
-    // 已废弃，透明度由全局统一控制
-  }
-
-  /**
    * 设置轨道透明度（供外部调用）
    */
   setOpacity(discOpacity: number, lineOpacity?: number): void {
@@ -431,10 +424,6 @@ export class OrbitCurve {
     }
   }
 
-  private applyOpacity(opacity: number): void {
-    this.setOpacity(opacity);
-  }
-
   /**
    * Regenerate curve with current resolution
    */
@@ -446,83 +435,6 @@ export class OrbitCurve {
     this.applyCurrentOpacity();
   }
 
-  /**
-   * Update gradient colors for new geometry
-   */
-  private updateGradientColors(geometry: THREE.BufferGeometry, orbitPoints: THREE.Vector3[]): void {
-    if (!this.planetPosition) return;
-    
-    const vertexCount = orbitPoints.length;
-    const colors = new Float32Array(vertexCount * 3);
-    
-    // Parse orbit color
-    let r, g, b;
-    if (this.orbitColor.length === 7) {
-      r = parseInt(this.orbitColor.slice(1, 3), 16) / 255;
-      g = parseInt(this.orbitColor.slice(3, 5), 16) / 255;
-      b = parseInt(this.orbitColor.slice(5, 7), 16) / 255;
-    } else if (this.orbitColor.length === 4) {
-      r = parseInt(this.orbitColor[1], 16) / 15;
-      g = parseInt(this.orbitColor[2], 16) / 15;
-      b = parseInt(this.orbitColor[3], 16) / 15;
-    } else {
-      r = g = b = 1;
-    }
-    
-    // Find closest point to planet position
-    let closestIdx = 0;
-    let minDist = Infinity;
-    for (let i = 0; i < vertexCount; i++) {
-      const dist = orbitPoints[i].distanceTo(this.planetPosition);
-      if (dist < minDist) {
-        minDist = dist;
-        closestIdx = i;
-      }
-    }
-    
-    // Calculate motion direction
-    const nextIdx = (closestIdx + 1) % vertexCount;
-    const velocityDir = new THREE.Vector3()
-      .subVectors(orbitPoints[nextIdx], orbitPoints[closestIdx])
-      .normalize();
-    
-    const maxDist = Math.max(...orbitPoints.map(p => p.distanceTo(this.planetPosition!)));
-    
-    // Apply gradient
-    for (let i = 0; i < vertexCount; i++) {
-      const point = orbitPoints[i];
-      const toPoint = new THREE.Vector3().subVectors(point, this.planetPosition);
-      const dist = toPoint.length();
-      
-      if (dist < 0.001) {
-        colors[i * 3] = r;
-        colors[i * 3 + 1] = g;
-        colors[i * 3 + 2] = b;
-        continue;
-      }
-      
-      toPoint.normalize();
-      const dot = toPoint.dot(velocityDir);
-      const distT = Math.min(1, dist / maxDist);
-      
-      let opacity = ORBIT_GRADIENT_CONFIG.maxOpacity;
-      if (dot < 0) {
-        const fadeT = Math.abs(dot) * distT;
-        opacity = ORBIT_GRADIENT_CONFIG.maxOpacity - 
-                 (ORBIT_GRADIENT_CONFIG.maxOpacity - ORBIT_GRADIENT_CONFIG.minOpacity) * fadeT;
-      } else {
-        opacity = ORBIT_GRADIENT_CONFIG.maxOpacity - 
-                 (ORBIT_GRADIENT_CONFIG.maxOpacity - ORBIT_GRADIENT_CONFIG.minOpacity) * distT * 0.3;
-      }
-      
-      opacity = Math.max(ORBIT_GRADIENT_CONFIG.minOpacity, Math.min(ORBIT_GRADIENT_CONFIG.maxOpacity, opacity));
-      colors[i * 3] = r * opacity;
-      colors[i * 3 + 1] = g * opacity;
-      colors[i * 3 + 2] = b * opacity;
-    }
-    
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  }
   updatePlanetPosition(position: THREE.Vector3): void {
     this.planetPosition = position;
     
@@ -632,7 +544,7 @@ export class OrbitCurve {
    * @param tolerance Maximum allowed distance from orbit (AU)
    * @returns Distance from orbit curve, or -1 if validation fails
    */
-  validatePlanetAlignment(planetPosition: THREE.Vector3, tolerance: number = 0.001): number {
+  validatePlanetAlignment(planetPosition: THREE.Vector3, _tolerance: number = 0.001): number {
     if (!this.curve || this.points.length === 0) {
       return -1;
     }
@@ -693,7 +605,7 @@ export class OrbitCurve {
     // 时间演化轨道元素（与 orbit.ts 相同）
     let elem = elements;
     if (julianDay) {
-      const T = (julianDay - 2451545.0) / 36525.0;
+    const T = (julianDay - 2451545.0) / 36525.0;
       elem = {
         ...elements,
         a: elements.a + elements.a_dot * T,
@@ -770,9 +682,9 @@ export class OrbitCurve {
    * @param julianDay Julian day number
    * @returns Position vector
    */
-  calculatePosition(julianDay: number): THREE.Vector3 {
+  calculatePosition(_julianDay: number): THREE.Vector3 {
     // Use the same calculation as in orbit.ts
-    const T = (julianDay - 2451545.0) / 36525.0;
+
     
     // Calculate current orbital elements (simplified - no time evolution for tests)
     const elem = this.elements;
@@ -853,4 +765,4 @@ export class OrbitCurve {
   }
 }
 
-import { vectorPool } from './utils/vectorPool';
+

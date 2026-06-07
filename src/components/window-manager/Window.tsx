@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { WindowState } from '@/types/window';
+import { WindowState, ResizeDirection } from '@/types/window';
 import { useWindowManagerStore } from '@/lib/state/windowManagerStore';
 import { WindowTitleBar } from './WindowTitleBar';
 
@@ -28,34 +28,46 @@ export function Window({ window }: WindowProps) {
   const [isDragging, setIsDragging] = React.useState(false);
   const [isResizing, setIsResizing] = React.useState(false);
   const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 });
-  const [resizeStart, setResizeStart] = React.useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [resizeStart, setResizeStart] = React.useState({ x: 0, y: 0, width: 0, height: 0, posX: 0, posY: 0 });
+  const [resizeDirection, setResizeDirection] = React.useState<ResizeDirection>('se');
+
+  // 提取 clientX/Y 兼容鼠标和触摸事件
+  const getClientXY = (e: React.MouseEvent | React.TouchEvent): { clientX: number; clientY: number } => {
+    if ('touches' in e) {
+      const touch = e.touches[0] || (e as React.TouchEvent).changedTouches[0];
+      return { clientX: touch.clientX, clientY: touch.clientY };
+    }
+    return { clientX: (e as React.MouseEvent).clientX, clientY: (e as React.MouseEvent).clientY };
+  };
 
   // 处理窗口点击 (聚焦)
   const handleWindowClick = () => {
     focusWindow(window.id);
   };
 
-  // 处理标题栏拖动开始
-  const handleDragStart = (e: React.MouseEvent) => {
+  // 处理标题栏拖动开始 (鼠标 + 触摸)
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
     if (!window.draggable || window.isMaximized) return;
+    const { clientX, clientY } = getClientXY(e);
 
     setIsDragging(true);
     setDragStart({
-      x: e.clientX - window.position.x,
-      y: e.clientY - window.position.y,
+      x: clientX - window.position.x,
+      y: clientY - window.position.y,
     });
     focusWindow(window.id);
   };
 
-  // 处理拖动
+  // 处理拖动 (鼠标 + 触摸)
   React.useEffect(() => {
     if (!isDragging) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const newX = e.clientX - dragStart.x;
-      const newY = e.clientY - dragStart.y;
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+      const newX = clientX - dragStart.x;
+      const newY = clientY - dragStart.y;
 
-      // 边界检查
       const viewportWidth = typeof globalThis.window !== 'undefined' ? globalThis.window.innerWidth : 1920;
       const viewportHeight = typeof globalThis.window !== 'undefined' ? globalThis.window.innerHeight : 1080;
       const maxX = viewportWidth - window.size.width;
@@ -67,63 +79,121 @@ export function Window({ window }: WindowProps) {
       });
     };
 
-    const handleMouseUp = () => {
+    const handleUp = () => {
       setIsDragging(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('touchend', handleUp);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleUp);
     };
   }, [isDragging, dragStart, window.id, window.size, updateWindowPosition]);
 
-  // 处理调整大小开始
-  const handleResizeStart = (e: React.MouseEvent, direction: string) => {
+  // 处理调整大小开始 (鼠标 + 触摸)
+  const handleResizeStart = (e: React.MouseEvent | React.TouchEvent, direction: ResizeDirection) => {
     if (!window.resizable) return;
-
     e.stopPropagation();
+    const { clientX, clientY } = getClientXY(e);
     setIsResizing(true);
+    setResizeDirection(direction);
     setResizeStart({
-      x: e.clientX,
-      y: e.clientY,
+      x: clientX,
+      y: clientY,
       width: window.size.width,
       height: window.size.height,
+      posX: window.position.x,
+      posY: window.position.y,
     });
     focusWindow(window.id);
   };
 
-  // 处理调整大小
+  // 处理调整大小 (鼠标 + 触摸, 支持四角)
   React.useEffect(() => {
     if (!isResizing) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - resizeStart.x;
-      const deltaY = e.clientY - resizeStart.y;
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+      const deltaX = clientX - resizeStart.x;
+      const deltaY = clientY - resizeStart.y;
+      let newWidth = resizeStart.width;
+      let newHeight = resizeStart.height;
+      let newX = resizeStart.posX;
+      let newY = resizeStart.posY;
 
-      const newWidth = Math.max(window.minSize.width, resizeStart.width + deltaX);
-      const newHeight = Math.max(window.minSize.height, resizeStart.height + deltaY);
+      switch (resizeDirection) {
+        case 'se':
+          newWidth = resizeStart.width + deltaX;
+          newHeight = resizeStart.height + deltaY;
+          break;
+        case 'sw':
+          newWidth = resizeStart.width - deltaX;
+          newHeight = resizeStart.height + deltaY;
+          newX = resizeStart.posX + deltaX;
+          break;
+        case 'ne':
+          newWidth = resizeStart.width + deltaX;
+          newHeight = resizeStart.height - deltaY;
+          newY = resizeStart.posY + deltaY;
+          break;
+        case 'nw':
+          newWidth = resizeStart.width - deltaX;
+          newHeight = resizeStart.height - deltaY;
+          newX = resizeStart.posX + deltaX;
+          newY = resizeStart.posY + deltaY;
+          break;
+      }
 
-      updateWindowSize(window.id, {
-        width: newWidth,
-        height: newHeight,
-      });
+      // 约束最小尺寸，防止窗口翻转
+      const clampedWidth = Math.max(window.minSize.width, newWidth);
+      const clampedHeight = Math.max(window.minSize.height, newHeight);
+
+      // 当宽度被 clamp 时，修正位置偏移
+      if (resizeDirection === 'sw' || resizeDirection === 'nw') {
+        const actualDeltaX = clampedWidth - resizeStart.width;
+        newX = resizeStart.posX - actualDeltaX;
+      }
+      if (resizeDirection === 'ne' || resizeDirection === 'nw') {
+        const actualDeltaY = clampedHeight - resizeStart.height;
+        newY = resizeStart.posY - actualDeltaY;
+      }
+
+      const viewportWidth = typeof globalThis.window !== 'undefined' ? globalThis.window.innerWidth : 1920;
+      const viewportHeight = typeof globalThis.window !== 'undefined' ? globalThis.window.innerHeight : 1080;
+
+      // 约束位置不超出视口
+      newX = Math.max(0, Math.min(newX, viewportWidth - clampedWidth));
+      newY = Math.max(0, Math.min(newY, viewportHeight - clampedHeight));
+
+      if (newX !== resizeStart.posX || newY !== resizeStart.posY) {
+        updateWindowPosition(window.id, { x: newX, y: newY });
+      }
+      updateWindowSize(window.id, { width: clampedWidth, height: clampedHeight });
     };
 
-    const handleMouseUp = () => {
+    const handleUp = () => {
       setIsResizing(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('touchend', handleUp);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleUp);
     };
-  }, [isResizing, resizeStart, window.id, window.minSize, updateWindowSize]);
+  }, [isResizing, resizeStart, resizeDirection, window.id, window.minSize, window.size, updateWindowPosition, updateWindowSize]);
 
   // 处理窗口控制按钮
   const handleClose = () => closeWindow(window.id);
@@ -204,6 +274,8 @@ export function Window({ window }: WindowProps) {
         top: window.position.y,
         width: window.size.width,
         height: window.size.height,
+        maxWidth: 'calc(100vw - 20px)',
+        maxHeight: 'calc(100vh - 20px)',
         zIndex: window.zIndex,
       }}
       initial={{ opacity: 0, scale: 0.9 }}
@@ -223,6 +295,7 @@ export function Window({ window }: WindowProps) {
         maximizable={window.maximizable}
         isMaximized={window.isMaximized}
         onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
       />
 
       {/* 窗口内容 */}
@@ -230,16 +303,38 @@ export function Window({ window }: WindowProps) {
         {window.content}
       </div>
 
-      {/* 调整大小手柄 (右下角) */}
+      {/* 调整大小手柄 (四角) */}
       {window.resizable && !window.isMaximized && (
-        <div
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
-          onMouseDown={(e) => handleResizeStart(e, 'se')}
-        >
-          <svg className="w-full h-full text-white/30" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M14 14L14 10M14 14L10 14M14 14L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-        </div>
+        <>
+          {/* 右上角 */}
+          <div
+            className="absolute top-0 right-0 w-6 h-6 cursor-ne-resize z-10"
+            onMouseDown={(e) => handleResizeStart(e, 'ne')}
+            onTouchStart={(e) => handleResizeStart(e, 'ne')}
+          />
+          {/* 左上角 */}
+          <div
+            className="absolute top-0 left-0 w-6 h-6 cursor-nw-resize z-10"
+            onMouseDown={(e) => handleResizeStart(e, 'nw')}
+            onTouchStart={(e) => handleResizeStart(e, 'nw')}
+          />
+          {/* 右下角 */}
+          <div
+            className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize z-10 flex items-end justify-end"
+            onMouseDown={(e) => handleResizeStart(e, 'se')}
+            onTouchStart={(e) => handleResizeStart(e, 'se')}
+          >
+            <svg className="w-4 h-4 text-white/30" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M14 14L14 10M14 14L10 14M14 14L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+          {/* 左下角 */}
+          <div
+            className="absolute bottom-0 left-0 w-6 h-6 cursor-sw-resize z-10"
+            onMouseDown={(e) => handleResizeStart(e, 'sw')}
+            onTouchStart={(e) => handleResizeStart(e, 'sw')}
+          />
+        </>
       )}
     </motion.div>
   );

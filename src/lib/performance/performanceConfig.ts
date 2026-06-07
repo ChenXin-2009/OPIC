@@ -76,7 +76,7 @@ export function isDevelopment(): boolean {
  * logDebug('[SatelliteLayer]', 'Updated', count, 'satellites');
  * ```
  */
-export function logDebug(message: string, ...args: any[]): void {
+export function logDebug(_message: string, ..._args: any[]): void {
   // 性能日志已禁用
 }
 

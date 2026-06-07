@@ -5,9 +5,8 @@
  * 负责构建依赖图、检测循环依赖、计算加载/卸载顺序。
  */
 
-import type { DependencyResolution, ModDependency } from '../types';
-import { CircularDependencyError, MissingDependencyError } from '../error/ModError';
 import { isVersionCompatible } from '../utils/version';
+import type { ModDependency, DependencyResolution } from '../types';
 
 /**
  * 依赖图节点

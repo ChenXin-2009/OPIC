@@ -85,6 +85,7 @@
  */
 
 import { UniverseScale } from '../types/universeTypes';
+import { logger } from '@/utils/logger';
 
 /**
  * 宇宙数据加载器（单例）
@@ -208,7 +209,6 @@ export class UniverseDataLoader {
    */
   private async loadBinaryFile(path: string): Promise<ArrayBuffer> {
     try {
-      // 添加 cache-busting 和 no-cache headers
       const response = await fetch(path, {
         cache: 'no-store',
         headers: {
@@ -253,24 +253,22 @@ export class UniverseDataLoader {
    * 
    * @example
    * ```typescript
-   * const filename = this.getFilenameForScale(UniverseScale.LocalGroup);
-   * // 返回: '/data/universe/local-group.bin?t=1234567890'
+    * const filename = this.getFilenameForScale(UniverseScale.LocalGroup);
+    * // 返回: '/data/universe/local-group.bin'
    * ```
    */
   private getFilenameForScale(scale: UniverseScale): string {
     const basePath = '/data/universe/';
-    // 使用时间戳强制重新加载（更激进的缓存清除）
-    const timestamp = Date.now();
 
     switch (scale) {
       case UniverseScale.LocalGroup:
-        return `${basePath}local-group.bin?t=${timestamp}`;
+        return `${basePath}local-group.bin`;
       case UniverseScale.NearbyGroups:
-        return `${basePath}nearby-groups.bin?t=${timestamp}`;
+        return `${basePath}nearby-groups.bin`;
       case UniverseScale.VirgoSupercluster:
-        return `${basePath}virgo-supercluster.bin?t=${timestamp}`;
+        return `${basePath}virgo-supercluster.bin`;
       case UniverseScale.LaniakeaSupercluster:
-        return `${basePath}laniakea.bin?t=${timestamp}`;
+        return `${basePath}laniakea.bin`;
       default:
         throw new Error(`No data file for scale: ${scale}`);
     }
@@ -530,7 +528,7 @@ export class UniverseDataLoader {
         const filename = this.getFilenameForScale(scale);
         if (this.cache.has(filename)) {
           this.cache.delete(filename);
-          console.log(`Released cache for ${scale}`);
+          logger.debug(`Released cache for ${scale}`);
         }
       } catch (error) {
         // 忽略没有数据文件的尺度
@@ -1041,7 +1039,7 @@ export class UniverseDataLoader {
     // 读取超星系团数量
     const superclusterCount = view.getUint16(offset, true);
     offset += 2;
-    console.log(`[UniverseDataLoader] Supercluster count: ${superclusterCount}`);
+    logger.debug(`[UniverseDataLoader] Supercluster count: ${superclusterCount}`);
 
     // 读取超星系团数据
     const superclusters: any[] = [];
@@ -1106,11 +1104,11 @@ export class UniverseDataLoader {
       });
       
       if (i < 3) {
-        console.log(`[UniverseDataLoader] Supercluster ${i}: ${nameTable[nameIndex]}, center=(${centerX.toFixed(1)}, ${centerY.toFixed(1)}, ${centerZ.toFixed(1)}), members=${memberCount}`);
+        logger.debug(`[UniverseDataLoader] Supercluster ${i}: ${nameTable[nameIndex]}, center=(${centerX.toFixed(1)}, ${centerY.toFixed(1)}, ${centerZ.toFixed(1)}), members=${memberCount}`);
       }
     }
 
-    console.log(`[UniverseDataLoader] Parsed ${superclusters.length} superclusters, ${allGalaxies.length} total galaxies`);
+    logger.debug(`[UniverseDataLoader] Parsed ${superclusters.length} superclusters, ${allGalaxies.length} total galaxies`);
     return { superclusters, galaxies: allGalaxies };
   }
 }

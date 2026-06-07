@@ -13,6 +13,7 @@ export interface WindowTitleBarProps {
   maximizable?: boolean;
   isMaximized?: boolean;
   onMouseDown?: (e: React.MouseEvent) => void;
+  onTouchStart?: (e: React.TouchEvent) => void;
 }
 
 /**
@@ -28,6 +29,7 @@ export function WindowTitleBar({
   maximizable = true,
   isMaximized = false,
   onMouseDown,
+  onTouchStart,
 }: WindowTitleBarProps) {
   const [isHovered, setIsHovered] = React.useState(false);
 
@@ -35,6 +37,7 @@ export function WindowTitleBar({
     <div
       className="relative flex items-center justify-between h-12 px-4 bg-white/5 backdrop-blur-md border-b border-white/10 rounded-t-xl cursor-move select-none"
       onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

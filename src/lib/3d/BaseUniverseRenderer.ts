@@ -130,7 +130,7 @@ export abstract class BaseUniverseRenderer implements UniverseScaleRenderer {
    * 更新渲染器状态
    * 子类可以重写此方法添加额外逻辑
    */
-  update(cameraDistance: number, deltaTime: number): void {
+  update(cameraDistance: number, _deltaTime: number): void {
     this.opacity = this.calculateOpacity(cameraDistance);
     this.isVisible = this.opacity > 0.01;
     this.group.visible = this.isVisible;

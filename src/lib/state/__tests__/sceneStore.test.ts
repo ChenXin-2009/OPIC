@@ -9,7 +9,7 @@
  * - 状态独立性
  */
 
-import { useSceneStore } from '../sceneStore';
+import { useSceneStore } from '../SceneStore';
 
 // Mock SceneManager 和 CameraController
 const mockSceneManager = {

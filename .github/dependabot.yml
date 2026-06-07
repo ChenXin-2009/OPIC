@@ -1,0 +1,89 @@
+# Dependabot 自动依赖更新配置
+# 
+# 功能：
+# - 自动检测 npm 依赖更新
+# - 每周一 00:00 UTC 运行
+# - 分组开发依赖到单个 PR
+# - 优先处理安全更新
+# - 限制最多 10 个开放 PR
+# 
+# 文档: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # npm 包管理器配置
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      # 每周一 00:00 UTC 运行
+      interval: "weekly"
+      day: "monday"
+      time: "00:00"
+      timezone: "UTC"
+    
+    # 打开的 PR 数量限制
+    open-pull-requests-limit: 10
+    
+    # 允许的更新类型
+    # - security: 安全更新（优先级最高）
+    # - minor: 次要版本更新（如 1.0.0 → 1.1.0）
+    # - patch: 补丁版本更新（如 1.0.0 → 1.0.1）
+    versioning-strategy: auto
+    
+    # PR 标签
+    labels:
+      - "dependencies"
+      - "automated"
+    
+    # 提交消息前缀（遵循 conventional commits）
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    
+    # 忽略特定依赖（如果需要）
+    ignore:
+      # 示例：忽略特定包的主版本更新
+      # - dependency-name: "next"
+      #   update-types: ["version-update:semver-major"]
+    
+    # 安全更新单独处理
+    # 开发依赖分组到单个 PR
+    groups:
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+    
+    # PR 审阅人（可选，根据团队配置）
+    # reviewers:
+    #   - "your-github-username"
+    # assignees:
+    #   - "your-github-username"
+    
+    # 里程碑（可选）
+    # milestone: 1
+    
+    # 仅在特定分支上运行
+    target-branch: "main"
+    
+    # 更新策略
+    # - auto: 自动合并补丁和次要版本更新（需要 GitHub Auto-merge 功能）
+    # - security: 仅安全更新自动合并
+    # auto-merge:
+    #   enabled: false
+
+  # GitHub Actions 依赖更新（可选）
+  # - package-ecosystem: "github-actions"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #     day: "monday"
+  #     time: "00:00"
+  #   labels:
+  #     - "dependencies"
+  #     - "github-actions"
+  #     - "automated"
+  #   commit-message:
+  #     prefix: "ci"

@@ -1,0 +1,146 @@
+{
+  "common": {
+    "now": "Now",
+    "loading": "Loading...",
+    "error": "ERROR",
+    "retry": "RETRY",
+    "search": "SEARCH",
+    "searching": "Searching...",
+    "version": "VERSION",
+    "author": "AUTHOR",
+    "show": "SHOW",
+    "hide": "HIDE",
+    "refresh": "REFRESH DATA",
+    "refreshing": "REFRESHING...",
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete"
+  },
+  "settings": {
+    "title": "SETTINGS",
+    "language": "LANGUAGE",
+    "ephemerisStatus": "EPHEMERIS STATUS",
+    "unitSystem": "UNIT SYSTEM",
+    "metric": "Metric",
+    "imperial": "Imperial",
+    "temperature": "Temperature",
+    "celsius": "Celsius",
+    "fahrenheit": "Fahrenheit",
+    "accessibility": "ACCESSIBILITY",
+    "highContrast": "High Contrast Mode",
+    "reducedMotion": "Reduced Motion",
+    "keyboardShortcuts": "Keyboard Shortcuts"
+  },
+  "timeControl": {
+    "jumpToNow": "Jump to now",
+    "selectDate": "Select date",
+    "accuracyWarning": "Accuracy may be reduced",
+    "paused": "Paused",
+    "future": "",
+    "past": "",
+    "year": "y",
+    "month": "mo",
+    "day": "d",
+    "hour": "h",
+    "minute": "m",
+    "second": "s"
+  },
+  "search": {
+    "title": "SEARCH",
+    "placeholder": "Search celestial objects (Ctrl+K or /)",
+    "noResults": "No matching celestial objects found"
+  },
+  "satellite": {
+    "title": "SATELLITES",
+    "control": "SATELLITE CONTROL",
+    "searchPlaceholder": "Name or NORAD ID...",
+    "visible": "VISIBLE",
+    "updated": "UPDATED",
+    "notUpdated": "Not updated",
+    "justNow": "Just now",
+    "minutesAgo": "m ago",
+    "hoursAgo": "h ago",
+    "daysAgo": "d ago",
+    "info": "SATELLITE INFO",
+    "basicInfo": "BASIC INFO",
+    "altitude": "ALTITUDE",
+    "velocity": "VELOCITY",
+    "orbitalParams": "ORBITAL PARAMETERS",
+    "inclination": "INCLINATION",
+    "eccentricity": "ECCENTRICITY",
+    "period": "PERIOD",
+    "semiMajorAxis": "SEMI-MAJOR AXIS",
+    "minutes": "min",
+    "statistics": "STATISTICS",
+    "byCategory": "BY CATEGORY",
+    "performance": "PERFORMANCE",
+    "renderTime": "RENDER TIME",
+    "showSatellites": "SHOW SATELLITES",
+    "hideSatellites": "HIDE SATELLITES",
+    "showOrbit": "SHOW ORBIT",
+    "hideOrbit": "HIDE ORBIT",
+    "visualizationError": "Satellite visualization error occurred"
+  },
+  "celestialBodies": {
+    "sun": "Sun",
+    "mercury": "Mercury",
+    "venus": "Venus",
+    "earth": "Earth",
+    "mars": "Mars",
+    "jupiter": "Jupiter",
+    "saturn": "Saturn",
+    "uranus": "Uranus",
+    "neptune": "Neptune",
+    "moon": "Moon"
+  },
+  "celestialTypes": {
+    "star": "Star",
+    "planet": "Planet",
+    "satellite": "Satellite",
+    "galaxy": "Galaxy",
+    "group": "Group",
+    "cluster": "Cluster",
+    "supercluster": "Supercluster"
+  },
+  "galaxy": {
+    "milkyWay": "Milky Way",
+    "laniakea": "Laniakea Supercluster"
+  },
+  "zoomLevels": {
+    "solarSystem": "Solar System",
+    "innerPlanets": "Inner Planets",
+    "earthMoon": "Earth-Moon",
+    "jupiterSystem": "Jupiter System",
+    "saturnSystem": "Saturn System"
+  },
+  "language": {
+    "switch": "Switch language",
+    "chinese": "Chinese",
+    "english": "English",
+    "spanish": "Spanish",
+    "french": "French",
+    "german": "German",
+    "japanese": "Japanese"
+  },
+  "errors": {
+    "initializationFailed": "Initialization Failed",
+    "networkError": "Network Error",
+    "loadingFailed": "Loading Failed",
+    "unexpectedError": "Unexpected Error Occurred"
+  },
+  "loading": {
+    "assets": "Asset Loading",
+    "data": "Data Initialization",
+    "rendering": "Rendering Preparation",
+    "complete": "Initialization Complete",
+    "timeoutWarning": "Initialization is taking longer than expected",
+    "suggestions": {
+      "checkNetwork": "Check your network connection",
+      "refresh": "Try refreshing the page",
+      "clearCache": "Clear browser cache",
+      "checkConsole": "Check browser console for errors"
+    }
+  }
+}

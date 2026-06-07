@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react';
 import { useModManager } from '@/hooks/useModManager';
-import { ModList } from './ModList';
+
 import { ModConfigPanel } from './ModConfigPanel';
 import { ModPerformancePanel } from './ModPerformancePanel';
 

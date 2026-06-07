@@ -107,9 +107,9 @@ export class PackageValidator {
    * 验证数字签名
    */
   async verifySignature(
-    packageData: ArrayBuffer,
-    signature: string,
-    publicKey: string
+    _packageData: ArrayBuffer,
+    _signature: string,
+    _publicKey: string
   ): Promise<boolean> {
     try {
       // TODO: 实现真实的签名验证
@@ -147,7 +147,7 @@ export class PackageValidator {
   /**
    * 计算数据的哈希值
    */
-  private calculateHash(data: ArrayBuffer): string {
+  private calculateHash(_data: ArrayBuffer): string {
     // TODO: 实现真实的哈希计算
     // 使用 Web Crypto API 的 SHA-256
     // 示例实现：

@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useSolarSystemStore } from '@/lib/state';
 import { Language, TranslationKey, translations } from '@/lib/i18n/translations';
 

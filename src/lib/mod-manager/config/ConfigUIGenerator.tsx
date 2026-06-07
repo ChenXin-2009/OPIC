@@ -7,7 +7,7 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import type { JSONSchema } from './types';
 import { ConfigValidator } from './ConfigValidator';
 

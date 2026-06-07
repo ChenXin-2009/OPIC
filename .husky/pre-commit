@@ -1,0 +1,5 @@
+# Run lint-staged
+npx lint-staged --concurrent false --verbose
+
+# Check TypeScript compilation (strict mode)
+npx tsc --noEmit

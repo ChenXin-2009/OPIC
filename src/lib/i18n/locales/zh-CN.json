@@ -1,0 +1,146 @@
+{
+  "common": {
+    "now": "现在",
+    "loading": "加载中...",
+    "error": "错误",
+    "retry": "重试",
+    "search": "搜索",
+    "searching": "搜索中...",
+    "version": "版本",
+    "author": "作者",
+    "show": "显示",
+    "hide": "隐藏",
+    "refresh": "刷新数据",
+    "refreshing": "刷新中...",
+    "close": "关闭",
+    "cancel": "取消",
+    "confirm": "确认",
+    "save": "保存",
+    "delete": "删除"
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "ephemerisStatus": "星历状态",
+    "unitSystem": "单位系统",
+    "metric": "公制",
+    "imperial": "英制",
+    "temperature": "温度",
+    "celsius": "摄氏度",
+    "fahrenheit": "华氏度",
+    "accessibility": "无障碍",
+    "highContrast": "高对比度模式",
+    "reducedMotion": "减少动画",
+    "keyboardShortcuts": "键盘快捷键"
+  },
+  "timeControl": {
+    "jumpToNow": "跳转到现在",
+    "selectDate": "选择日期",
+    "accuracyWarning": "精度可能降低",
+    "paused": "暂停",
+    "future": "未来",
+    "past": "过去",
+    "year": "年",
+    "month": "个月",
+    "day": "天",
+    "hour": "小时",
+    "minute": "分钟",
+    "second": "秒"
+  },
+  "search": {
+    "title": "搜索天体",
+    "placeholder": "搜索天体（Ctrl+K 或 /）",
+    "noResults": "未找到匹配的天体"
+  },
+  "satellite": {
+    "title": "地球卫星",
+    "control": "卫星控制",
+    "searchPlaceholder": "名称或NORAD ID...",
+    "visible": "可见卫星",
+    "updated": "更新时间",
+    "notUpdated": "未更新",
+    "justNow": "刚刚",
+    "minutesAgo": "分钟前",
+    "hoursAgo": "小时前",
+    "daysAgo": "天前",
+    "info": "卫星信息",
+    "basicInfo": "基本信息",
+    "altitude": "高度",
+    "velocity": "速度",
+    "orbitalParams": "轨道参数",
+    "inclination": "倾角",
+    "eccentricity": "偏心率",
+    "period": "周期",
+    "semiMajorAxis": "半长轴",
+    "minutes": "分钟",
+    "statistics": "统计信息",
+    "byCategory": "类别分布",
+    "performance": "性能",
+    "renderTime": "渲染时间",
+    "showSatellites": "显示卫星",
+    "hideSatellites": "隐藏卫星",
+    "showOrbit": "显示轨道",
+    "hideOrbit": "隐藏轨道",
+    "visualizationError": "卫星可视化组件发生错误"
+  },
+  "celestialBodies": {
+    "sun": "太阳",
+    "mercury": "水星",
+    "venus": "金星",
+    "earth": "地球",
+    "mars": "火星",
+    "jupiter": "木星",
+    "saturn": "土星",
+    "uranus": "天王星",
+    "neptune": "海王星",
+    "moon": "月球"
+  },
+  "celestialTypes": {
+    "star": "恒星",
+    "planet": "行星",
+    "satellite": "卫星",
+    "galaxy": "星系",
+    "group": "星系群",
+    "cluster": "星系团",
+    "supercluster": "超星系团"
+  },
+  "galaxy": {
+    "milkyWay": "银河系",
+    "laniakea": "拉尼亚凯亚超星系团"
+  },
+  "zoomLevels": {
+    "solarSystem": "太阳系",
+    "innerPlanets": "内行星",
+    "earthMoon": "地月系",
+    "jupiterSystem": "木星系",
+    "saturnSystem": "土星系"
+  },
+  "language": {
+    "switch": "切换语言",
+    "chinese": "中文",
+    "english": "英文",
+    "spanish": "西班牙语",
+    "french": "法语",
+    "german": "德语",
+    "japanese": "日语"
+  },
+  "errors": {
+    "initializationFailed": "初始化失败",
+    "networkError": "网络错误",
+    "loadingFailed": "加载失败",
+    "unexpectedError": "发生意外错误"
+  },
+  "loading": {
+    "assets": "资源加载",
+    "data": "数据初始化",
+    "rendering": "渲染准备",
+    "complete": "初始化完成",
+    "timeoutWarning": "初始化时间较长",
+    "suggestions": {
+      "checkNetwork": "检查网络连接",
+      "refresh": "刷新页面重试",
+      "clearCache": "清除浏览器缓存",
+      "checkConsole": "检查浏览器控制台错误信息"
+    }
+  }
+}

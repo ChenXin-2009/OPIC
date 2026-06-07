@@ -157,11 +157,6 @@ const SectionTitle = memo(({ children }: { children: React.ReactNode }) => {
 SectionTitle.displayName = 'SectionTitle';
 
 function SatelliteDetailContent({ data, lang = 'zh' }: SatelliteDetailContentProps) {
-  // 订阅Store中的卫星实时状态
-  const satelliteState = useSatelliteStore((state) => 
-    data.noradId ? state.satellites.get(data.noradId) : null
-  );
-
   // 使用本地状态存储实时数据，每秒更新
   const [realTimeData, setRealTimeData] = useState(data.realTimeData);
   const [velocityVector, setVelocityVector] = useState<{ x: number; y: number; z: number } | null>(null);

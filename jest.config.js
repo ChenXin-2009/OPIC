@@ -20,6 +20,14 @@ const config = {
     '!src/**/*.test.ts',
     '!src/**/*.spec.ts'
   ],
+  coverageThreshold: {
+    global: {
+      statements: 7,
+      branches: 4,
+      functions: 7,
+      lines: 7,
+    },
+  },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
   },

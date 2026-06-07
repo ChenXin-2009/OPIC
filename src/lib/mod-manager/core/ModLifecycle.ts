@@ -8,8 +8,6 @@
 import type {
   ModState,
   ModContext,
-  ModInstance,
-  ModLifecycleHooks,
 } from '../types';
 import { getRegistry } from './ModRegistry';
 import { getEventBus } from './EventBus';

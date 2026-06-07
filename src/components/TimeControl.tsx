@@ -250,8 +250,6 @@ const TimeControl = React.memo(() => {
   // 根据屏幕尺寸选择合适的配置值
   const cfg = TIME_CONTROL_CONFIG;
   
-  const dateTimeWidth = isMobile ? cfg.dateTimeWidthMobile : cfg.dateTimeWidth;
-  const middleSectionWidth = isMobile ? cfg.middleSectionWidthMobile : cfg.middleSectionWidth;
   const sliderWidth = isMobile ? TIME_SLIDER_CONFIG.widthMobile : TIME_SLIDER_CONFIG.width;
 
   return (

@@ -190,7 +190,6 @@ export function useSatelliteDetail(noradId: number | null): UseSatelliteDetailRe
       console.log(`[useSatelliteDetail] 加载详情数据: NORAD ID=${id}`);
 
       // 优化: 直接从store获取TLE数据,不需要通过API查询
-      const satelliteState = useSatelliteStore.getState().satellites.get(id);
       const storeTleData = useSatelliteStore.getState().tleData.get(id);
       
       if (!storeTleData) {

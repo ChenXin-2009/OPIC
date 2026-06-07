@@ -1,4 +1,4 @@
-import { useDockStore, initializeDefaultDockItems } from '../dockStore';
+import { useDockStore, initializeDefaultDockItems } from '../DockStore';
 import type { DockItem, DockItemConfig } from '@/types/dock';
 
 describe('useDockStore', () => {
