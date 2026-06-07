@@ -33,6 +33,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -44,19 +45,38 @@ next-env.d.ts
 # quality reports
 /reports
 
-测试.bat
-推.txt
-
-# IDE configurations
+# IDE and editor configurations
 .kiro/
 .vscode/
-.playwright-mcp/
+.idea/
+.codebuddy/
 .workbuddy/
 
+# Playwright browser automation
+.playwright-mcp/
 
 # 根目录临时文件
 /*.txt
 /*.bat
+!README*.txt
 
 # 比赛材料（不上传 GitHub）
 /docs/competition/
+
+# Cesium 静态资源（由构建脚本自动生成）
+/public/cesium/Workers/
+/public/cesium/ThirdParty/
+/public/cesium/Assets/
+/public/cesium/Widgets/
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 临时文件和备份
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
