@@ -1,9 +1,8 @@
 {
   "name": "opic",
-  "version": "11.2.3",
+  "version": "11.2.4",
   "description": "A Web-based multi-scale universe visualization and astronomical data integration system - Open Integrated Cosmos",
   "private": true,
-  "type": "commonjs",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
