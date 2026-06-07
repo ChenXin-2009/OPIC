@@ -28,7 +28,7 @@ declare global {
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useSolarSystemStore } from '@/lib/state';
 import { useSatelliteStore } from '@/lib/store/useSatelliteStore';
-import { useSceneStore } from '@/lib/state/SceneStore';
+import { useSceneStore } from '@/lib/state/sceneStore';
 import { SceneManager } from '@/lib/3d/SceneManager';
 import { SceneMode } from '@/lib/3d/SceneModeManager';
 import { getRenderAPI } from '@/lib/mod-manager/api/RenderAPI';
@@ -61,7 +61,7 @@ import { initializeUniverseRenderers } from './universeRenderers';
 import SatelliteDetailModal from '@/components/satellite/SatelliteDetailModal';
 import ExoplanetSystemPanel from '@/components/exoplanets/ExoplanetSystemPanel';
 import { useExoplanetStore } from '@/lib/store/useExoplanetStore';
-import { useEarthControlStore } from '@/lib/state/EarthControlStore';
+import { useEarthControlStore } from '@/lib/state/earthControlStore';
 import { logger } from '@/utils/logger';
 
 

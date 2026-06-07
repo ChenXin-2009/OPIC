@@ -8,7 +8,7 @@ import InfoModal from "@/components/InfoModal";
 import { HEADER_CONFIG } from "@/lib/config/visualConfig";
 import EphemerisStatusPanel from "@/components/EphemerisStatusPanel";
 import { useSolarSystemStore } from "@/lib/state";
-import { useEarthControlStore } from "@/lib/state/EarthControlStore";
+import { useEarthControlStore } from "@/lib/state/earthControlStore";
 import { initModManager, autoEnableMods } from "@/lib/mod-manager";
 import { registerCoreMods } from "@/lib/mods";
 import { useModStore } from "@/lib/mod-manager/store";

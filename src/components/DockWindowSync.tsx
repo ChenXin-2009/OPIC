@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useDockStore } from '@/lib/state/DockStore';
-import { useWindowManagerStore } from '@/lib/state/windowManagerStore';
+import { useDockStore } from '@/lib/state/dockStore';
+import { useWindowManagerStore } from '@/lib/state/WindowManagerStore';
 
 /**
  * Dock 和窗口管理器同步组件

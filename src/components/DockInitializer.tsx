@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useDockStore } from '@/lib/state/DockStore';
-import { useWindowManagerStore } from '@/lib/state/windowManagerStore';
-import { useSceneStore } from '@/lib/state/SceneStore';
+import { useDockStore } from '@/lib/state/dockStore';
+import { useWindowManagerStore } from '@/lib/state/WindowManagerStore';
+import { useSceneStore } from '@/lib/state/sceneStore';
 import { defaultDockItems } from '@/lib/config/defaultDockItems';
 import { SettingsWindow } from './windows/SettingsWindow';
 import { SearchWindow } from './windows/SearchWindow';

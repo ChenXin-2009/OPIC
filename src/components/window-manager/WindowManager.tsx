@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useWindowManagerStore } from '@/lib/state/windowManagerStore';
+import { useWindowManagerStore } from '@/lib/state/WindowManagerStore';
 import { Window } from './Window';
 
 /**

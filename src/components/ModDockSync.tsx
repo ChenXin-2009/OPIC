@@ -7,8 +7,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useDockStore } from '@/lib/state/DockStore';
-import { useWindowManagerStore } from '@/lib/state/windowManagerStore';
+import { useDockStore } from '@/lib/state/dockStore';
+import { useWindowManagerStore } from '@/lib/state/WindowManagerStore';
 import { useModStore } from '@/lib/mod-manager/store';
 import { SatelliteWindow } from './windows/SatelliteWindow';
 import { CesiumControlWindow } from './windows/CesiumControlWindow';

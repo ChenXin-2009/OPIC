@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useDockStore } from '@/lib/state/DockStore';
+import { useDockStore } from '@/lib/state/dockStore';
 import { DockItem } from './DockItem';
 
 /**

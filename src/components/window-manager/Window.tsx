@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { WindowState, ResizeDirection } from '@/types/window';
-import { useWindowManagerStore } from '@/lib/state/windowManagerStore';
+import { useWindowManagerStore } from '@/lib/state/WindowManagerStore';
 import { WindowTitleBar } from './WindowTitleBar';
 
 export interface WindowProps {
