@@ -28,6 +28,41 @@ import { logDebug, logError } from '../performance/performanceConfig';
 import { useModStore } from '../mod-manager/store';
 
 /**
+ * 卫星 TEME-like 位置到 RenderWorld 的帧变换。
+ *
+ * 背景：sgp4Calculator 输出的位置经过 eciToThreeJS 私有轴映射
+ * (x, z, -y)，将赤道惯性系（X=春分点, Z=北极）映射到一个非标准帧。
+ * 此函数将该中间帧 + GMST 旋转 + ICRF→RenderWorld 组合成一次矩阵乘法，
+ * 取代旧版 rotationX(66.56°) 静态补偿。
+ *
+ * @param inputPos - eciToThreeJS 格式的卫星位置 (AU)
+ * @param gmstRad - 格林尼治平恒星时 (弧度)，由 satellite.gstime(date) 获取
+ * @returns RenderWorld 位置 (AU)，X=春分点, Z=黄道北极
+ */
+function eciSwappedToRenderWorld(
+  inputPos: THREE.Vector3,
+  gmstRad: number
+): THREE.Vector3 {
+  const eps = 23.43928 * Math.PI / 180;
+  const cosE = Math.cos(eps);
+  const sinE = Math.sin(eps);
+  const cosG = Math.cos(gmstRad);
+  const sinG = Math.sin(gmstRad);
+
+  // 推导自 eciToThreeJS(x, z, -y) 输出经
+  // ECI→ECF (-GMST) → ICRF → RenderWorld (R_x(-ε)) 的完整复合
+  const x = inputPos.x;
+  const y = inputPos.y;
+  const z = inputPos.z;
+
+  return new THREE.Vector3(
+    x * cosG - z * sinG,
+    -x * sinG * cosE - z * cosG * cosE + y * sinE,
+    x * sinG * sinE + z * cosG * sinE + y * cosE
+  );
+}
+
+/**
  * SatelliteLayer - 卫星图层管理器
  * 
  * 负责协调卫星渲染器和SGP4计算器，将卫星数据集成到3D场景中。
@@ -180,9 +215,12 @@ export class SatelliteLayer {
       if (earthBody) {
         const earthPosition = new THREE.Vector3(earthBody.x, earthBody.y, earthBody.z);
         
-        // 创建旋转矩阵：X轴旋转66.56度（ECI → 黄道坐标）
-        const rotationMatrix = new THREE.Matrix4();
-        rotationMatrix.makeRotationX(THREE.MathUtils.degToRad(66.56));
+        // 计算 GMST（格林尼治平恒星时）用于 TEME→ECF 旋转
+        // 公式：JD = (timestamp_ms / 86400000) + 2440587.5
+        //        GMST(deg) = 280.46061837 + 360.98564736629 * (JD - 2451545.0)
+        const jd = currentSimulatedTime / 86400000 + 2440587.5;
+        const gmstDeg = (280.46061837 + 360.98564736629 * (jd - 2451545.0)) % 360;
+        const gmstRad = THREE.MathUtils.degToRad(gmstDeg);
         
         // 卫星位置保持在地球相对坐标系，不叠加地球绝对位置
         // 改为通过 pointCloud.position 设置整体偏移，避免 Float32 精度丢失：
@@ -191,7 +229,9 @@ export class SatelliteLayer {
         // 叠加后低 4 位小数丢失 → 位置量化跳跃 → 抖动。
         const relativePositions = new Map<number, any>();
         interpolatedPositions.forEach((position, noradId) => {
-          const rotatedPosition = position.clone().applyMatrix4(rotationMatrix);
+          // 使用帧变换替代旧版 rotationX(66.56°) 静态补偿
+          // 参见 COORDINATE_SYSTEM_ALIGNMENT_PLAN.md §4 阶段 4
+          const rotatedPosition = eciSwappedToRenderWorld(position, gmstRad);
           
           const savedState = this.satelliteStates.get(noradId);
           if (savedState) {
@@ -484,8 +524,6 @@ export class SatelliteLayer {
     if (!earthBody) throw new Error('earth not found');
 
     const earthPosition = new THREE.Vector3(earthBody.x, earthBody.y, earthBody.z);
-    const rotationMatrix = new THREE.Matrix4();
-    rotationMatrix.makeRotationX(THREE.MathUtils.degToRad(66.56));
 
     // 直接在主线程用 satellite.js 计算，绕过 Worker 通信
     const satLib = await import('satellite.js');
@@ -505,14 +543,18 @@ export class SatelliteLayer {
       const pv = satLib.propagate(satrec, t);
       if (!pv || !pv.position || typeof pv.position === 'boolean') continue;
       const pos = pv.position as { x: number; y: number; z: number };
-      // ECI km → Three.js AU，坐标轴转换与 eciToThreeJS 一致
-      const raw = new THREE.Vector3(
+      // ECI km → AU + eciToThreeJS 轴映射，然后经帧变换到 RenderWorld
+      const eciSwapped = new THREE.Vector3(
         pos.x / AU_TO_KM,
         pos.z / AU_TO_KM,
         -pos.y / AU_TO_KM
       );
-      raw.applyMatrix4(rotationMatrix).add(earthPosition);
-      worldPoints.push(raw);
+      // 对轨道线的每步计算 GMST
+      const jd = t.getTime() / 86400000 + 2440587.5;
+      const gmstDeg = (280.46061837 + 360.98564736629 * (jd - 2451545.0)) % 360;
+      const gmstRad = THREE.MathUtils.degToRad(gmstDeg);
+      eciSwappedToRenderWorld(eciSwapped, gmstRad).add(earthPosition);
+      worldPoints.push(eciSwapped);
     }
 
     if (worldPoints.length < 2) throw new Error(`not enough orbit points for ${noradId}`);

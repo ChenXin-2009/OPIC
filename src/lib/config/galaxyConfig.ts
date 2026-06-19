@@ -22,7 +22,11 @@ export const SCALE_VIEW_CONFIG = {
   milkyWayBackgroundFadeEnd: LIGHT_YEAR_TO_AU,
 };
 
-// ==================== 银河系配置 ====================
+// ==================== 银河系纹理朝向配置 ====================
+// 以下 rotation 值仅用于银河系艺术纹理的朝向校准，
+// 不参与物理数据坐标变换。
+// 物理坐标变换由 src/lib/coordinates/frames/galactic.ts 处理。
+// 参见 COORDINATE_SYSTEM_ALIGNMENT_PLAN.md §3.8"
 export const GALAXY_CONFIG = {
   enabled: true,
   radius: 50000,

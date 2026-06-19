@@ -3,6 +3,25 @@ import { PARSEC_TO_AU } from '@/lib/constants/units';
 
 const SOLAR_RADIUS_TO_AU = 0.00465047;
 
+/**
+ * 将系外行星宿主星的 ICRS/ICRF 球面坐标（RA, Dec, distance）转换为 OPIC RenderWorld 笛卡尔坐标。
+ *
+ * 变换链（参见 COORDINATE_SYSTEM_ALIGNMENT_PLAN.md §3.7）：
+ *   1. ICRS 球面 (RA, Dec, d_pc) → ICRF 笛卡尔 (AU)
+ *      x_i = d_au * cos(δ) * cos(α)
+ *      y_i = d_au * cos(δ) * sin(α)
+ *      z_i = d_au * sin(δ)
+ *   2. ICRF 笛卡尔 → RenderWorld 笛卡尔 (J2000 mean ecliptic)
+ *      绕 X 轴旋转 -ε（黄赤交角 ε = 23.43928°）
+ *
+ * 旧版直接将 RA/Dec 映射到 Three.js Y-up（x=cosδ·cosα, y=sinδ），
+ * 导致与黄道面差 23.4°。此修正使系外行星宿主星方向与太阳系黄道面一致。
+ *
+ * @param raDeg - 赤经 (度)
+ * @param decDeg - 赤纬 (度)
+ * @param distancePc - 距离 (秒差距)
+ * @returns RenderWorld 坐标 (AU)，X 春分点 · Z 黄道北极
+ */
 export function exoplanetEquatorialToCartesian(
   raDeg: number,
   decDeg: number,
@@ -12,10 +31,21 @@ export function exoplanetEquatorialToCartesian(
   const dec = THREE.MathUtils.degToRad(decDeg);
   const distanceAU = distancePc * PARSEC_TO_AU;
 
+  // 步骤 1: ICRS 球面 → ICRF 笛卡尔
+  const cosDec = Math.cos(dec);
+  const xi = distanceAU * cosDec * Math.cos(ra);
+  const yi = distanceAU * cosDec * Math.sin(ra);
+  const zi = distanceAU * Math.sin(dec);
+
+  // 步骤 2: ICRF → RenderWorld (J2000 mean ecliptic)
+  const epsilon = 23.43928 * Math.PI / 180;
+  const cosEps = Math.cos(epsilon);
+  const sinEps = Math.sin(epsilon);
+
   return new THREE.Vector3(
-    distanceAU * Math.cos(dec) * Math.cos(ra),
-    distanceAU * Math.sin(dec),
-    -distanceAU * Math.cos(dec) * Math.sin(ra)
+    xi,
+    yi * cosEps + zi * sinEps,
+    -yi * sinEps + zi * cosEps
   );
 }
 
@@ -65,4 +95,20 @@ export function formatMaybe(value: number | undefined, digits = 2): string {
     return '-';
   }
   return value.toFixed(digits);
+}
+
+/**
+ * 判断系外行星轨道是否为示意性（缺少真实三维朝向数据）。
+ *
+ * NASA Exoplanet Archive 的 pscomppars 表只提供 inclination，不提供
+ * Omega（升交点经度）。缺少 Omega 时无法确定轨道平面在空间中的真实朝向，
+ * 轨道只能显示为示意性，不应声称物理朝向正确。
+ *
+ * 参见 docs/coordinates/COORDINATE_SYSTEM_ALIGNMENT_PLAN.md §3.7
+ *
+ * @param omegaDeg - 升交点经度 (度)，来自 ExoplanetPlanet.omegaDeg
+ * @returns true 如果轨道缺少 Omega（为示意性）
+ */
+export function isSchematicOrbit(omegaDeg?: number): boolean {
+  return omegaDeg === undefined || omegaDeg === null || !Number.isFinite(omegaDeg);
 }

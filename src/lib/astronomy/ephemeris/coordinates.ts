@@ -25,6 +25,20 @@
 
 import { Vector3 } from './types';
 
+// 帧变换的权威实现已迁移到统一坐标层。
+// 本文件 re-export 新实现，并让 CoordinateTransformer 委托给它，
+// 以保持现有引用不破坏。新代码应直接 import from '@/lib/coordinates'。
+// 详见 docs/coordinates/COORDINATE_SYSTEM_ALIGNMENT_PLAN.md。
+export {
+  icrfToEcliptic,
+  eclipticToIcrf,
+  icrfToRenderWorld,
+  renderWorldToIcrf,
+  OBLIQUITY_J2000_DEG,
+  OBLIQUITY_J2000_RAD,
+} from '@/lib/coordinates/frames/ecliptic';
+import { icrfToEcliptic as icrfToEclipticFn, eclipticToIcrf as eclipticToIcrfFn } from '@/lib/coordinates/frames/ecliptic';
+
 /**
  * CoordinateTransformer provides transformations between astronomical reference frames.
  * 
@@ -39,6 +53,9 @@ export class CoordinateTransformer {
    * Obliquity of the ecliptic at J2000.0 epoch (in radians)
    * This is the angle between Earth's equatorial plane and orbital plane.
    * Value: 23.43928° = 0.40909280422232897 radians
+   *
+   * @deprecated 权威常量已迁移至 `@/lib/coordinates/frames/ecliptic` 的 `OBLIQUITY_J2000_RAD`。
+   *             本字段保留仅为向后兼容，值与新模块一致。
    */
   private static readonly OBLIQUITY_J2000 = 23.43928 * Math.PI / 180;
 
@@ -78,16 +95,8 @@ export class CoordinateTransformer {
    * ```
    */
   icrfToEcliptic(pos: Vector3): Vector3 {
-    const epsilon = CoordinateTransformer.OBLIQUITY_J2000;
-    const cosEps = Math.cos(epsilon);
-    const sinEps = Math.sin(epsilon);
-
-    // Apply rotation matrix around X-axis
-    const x = pos.x;
-    const y = pos.y * cosEps + pos.z * sinEps;
-    const z = -pos.y * sinEps + pos.z * cosEps;
-
-    return new Vector3(x, y, z);
+    // 委托给统一坐标层实现，确保全项目只有一个权威变换来源。
+    return icrfToEclipticFn(pos);
   }
 
   /**
@@ -114,16 +123,8 @@ export class CoordinateTransformer {
    * ```
    */
   eclipticToICRF(pos: Vector3): Vector3 {
-    const epsilon = CoordinateTransformer.OBLIQUITY_J2000;
-    const cosEps = Math.cos(epsilon);
-    const sinEps = Math.sin(epsilon);
-
-    // Apply inverse rotation matrix around X-axis
-    const x = pos.x;
-    const y = pos.y * cosEps - pos.z * sinEps;
-    const z = pos.y * sinEps + pos.z * cosEps;
-
-    return new Vector3(x, y, z);
+    // 委托给统一坐标层实现，确保全项目只有一个权威变换来源。
+    return eclipticToIcrfFn(pos);
   }
 
   /**

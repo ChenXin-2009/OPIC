@@ -4,10 +4,11 @@
  * 使用Web Worker执行SGP4算法计算卫星位置,避免阻塞主线程
  * 实现批量计算、轨道轨迹生成和坐标系转换功能
  * 
- * 坐标系转换:
- * - ECI坐标系: 地心惯性坐标系,Z轴指向北极,X轴指向春分点,单位km
- * - Three.js坐标系: Y轴向上,Z轴指向观察者,单位1000km
- * - 转换公式: (x, y, z)_Three = (x_ECI, z_ECI, -y_ECI) / 1000
+ * 坐标系转换（参见 src/lib/coordinates/README.md RenderWorld 约定）：
+ * - ECI/TEME-like 坐标系：地心赤道惯性系，X 指向春分点，Z 指向北极，单位 km
+ * - OPIC RenderWorld：J2000 mean ecliptic，X 春分点 · Y 黄道面内 90° · Z 黄道北极，单位 AU
+ * - 内置了 (x_ECI, z_ECI, -y_ECI) 轴重映射作为过渡方案，
+ *   计划迁移到 frames/teme.ts（见 COORDINATE_SYSTEM_ALIGNMENT_PLAN.md §4 阶段 4）
  */
 
 import { Vector3 } from 'three';

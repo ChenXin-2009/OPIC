@@ -369,7 +369,11 @@ export default function SolarSystemCanvas3D({ onCameraDistanceChange, cesiumEnab
       const renderer = sceneManager.getRenderer();
 
       const exoplanetRenderer = new ExoplanetRenderer();
-      exoplanetRenderer.getGroup().quaternion.copy(sceneManager.getStarsAlignmentQuaternion());
+      // exoplanets/coordinates.ts 已经将宿主星 RA/Dec/distance 经 ICRS→ICRF→RenderWorld
+      // 正确链输出 RenderWorld 坐标，所以渲染组用 identity quaternion。
+      // 不再依赖 StarsAlignmentCalculator 的魔法角（违反 v2 验收 #4）。
+      // 参见 docs/coordinates/COORDINATE_SYSTEM_ALIGNMENT_PLAN.md §6 验收 #4
+      exoplanetRenderer.getGroup().quaternion.identity();
       exoplanetRenderer.setCamera(camera); // 设置相机引用以支持标签更新
       scene.add(exoplanetRenderer.getGroup());
       exoplanetRendererRef.current = exoplanetRenderer;

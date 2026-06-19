@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { PARSEC_TO_AU } from '@/lib/constants/units';
 import {
   exoplanetEquatorialToCartesian,
   stellarRadiusSolarToAU,
@@ -10,16 +11,30 @@ import {
 
 describe('exoplanet coordinates', () => {
   describe('exoplanetEquatorialToCartesian', () => {
-    it('should convert equatorial coordinates to cartesian', () => {
+    it('should convert (RA=0, Dec=0) to RenderWorld +X direction (vernal equinox)', () => {
       const result = exoplanetEquatorialToCartesian(0, 0, 1);
       expect(result.x).toBeGreaterThan(0);
-      expect(result.y).toBe(0);
-      expect(result.z).toBe(-0);
+      // Dec=0, RA=0 → ICRF +X → RenderWorld +X（旋转绕 X 轴，X 分量不变）
+      expect(result.y).toBeCloseTo(0, 10);
+      expect(result.z).toBeCloseTo(0, 10);
+    });
+
+    it('should convert north celestial pole (Dec=90°) to near ecliptic pole', () => {
+      const distanceAU = 1 * PARSEC_TO_AU;
+      const result = exoplanetEquatorialToCartesian(0, 90, 1);
+      const eps = 23.43928 * Math.PI / 180;
+      // ICRF +Z (celestial pole) → RenderWorld (0, distance*sin(eps), distance*cos(eps))
+      expect(result.x).toBeCloseTo(0, 4);
+      expect(result.y).toBeCloseTo(distanceAU * Math.sin(eps), 4);
+      expect(result.z).toBeCloseTo(distanceAU * Math.cos(eps), 4);
     });
 
     it('should handle negative declination', () => {
       const result = exoplanetEquatorialToCartesian(0, -45, 1);
-      expect(result.y).toBeLessThan(0);
+      // 负赤纬 → ICRF -Z → RenderWorld -Y component
+      // result.y = y_i*cos(eps) + z_i*sin(eps) where z_i is negative
+      // result.z = -y_i*sin(eps) + z_i*cos(eps) where z_i is negative
+      expect(result.z).toBeLessThan(0); // 黄道南半球
     });
   });
 

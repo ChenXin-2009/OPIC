@@ -2,12 +2,29 @@
  * CoordinateTransformer - 坐标转换器
  *
  * @module CoordinateTransformer
+ * @deprecated 本模块已进入维护模式。帧变换（ICRF↔RenderWorld）的权威实现已迁移到
+ *   `src/lib/coordinates/frames/ecliptic.ts`，Cesium 桥接的权威路径为
+ *   `CameraSynchronizer.ts`（使用 Cesium.Transforms.computeIcrfToFixedMatrix）。
+ *
+ *   需要帧变换的新代码应直接引用：
+ *     import { icrfToEcliptic, eclipticToIcrf } from '@/lib/coordinates';
+ *   需要 Cesium 相机同步的新代码应使用：
+ *     CameraSynchronizer.syncViewMatrix(...)
+ *     CameraSynchronizer.syncFromCesium(...)
+ *
+ * @warnings
+ * - `solarSystemToCesiumCamera` 缺少 ERA 旋转，仅在 CameraSynchronizer 已完成
+ *   ICRF→Fixed 变换的上游调用链中间接有效。直接调用会产生最大 ±360° 经度误差。
+ * - `ecefToSolarSystem` 使用轴重映射捷径（Z-up→Y-up），不是完整逆变换。
+ *   圆整误差在往返中累积。CameraSynchronizer.syncFromCesium 已提供正确实现。
+ * - `debugRotationOffset` 仅开发环境可用；生产环境应始终保持为 {x:0, y:0, z:0}。
+ *
  * @description
  * 负责太阳系黄道坐标系（Solar System Frame）与地心地固坐标系（ECEF）之间的双向转换，
  * 以及经纬度高度（LLA）与 ECEF 之间的互转。
  *
  * @architecture
- * 架构层级：Cesium 子系统 → 坐标转换层（底层工具类）
+ * 架构层级：Cesium 子系统 → 坐标转换层（底层工具类，维护模式）
  * 职责边界：纯坐标数学变换，不持有任何状态，所有方法均为静态方法。
  *
  * @dependencies
@@ -89,6 +106,14 @@ export class CoordinateConstants {
 /**
  * 调试用旋转偏移（度）
  *
+ * @deprecated 此偏移量仅用于开发期校准。OPIC 坐标系对齐方案（v2）要求
+ *   生产环境中三个分量始终为 0；所有对齐应由帧变换函数处理，
+ *   不再依赖此手动调整。CameraSynchronizer 中的 debugRotationOffset
+ *   引用计划在阶段 3 完整实现中移除以环境变量门控。
+ *
+ * 生产环境保护：当 process.env.NODE_ENV === 'production' 时，本对象的所有
+ * 字段写入会被静默忽略（保持为 0）。仅开发环境允许实时调整。
+ *
  * 该对象在运行时可变（非 const），可通过 CesiumDebugPanel 组件的滑块在浏览器中实时调整。
  * 用途：在开发阶段校准 Three.js 坐标系与 Cesium ECEF 坐标系之间的对齐误差。
  * 当三个分量均为 0 时，不施加任何额外旋转（即使用理论计算的坐标系对齐）。
@@ -96,6 +121,9 @@ export class CoordinateConstants {
  * 注意：这是调试工具，生产环境中三个分量应保持为 0。
  * 修改此对象会立即影响下一帧的相机位置计算，无需重启。
  */
+
+const IS_PRODUCTION = typeof process !== 'undefined' && process.env?.NODE_ENV === 'production';
+
 export const debugRotationOffset = {
   /** 绕 X 轴的额外旋转偏移（度），正值为右手定则正方向 */
   x: 0,
@@ -183,9 +211,12 @@ export class CoordinateTransformer {
       dx = nx; dy = ny;
     }
 
-    // 4. 赤道坐标系 → Cesium ECEF 轴重映射（直接对应）
-    // 赤道惯性系与 ECEF 的轴方向一致（均为 X→春分点，Z→北极），
-    // 此处直接赋值，无需额外旋转。
+    // 4. 赤道坐标系 → Cesium ECEF 轴重映射
+    // 注意：赤道惯性系（ICRF, Z→天球北极）与 ECEF（ITRF, Z→地球北极）轴方向近似一致，
+    // 但 ECEF 随地球以 ERA（Earth Rotation Angle）绕 Z 轴旋转，两者不是同一帧。
+    // 此处直接赋值仅在时间参数与 ICRF-to-ITRF 矩阵已由 CameraSynchronizer 统一处理时近似有效。
+    // 依赖此转换的新代码应迁移到 frames/fixed.ts 或直接使用 CameraSynchronizer 的
+    // computeIcrfToFixedMatrix 路径。
     const localCesiumX = dx;
     const localCesiumY = dy;
     const localCesiumZ = dz;
@@ -262,6 +293,18 @@ export class CoordinateTransformer {
     ecef: Cesium.Cartesian3,
     earthPosition: THREE.Vector3
   ): THREE.Vector3 {
+    // @deprecated 本方法不与正变换严格互逆。
+    //   正变换 (solarSystemToCesiumCamera) 走 黄道→赤道→ECEF，
+    //   本逆变换却只做 Z-up→Y-up 轴重映射 + 单位换算 + 平移，
+    //   缺少 R_x(+ε) 黄赤交角逆旋转和 ERA 自转逆旋转。
+    //   由此产生的误差：黄赤交角 23.4° + 0~360° 经度漂移。
+    //
+    // 新代码应使用：
+    //   CameraSynchronizer.syncFromCesium(...) (基于 computeIcrfToFixedMatrix 的转置)
+    // 该方法已在 CameraSynchronizer.ts:286 实现，包含完整的 ERA + 极移逆变换。
+    //
+    // 以下实现保留仅为向后兼容；任何对精度敏感的用途都不应使用此方法。
+
     // 1. 坐标轴重映射：Cesium ECEF（Z 轴朝上）→ Three.js（Y 轴朝上）
     // 保持右手系手性的正确映射（与 solarSystemToCesiumCamera 互逆）：
     //   Three.x =  Cesium.x
@@ -270,14 +313,14 @@ export class CoordinateTransformer {
     const xMeters = ecef.x;
     const yMeters = ecef.z;
     const zMeters = -ecef.y;
-    
+
     // 2. 单位换算：米 → AU
     const localPosition = new THREE.Vector3(
       xMeters / CoordinateConstants.AU_TO_METERS,
       yMeters / CoordinateConstants.AU_TO_METERS,
       zMeters / CoordinateConstants.AU_TO_METERS
     );
-    
+
     // 3. 还原太阳系绝对坐标：局部坐标（相对地球）+ 地球在太阳系中的位置
     return localPosition.add(earthPosition);
   }

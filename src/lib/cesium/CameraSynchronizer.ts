@@ -31,8 +31,11 @@
  * @integration
  * 与 Three.js 的集成关系：
  *   本模块是 Cesium 子系统与 Three.js 渲染子系统之间的唯一相机状态桥梁。
- *   Three.js 场景使用黄道惯性系（Y 轴朝上），Cesium 使用 ECEF（Z 轴朝北极）。
- *   两套坐标系的对齐通过黄赤交角旋转 + GMST 旋转实现，确保地球表面纹理与
+ *   Three.js 场景 = OPIC RenderWorld (J2000 mean ecliptic, X 春分点 · Y 黄道面内 90° · Z 黄道北极)，
+ *   单位 AU。Cesium 使用 ECEF/ITRF（Z 轴指向地球北极），单位 米。
+ *   注意：三个坐标系的轴方向不同 —— RenderWorld 是 Z = ecliptic pole，
+ *   ICRF 是 Z = celestial pole，ECEF 是 Z = geodetic pole。
+ *   两套坐标系的对齐通过黄赤交角旋转 + computeIcrfToFixedMatrix 实现，确保地球表面纹理与
  *   Three.js 场景中的地球位置在视觉上完全重合。
  */
 
@@ -153,26 +156,32 @@ export class CameraSynchronizer {
     const [dDirX, dDirY, dDirZ] = transformToECEF(directionThree);
     const [dUpX, dUpY, dUpZ] = transformToECEF(upThree);
 
-    // ── 4. 应用调试旋转偏移（用于校准坐标系对齐，生产环境偏移量通常为 0）────
+    // ── 4. 应用调试旋转偏移（仅开发环境生效，生产环境始终为 0）────
+    // v2 §3 要求：debugRotationOffset 仅开发环境启用，生产环境门控为 0
+    const IS_PROD = typeof process !== 'undefined' && process.env?.NODE_ENV === 'production';
+    const dbgX = IS_PROD ? 0 : debugRotationOffset.x;
+    const dbgY = IS_PROD ? 0 : debugRotationOffset.y;
+    const dbgZ = IS_PROD ? 0 : debugRotationOffset.z;
+
     let fDirX = dDirX, fDirY = dDirY, fDirZ = dDirZ;
     let fUpX = dUpX, fUpY = dUpY, fUpZ = dUpZ;
-    if (debugRotationOffset.x !== 0) {
+    if (dbgX !== 0) {
       // 绕 X 轴旋转（调整俯仰偏差）
-      const rx = debugRotationOffset.x * Math.PI / 180;
+      const rx = dbgX * Math.PI / 180;
       const cy = Math.cos(rx), sy = Math.sin(rx);
       [fDirY, fDirZ] = [fDirY * cy - fDirZ * sy, fDirY * sy + fDirZ * cy];
       [fUpY, fUpZ] = [fUpY * cy - fUpZ * sy, fUpY * sy + fUpZ * cy];
     }
-    if (debugRotationOffset.y !== 0) {
+    if (dbgY !== 0) {
       // 绕 Y 轴旋转（调整偏航偏差）
-      const ry = debugRotationOffset.y * Math.PI / 180;
+      const ry = dbgY * Math.PI / 180;
       const cx = Math.cos(ry), sx = Math.sin(ry);
       [fDirX, fDirZ] = [fDirX * cx + fDirZ * sx, -fDirX * sx + fDirZ * cx];
       [fUpX, fUpZ] = [fUpX * cx + fUpZ * sx, -fUpX * sx + fUpZ * cx];
     }
-    if (debugRotationOffset.z !== 0) {
+    if (dbgZ !== 0) {
       // 绕 Z 轴旋转（调整滚转偏差）
-      const rz = debugRotationOffset.z * Math.PI / 180;
+      const rz = dbgZ * Math.PI / 180;
       const cz = Math.cos(rz), sz = Math.sin(rz);
       [fDirX, fDirY] = [fDirX * cz - fDirY * sz, fDirX * sz + fDirY * cz];
       [fUpX, fUpY] = [fUpX * cz - fUpY * sz, fUpX * sz + fUpY * cz];

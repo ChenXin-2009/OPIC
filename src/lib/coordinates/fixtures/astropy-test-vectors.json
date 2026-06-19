@@ -1,0 +1,59 @@
+{
+  "galactic_center": {
+    "icrs": {
+      "ra_deg": 266.4168,
+      "dec_deg": -29.0078,
+      "distance_kpc": 8.27
+    },
+    "galactic": {
+      "l_deg": 359.944249,
+      "b_deg": -0.046135,
+      "distance_kpc": 8.27
+    },
+    "icrs_cartesian_1kpc": {
+      "x": -0.0546577522,
+      "y": -0.8728440312,
+      "z": -0.4849286827
+    }
+  },
+  "supergalactic_north_pole": {
+    "icrs": {
+      "ra_deg": 283.75,
+      "dec_deg": 15.7
+    },
+    "supergalactic": {
+      "sgl_deg": 182.676664,
+      "sgb_deg": 89.990241
+    }
+  },
+  "vernal_equinox_1kpc": {
+    "icrs": {
+      "ra_deg": 0,
+      "dec_deg": 0,
+      "distance_kpc": 1
+    },
+    "galactic": {
+      "l_deg": 96.337283,
+      "b_deg": -60.188552
+    },
+    "supergalactic": {
+      "sgl_deg": 292.658732,
+      "sgb_deg": 13.230842
+    }
+  },
+  "m31_andromeda": {
+    "icrs": {
+      "ra_deg": 10.6847,
+      "dec_deg": 41.2692,
+      "distance_mpc": 0.778
+    },
+    "galactic": {
+      "l_deg": 121.17434,
+      "b_deg": -21.572859
+    },
+    "supergalactic": {
+      "sgl_deg": 336.193425,
+      "sgb_deg": 12.552192
+    }
+  }
+}
