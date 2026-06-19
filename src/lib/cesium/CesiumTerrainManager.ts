@@ -39,7 +39,7 @@ export class CesiumTerrainManager {
       this.config.terrainExaggerationRelativeHeight ?? 0;
 
     if (this.config.terrainProvider) {
-      this.viewer.terrainProvider = this.config.terrainProvider;
+      this.viewer.terrainProvider = this.config.terrainProvider as unknown as Cesium.TerrainProvider;
       this.log('info', 'Custom Cesium terrain provider applied');
       return;
     }

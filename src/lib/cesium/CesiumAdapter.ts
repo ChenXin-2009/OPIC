@@ -203,7 +203,7 @@ export class CesiumAdapter {
     // 配置 ImageryProvider（如果提供）
     if (this.config.imageryProvider) {
       this.viewer.imageryLayers.removeAll();
-      this.viewer.imageryLayers.addImageryProvider(this.config.imageryProvider);
+      this.viewer.imageryLayers.addImageryProvider(this.config.imageryProvider as unknown as Cesium.ImageryProvider);
     }
     
     // 配置 TerrainProvider（如果提供）
