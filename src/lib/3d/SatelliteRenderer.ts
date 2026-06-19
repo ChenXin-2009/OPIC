@@ -168,7 +168,7 @@ export class SatelliteRenderer {
     const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
     gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
     gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
-    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)'); // 边缘用透明黑，避免 premultiplied alpha 插值出暗边
     
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 64, 64);
@@ -182,10 +182,11 @@ export class SatelliteRenderer {
       sizeAttenuation: false, // 禁用距离衰减，保持固定像素大小
       transparent: true,
       opacity: satelliteConfig.rendering.opacity,
-      depthWrite: true, // 启用深度写入,防止被地球遮挡
+      depthWrite: false, // 透明点不写深度，避免排序黑边
       depthTest: true,
-      map: texture, // 使用圆形纹理
-      alphaTest: 0.01, // 丢弃完全透明的像素
+      blending: THREE.AdditiveBlending, // 叠加混合，消除 premultiplied alpha 暗边
+      map: texture,
+      alphaTest: 0.05, // 丢弃低 alpha 像素，减少过渡区黑边
     });
     
     // 创建点云对象
