@@ -31,6 +31,7 @@ export function useSolarSystemAnimation(
   callbacks: SceneCallbacks
 ) {
   const animateRef = useRef<(() => void) | null>(null);
+  const activeCesiumBodyRef = useRef<'earth' | 'moon' | null>(null);
 
   const stopAnimation = useCallback(() => {
     if (refs.animationFrameRef.current !== null) {
@@ -290,69 +291,77 @@ export function useSolarSystemAnimation(
     if (cameraController) cameraController.update(deltaTime);
 
     const earthBody = currentBodies.find((b: any) => b.name.toLowerCase() === 'earth');
+    const moonBody = currentBodies.find((b: any) => b.name.toLowerCase() === 'moon');
+
     if (earthBody) {
       const earthPos = new THREE.Vector3(earthBody.x, earthBody.y, earthBody.z);
-      if (sceneManager) {
-        const sceneModeManager = sceneManager.getSceneModeManager();
-        const currentMode = sceneModeManager.getCurrentMode();
-        if (currentMode === SceneMode.CESIUM_DOMINANT) {
-          const earthPlanet = refs.planetsRef.current?.get('earth');
-          if (earthPlanet && 'getCesiumExtension' in earthPlanet) {
-            const cesiumExt = (earthPlanet as any).getCesiumExtension();
-            if (cesiumExt) cesiumExt.syncCameraFromCesium(camera, earthPos);
-          }
-        }
-      }
       const cameraPos = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
       const distToEarth = cameraPos.distanceTo(earthPos);
+
+      let moonPos: THREE.Vector3 | null = null;
+      let distToMoon = Infinity;
+      if (moonBody) {
+        moonPos = new THREE.Vector3(moonBody.x, moonBody.y, moonBody.z);
+        distToMoon = cameraPos.distanceTo(moonPos);
+      }
       callbacks.onDistanceToEarthChange?.(distToEarth);
+
+      // 阈值定义
+      const moonCamEntryAU = 0.000025; // 月球 CESIUM 相机模式进入（~3,737 km）
+      const moonCamExitAU  = 0.000035; // 月球 CESIUM 相机模式退出（滞回）
+      const earthEntryAU = 0.000076;  // 地球 CESIUM 进入
+      const earthExitAU  = 0.000096;  // 地球 CESIUM 退出（滞回）
+
+      const activeBody = activeCesiumBodyRef.current;
+
+      // Moon 是否需要 CESIUM 相机
+      let moonNeedsCam = false;
+      if (moonPos) {
+        if (activeBody === 'moon') {
+          moonNeedsCam = distToMoon < moonCamExitAU;
+        } else {
+          moonNeedsCam = distToMoon < moonCamEntryAU && distToMoon < distToEarth;
+        }
+      }
+
+      // Earth 是否需要 CESIUM（使用 SceneModeManager 滞回）
+      const earthNeedsCam = distToEarth < (activeBody === 'earth' ? earthExitAU : earthEntryAU);
+
+      // CESIUM 模式激活条件：Earth 或 Moon 任意一者需要
+      const wantsCesium = earthNeedsCam || moonNeedsCam;
 
       if (sceneManager) {
         const sceneModeManager = sceneManager.getSceneModeManager();
-        const currentMode = sceneModeManager.getCurrentMode();
-        const config = sceneModeManager.getConfig();
-        const modeChanged = sceneManager.updateSceneMode(distToEarth);
+        sceneModeManager.getTransitionProgress();
+        const earthPlanet = refs.planetsRef.current?.get('earth');
+        const moonPlanet = refs.planetsRef.current?.get('moon');
+        const cesiumActive = sceneModeManager.getCurrentMode() === SceneMode.CESIUM_DOMINANT;
 
-        if (modeChanged) {
-          const newMode = sceneModeManager.getCurrentMode();
-          const earthPlanet = refs.planetsRef.current?.get('earth');
+        // 确定目标天体
+        let newTargetBody: typeof activeBody = null;
+        if (wantsCesium) {
+          if (moonNeedsCam) {
+            newTargetBody = 'moon';
+          } else if (earthNeedsCam) {
+            newTargetBody = 'earth';
+          }
+        }
 
-          if (newMode === SceneMode.CESIUM_DOMINANT) {
-            if (cameraController) {
-              const controls = cameraController.getControls();
-              controls.target.copy(earthPos);
-            }
-            if (earthPlanet && 'setCesiumEnabled' in earthPlanet) {
-              (earthPlanet as any).setCesiumEnabled(true, camera);
-            }
-            if (earthPlanet && 'setCesiumNativeCameraMode' in earthPlanet) {
-              (earthPlanet as any).setCesiumNativeCameraMode(true);
-            }
-            if (earthPlanet && 'getCesiumExtension' in earthPlanet) {
-              const cesiumExt = (earthPlanet as any).getCesiumExtension();
-              if (cesiumExt) {
-                cesiumExt.syncCamera(camera, earthPos);
-                cesiumExt.setNativeCameraEnabled(true);
-              }
-            }
-            if (cameraController) {
-              cameraController.getControls().enabled = false;
-            }
-            const renderer = sceneManager.getRenderer();
-            renderer.domElement.style.pointerEvents = 'none';
-            renderer.domElement.style.zIndex = '1';
-          } else {
-            if (earthPlanet && 'getCesiumExtension' in earthPlanet) {
-              const cesiumExt = (earthPlanet as any).getCesiumExtension();
-              if (cesiumExt) cesiumExt.syncCameraFromCesium(camera, earthPos);
-            }
-            if (earthPlanet && 'setCesiumNativeCameraMode' in earthPlanet) {
-              (earthPlanet as any).setCesiumNativeCameraMode(false);
-            }
-            if (earthPlanet && 'getCesiumExtension' in earthPlanet) {
-              const cesiumExt = (earthPlanet as any).getCesiumExtension();
-              if (cesiumExt) cesiumExt.setNativeCameraEnabled(false);
-            }
+        const modeChanged = wantsCesium !== cesiumActive;
+        if (newTargetBody !== activeBody || modeChanged) {
+          if (activeBody === 'moon' && moonPlanet) {
+            if ('setCesiumNativeCameraMode' in moonPlanet) (moonPlanet as any).setCesiumNativeCameraMode(false);
+            if ('getCesiumExtension' in moonPlanet) (moonPlanet as any).getCesiumExtension()?.setNativeCameraEnabled(false);
+          }
+          if (activeBody === 'earth' && earthPlanet) {
+            if ('setCesiumNativeCameraMode' in earthPlanet) (earthPlanet as any).setCesiumNativeCameraMode(false);
+            if ('getCesiumExtension' in earthPlanet) (earthPlanet as any).getCesiumExtension()?.setNativeCameraEnabled(false);
+          }
+
+          if (newTargetBody === null) {
+            // 退出 CESIUM 模式
+            sceneModeManager.switchMode(SceneMode.THREE_DOMINANT);
+            activeCesiumBodyRef.current = null;
             if (cameraController) {
               const controls = cameraController.getControls();
               controls.enabled = true;
@@ -364,7 +373,54 @@ export function useSolarSystemAnimation(
             }
             const renderer = sceneManager.getRenderer();
             renderer.domElement.style.pointerEvents = 'auto';
-            renderer.domElement.style.zIndex = '1';
+          } else if (activeBody === null) {
+            // 首次进入 CESIUM 模式
+            activeCesiumBodyRef.current = newTargetBody;
+            sceneModeManager.switchMode(SceneMode.CESIUM_DOMINANT);
+            if (cameraController) cameraController.getControls().enabled = false;
+            const renderer = sceneManager.getRenderer();
+            renderer.domElement.style.pointerEvents = 'none';
+
+            if (newTargetBody === 'moon' && moonPos) {
+              if (cameraController) cameraController.getControls().target.copy(moonPos);
+              if (moonPlanet && 'setCesiumNativeCameraMode' in moonPlanet) (moonPlanet as any).setCesiumNativeCameraMode(true);
+              if (moonPlanet && 'getCesiumExtension' in moonPlanet) {
+                (moonPlanet as any).getCesiumExtension()?.syncCamera(camera, moonPos);
+                (moonPlanet as any).getCesiumExtension()?.setNativeCameraEnabled(true);
+              }
+            } else {
+              if (cameraController) cameraController.getControls().target.copy(earthPos);
+              if (earthPlanet && 'setCesiumNativeCameraMode' in earthPlanet) (earthPlanet as any).setCesiumNativeCameraMode(true);
+              if (earthPlanet && 'getCesiumExtension' in earthPlanet) {
+                (earthPlanet as any).getCesiumExtension()?.syncCamera(camera, earthPos);
+                (earthPlanet as any).getCesiumExtension()?.setNativeCameraEnabled(true);
+              }
+            }
+          } else if (newTargetBody !== activeBody) {
+            // CESIUM 模式中切换主体
+            activeCesiumBodyRef.current = newTargetBody;
+            if (newTargetBody === 'moon' && moonPos) {
+              if (cameraController) cameraController.getControls().target.copy(moonPos);
+              if (moonPlanet && 'setCesiumNativeCameraMode' in moonPlanet) (moonPlanet as any).setCesiumNativeCameraMode(true);
+              if (moonPlanet && 'getCesiumExtension' in moonPlanet) {
+                (moonPlanet as any).getCesiumExtension()?.syncCamera(camera, moonPos);
+                (moonPlanet as any).getCesiumExtension()?.setNativeCameraEnabled(true);
+              }
+            } else {
+              if (cameraController) cameraController.getControls().target.copy(earthPos);
+              if (earthPlanet && 'setCesiumNativeCameraMode' in earthPlanet) (earthPlanet as any).setCesiumNativeCameraMode(true);
+              if (earthPlanet && 'getCesiumExtension' in earthPlanet) {
+                (earthPlanet as any).getCesiumExtension()?.syncCamera(camera, earthPos);
+                (earthPlanet as any).getCesiumExtension()?.setNativeCameraEnabled(true);
+              }
+            }
+          }
+        } else if (cesiumActive && activeBody !== null) {
+          // 每帧从 CESIUM 原生相机同步回 Three.js
+          if (activeBody === 'moon' && moonPos && moonPlanet && 'getCesiumExtension' in moonPlanet) {
+            (moonPlanet as any).getCesiumExtension()?.syncCameraFromCesium(camera, moonPos);
+          } else if (earthPlanet && 'getCesiumExtension' in earthPlanet) {
+            (earthPlanet as any).getCesiumExtension()?.syncCameraFromCesium(camera, earthPos);
           }
         }
       }

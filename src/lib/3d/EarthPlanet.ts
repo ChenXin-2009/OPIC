@@ -236,8 +236,15 @@ export class EarthPlanet extends Planet {
           color: 0x000000,
           transparent: true,
           depthWrite: true,
-          colorWrite: false, // 只写深度不写颜色，Cesium 地球从下层透出
           side: THREE.FrontSide,
+          // 自定义混合：把地球区域的 RGBA 全部写为 0（完全透明）
+          // 这样 Cesium canvas 从下层透出，而不是被天空盒颜色覆盖
+          blending: THREE.CustomBlending,
+          blendEquation: THREE.AddEquation,
+          blendSrc: THREE.ZeroFactor,
+          blendDst: THREE.ZeroFactor,
+          blendSrcAlpha: THREE.ZeroFactor,
+          blendDstAlpha: THREE.ZeroFactor,
         });
         mesh.renderOrder = 0;
         mesh.material = depthOnlyMat;

@@ -40,10 +40,10 @@ export interface SceneModeConfig {
  * 默认配置
  */
 const DEFAULT_CONFIG: SceneModeConfig = {
-  // 0.0001 AU ≈ 15,000 km（约地球半径的 2.3 倍）
-  cesiumModeDistanceThreshold: 0.0001,
-  // 0.0002 AU ≈ 30,000 km（避免频繁切换的滞后阈值）
-  threeModeDistanceThreshold: 0.0002,
+  // 地表以上 ≈ 5,000 km → 距地心 ≈ 11,371 km = 0.000076 AU
+  cesiumModeDistanceThreshold: 0.000076,
+  // 地表以上 ≈ 8,000 km → 距地心 ≈ 14,371 km = 0.000096 AU（滞回）
+  threeModeDistanceThreshold: 0.000096,
   autoSwitch: true,
   transitionDuration: 0, // 即时切换，无过渡动画
 };

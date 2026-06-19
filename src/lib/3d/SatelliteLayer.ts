@@ -258,35 +258,26 @@ export class SatelliteLayer {
         const cameraPosition = this.sceneManager.getCamera().position;
         const distanceToEarth = cameraPosition.distanceTo(earthPosition);
         
-        // 人造卫星可见性阈值
-        const visibilityThreshold = 5000000 / 149597870.7; // 5,000,000 km in AU (完全不可见)
-        const fadeThreshold = 1000000 / 149597870.7; // 1,000,000 km in AU (开始渐隐)
+        // 人造卫星可见性阈值（随距离淡出，避免远距离遮盖地球）
+        const visibilityThreshold = 300000 / 149597870.7; // 300,000 km (完全透明)
+        const fadeThreshold = 10000 / 149597870.7; // 10,000 km (开始渐隐)
         
-        // 计算可见性和透明度
-        const isVisibleByDistance = distanceToEarth < visibilityThreshold;
+        // 保持点云始终可见（以便射线检测/悬浮轨道），用 opacity 控制外观
+        this.renderer.setVisible(true);
         let opacity: number;
         let size: number;
         
-        if (!isVisibleByDistance) {
-          // 超出可见范围，完全隐藏
+        if (distanceToEarth < fadeThreshold) {
+          opacity = 1.0;
+          size = satelliteConfig.rendering.pointSize;
+        } else if (distanceToEarth < visibilityThreshold) {
+          const fadeRange = visibilityThreshold - fadeThreshold;
+          const fadeDistance = distanceToEarth - fadeThreshold;
+          opacity = 1.0 - (fadeDistance / fadeRange);
+          size = satelliteConfig.rendering.pointSize * opacity;
+        } else {
           opacity = 0;
           size = 0;
-          this.renderer.setVisible(false);
-        } else {
-          // 在可见范围内，显示卫星
-          this.renderer.setVisible(true);
-          
-          if (distanceToEarth < fadeThreshold) {
-            // 近距离：完全不透明
-            opacity = 1.0;
-            size = satelliteConfig.rendering.pointSize;
-          } else {
-            // 渐隐区域：从 fadeThreshold 到 visibilityThreshold 线性渐隐
-            const fadeRange = visibilityThreshold - fadeThreshold;
-            const fadeDistance = distanceToEarth - fadeThreshold;
-            opacity = 1.0 - (fadeDistance / fadeRange);
-            size = satelliteConfig.rendering.pointSize * opacity;
-          }
         }
         
         this.renderer.setOpacity(opacity);
@@ -538,6 +529,11 @@ export class SatelliteLayer {
     const worldPoints: THREE.Vector3[] = [];
     const startDate = new Date();
 
+    // 使用当前时刻的 GMST 旋转所有轨道点（与卫星点云一致），避免每步不同 GMST 导致轨道扭曲
+    const jd = startDate.getTime() / 86400000 + 2440587.5;
+    const gmstDeg = (280.46061837 + 360.98564736629 * (jd - 2451545.0)) % 360;
+    const gmstRad = THREE.MathUtils.degToRad(gmstDeg);
+
     for (let i = 0; i < steps; i++) {
       const t = new Date(startDate.getTime() + i * stepMinutes * 60000);
       const pv = satLib.propagate(satrec, t);
@@ -549,12 +545,9 @@ export class SatelliteLayer {
         pos.z / AU_TO_KM,
         -pos.y / AU_TO_KM
       );
-      // 对轨道线的每步计算 GMST
-      const jd = t.getTime() / 86400000 + 2440587.5;
-      const gmstDeg = (280.46061837 + 360.98564736629 * (jd - 2451545.0)) % 360;
-      const gmstRad = THREE.MathUtils.degToRad(gmstDeg);
-      eciSwappedToRenderWorld(eciSwapped, gmstRad).add(earthPosition);
-      worldPoints.push(eciSwapped);
+      const worldPoint = eciSwappedToRenderWorld(eciSwapped, gmstRad);
+      worldPoint.add(earthPosition);
+      worldPoints.push(worldPoint);
     }
 
     if (worldPoints.length < 2) throw new Error(`not enough orbit points for ${noradId}`);

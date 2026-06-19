@@ -56,6 +56,9 @@ export interface CesiumAdapterConfig {
   /** Expose this viewer as window.__cesiumViewer for earth-specific MOD integrations. */
   exposeViewerToWindow?: boolean;
 
+  /** URL for a single-tile fallback imagery layer placed at the bottom of the stack. */
+  fallbackImageUrl?: string;
+
   /**
    * Canvas 分辨率缩放系数（默认 1.0，范围 0.1 ~ 2.0）
    * 小于 1.0 可降低渲染分辨率以提升性能；大于 1.0 可提升清晰度（高 DPI 屏幕）

@@ -172,6 +172,7 @@ export function useSolarSystemInit(
             requestTerrainWaterMask: true,
             terrainExaggeration: 1.5,
             terrainExaggerationRelativeHeight: 0,
+            fallbackImageUrl: '/images/earth-fallback.jpg',
           },
           cesiumVisibleDistance: 2000,
           transitionStartDistance: 1800,
@@ -198,6 +199,7 @@ export function useSolarSystemInit(
             ellipsoid: 'moon',
             bodyRadiusMeters: 1737400,
             exposeViewerToWindow: false,
+            fallbackImageUrl: '/images/moon-fallback.jpg',
           },
           cesiumVisibleDistanceAu: 0.0015,
           logLabel: 'MoonPlanet',
@@ -252,13 +254,31 @@ export function useSolarSystemInit(
         }
       }
 
-      const textureManager = TextureManager.getInstance();
-      textureManager.getTexture(bodyKey).then((texture) => {
-        if (texture && !planet.getIsSun()) planet.applyTexture(texture, bodyKey);
-      });
-      textureManager.getNightTexture(bodyKey).then((nightTexture) => {
-        if (nightTexture) planet.applyNightTexture(nightTexture);
-      });
+      // 地球和月球：加载 fallback 瓦片作为 Three.js 贴图（替换已移除的高精贴图）
+      if (bodyKey === 'earth') {
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load('/images/earth-fallback.jpg', (tex) => {
+          planet.applyTexture(tex, bodyKey);
+        });
+      } else if (bodyKey === 'moon') {
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load('/images/moon-fallback.jpg', (tex) => {
+          planet.applyTexture(tex, bodyKey);
+        });
+      } else {
+        const textureManager = TextureManager.getInstance();
+        textureManager.getTexture(bodyKey).then((texture) => {
+          if (texture && !planet.getIsSun()) planet.applyTexture(texture, bodyKey);
+        });
+        textureManager.getNightTexture(bodyKey).then((nightTexture) => {
+          if (nightTexture) planet.applyNightTexture(nightTexture);
+        });
+      }
+
+      // 地球和月球不显示经纬网格线
+      if (bodyKey === 'earth' || bodyKey === 'moon') {
+        planet.setGridVisible(false);
+      }
 
       planet.createMarkerCircle();
 

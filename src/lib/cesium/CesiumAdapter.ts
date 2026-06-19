@@ -58,6 +58,7 @@ export class CesiumAdapter {
   private boundHandleResize!: () => void;
   private boundHandleContextLost!: (e: Event) => void;
   private terrainManager: CesiumTerrainManager | null = null;
+  private _fallbackLayer: Cesium.ImageryLayer | null = null;
   
   /**
    * 创建 CesiumAdapter 实例并初始化 Cesium Viewer
@@ -227,13 +228,25 @@ export class CesiumAdapter {
     this.viewer.scene.globe.showGroundAtmosphere = false;
     // 4. globe.baseColor 控制无瓦片区域底色，设为透明
     this.viewer.scene.globe.baseColor = Cesium.Color.TRANSPARENT;
+    // 5. 添加单瓦片影像作为 fallback 层（如未加载到的区域的地球/月球底色）
+    const fallbackUrl = this.config.fallbackImageUrl || '/images/earth-fallback.jpg';
+    try {
+      const fallbackProvider = new Cesium.SingleTileImageryProvider({
+        url: fallbackUrl,
+      });
+      const fallbackLayer = this.viewer.imageryLayers.addImageryProvider(fallbackProvider);
+      this.viewer.imageryLayers.lowerToBottom(fallbackLayer);
+      this._fallbackLayer = fallbackLayer;
+    } catch (e) {
+      console.warn('[CesiumAdapter] Failed to add fallback imagery:', e);
+    }
     
     // 确保 globe 显示
     this.viewer.scene.globe.show = true;
     this.viewer.scene.globe.depthTestAgainstTerrain = false;
     
-    // 启用太阳光照：产生白天/黑夜分界线效果
-    this.viewer.scene.globe.enableLighting = true;
+    // 禁用太阳光照：Cesium globe 始终透出，避免暗面呈现黑色
+    this.viewer.scene.globe.enableLighting = false;
     
     // 获取 Cesium 内部创建的 canvas
     this.cesiumCanvas = this.viewer.scene.canvas;
@@ -605,7 +618,10 @@ export class CesiumAdapter {
   setImageryProvider(provider: Cesium.ImageryProvider): void {
     if (!this.isAvailable || !this.viewer) return;
     try {
-      this.viewer.imageryLayers.removeAll();
+      // 保留 fallback 层（index 0），移除其上所有高层级影像层
+      for (let i = this.viewer.imageryLayers.length - 1; i > 0; i--) {
+        this.viewer.imageryLayers.remove(this.viewer.imageryLayers.get(i));
+      }
       this.viewer.imageryLayers.addImageryProvider(provider);
     } catch (e) {
       console.warn('[CesiumAdapter] setImageryProvider failed:', e);

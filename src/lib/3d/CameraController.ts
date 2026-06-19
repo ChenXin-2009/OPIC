@@ -746,7 +746,10 @@ export class CameraController {
     
     const baseFactor = this.currentConfig.zoomBaseFactor;
     const scrollSpeed = Math.min(Math.abs(delta), 2);
-    const effectiveFactor = baseFactor;
+    // 距离自适应缩放因子：近距离时减小缩放幅度，解决曲率问题
+    // 在 0.0002 AU（~30,000 km）以上使用完整速度，以下线性衰减
+    const distanceScale = Math.min(1, currentDistance / 0.0002);
+    const effectiveFactor = baseFactor * distanceScale;
 
     if (delta > 0) {
       // 放大方向

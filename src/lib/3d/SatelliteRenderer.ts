@@ -167,8 +167,9 @@ export class SatelliteRenderer {
     // 绘制圆形渐变
     const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
     gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-    gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)'); // 边缘用透明黑，避免 premultiplied alpha 插值出暗边
+    gradient.addColorStop(0.3, 'rgba(255, 255, 255, 1)');
+    gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.6)');
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
     
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 64, 64);
