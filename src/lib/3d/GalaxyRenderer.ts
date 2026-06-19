@@ -82,37 +82,39 @@ export class GalaxyRenderer {
         const geometry = new THREE.PlaneGeometry(planeSize, planeSize, segments, segments);
         const posAttr = geometry.attributes.position;
         
-        // 翘曲参数
         const warpAngleRad = cfg.warpAngle * (Math.PI / 180);
         const warpAmplitudeAU = cfg.warpAmplitude * radiusAU;
+        const halfPlane = planeSize / 2;
+        const invHalfPlane = 1 / halfPlane;
+        const invCoreRadius = 1 / cfg.coreRadius;
+        const warpRange = 1 - cfg.warpStartRadius;
+        const invWarpRange = cfg.warpEnabled && warpRange > 0 ? 1 / warpRange : 0;
+        const bulgeExp = cfg.bulgeExponent;
+        const direction = t < 0.5 ? 1 : (t > 0.5 ? -1 : 0);
         
         for (let j = 0; j < posAttr.count; j++) {
           const x = posAttr.getX(j);
           const y = posAttr.getY(j);
           
-          const radius = planeSize / 2;
-          const distToCenter = Math.sqrt(x * x + y * y) / radius;
+          const distToCenter = Math.sqrt(x * x + y * y) * invHalfPlane;
           
-          // 银河系形状
-          const scaledDist = distToCenter / cfg.coreRadius;
-          const sechSquared = 1 / Math.pow(Math.cosh(scaledDist), 2);
-          const edgeFalloff = Math.max(0, 1 - Math.pow(distToCenter, cfg.bulgeExponent));
-          const minThickness = cfg.diskMinThickness;
-          const coreContribution = sechSquared * cfg.coreThicknessFactor;
-          const diskContribution = minThickness;
-          const bulgeFactor = (coreContribution + diskContribution) * edgeFalloff;
-          const bulge = bulgeFactor * layerBulge;
+          const scaledDist = distToCenter * invCoreRadius;
+          const coshVal = Math.cosh(scaledDist);
+          const sechSquared = 1 / (coshVal * coshVal);
           
-          // 翘曲效果：边缘一侧向上，另一侧向下
+          const d2 = distToCenter * distToCenter;
+          const d4 = d2 * d2;
+          const edgeFalloff = Math.max(0, 1 - (bulgeExp === 4 ? d4 : Math.pow(distToCenter, bulgeExp)));
+          
+          const bulge = (sechSquared * cfg.coreThicknessFactor + cfg.diskMinThickness) * edgeFalloff * layerBulge;
+          
           let warp = 0;
           if (cfg.warpEnabled && distToCenter > cfg.warpStartRadius) {
-            const warpProgress = (distToCenter - cfg.warpStartRadius) / (1 - cfg.warpStartRadius);
+            const warpProgress = (distToCenter - cfg.warpStartRadius) * invWarpRange;
             const angle = Math.atan2(y, x);
-            // 翘曲随角度变化，形成 S 形
             warp = Math.sin(angle - warpAngleRad) * warpProgress * warpProgress * warpAmplitudeAU;
           }
           
-          const direction = t < 0.5 ? 1 : (t > 0.5 ? -1 : 0);
           const vertexJitter = (seededRandom(i * 13.7 + j * 0.01) - 0.5) * jitterAmount * 0.5;
           posAttr.setZ(j, bulge * direction + warp + layerJitter + vertexJitter);
         }

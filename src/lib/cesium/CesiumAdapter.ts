@@ -30,135 +30,15 @@ if (typeof window !== 'undefined') {
 
 import * as Cesium from 'cesium';
 import { CameraSynchronizer } from './CameraSynchronizer';
-
-function withDefault<T>(value: T | undefined, fallback: T): T {
-  return value === undefined ? fallback : value;
-}
-
-function clampDefault(
-  value: number | undefined,
-  fallback: number,
-  min: number,
-  max: number
-): number {
-  return Math.max(min, Math.min(max, withDefault(value, fallback)));
-}
-
-/**
- * Cesium 适配器配置接口
- *
- * 传入 CesiumAdapter 构造函数，控制 Cesium Viewer 的初始化行为与渲染参数。
- */
-export interface CesiumAdapterConfig {
-  /** Cesium 容器 div 的 id，由适配器自动创建并挂载到 DOM */
-  cesiumContainerId: string;
-  /**
-   * 挂载容器（默认 document.body）
-   * 建议传入 Three.js canvas 的父容器，确保两者处于同一 stacking context，
-   * 使 z-index 层叠关系正确生效
-   */
-  parentElement?: HTMLElement;
-  /** 初始影像图层提供者；若不传则使用 Cesium 默认图源 */
-  imageryProvider?: Cesium.ImageryProvider;
-  /** 地形提供者；若不传则使用平坦地形（EllipsoidTerrainProvider） */
-  terrainProvider?: Cesium.TerrainProvider;
-  /** Enable real terrain elevation for the globe. */
-  enableTerrain?: boolean;
-  /** Default terrain source to load when terrainProvider is not supplied. */
-  terrainProviderSource?: 'arcgis-world-elevation' | 'cesium-world-terrain' | 'none';
-  /** Optional ArcGIS token for the WorldElevation3D terrain service. */
-  esriTerrainToken?: string;
-  /** Request terrain normals where supported for better oblique lighting. */
-  requestTerrainVertexNormals?: boolean;
-  /** Request terrain water masks where supported. */
-  requestTerrainWaterMask?: boolean;
-  /** Vertical terrain exaggeration. 1.0 keeps real-world height. */
-  terrainExaggeration?: number;
-  /** Reference height for vertical terrain exaggeration. */
-  terrainExaggerationRelativeHeight?: number;
-  /** Ellipsoid used by Cesium's globe. Defaults to WGS84 Earth. */
-  ellipsoid?: 'wgs84' | 'moon' | { x: number; y: number; z: number };
-  /** Mean body radius in meters, used for camera clipping and altitude logs. */
-  bodyRadiusMeters?: number;
-  /** Expose this viewer as window.__cesiumViewer for earth-specific MOD integrations. */
-  exposeViewerToWindow?: boolean;
-
-  /**
-   * Canvas 分辨率缩放系数（默认 1.0，范围 0.1 ~ 2.0）
-   * 小于 1.0 可降低渲染分辨率以提升性能；大于 1.0 可提升清晰度（高 DPI 屏幕）
-   */
-  canvasResolutionScale?: number;
-  /**
-   * 瓦片 LOD 误差阈值（默认 2，单位：屏幕像素）
-   * 值越小，加载的瓦片精度越高，但性能开销越大
-   */
-  maximumScreenSpaceError?: number;
-  /**
-   * 内存中最大缓存瓦片数量（默认 1000）
-   * 超出后 Cesium 会自动淘汰最久未使用的瓦片
-   */
-  maximumNumberOfLoadedTiles?: number;
-
-  /**
-   * 深度合成策略（默认 'render-order'）
-   * - 'render-order'：按渲染顺序决定前后关系（Cesium 在下，Three.js 在上）
-   * - 'satellite-always-front'：卫星模型始终渲染在地球之上
-   */
-  depthCompositingStrategy?: 'render-order' | 'satellite-always-front';
-
-  /** 性能监控对象（可选），用于记录每帧渲染耗时等指标 */
-  performanceMonitor?: any;
-}
-
-/**
- * Cesium 初始化错误
- */
-export class CesiumInitializationError extends Error {
-  override cause?: Error;
-  
-  /**
-   * 创建 Cesium 初始化错误实例
-   * @param message - 错误描述信息
-   * @param cause - 原始错误（可选），用于错误链追踪
-   */
-  constructor(message: string, cause?: Error) {
-    super(message);
-    this.name = 'CesiumInitializationError';
-    this.cause = cause;
-  }
-}
-
-/**
- * Cesium 渲染错误
- */
-export class CesiumRenderError extends Error {
-  override cause?: Error;
-  
-  /**
-   * 创建 Cesium 渲染错误实例
-   * @param message - 错误描述信息
-   * @param cause - 原始错误（可选），用于错误链追踪
-   */
-  constructor(message: string, cause?: Error) {
-    super(message);
-    this.name = 'CesiumRenderError';
-    this.cause = cause;
-  }
-}
-
-/**
- * WebGL Context Lost 错误
- */
-export class WebGLContextLostError extends Error {
-  /**
-   * 创建 WebGL 上下文丢失错误实例
-   * @param message - 错误描述信息
-   */
-  constructor(message: string) {
-    super(message);
-    this.name = 'WebGLContextLostError';
-  }
-}
+import {
+  CesiumAdapterConfig,
+  CesiumInitializationError,
+  CesiumRenderError,
+  WebGLContextLostError,
+  withDefault,
+  clampDefault
+} from './CesiumAdapterTypes';
+import { CesiumTerrainManager } from './CesiumTerrainManager';
 
 /**
  * CesiumAdapter - Cesium 适配器类
@@ -177,7 +57,7 @@ export class CesiumAdapter {
   private logCallback?: (level: 'info' | 'warn' | 'error', message: string) => void;
   private boundHandleResize!: () => void;
   private boundHandleContextLost!: (e: Event) => void;
-  private terrainLoadVersion = 0;
+  private terrainManager: CesiumTerrainManager | null = null;
   
   /**
    * 创建 CesiumAdapter 实例并初始化 Cesium Viewer
@@ -327,7 +207,8 @@ export class CesiumAdapter {
     }
     
     // 配置 TerrainProvider（如果提供）
-    this.configureTerrain();
+    this.terrainManager = new CesiumTerrainManager(this.viewer, this.config, (level, message) => this.log(level, message));
+    this.terrainManager.configure();
     
     // 禁用大气效果（由 Three.js 场景控制）
     if (this.viewer.scene.sun) {
@@ -389,98 +270,6 @@ export class CesiumAdapter {
   }
 
   
-  /**
-   * 设置事件监听器
-   */
-  private configureTerrain(): void {
-    if (!this.viewer) return;
-
-    this.viewer.scene.verticalExaggeration = this.config.terrainExaggeration ?? 1.0;
-    this.viewer.scene.verticalExaggerationRelativeHeight =
-      this.config.terrainExaggerationRelativeHeight ?? 0;
-
-    if (this.config.terrainProvider) {
-      this.viewer.terrainProvider = this.config.terrainProvider;
-      this.log('info', 'Custom Cesium terrain provider applied');
-      return;
-    }
-
-    if (!this.config.enableTerrain || this.config.terrainProviderSource === 'none') {
-      return;
-    }
-
-    this.loadDefaultTerrainProvider();
-  }
-
-  private loadDefaultTerrainProvider(): void {
-    const loadVersion = ++this.terrainLoadVersion;
-    const source = this.config.terrainProviderSource === 'cesium-world-terrain'
-      ? 'cesium-world-terrain'
-      : 'arcgis-world-elevation';
-
-    void (async () => {
-      try {
-        const provider = await this.createTerrainProvider(source);
-        this.applyTerrainProvider(provider, source, loadVersion);
-      } catch (error) {
-        this.log('warn', `Terrain provider ${source} failed: ${error}`);
-
-        if (source !== 'cesium-world-terrain') {
-          try {
-            const provider = await this.createTerrainProvider('cesium-world-terrain');
-            this.applyTerrainProvider(provider, 'cesium-world-terrain', loadVersion);
-          } catch (fallbackError) {
-            this.log('warn', `Cesium World Terrain fallback failed: ${fallbackError}`);
-          }
-        }
-      }
-    })();
-  }
-
-  private async createTerrainProvider(
-    source: 'arcgis-world-elevation' | 'cesium-world-terrain'
-  ): Promise<Cesium.TerrainProvider> {
-    if (source === 'cesium-world-terrain') {
-      return Cesium.createWorldTerrainAsync({
-        requestVertexNormals: this.config.requestTerrainVertexNormals ?? true,
-        requestWaterMask: this.config.requestTerrainWaterMask ?? true,
-      });
-    }
-
-    const options: Cesium.ArcGISTiledElevationTerrainProvider.ConstructorOptions = {};
-    const token = this.config.esriTerrainToken ?? process.env.NEXT_PUBLIC_ESRI_API_KEY;
-    if (token) {
-      options.token = token;
-    }
-
-    return Cesium.ArcGISTiledElevationTerrainProvider.fromUrl(
-      'https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer',
-      options
-    );
-  }
-
-  private applyTerrainProvider(
-    provider: Cesium.TerrainProvider,
-    source: 'arcgis-world-elevation' | 'cesium-world-terrain',
-    loadVersion: number
-  ): void {
-    if (!this.isAvailable || loadVersion !== this.terrainLoadVersion || !this.viewer) {
-      return;
-    }
-
-    try {
-      if ((this.viewer as any).isDestroyed?.()) {
-        return;
-      }
-
-      this.viewer.terrainProvider = provider;
-      this.viewer.scene.globe.maximumScreenSpaceError = this.config.maximumScreenSpaceError ?? 2;
-      this.log('info', `Cesium terrain provider loaded: ${source}`);
-    } catch (error) {
-      this.log('warn', `Applying terrain provider failed: ${error}`);
-    }
-  }
-
   private setupEventListeners(): void {
     // 监听 WebGL Context Lost（使用 Cesium 的 canvas）
     this.boundHandleContextLost = this.handleContextLost.bind(this);
@@ -736,7 +525,7 @@ export class CesiumAdapter {
     }
     
     this.isAvailable = false;
-    this.terrainLoadVersion++;
+    this.terrainManager?.cancelPendingLoads();
   }
   
   /**
@@ -892,7 +681,7 @@ export class CesiumAdapter {
    * 调用后适配器不可再使用。通常在组件卸载或页面销毁时调用。
    */
   dispose(): void {
-    this.terrainLoadVersion++;
+    this.terrainManager?.cancelPendingLoads();
     // 停止渲染循环
     this.isAvailable = false;
     
@@ -917,3 +706,6 @@ export class CesiumAdapter {
     console.log('CesiumAdapter disposed');
   }
 }
+
+export type { CesiumAdapterConfig };
+export { CesiumInitializationError, CesiumRenderError, WebGLContextLostError };

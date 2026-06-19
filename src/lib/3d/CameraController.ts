@@ -73,6 +73,8 @@ import { FocusManager, type CelestialObject, type FocusOptions } from './FocusMa
 import type { CameraMode } from './camera/CameraTypes';
 import { evalSensitivityCurve, DEFAULT_DRAG_CURVE } from './camera/SensitivityCurve';
 import { easeOutQuart, preventPenetrationDuringInput } from './camera/PenetrationUtils';
+import { CameraAnimator } from './camera/CameraAnimator';
+import { CameraInputHandler } from './camera/CameraInputHandler';
 
 export type { CameraMode } from './camera/CameraTypes';
 
@@ -108,12 +110,10 @@ export class CameraController {
   private targetDistance: number = 0; // 目标距离（即时响应）
   private isZooming: boolean = false; // 是否正在缩放
   
-  // 事件监听器引用，用于清理
-  private wheelHandler: ((e: WheelEvent) => void) | null = null;
-  private touchStartHandler: ((e: TouchEvent) => void) | null = null;
-  private touchMoveHandler: ((e: TouchEvent) => void) | null = null;
-  private touchEndHandler: ((e: TouchEvent) => void) | null = null;
   private domElement: HTMLElement;
+
+  private animator: CameraAnimator;
+  private inputHandler: CameraInputHandler;
   
   // 聚焦相关
   private targetCameraPosition: THREE.Vector3 | null = null;
@@ -211,28 +211,15 @@ export class CameraController {
       TWO: THREE.TOUCH.DOLLY_ROTATE,  // 双指缩放+旋转，不平移
     };
     
-    // 步骤 7：立即绑定事件监听器（不延迟，确保事件监听器始终存在）
-    // 即使 DOM 元素还没有连接到 DOM，事件监听器也会在元素准备好后自动生效
-    this.setupWheelZoom(domElement);
-    this.setupTouchZoom(domElement);
+    // 初始化动画管理器（角度过渡 + FOV 过渡）
+    this.animator = new CameraAnimator(camera, this.controls, CAMERA_CONFIG.fov);
     
-    // 备用方案：如果 DOM 元素尚未挂载，等待两帧后再次检查并补充绑定
-    // （正常情况下上面的绑定已经足够，这里只是防御性处理）
-    if (!domElement.isConnected) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // 确保事件监听器已绑定（如果还没有绑定）
-          if (domElement.isConnected) {
-            if (!this.wheelHandler) {
-              this.setupWheelZoom(domElement);
-            }
-            if (!this.touchStartHandler) {
-              this.setupTouchZoom(domElement);
-            }
-          }
-        });
-      });
-    }
+    // 初始化输入事件处理器（滚轮缩放 + 触摸捏合缩放）
+    this.inputHandler = new CameraInputHandler(domElement, {
+      zoom: (delta) => this.zoom(delta),
+      interruptFocusZoom: () => this.interruptFocusZoom(),
+      interruptTrackingZoom: () => this.interruptTrackingZoom(),
+    });
     
     // 步骤 5g：平移模式和极角限制配置
     this.controls.screenSpacePanning = false; // 使用球面平移，更自然（沿球面移动而非屏幕平面）
@@ -251,24 +238,7 @@ export class CameraController {
     this.controls.autoRotate = false;
     this.controls.autoRotateSpeed = 2.0; // 自动旋转速度（度/秒）
     
-    // 步骤 8：初始化角度平滑过渡状态（极角 polarAngle）
-    this.isPolarAngleTransitioning = false;
-    this.targetPolarAngle = 0;
-    this.currentPolarAngle = 0;
-    this.polarAngleTransitionSpeed = 0.08; // 角度过渡速度（0-1，越大越快；0.08 约需 30 帧完成过渡）
   }
-  
-  // 相机角度平滑过渡相关
-  private isPolarAngleTransitioning: boolean = false;
-  private targetPolarAngle: number = 0;
-  private currentPolarAngle: number = 0;
-  private polarAngleTransitionSpeed: number = 0.08; // 角度过渡速度（0-1，越大越快）
-  
-  // 左右角度（azimuthalAngle）平滑过渡相关
-  private isAzimuthalAngleTransitioning: boolean = false;
-  private targetAzimuthalAngle: number = 0;
-  private currentAzimuthalAngle: number = 0;
-  private azimuthalAngleTransitionSpeed: number = 0.08; // 角度过渡速度（0-1，越大越快）
 
   /**
    * 设置相机垂直角度（polarAngle / 仰俯角）
@@ -288,373 +258,17 @@ export class CameraController {
    * @param smooth 是否平滑过渡（默认 false，立即切换）
    */
   setPolarAngle(angle: number, smooth = false) {
-    // 步骤 1：将输入角度标准化到 0-180° 范围
-    // 允许任意角度值（包括负数），但最终会转换为 0 到 Math.PI 的范围
-    let normalizedAngle = angle;
-    // 负数角度处理：-45° 转换为 135°（从下方看的等效角度）
-    if (normalizedAngle < 0) {
-      normalizedAngle = 180 + normalizedAngle;
-    }
-    // 超过 360° 的角度：取模归一化
-    if (normalizedAngle >= 360) {
-      normalizedAngle = normalizedAngle % 360;
-    }
-    // 超过 180° 的角度：折叠到 0-180° 范围（利用对称性）
-    if (normalizedAngle > 180) {
-      normalizedAngle = 360 - normalizedAngle;
-    }
-    
-    // 步骤 2：转换为弧度（OrbitControls 内部使用弧度）
-    const angleRad = normalizedAngle * (Math.PI / 180);
-    
-    // 步骤 3：有效性检查（防止 NaN/Infinity 导致相机状态异常）
-    if (!isFinite(angleRad)) {
-      console.warn('CameraController.setPolarAngle: Invalid angle value', angle);
-      return;
-    }
-    
-    // 步骤 4：先调用 update() 确保 OrbitControls 内部的 spherical 对象被初始化
-    this.controls.update();
-    
-    // 使用类型断言访问 spherical（OrbitControls 内部属性，未在公开 API 中暴露）
-    const controlsAnyPol1 = this.controls as any;
-    
-    if (!smooth) {
-      // 立即切换模式：直接修改 OrbitControls 的 spherical.phi（phi 就是 polarAngle）
-      if (controlsAnyPol1.spherical) {
-        // 主路径：直接设置球坐标的仰俯角分量
-        controlsAnyPol1.spherical.phi = angleRad;
-        this.controls.update();
-      } else {
-        // 备用路径：spherical 不存在时，通过重新计算相机位置来设置角度
-        // 保持当前距离和方位角不变，只改变仰俯角
-        const currentDistance = this.camera.position.distanceTo(this.controls.target);
-        const currentAzimuthalAngle = this.controls.getAzimuthalAngle();
-        const newPosition = new THREE.Vector3();
-        // 球坐标转笛卡尔坐标：x = r·sin(φ)·cos(θ), y = r·cos(φ), z = r·sin(φ)·sin(θ)
-        newPosition.x = currentDistance * Math.sin(angleRad) * Math.cos(currentAzimuthalAngle);
-        newPosition.y = currentDistance * Math.cos(angleRad);
-        newPosition.z = currentDistance * Math.sin(angleRad) * Math.sin(currentAzimuthalAngle);
-        newPosition.add(this.controls.target);
-        this.camera.position.copy(newPosition);
-        this.camera.lookAt(this.controls.target);
-        this.controls.update();
-      }
-      // 同步内部状态，防止下一帧的过渡逻辑误判
-      this.currentPolarAngle = angleRad;
-      this.targetPolarAngle = angleRad;
-      this.isPolarAngleTransitioning = false;
-      return;
-    }
-    
-    // 平滑过渡模式：设置目标角度，由 update() 每帧插值逼近
-    this.targetPolarAngle = angleRad;
-    this.isPolarAngleTransitioning = true;
-    // 从 spherical.phi 读取当前角度（比 getPolarAngle() 更准确，避免阻尼引入的误差）
-    const controlsAnyPol2 = this.controls as any;
-    this.currentPolarAngle = controlsAnyPol2.spherical ? controlsAnyPol2.spherical.phi : this.controls.getPolarAngle();
+    this.animator.setPolarAngle(angle, smooth);
   }
 
   /**
    * 设置相机水平角度（azimuthalAngle / 方位角）
    *
-   * 角度标准化逻辑：
-   * - 输入角度被标准化到 -180° 到 +180° 范围（对应 -π 到 +π 弧度）
-   * - 立即切换时选择最短旋转路径，避免绕远路旋转（如从 170° 到 -170° 走 20° 而非 340°）
-   * - 平滑过渡时同样选择最短路径，并在 update() 中逐帧插值
-   *
    * @param angle 角度（度），0° = 正前方，90° = 右侧，-90° = 左侧，支持任意值
    * @param smooth 是否平滑过渡（默认 false，立即切换）
    */
   setAzimuthalAngle(angle: number, smooth = false) {
-    // 步骤 1：将输入角度标准化到 -180° 到 +180° 范围
-    // 允许任意角度值（包括负数），转换为 -Math.PI 到 Math.PI 的范围
-    let normalizedAngle = angle;
-    // 循环减法/加法，将角度归一化到 [-180, 180) 区间
-    while (normalizedAngle < -180) normalizedAngle += 360;
-    while (normalizedAngle >= 180) normalizedAngle -= 360;
-    
-    // 步骤 2：转换为弧度
-    const angleRad = normalizedAngle * (Math.PI / 180);
-    
-    // 步骤 3：有效性检查
-    if (!isFinite(angleRad)) {
-      console.warn('CameraController.setAzimuthalAngle: Invalid angle value', angle);
-      return;
-    }
-    
-    // 步骤 4：先调用 update() 确保 OrbitControls 内部的 spherical 对象被初始化
-    this.controls.update();
-    
-    // 使用类型断言访问 spherical（OrbitControls 内部属性，未在公开 API 中暴露）
-    const controlsAnyAz1 = this.controls as any;
-    
-    if (!smooth) {
-      // 立即切换模式：计算最短路径，然后设置角度
-      // ⚠️ 关键修复：即使立即切换，也要选择最短路径，避免旋转方向错误
-      if (controlsAnyAz1.spherical) {
-        // 读取当前角度（theta 是方位角）
-        const currentAngle = controlsAnyAz1.spherical.theta;
-        // 将当前角度标准化到 -π 到 π 范围，确保差值计算正确
-        let normalizedCurrent = currentAngle;
-        while (normalizedCurrent > Math.PI) normalizedCurrent -= 2 * Math.PI;
-        while (normalizedCurrent < -Math.PI) normalizedCurrent += 2 * Math.PI;
-        
-        // 计算角度差值，选择最短路径（差值绝对值不超过 π）
-        let angleDiff = angleRad - normalizedCurrent;
-        if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;   // 顺时针更短
-        if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;  // 逆时针更短
-        
-        // 最终目标角度 = 当前角度 + 最短路径差值
-        const finalAngle = normalizedCurrent + angleDiff;
-        
-        // ⚠️ 关键修复：临时禁用阻尼，避免与自定义角度设置冲突
-        // 阻尼会在 update() 中对角度施加额外的插值，导致设置的角度不准确
-        const oldEnableDamping = this.controls.enableDamping;
-        this.controls.enableDamping = false;
-        
-        controlsAnyAz1.spherical.theta = finalAngle;
-        this.controls.update();
-        
-        // 恢复阻尼设置
-        this.controls.enableDamping = oldEnableDamping;
-      } else {
-        // 备用路径：spherical 不存在时，通过重新计算相机位置来设置角度
-        // 同样需要计算最短路径
-        const currentAngle = this.controls.getAzimuthalAngle();
-        let normalizedCurrent = currentAngle;
-        while (normalizedCurrent > Math.PI) normalizedCurrent -= 2 * Math.PI;
-        while (normalizedCurrent < -Math.PI) normalizedCurrent += 2 * Math.PI;
-        
-        let angleDiff = angleRad - normalizedCurrent;
-        if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-        if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-        
-        const finalAngle = normalizedCurrent + angleDiff;
-        
-        // 球坐标转笛卡尔坐标：保持距离和仰俯角不变，只改变方位角
-        const currentDistance = this.camera.position.distanceTo(this.controls.target);
-        const currentPolarAngle = this.controls.getPolarAngle();
-        const newPosition = new THREE.Vector3();
-        newPosition.x = currentDistance * Math.sin(currentPolarAngle) * Math.cos(finalAngle);
-        newPosition.y = currentDistance * Math.cos(currentPolarAngle);
-        newPosition.z = currentDistance * Math.sin(currentPolarAngle) * Math.sin(finalAngle);
-        newPosition.add(this.controls.target);
-        this.camera.position.copy(newPosition);
-        this.camera.lookAt(this.controls.target);
-        this.controls.update();
-      }
-      // 同步内部状态
-      this.currentAzimuthalAngle = angleRad;
-      this.targetAzimuthalAngle = angleRad;
-      this.isAzimuthalAngleTransitioning = false;
-      return;
-    }
-    
-    // 平滑过渡模式：设置目标角度，由 update() 每帧插值逼近
-    this.targetAzimuthalAngle = angleRad;
-    this.isAzimuthalAngleTransitioning = true;
-    // 从 spherical.theta 读取当前角度（比 getAzimuthalAngle() 更准确）
-    this.controls.update();
-    const controlsAnyAz2 = this.controls as any;
-    const currentAngle = controlsAnyAz2.spherical ? controlsAnyAz2.spherical.theta : this.controls.getAzimuthalAngle();
-    // 将当前角度标准化到 -π 到 π 范围
-    let normalizedCurrent = currentAngle;
-    while (normalizedCurrent > Math.PI) normalizedCurrent -= 2 * Math.PI;
-    while (normalizedCurrent < -Math.PI) normalizedCurrent += 2 * Math.PI;
-    // 计算最短路径差值（处理角度环绕，如从 170° 到 -170° 走 20° 而非 340°）
-    let angleDiff = angleRad - normalizedCurrent;
-    // 如果差值超过 180°，选择另一条更短的路径
-    if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-    if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-    // 从标准化后的当前角度开始插值（确保插值方向正确）
-    this.currentAzimuthalAngle = normalizedCurrent;
-  }
-
-  /**
-   * 初始化鼠标滚轮缩放事件处理
-   *
-   * 事件处理逻辑：
-   * 1. 阻止默认滚动行为（preventDefault），防止页面滚动与相机缩放冲突
-   * 2. 若正在执行聚焦动画，立即中断并切换到用户控制模式
-   * 3. 若正在跟踪目标，同步当前距离到缩放状态（允许跟踪时缩放）
-   * 4. 根据 deltaY 方向和大小计算缩放增量，调用 zoom() 执行缩放
-   *
-   * 注意：OrbitControls 的内置缩放已被禁用（enableZoom = false），
-   * 所有缩放操作均通过此处理器路由到自定义平滑缩放算法。
-   *
-   * @param domElement 绑定事件的 DOM 元素（renderer.domElement）
-   */
-  private interruptFocusZoom(): void {
-    if (!this.isFocusing) return;
-    this.isFocusing = false;
-    this.targetCameraPosition = null;
-    this.targetControlsTarget = null;
-    const currentDist = this.camera.position.distanceTo(this.controls.target);
-    if (isFinite(currentDist) && currentDist > 0) {
-      this.smoothDistance = currentDist;
-      this.targetDistance = currentDist;
-    }
-    this.resetMinDistance();
-  }
-
-  private interruptTrackingZoom(): void {
-    if (!this.isTracking) return;
-    const currentDist = this.smoothDistance || this.camera.position.distanceTo(this.controls.target);
-    if (isFinite(currentDist) && currentDist > 0) {
-      this.smoothDistance = currentDist;
-      this.targetDistance = currentDist;
-      this.trackingDistance = currentDist;
-    }
-  }
-
-  private setupWheelZoom(domElement: HTMLElement) {
-    // 如果已经绑定过，先移除旧的监听器（防止重复绑定导致缩放速度翻倍）
-    if (this.wheelHandler) {
-      domElement.removeEventListener('wheel', this.wheelHandler);
-    }
-    
-    this.wheelHandler = (e: WheelEvent) => {
-      // 阻止默认行为（防止页面滚动）和事件冒泡（防止父元素响应）
-      e.preventDefault();
-      e.stopPropagation();
-      
-      this.interruptFocusZoom();
-      this.interruptTrackingZoom();
-      this.isZooming = true;
-      
-      // 计算缩放增量：
-      // - scrollSpeed：将 deltaY 归一化到 [0, 3] 范围，避免高精度触控板产生过大增量
-      // - zoomDelta：向下滚动（deltaY > 0）为负值（拉远），向上滚动（deltaY < 0）为正值（拉近）
-      const scrollSpeed = Math.min(Math.abs(e.deltaY) / 100, 3); // 最大步长限制为 3
-      // 向下滚动缩小（deltaY > 0），向上滚动放大（deltaY < 0）
-      const zoomDelta = e.deltaY > 0 ? -scrollSpeed : scrollSpeed;
-      this.zoom(zoomDelta);
-    };
-    
-    // 绑定到 canvas 元素，使用 passive: false 以允许 preventDefault()
-    domElement.addEventListener('wheel', this.wheelHandler, { passive: false });
-  }
-
-  /**
-   * 初始化触摸捏合缩放事件处理（移动端双指缩放）
-   *
-   * 事件处理逻辑：
-   * - touchstart：检测双指触摸，记录初始指间距离和平滑距离；中断聚焦动画
-   * - touchmove：计算当前指间距离与初始距离的比值（scale），转换为缩放增量
-   *   - 使用平方根函数放大小幅度手指移动的效果（提升灵敏度）
-   *   - 限制更新频率（每 8ms 最多一次，约 120fps），避免过于频繁的计算
-   *   - 每次处理后更新 initialDistance，实现连续缩放（而非相对初始位置的绝对缩放）
-   * - touchend：重置捏合状态，但不立即停止缩放（保留惯性效果）
-   *
-   * @param domElement 绑定事件的 DOM 元素（renderer.domElement）
-   */
-  private setupTouchZoom(domElement: HTMLElement) {
-    // 如果已经绑定过，先移除旧的监听器（防止重复绑定）
-    if (this.touchStartHandler) {
-      domElement.removeEventListener('touchstart', this.touchStartHandler);
-      domElement.removeEventListener('touchmove', this.touchMoveHandler!);
-      domElement.removeEventListener('touchend', this.touchEndHandler!);
-    }
-    
-    let initialDistance = 0;       // 双指触摸开始时的指间距离（像素）
-    let isPinching = false;        // 是否正在进行捏合缩放
-    let lastUpdateTime = 0;        // 上次处理 touchmove 的时间戳（用于限频）
-
-    this.touchStartHandler = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
-        e.preventDefault(); // 阻止默认的浏览器缩放行为（防止页面被放大）
-        const touch1 = e.touches[0];
-        const touch2 = e.touches[1];
-        // 计算两指间的欧几里得距离（像素）
-        initialDistance = Math.sqrt(
-          Math.pow(touch2.clientX - touch1.clientX, 2) +
-          Math.pow(touch2.clientY - touch1.clientY, 2)
-        );
-        isPinching = true;
-        lastUpdateTime = performance.now(); // 重置更新时间戳
-        
-        this.interruptFocusZoom();
-        this.interruptTrackingZoom();
-        this.isZooming = true;
-      } else {
-        // 非双指触摸时重置捏合状态（如单指触摸开始）
-        isPinching = false;
-        initialDistance = 0;
-      }
-    };
-
-    this.touchMoveHandler = (e: TouchEvent) => {
-      if (e.touches.length === 2 && isPinching && initialDistance > 0) {
-        e.preventDefault(); // 阻止默认的浏览器缩放行为
-        
-        // 限制更新频率：每 8ms 最多处理一次（约 120fps），改善大范围缩放的平滑度
-        const currentTime = performance.now();
-        if (currentTime - lastUpdateTime < 8) {
-          return;
-        }
-        lastUpdateTime = currentTime;
-        
-        const touch1 = e.touches[0];
-        const touch2 = e.touches[1];
-        // 计算当前指间距离
-        const currentDistance = Math.sqrt(
-          Math.pow(touch2.clientX - touch1.clientX, 2) +
-          Math.pow(touch2.clientY - touch1.clientY, 2)
-        );
-        
-        // 最小距离检查（避免除零错误，且过小的距离变化无意义）
-        if (currentDistance > 10 && initialDistance > 10) {
-          // 计算缩放比例（当前距离 / 初始距离）
-          const scale = currentDistance / initialDistance;
-          
-          // 计算缩放增量：
-          // - scaleDiff > 0：两指张开（放大）
-          // - scaleDiff < 0：两指合拢（缩小）
-          const scaleDiff = scale - 1.0;
-          
-          // 使用平方根函数放大小幅度手指移动的效果：
-          // - 小变化（如 scaleDiff = 0.01）：sqrt(0.01) * 3 = 0.3，放大了 30 倍
-          // - 大变化（如 scaleDiff = 0.25）：sqrt(0.25) * 3 = 1.5，放大了 6 倍
-          // 这样即使很小的手指移动也能产生明显的缩放效果，同时大幅度移动不会过于激进
-          let zoomDelta;
-          if (Math.abs(scaleDiff) > 0.001) {
-            const sign = scaleDiff > 0 ? 1 : -1;
-            const absScaleDiff = Math.abs(scaleDiff);
-            zoomDelta = sign * Math.sqrt(absScaleDiff) * 3; // 灵敏度系数 3
-          } else {
-            zoomDelta = 0;
-          }
-          
-          // 限制单次缩放的最大幅度（±6），防止手指快速移动时产生过大跳跃
-          zoomDelta = Math.max(-6, Math.min(6, zoomDelta));
-          
-          // 调用统一的缩放方法（与滚轮缩放使用相同的算法）
-          this.zoom(zoomDelta);
-          
-          // 更新初始距离，实现连续缩放（每帧相对上一帧计算，而非相对触摸开始位置）
-          initialDistance = currentDistance;
-        }
-      } else if (e.touches.length !== 2) {
-        // 触摸点数量变化时重置捏合状态
-        isPinching = false;
-        initialDistance = 0;
-      }
-    };
-
-    this.touchEndHandler = (e: TouchEvent) => {
-      // 缩放无缓动：isZooming 会在下一帧 update() 中自动完成
-      if (e.touches.length < 2) {
-        isPinching = false;
-        initialDistance = 0;
-        lastUpdateTime = 0;
-      }
-    };
-
-    // 绑定事件监听器，touchstart/touchmove 使用 passive: false 以允许 preventDefault()
-    domElement.addEventListener('touchstart', this.touchStartHandler, { passive: false });
-    domElement.addEventListener('touchmove', this.touchMoveHandler, { passive: false });
-    domElement.addEventListener('touchend', this.touchEndHandler);
+    this.animator.setAzimuthalAngle(angle, smooth);
   }
 
   /**
@@ -681,6 +295,29 @@ export class CameraController {
         this.controls.enabled = false;
         // TODO: 跟随目标
         break;
+    }
+  }
+
+  private interruptFocusZoom(): void {
+    if (!this.isFocusing) return;
+    this.isFocusing = false;
+    this.targetCameraPosition = null;
+    this.targetControlsTarget = null;
+    const currentDist = this.camera.position.distanceTo(this.controls.target);
+    if (isFinite(currentDist) && currentDist > 0) {
+      this.smoothDistance = currentDist;
+      this.targetDistance = currentDist;
+    }
+    this.resetMinDistance();
+  }
+
+  private interruptTrackingZoom(): void {
+    if (!this.isTracking) return;
+    const currentDist = this.smoothDistance || this.camera.position.distanceTo(this.controls.target);
+    if (isFinite(currentDist) && currentDist > 0) {
+      this.smoothDistance = currentDist;
+      this.targetDistance = currentDist;
+      this.trackingDistance = currentDist;
     }
   }
 
@@ -1187,174 +824,11 @@ export class CameraController {
       this.focusManager.interruptTransition();
     }
     
-    // FOV 过渡（仅 setFov() 触发，缩放不再改变 FOV）
-    if (this.isFovTransitioning) {
-      const fovDiff = this.targetFov - this.currentFov;
-      if (Math.abs(fovDiff) > 0.1) {
-        // 使用缓动函数实现平滑过渡
-        this.currentFov += fovDiff * this.fovTransitionSpeed;
-        this.camera.fov = this.currentFov;
-        this.camera.updateProjectionMatrix();
-      } else {
-        // 过渡完成
-        this.currentFov = this.targetFov;
-        this.camera.fov = this.targetFov;
-        this.isFovTransitioning = false;
-        this.camera.updateProjectionMatrix();
-      }
-    }
-    
+    // 代理角度 + FOV 过渡到 CameraAnimator
+    this.animator.update(deltaTime);
     
     // 每帧应用防穿透约束，确保相机不会进入行星内部
-    this.applyPenetrationConstraint(deltaTime);    // 处理相机左右角度平滑过渡
-    if (this.isAzimuthalAngleTransitioning) {
-      // ⚠️ 重要：不要在每帧都从 spherical.theta 同步角度，这会导致振荡
-      // 只在开始时读取一次，然后使用我们自己的插值逻辑
-      
-      // 计算角度差值，选择最短路径（处理角度环绕）
-      let angleDiff = this.targetAzimuthalAngle - this.currentAzimuthalAngle;
-      // 处理角度环绕：如果差值超过180度，选择另一条路径
-      if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-      if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-      
-      if (Math.abs(angleDiff) > 0.01) {
-        // 使用缓动函数实现平滑过渡
-        this.currentAzimuthalAngle += angleDiff * this.azimuthalAngleTransitionSpeed;
-        // 保持角度在 -Math.PI 到 Math.PI 范围内
-        if (this.currentAzimuthalAngle > Math.PI) this.currentAzimuthalAngle -= 2 * Math.PI;
-        if (this.currentAzimuthalAngle < -Math.PI) this.currentAzimuthalAngle += 2 * Math.PI;
-        
-        // 使用类型断言访问 spherical（OrbitControls 内部属性）
-        const controlsAnyAz = this.controls as any;
-        if (controlsAnyAz.spherical) {
-          // ⚠️ 关键修复：临时禁用阻尼，避免与自定义插值冲突
-          const oldEnableDamping = this.controls.enableDamping;
-          this.controls.enableDamping = false;
-          
-          controlsAnyAz.spherical.theta = this.currentAzimuthalAngle;
-          
-          // 更新但不允许阻尼修改角度
-          this.controls.update();
-          
-          // 恢复阻尼设置
-          this.controls.enableDamping = oldEnableDamping;
-        } else {
-          // 如果 spherical 不存在，使用备用方法
-          const currentDistance = this.camera.position.distanceTo(this.controls.target);
-          const currentPolarAngle = this.controls.getPolarAngle();
-          const newPosition = new THREE.Vector3();
-          newPosition.x = currentDistance * Math.sin(currentPolarAngle) * Math.cos(this.currentAzimuthalAngle);
-          newPosition.y = currentDistance * Math.cos(currentPolarAngle);
-          newPosition.z = currentDistance * Math.sin(currentPolarAngle) * Math.sin(this.currentAzimuthalAngle);
-          newPosition.add(this.controls.target);
-          this.camera.position.copy(newPosition);
-          this.camera.lookAt(this.controls.target);
-          this.controls.update();
-        }
-      } else {
-        // 过渡完成
-        this.currentAzimuthalAngle = this.targetAzimuthalAngle;
-        const controlsAnyAz = this.controls as any;
-        if (controlsAnyAz.spherical) {
-          // ⚠️ 关键修复：临时禁用阻尼，避免与自定义插值冲突
-          const oldEnableDamping = this.controls.enableDamping;
-          this.controls.enableDamping = false;
-          
-          controlsAnyAz.spherical.theta = this.targetAzimuthalAngle;
-          
-          // 更新但不允许阻尼修改角度
-          this.controls.update();
-          
-          // 恢复阻尼设置
-          this.controls.enableDamping = oldEnableDamping;
-        } else {
-          // 如果 spherical 不存在，使用备用方法
-          const currentDistance = this.camera.position.distanceTo(this.controls.target);
-          const currentPolarAngle = this.controls.getPolarAngle();
-          const newPosition = new THREE.Vector3();
-          newPosition.x = currentDistance * Math.sin(currentPolarAngle) * Math.cos(this.targetAzimuthalAngle);
-          newPosition.y = currentDistance * Math.cos(currentPolarAngle);
-          newPosition.z = currentDistance * Math.sin(currentPolarAngle) * Math.sin(this.targetAzimuthalAngle);
-          newPosition.add(this.controls.target);
-          this.camera.position.copy(newPosition);
-          this.camera.lookAt(this.controls.target);
-          this.controls.update();
-        }
-        this.isAzimuthalAngleTransitioning = false;
-      }
-    }
-    
-    // 处理相机上下角度平滑过渡
-    if (this.isPolarAngleTransitioning) {
-      // ⚠️ 重要：不要在每帧都从 spherical.phi 同步角度，这会导致振荡
-      // 只在开始时读取一次，然后使用我们自己的插值逻辑
-      
-      const angleDiff = this.targetPolarAngle - this.currentPolarAngle;
-      if (Math.abs(angleDiff) > 0.01) {
-        // 使用缓动函数实现平滑过渡
-        this.currentPolarAngle += angleDiff * this.polarAngleTransitionSpeed;
-        // 确保角度在有效范围内（0 到 Math.PI），允许上下翻转
-        this.currentPolarAngle = Math.max(0, Math.min(Math.PI, this.currentPolarAngle));
-        
-        // 使用类型断言访问 spherical（OrbitControls 内部属性）
-        const controlsAnyPol = this.controls as any;
-        if (controlsAnyPol.spherical) {
-          // ⚠️ 关键修复：临时禁用阻尼，避免与自定义插值冲突
-          const oldEnableDamping = this.controls.enableDamping;
-          this.controls.enableDamping = false;
-          
-          controlsAnyPol.spherical.phi = this.currentPolarAngle;
-          
-          // 更新但不允许阻尼修改角度
-          this.controls.update();
-          
-          // 恢复阻尼设置
-          this.controls.enableDamping = oldEnableDamping;
-        } else {
-          // 如果 spherical 不存在，使用备用方法：通过设置相机位置
-          const currentDistance = this.camera.position.distanceTo(this.controls.target);
-          const currentAzimuthalAngle = this.controls.getAzimuthalAngle();
-          const newPosition = new THREE.Vector3();
-          newPosition.x = currentDistance * Math.sin(this.currentPolarAngle) * Math.cos(currentAzimuthalAngle);
-          newPosition.y = currentDistance * Math.cos(this.currentPolarAngle);
-          newPosition.z = currentDistance * Math.sin(this.currentPolarAngle) * Math.sin(currentAzimuthalAngle);
-          newPosition.add(this.controls.target);
-          this.camera.position.copy(newPosition);
-          this.camera.lookAt(this.controls.target);
-          this.controls.update();
-        }
-      } else {
-        // 过渡完成
-        this.currentPolarAngle = this.targetPolarAngle;
-        const controlsAnyPol3 = this.controls as any;
-        if (controlsAnyPol3.spherical) {
-          // ⚠️ 关键修复：临时禁用阻尼，避免与自定义插值冲突
-          const oldEnableDamping = this.controls.enableDamping;
-          this.controls.enableDamping = false;
-          
-          controlsAnyPol3.spherical.phi = this.targetPolarAngle;
-          
-          // 更新但不允许阻尼修改角度
-          this.controls.update();
-          
-          // 恢复阻尼设置
-          this.controls.enableDamping = oldEnableDamping;
-        } else {
-          // 如果 spherical 不存在，使用备用方法
-          const currentDistance = this.camera.position.distanceTo(this.controls.target);
-          const currentAzimuthalAngle = this.controls.getAzimuthalAngle();
-          const newPosition = new THREE.Vector3();
-          newPosition.x = currentDistance * Math.sin(this.targetPolarAngle) * Math.cos(currentAzimuthalAngle);
-          newPosition.y = currentDistance * Math.cos(this.targetPolarAngle);
-          newPosition.z = currentDistance * Math.sin(this.targetPolarAngle) * Math.sin(currentAzimuthalAngle);
-          newPosition.add(this.controls.target);
-          this.camera.position.copy(newPosition);
-          this.camera.lookAt(this.controls.target);
-          this.controls.update();
-        }
-        this.isPolarAngleTransitioning = false;
-      }
-    }
+    this.applyPenetrationConstraint(deltaTime);
     
     // 处理聚焦动画（仅在非跟踪模式下）
     if (!this.isTracking && this.isFocusing && this.targetCameraPosition && this.targetControlsTarget) {
@@ -1678,12 +1152,6 @@ export class CameraController {
     return this.controls;
   }
 
-  // FOV 平滑过渡相关
-  private targetFov: number = CAMERA_CONFIG.fov;
-  private currentFov: number = CAMERA_CONFIG.fov;
-  private isFovTransitioning: boolean = false;
-  private fovTransitionSpeed: number = 1.0; // FOV 过渡速度（1.0 = 立即切换，无缓动）
-
   private _dragSensitivityCurve = DEFAULT_DRAG_CURVE;
 
   // FOV（视野角度）相关 — setFov() 保留，用于程序化设置；缩放中不再使用 FOV 光学变焦
@@ -1699,24 +1167,7 @@ export class CameraController {
    * @param smooth 是否平滑过渡（默认 false，立即切换）
    */
   setFov(fov: number, smooth = false) {
-    if (!isFinite(fov) || fov <= 0 || fov >= 180) {
-      console.warn('CameraController.setFov: Invalid FOV value', fov);
-      return;
-    }
-    
-    if (smooth) {
-      // 平滑过渡模式
-      this.targetFov = fov;
-      this.isFovTransitioning = true;
-      this.currentFov = this.camera.fov; // 从当前 FOV 开始过渡
-    } else {
-      // 立即切换模式
-      this.camera.fov = fov;
-      this.currentFov = fov;
-      this.targetFov = fov;
-      this.isFovTransitioning = false;
-      this.camera.updateProjectionMatrix();
-    }
+    this.animator.setFov(fov, smooth);
   }
 
   /**
@@ -1742,7 +1193,7 @@ export class CameraController {
    * @returns 当前 FOV（度），范围 [FOV_MIN, 180)
    */
   getFov() {
-    return this.camera.fov;
+    return this.animator.getFov();
   }
 
   /**
@@ -1763,20 +1214,8 @@ export class CameraController {
       this.configUnsubscribe = null;
     }
     
-    // 清理事件监听器
-    if (this.wheelHandler && this.domElement) {
-      this.domElement.removeEventListener('wheel', this.wheelHandler);
-      this.wheelHandler = null;
-    }
-    
-    if (this.touchStartHandler && this.domElement) {
-      this.domElement.removeEventListener('touchstart', this.touchStartHandler);
-      this.domElement.removeEventListener('touchmove', this.touchMoveHandler!);
-      this.domElement.removeEventListener('touchend', this.touchEndHandler!);
-      this.touchStartHandler = null;
-      this.touchMoveHandler = null;
-      this.touchEndHandler = null;
-    }
+    // 清理事件监听器（通过 CameraInputHandler）
+    this.inputHandler.dispose();
     
     // OrbitControls 会自动处理其内部的事件监听器
     this.controls.dispose();

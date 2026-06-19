@@ -75,7 +75,6 @@ export const NEARBY_GROUPS_CONFIG = {
   galaxyCount: 150,  // 真实观测的星系数量
   useParticles: true,  // 使用粒子系统渲染
   particleSize: 0.01,  // 粒子基础大小（Mpc）- 对应约3万光年直径的星系
-  enhancementFactor: 3,  // 程序化生成增强因子（在真实数据基础上）
   showConnections: true,  // 显示星系群内部连线
   connectionOpacity: 0.3,  // 连线透明度
   // 粒子颜色配置
@@ -95,7 +94,6 @@ export const VIRGO_SUPERCLUSTER_CONFIG = {
   particleSize: 0.008,  // 粒子基础大小（Mpc）- 对应约2.5万光年直径的星系
   densityFieldEnabled: true,  // 启用密度场可视化
   densityFieldResolution: 32,  // 密度场网格分辨率
-  enhancementFactor: 5,  // 程序化生成增强因子
   showConnections: true,  // 显示星系团内部连线
   connectionOpacity: 0.2,  // 连线透明度
   // 密度场颜色映射

@@ -97,6 +97,19 @@ export class SatelliteRenderer {
   // 对象池：复用轨道线对象
   private orbitLinePool: OrbitLine[];
   
+  // 预分配的颜色对象，避免循环内 new THREE.Color()
+  private static COLOR_HOVER = new THREE.Color(1.0, 0.9, 0.0);
+  private static COLOR_SELECTED = new THREE.Color(1.0, 0.5, 0.0);
+  private static COLOR_HOVER_BRIGHT = new THREE.Color(1.0, 1.0, 0.5);
+  private static COLOR_SELECTED_BRIGHT = new THREE.Color(1.0, 0.5, 0.0);
+  
+  // 缓存的颜色查找表，按轨道类型索引
+  private orbitColorCache: Map<OrbitType, THREE.Color> = new Map();
+  
+  // 缓存的 noradIds 数组，避免每帧 Array.from()
+  private cachedNoradIds: number[] = [];
+  private noradIdsDirty: boolean = true;
+
   /**
    * 创建卫星渲染器实例
    * 
@@ -214,69 +227,67 @@ export class SatelliteRenderer {
   updatePositions(satellites: Map<number, SatelliteState>): void {
     this.satellites = satellites;
     
-    // 如果没有卫星数据，隐藏点云
     if (satellites.size === 0) {
       this.pointCloud.visible = false;
       this.geometry.setDrawRange(0, 0);
       return;
     }
     
-    // 使用Array.from确保与raycast中的顺序一致
-    const noradIds = Array.from(satellites.keys());
+    // 仅在数据变化时重建缓存数组
+    if (this.noradIdsDirty) {
+      this.cachedNoradIds = Array.from(satellites.keys());
+      this.noradIdsDirty = false;
+    }
+    const noradIds = this.cachedNoradIds;
+    
     let index = 0;
     let positionChanged = false;
     let colorChanged = false;
     
-    noradIds.forEach((noradId) => {
-      if (index >= MAX_SATELLITES) {
-        return;
-      }
-      
+    const hovered = this.hoveredSatellite;
+    const selected = this.selectedSatellite;
+    
+    for (let n = 0; n < noradIds.length && index < MAX_SATELLITES; n++) {
+      const noradId = noradIds[n];
       const sat = satellites.get(noradId);
-      if (!sat) {
-        return;
-      }
+      if (!sat) continue;
       
-      // 检查位置是否变化（优化：只在位置真正变化时更新）
-      const oldX = this.positionBuffer[index * 3];
-      const oldY = this.positionBuffer[index * 3 + 1];
-      const oldZ = this.positionBuffer[index * 3 + 2];
+      const i3 = index * 3;
+      
+      const oldX = this.positionBuffer[i3];
+      const oldY = this.positionBuffer[i3 + 1];
+      const oldZ = this.positionBuffer[i3 + 2];
       
       if (oldX !== sat.position.x || oldY !== sat.position.y || oldZ !== sat.position.z) {
-        this.positionBuffer[index * 3] = sat.position.x;
-        this.positionBuffer[index * 3 + 1] = sat.position.y;
-        this.positionBuffer[index * 3 + 2] = sat.position.z;
+        this.positionBuffer[i3] = sat.position.x;
+        this.positionBuffer[i3 + 1] = sat.position.y;
+        this.positionBuffer[i3 + 2] = sat.position.z;
         positionChanged = true;
       }
       
-      // 更新颜色(根据轨道类型和悬停状态)
-      let color = this.getColorByOrbitType(sat.orbitType);
-      
-      // 如果是悬停的卫星,使用高亮颜色(明亮的黄色)
-      // 注意:悬停状态优先级高于轨道类型颜色
-      if (this.hoveredSatellite === sat.noradId) {
-        color = new THREE.Color(1.0, 0.9, 0.0); // 明亮的黄色高亮,更显眼
+      // 使用预分配的颜色对象，避免 new THREE.Color()
+      let color: THREE.Color;
+      if (selected === noradId) {
+        color = SatelliteRenderer.COLOR_SELECTED;
+      } else if (hovered === noradId) {
+        color = SatelliteRenderer.COLOR_HOVER;
+      } else {
+        color = this.getColorByOrbitType(sat.orbitType);
       }
       
-      // 如果是选中的卫星,使用更明亮的高亮色
-      if (this.selectedSatellite === sat.noradId) {
-        color = new THREE.Color(1.0, 0.5, 0.0); // 橙色高亮,表示选中状态
-      }
-      
-      // 检查颜色是否变化（优化：只在颜色真正变化时更新）
-      const oldR = this.colorBuffer[index * 3];
-      const oldG = this.colorBuffer[index * 3 + 1];
-      const oldB = this.colorBuffer[index * 3 + 2];
+      const oldR = this.colorBuffer[i3];
+      const oldG = this.colorBuffer[i3 + 1];
+      const oldB = this.colorBuffer[i3 + 2];
       
       if (oldR !== color.r || oldG !== color.g || oldB !== color.b) {
-        this.colorBuffer[index * 3] = color.r;
-        this.colorBuffer[index * 3 + 1] = color.g;
-        this.colorBuffer[index * 3 + 2] = color.b;
+        this.colorBuffer[i3] = color.r;
+        this.colorBuffer[i3 + 1] = color.g;
+        this.colorBuffer[i3 + 2] = color.b;
         colorChanged = true;
       }
       
       index++;
-    });
+    }
     
     // 动态调整点大小(如果有高亮的卫星)
     if (this.hoveredSatellite !== null || this.selectedSatellite !== null) {
@@ -330,20 +341,15 @@ export class SatelliteRenderer {
   }
   
   /**
-   * 根据轨道类型获取颜色
-   * 
-   * 颜色映射：
-   * - LEO(低轨): 蓝色 #00aaff
-   * - MEO(中轨): 绿色 #00ff00
-   * - GEO(高轨): 红色 #ff0000
-   * - HEO(高椭圆轨道): 白色 #ffffff
-   * 
-   * @param orbitType - 轨道类型
-   * @returns Three.js颜色对象
+   * 根据轨道类型获取颜色（使用缓存，避免重复创建）
    */
   private getColorByOrbitType(orbitType: OrbitType): THREE.Color {
-    const colorHex = satelliteConfig.rendering.colors[orbitType];
-    return new THREE.Color(colorHex);
+    let color = this.orbitColorCache.get(orbitType);
+    if (!color) {
+      color = new THREE.Color(satelliteConfig.rendering.colors[orbitType]);
+      this.orbitColorCache.set(orbitType, color);
+    }
+    return color;
   }
   
   /**
@@ -455,9 +461,9 @@ export class SatelliteRenderer {
     if (intersects.length > 0) {
       const index = intersects[0].index;
       if (index !== undefined) {
-        // 从索引获取NORAD ID
-        // 确保使用与updatePositions相同的遍历顺序
-        const noradIds = Array.from(this.satellites.keys());
+        const noradIds = this.cachedNoradIds.length > 0
+          ? this.cachedNoradIds
+          : Array.from(this.satellites.keys());
         if (index < noradIds.length) {
           return noradIds[index];
         }
@@ -783,5 +789,7 @@ export class SatelliteRenderer {
     // 清空数据
     this.satellites.clear();
     this.orbitCurves.clear();
+    this.cachedNoradIds = [];
+    this.noradIdsDirty = true;
   }
 }

@@ -32,7 +32,7 @@ interface GridCell {
  * 重叠检测器
  */
 export class OverlapDetector {
-  private grid: Map<string, GridCell> = new Map();
+  private grid: Map<number, GridCell> = new Map();
   private cellSize: number;
   
   constructor(cellSize: number = 100) {
@@ -91,12 +91,12 @@ export class OverlapDetector {
   }
   
   /**
-   * 获取网格单元键
+   * 获取网格单元键（数字编码，避免字符串拼接开销）
    */
-  private getCellKey(x: number, y: number): string {
+  private getCellKey(x: number, y: number): number {
     const cellX = Math.floor(x / this.cellSize);
     const cellY = Math.floor(y / this.cellSize);
-    return `${cellX},${cellY}`;
+    return cellX * 100000 + cellY;
   }
   
   /**

@@ -45,6 +45,9 @@ next-env.d.ts
 # quality reports
 /reports
 
+# git rewrite temporary files
+.git-rewrite/
+
 # IDE and editor configurations
 .kiro/
 .vscode/

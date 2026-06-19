@@ -101,24 +101,12 @@ export class LODManager {
    * @returns LOD 级别
    */
   getCurrentLOD(cameraDistance: number): LODLevel {
-    // 二分查找
-    let left = 0;
-    let right = this.lodLevels.length - 1;
-    let result = this.lodLevels[0];
-
-    while (left <= right) {
-      const mid = Math.floor((left + right) / 2);
-      const level = this.lodLevels[mid];
-
-      if (cameraDistance >= level.distance) {
-        result = level;
-        left = mid + 1;
-      } else {
-        right = mid - 1;
+    for (let i = this.lodLevels.length - 1; i >= 0; i--) {
+      if (cameraDistance >= this.lodLevels[i].distance) {
+        return this.lodLevels[i];
       }
     }
-
-    return result;
+    return this.lodLevels[0];
   }
 
   /**

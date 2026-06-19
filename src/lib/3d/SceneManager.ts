@@ -1,8 +1,6 @@
 import * as THREE from 'three';
 import { VIEW_SETTINGS } from '../config/cameraConfig';
-import { NearbyStars } from './NearbyStars';
 import { GalaxyRenderer } from './GalaxyRenderer';
-import { GaiaStars } from './GaiaStars';
 import { GALAXY_CONFIG, SCALE_VIEW_CONFIG } from '../config/galaxyConfig';
 import type { UniverseScaleRenderer } from '../types/universeTypes';
 import { type GridInfo, SolarSystemGrid } from './SolarSystemGrid';
@@ -23,8 +21,6 @@ export class SceneManager {
   private alignmentCalculator: StarsAlignmentCalculator;
   private universeGroupManager: UniverseGroupManager;
 
-  private nearbyStars: NearbyStars | null = null;
-  private gaiaStars: GaiaStars | null = null;
   private galaxyRenderer: GalaxyRenderer | null = null;
 
   private observableBoundarySphere: THREE.LineSegments | null = null;
@@ -130,12 +126,6 @@ export class SceneManager {
   }
 
   updateMultiScaleView(cameraDistance: number, deltaTime: number): void {
-    if (this.nearbyStars) {
-      this.nearbyStars.update(cameraDistance, deltaTime);
-    }
-    if (this.gaiaStars) {
-      this.gaiaStars.update(cameraDistance, deltaTime);
-    }
     if (this.galaxyRenderer) {
       this.galaxyRenderer.update(cameraDistance, deltaTime);
     }
@@ -164,16 +154,6 @@ export class SceneManager {
   applyStarsAlignment(): void {
     const combinedRotation = this.alignmentCalculator.calculateCombinedRotation();
     this.skyboxManager.applyRotation(combinedRotation);
-    if (this.gaiaStars) {
-      this.gaiaStars.getGroup().quaternion.copy(combinedRotation);
-    }
-    if (this.nearbyStars) {
-      this.nearbyStars.getGroup().quaternion.copy(combinedRotation);
-    }
-  }
-
-  getNearbyStars(): NearbyStars | null {
-    return this.nearbyStars;
   }
 
   getGalaxyRenderer(): GalaxyRenderer | null {
@@ -319,14 +299,6 @@ export class SceneManager {
   }
 
   dispose(): void {
-    if (this.nearbyStars) {
-      this.nearbyStars.dispose();
-      this.nearbyStars = null;
-    }
-    if (this.gaiaStars) {
-      this.gaiaStars.dispose();
-      this.gaiaStars = null;
-    }
     if (this.galaxyRenderer) {
       this.galaxyRenderer.dispose();
       this.galaxyRenderer = null;

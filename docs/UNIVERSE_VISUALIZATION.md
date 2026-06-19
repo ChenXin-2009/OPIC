@@ -104,10 +104,6 @@ The `MemoryManager` tracks and controls memory usage:
 - Automatic release of distant scale data
 - Preloading of adjacent scales
 
-### 5. Web Workers
-
-The `ProceduralGenerator` uses Web Workers for galaxy generation to avoid blocking the main thread.
-
 ## Scale Transition System
 
 Smooth transitions between scales are controlled by distance thresholds:

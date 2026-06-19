@@ -95,27 +95,29 @@ export class PositionInterpolator {
     p3: Vector3,
     dt: number
   ): Vector3 {
-    // Compute velocities using central differences with actual time step
-    // v1 = (p2 - p0) / (2 * dt)
-    // v2 = (p3 - p1) / (2 * dt)
-    const v1 = p2.sub(p0).scale(1 / (2 * dt));
-    const v2 = p3.sub(p1).scale(1 / (2 * dt));
+    // 使用标量运算直接计算，避免创建临时 Vector3 对象
+    const invDt = 1 / (2 * dt);
+    const v1x = (p2.x - p0.x) * invDt;
+    const v1y = (p2.y - p0.y) * invDt;
+    const v1z = (p2.z - p0.z) * invDt;
+    const v2x = (p3.x - p1.x) * invDt;
+    const v2y = (p3.y - p1.y) * invDt;
+    const v2z = (p3.z - p1.z) * invDt;
 
-    // Hermite basis functions
     const t2 = t * t;
     const t3 = t2 * t;
 
-    const h00 = 2 * t3 - 3 * t2 + 1;           // (1 + 2t)(1 - t)^2
-    const h10 = t3 - 2 * t2 + t;               // t(1 - t)^2
-    const h01 = -2 * t3 + 3 * t2;              // t^2(3 - 2t)
-    const h11 = t3 - t2;                       // t^2(t - 1)
+    const h00 = 2 * t3 - 3 * t2 + 1;
+    const h10 = t3 - 2 * t2 + t;
+    const h01 = -2 * t3 + 3 * t2;
+    const h11 = t3 - t2;
+    const dtH10 = dt * h10;
+    const dtH11 = dt * h11;
 
-    // Hermite interpolation formula
-    // P(t) = h00*p1 + h10*dt*v1 + h01*p2 + h11*dt*v2
     return new Vector3(
-      h00 * p1.x + h10 * dt * v1.x + h01 * p2.x + h11 * dt * v2.x,
-      h00 * p1.y + h10 * dt * v1.y + h01 * p2.y + h11 * dt * v2.y,
-      h00 * p1.z + h10 * dt * v1.z + h01 * p2.z + h11 * dt * v2.z
+      h00 * p1.x + dtH10 * v1x + h01 * p2.x + dtH11 * v2x,
+      h00 * p1.y + dtH10 * v1y + h01 * p2.y + dtH11 * v2y,
+      h00 * p1.z + dtH10 * v1z + h01 * p2.z + dtH11 * v2z
     );
   }
 

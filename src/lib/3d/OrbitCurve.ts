@@ -266,25 +266,36 @@ export class OrbitCurve {
         const planetPos = this.planetPosition!;
         let closestIdx = 0;
         let minDist = Infinity;
+        let maxDist = 0;
         for (let i = 0; i < vertexCount; i++) {
-            const dist = this.points[i].distanceTo(planetPos);
+            const dx = this.points[i].x - planetPos.x;
+            const dy = this.points[i].y - planetPos.y;
+            const dz = this.points[i].z - planetPos.z;
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
             if (dist < minDist) {
                 minDist = dist;
                 closestIdx = i;
             }
+            if (dist > maxDist) maxDist = dist;
         }
         
         const nextIdx = (closestIdx + 1) % vertexCount;
-        const velocityDir = new THREE.Vector3()
-            .subVectors(this.points[nextIdx], this.points[closestIdx])
-            .normalize();
+        const velX = this.points[nextIdx].x - this.points[closestIdx].x;
+        const velY = this.points[nextIdx].y - this.points[closestIdx].y;
+        const velZ = this.points[nextIdx].z - this.points[closestIdx].z;
+        const velLen = Math.sqrt(velX * velX + velY * velY + velZ * velZ);
+        const vnx = velX / velLen;
+        const vny = velY / velLen;
+        const vnz = velZ / velLen;
         
-        const maxDist = Math.max(...this.points.map(p => p.distanceTo(planetPos)));
+        const invMaxDist = maxDist > 0 ? 1 / maxDist : 1;
         
         for (let i = 0; i < vertexCount; i++) {
             const point = this.points[i];
-            const toPoint = new THREE.Vector3().subVectors(point, planetPos);
-            const dist = toPoint.length();
+            const toDx = point.x - planetPos.x;
+            const toDy = point.y - planetPos.y;
+            const toDz = point.z - planetPos.z;
+            const dist = Math.sqrt(toDx * toDx + toDy * toDy + toDz * toDz);
             
             if (dist < 0.001) {
                 colors[i * 3] = r * lineOpacity;
@@ -293,9 +304,9 @@ export class OrbitCurve {
                 continue;
             }
             
-            toPoint.normalize();
-            const dot = toPoint.dot(velocityDir);
-            const distT = Math.min(1, dist / maxDist);
+            const invDist = 1 / dist;
+            const dot = toDx * vnx * invDist + toDy * vny * invDist + toDz * vnz * invDist;
+            const distT = Math.min(1, dist * invMaxDist);
             
             let opacity = ORBIT_GRADIENT_CONFIG.maxOpacity;
             if (dot < 0) {
@@ -481,37 +492,50 @@ export class OrbitCurve {
       // 找到最接近行星位置的轨道点索引
       let closestIdx = 0;
       let minDist = Infinity;
+      let maxDist = 0;
+      const px = this.planetPosition!.x;
+      const py = this.planetPosition!.y;
+      const pz = this.planetPosition!.z;
       for (let i = 0; i < vertexCount; i++) {
-        const dist = this.points[i].distanceTo(this.planetPosition);
+        const dx = this.points[i].x - px;
+        const dy = this.points[i].y - py;
+        const dz = this.points[i].z - pz;
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
         if (dist < minDist) {
           minDist = dist;
           closestIdx = i;
         }
+        if (dist > maxDist) maxDist = dist;
       }
       
       // 计算运动方向
       const nextIdx = (closestIdx + 1) % vertexCount;
-      const velocityDir = new THREE.Vector3()
-        .subVectors(this.points[nextIdx], this.points[closestIdx])
-        .normalize();
+      const velX = this.points[nextIdx].x - this.points[closestIdx].x;
+      const velY = this.points[nextIdx].y - this.points[closestIdx].y;
+      const velZ = this.points[nextIdx].z - this.points[closestIdx].z;
+      const velLen = Math.sqrt(velX * velX + velY * velY + velZ * velZ);
+      const vnx = velX / velLen;
+      const vny = velY / velLen;
+      const vnz = velZ / velLen;
       
-      const maxDist = Math.max(...this.points.map(p => p.distanceTo(this.planetPosition!)));
+      const invMaxDist = maxDist > 0 ? 1 / maxDist : 1;
       
       // 更新颜色数组
       for (let i = 0; i < vertexCount; i++) {
         const point = this.points[i];
-        const toPoint = new THREE.Vector3().subVectors(point, this.planetPosition);
-        const dist = toPoint.length();
+        const toDx = point.x - px;
+        const toDy = point.y - py;
+        const toDz = point.z - pz;
+        const dist = Math.sqrt(toDx * toDx + toDy * toDy + toDz * toDz);
         
         if (dist < 0.001) {
-          // 行星当前位置，完全不透明
           colors.setXYZ(i, r * lineOpacity, g * lineOpacity, b * lineOpacity);
           continue;
         }
         
-        toPoint.normalize();
-        const dot = toPoint.dot(velocityDir);
-        const distT = Math.min(1, dist / maxDist);
+        const invDist = 1 / dist;
+        const dot = toDx * vnx * invDist + toDy * vny * invDist + toDz * vnz * invDist;
+        const distT = Math.min(1, dist * invMaxDist);
         
         // 渐变逻辑：从行星位置开始，向运动反方向渐隐
         let opacity = ORBIT_GRADIENT_CONFIG.maxOpacity;
@@ -545,24 +569,26 @@ export class OrbitCurve {
    * @returns Distance from orbit curve, or -1 if validation fails
    */
   validatePlanetAlignment(planetPosition: THREE.Vector3, _tolerance: number = 0.001): number {
-    if (!this.curve || this.points.length === 0) {
+    if (this.points.length === 0) {
       return -1;
     }
     
-    // Find the closest point on the orbit curve to the planet position
+    // 直接使用已有的轨道点，无需重新采样曲线
     let minDistance = Infinity;
+    const px = planetPosition.x;
+    const py = planetPosition.y;
+    const pz = planetPosition.z;
     
-    // Sample the curve at high resolution for accurate distance measurement
-    const samplePoints = this.curve.getPoints(Math.max(1000, this.currentResolution * 2));
-    
-    for (const point of samplePoints) {
-      const distance = planetPosition.distanceTo(point);
-      if (distance < minDistance) {
-        minDistance = distance;
+    for (let i = 0; i < this.points.length; i++) {
+      const dx = this.points[i].x - px;
+      const dy = this.points[i].y - py;
+      const dz = this.points[i].z - pz;
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (dist < minDistance) {
+        minDistance = dist;
       }
     }
     
-    // Return the minimum distance (can be compared against tolerance by caller)
     return minDistance;
   }
 
@@ -572,23 +598,26 @@ export class OrbitCurve {
    * @returns Closest point on orbit curve
    */
   getClosestPointOnOrbit(position: THREE.Vector3): THREE.Vector3 | null {
-    if (!this.curve) return null;
+    if (this.points.length === 0) return null;
     
     let minDistance = Infinity;
     let closestPoint: THREE.Vector3 | null = null;
+    const px = position.x;
+    const py = position.y;
+    const pz = position.z;
     
-    // Sample the curve for closest point
-    const samplePoints = this.curve.getPoints(Math.max(500, this.currentResolution));
-    
-    for (const point of samplePoints) {
-      const distance = position.distanceTo(point);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestPoint = point.clone();
+    for (let i = 0; i < this.points.length; i++) {
+      const dx = this.points[i].x - px;
+      const dy = this.points[i].y - py;
+      const dz = this.points[i].z - pz;
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestPoint = this.points[i];
       }
     }
     
-    return closestPoint;
+    return closestPoint ? closestPoint.clone() : null;
   }
 
   /**
