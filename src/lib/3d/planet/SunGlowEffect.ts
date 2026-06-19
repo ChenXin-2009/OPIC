@@ -27,6 +27,7 @@ export class SunGlowEffect {
   private glowSprite: THREE.Sprite | null = null;
   private rainbowSprites: THREE.Sprite[] = [];
   private starSpikesSprite: THREE.Sprite | null = null;
+  private occluders: THREE.Object3D[] = [];
 
   constructor(parentObject: THREE.Object3D, realRadius: number) {
     this.parentObject = parentObject;
@@ -234,6 +235,10 @@ export class SunGlowEffect {
 
     this.starSpikesSprite = sprite;
     this.parentObject.add(sprite);
+  }
+
+  setOccluders(occluders: THREE.Object3D[]): void {
+    this.occluders = occluders;
   }
 
   update(camera: THREE.Camera): void {

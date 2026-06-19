@@ -73,7 +73,7 @@ import { type PlanetConfig, REAL_PLANET_RADII } from './planet/PlanetTypes';
 import { createSunShaderMaterial, createPlanetShaderMaterial } from './planet/planetShaders';
 import { PlanetRingRenderer } from './planet/PlanetRing';
 import { PlanetGrid } from './planet/PlanetGrid';
-import { SunGlowEffect } from './planet/SunGlowEffect';
+import { SunVisualEnhancer } from './planet/SunVisualEnhancer';
 
 export type { PlanetConfig } from './planet/PlanetTypes';
 
@@ -105,7 +105,7 @@ export class Planet {
 
   private ringRenderer: PlanetRingRenderer | null = null;
   private grid: PlanetGrid | null = null;
-  private sunGlow: SunGlowEffect | null = null;
+  private sunGlow: SunVisualEnhancer | null = null;
 
   constructor(config: PlanetConfig) {
     let celestialConfig: CelestialBodyConfig | undefined;
@@ -182,7 +182,7 @@ export class Planet {
     this.applyAxialTilt();
 
     if (this.isSun && SUN_GLOW_CONFIG.enabled) {
-      this.sunGlow = new SunGlowEffect(this.mesh, this.realRadius);
+      this.sunGlow = new SunVisualEnhancer(this.mesh, this.realRadius);
       this.sunGlow.create();
     }
 
@@ -344,8 +344,15 @@ export class Planet {
     if (this.grid) this.grid.updateVisibility(distance);
   }
 
+  setGlowOccluders(occluders: THREE.Object3D[]): void {
+    if (this.sunGlow) this.sunGlow.setOccluders(occluders);
+  }
+
   updateGlow(camera: THREE.Camera): void {
-    if (this.sunGlow) this.sunGlow.update(camera);
+    if (this.sunGlow) {
+      this.sunGlow.mount();
+      this.sunGlow.update(camera);
+    }
   }
 
   updateLOD(distance: number): void {

@@ -65,3 +65,19 @@ export const SUN_RAINBOW_LAYERS = [
   { color: '#ffd56b', radiusMultiplier: 2.3, opacity: 0.25 },
   { color: '#6bd6ff', radiusMultiplier: 2.8, opacity: 0.2 },
 ];
+
+/**
+ * 电影级镜头光晕 (CC0) — 与 SunVisualDebugStore 默认值同步
+ */
+export const SUN_LENS_FLARE_CONFIG = {
+  enabled: true,
+  opacity: 0.95,
+  colorGainR: 43, colorGainG: 18, colorGainB: 5,
+  starPoints: 4,
+  glareSize: 0.03, flareSize: 0.005, flareSpeed: 0,
+  flareShape: 1.3, haloScale: 0.5, ghostScale: 0.6,
+  animated: false, anamorphic: true,
+  secondaryGhosts: true, starBurst: false, aditionalStreaks: true,
+  enhanceStartDistance: 70, enhanceEndDistance: 5,
+  enhanceOpacityMultiplier: 2.5, farLimitDistance: 100,
+};

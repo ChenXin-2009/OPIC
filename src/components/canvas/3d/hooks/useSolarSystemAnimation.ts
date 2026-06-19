@@ -276,6 +276,14 @@ export function useSolarSystemAnimation(
       sunPlanet.updateGridVisibility(sunDistance);
       const sunLabel = refs.labelsRef.current?.get('sun');
       if (sunLabel) sunLabel.setOpacity(1);
+
+      // 每帧收集非太阳行星 mesh 作为镜头光晕遮挡检测目标
+      const occluderMeshes: THREE.Object3D[] = [];
+      refs.planetsRef.current?.forEach((planet, key) => {
+        if (key !== 'sun') occluderMeshes.push(planet.getMesh());
+      });
+      sunPlanet.setGlowOccluders(occluderMeshes);
+
       try { sunPlanet.updateGlow(camera); } catch { /* ignore */ }
     }
 
