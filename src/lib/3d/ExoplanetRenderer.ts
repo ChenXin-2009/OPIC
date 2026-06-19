@@ -1,3 +1,18 @@
+/**
+ * 系外行星渲染器 (Exoplanet Renderer)
+ *
+ * 负责在 RenderWorld 中渲染已知系外行星系统的宿主恒星及其行星。
+ *
+ * 核心功能：
+ * - 将 ICRS 坐标系的系外行星位置变换到 Three.js 渲染空间
+ * - 基于恒星温度/行星半径着色
+ * - 支持鼠标拾取（恒星/行星级别）
+ * - 管理轨道线和标签显示
+ * - 与 ExoplanetSystemRenderer 协作渲染选中系统的详细视图
+ *
+ * 数据来源：NASA Exoplanet Archive（通过后端 API 加载）
+ */
+
 import * as THREE from 'three';
 import {
   estimateSemiMajorAxisAU,
@@ -37,6 +52,9 @@ const SYSTEM_ORBIT_SCALE = 8;
 const STAR_PICK_RADIUS_PX = 13;
 const PLANET_PICK_RADIUS_PX = 16;
 
+/**
+ * 系外行星渲染器 — 将 NASA 系外行星数据渲染到 Three.js 场景中，支持拾取和交互。
+ */
 export class ExoplanetRenderer {
   private group = new THREE.Group();
   private hostsGroup = new THREE.Group();
@@ -610,4 +628,5 @@ export class ExoplanetRenderer {
   }
 }
 
+/** 拾取目标类型 — 标识鼠标点击的是恒星还是行星 */
 export type { PickTarget as ExoplanetPickTarget };

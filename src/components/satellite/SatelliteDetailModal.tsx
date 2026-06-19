@@ -1,3 +1,10 @@
+/**
+ * 卫星详情弹窗 (Satellite Detail Modal)
+ *
+ * 全屏模态弹窗，展示选中卫星的完整详细信息和实时数据。
+ * 使用骨架屏加载态，支持 ESC 键关闭。
+ */
+
 'use client';
 
 import { memo, useCallback, useEffect, useRef } from 'react';

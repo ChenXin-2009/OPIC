@@ -1,3 +1,16 @@
+/**
+ * 天体位置计算编排器 (Celestial Position Orchestrator)
+ *
+ * 协调所有太阳系天体（行星、卫星）的位置计算。
+ * 根据时间精度需求自动选择：
+ * - 解析轨道力学（快速，±1000km 精度）
+ * - 星历表插值（高精度，±10m 精度）
+ *
+ * 缓存机制：
+ * - JD 变化小于 CACHE_TOLERANCE 时复用上次结果
+ * - 缓存超过 CACHE_MAX_AGE 毫秒自动失效
+ */
+
 import * as THREE from 'three';
 import type { CelestialBody } from './types';
 import { ORBITAL_ELEMENTS, SATELLITE_DEFINITIONS, CACHE_TOLERANCE, CACHE_MAX_AGE } from './data';
@@ -13,6 +26,15 @@ interface PositionCache {
 
 let positionCache: PositionCache | null = null;
 
+/**
+ * 获取所有太阳系天体在指定时刻的位置。
+ * 根据精度需求自动选择解析轨道力学或星历表插值。
+ * 结果按 JD 缓存，短时间内重复调用直接返回缓存。
+ *
+ * @param julianDay 儒略日 (JD)
+ * @param setBodyStatus 可选的状态回调，用于报告各天体的加载进度
+ * @returns 天体位置数组（太阳、行星、卫星）
+ */
 export async function getCelestialBodies(
   julianDay: number,
   setBodyStatus?: (bodyKey: string, status: string, error?: string) => void

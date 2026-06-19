@@ -1,3 +1,9 @@
+/**
+ * 卫星详情 Hook (useSatelliteDetail)
+ *
+ * 加载并管理选中卫星的详细数据，包括 TLE 解析、轨道参数计算和实时数据更新。
+ */
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSatelliteStore } from '@/lib/store/useSatelliteStore';
 import { SatelliteCategory, SatelliteDetailData, TLEData } from '@/lib/types/satellite';

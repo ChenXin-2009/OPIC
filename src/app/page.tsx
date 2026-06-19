@@ -1,3 +1,13 @@
+/**
+ * 主页面 (Main Page)
+ *
+ * OPIC 宇宙可视化系统的根页面，负责：
+ * - 初始化 3D 太阳系场景（SolarSystemCanvas3D）
+ * - 加载和初始化 MOD 管理器
+ * - 渲染浮动 UI 控件（时间控制、信息面板、状态指示器）
+ * - 管理初始化遮罩层的显示/隐藏
+ */
+
 // src/app/page.tsx 或 src/app/solar-system/page.tsx
 'use client';
 
@@ -8,7 +18,7 @@ import InfoModal from "@/components/InfoModal";
 import { HEADER_CONFIG } from "@/lib/config/visualConfig";
 import EphemerisStatusPanel from "@/components/EphemerisStatusPanel";
 import { useSolarSystemStore } from "@/lib/state";
-import { useEarthControlStore } from "@/lib/state/earthControlStore";
+import { useEarthControlStore } from "@/lib/state/EarthControlStore";
 import { initModManager, autoEnableMods } from "@/lib/mod-manager";
 import { registerCoreMods } from "@/lib/mods";
 import { useModStore } from "@/lib/mod-manager/store";

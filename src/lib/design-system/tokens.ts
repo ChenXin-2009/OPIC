@@ -5,6 +5,7 @@
  * 支持亮色和暗色主题
  */
 
+/** 主题模式：亮色、暗色或跟随系统 */
 export type Theme = 'light' | 'dark' | 'auto';
 
 /**

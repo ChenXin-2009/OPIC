@@ -1,3 +1,15 @@
+/**
+ * 室女座超星系团渲染器 (Virgo Supercluster Renderer)
+ *
+ * 渲染室女座超星系团（包含本星系群在内）的星系团和成员星系。
+ * 在宇宙尺度缩放中，当相机距离大于本星系群时显示此层。
+ *
+ * 渲染技术：
+ * - 使用 OptimizedParticleSystem 进行 GPU 加速粒子渲染
+ * - 星系团间连线显示大尺度结构
+ * - 支持 LOD（Level of Detail）远距离简化
+ */
+
 import * as THREE from 'three';
 import type { GalaxyCluster, SimpleGalaxy } from '../types/universeTypes';
 import { MEGAPARSEC_TO_AU, UNIVERSE_SCALE_CONFIG, VIRGO_SUPERCLUSTER_CONFIG } from '../config/universeConfig';
@@ -8,6 +20,9 @@ import { type LabelData, UniverseLabelManager } from './UniverseLabelManager';
 import { getNamePriorityBonus, VIRGO_SUPERCLUSTER_LABEL_CONFIG } from '../config/universeLabelConfig';
 import { getChineseName } from '../astronomy/universeNames';
 
+/**
+ * 室女座超星系团渲染器 — 使用粒子系统和连线渲染星系团大尺度结构。
+ */
 export class VirgoSuperclusterRenderer extends BaseUniverseRenderer {
   private clusters: GalaxyCluster[] = [];
   private galaxies: SimpleGalaxy[] = [];

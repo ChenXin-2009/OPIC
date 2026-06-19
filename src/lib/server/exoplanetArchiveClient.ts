@@ -1,3 +1,13 @@
+/**
+ * 系外行星档案馆客户端 (Exoplanet Archive Client)
+ *
+ * 从 NASA Exoplanet Archive TAP 接口查询系外行星数据。
+ * 支持宿主星索引查询和单个系统详情查询。
+ *
+ * 缓存策略：索引数据缓存 12 小时，减少重复请求。
+ * 数据格式：TAP sync 接口返回 VOTable XML，解析为 JSON。
+ */
+
 import {
   ExoplanetHostIndex,
   ExoplanetIndexResponse,
@@ -141,6 +151,11 @@ function mapStar(row: TapRow, planetCount: number): ExoplanetStarDetails {
   };
 }
 
+/**
+ * 获取系外行星宿主星索引列表
+ * 查询 NASA Exoplanet Archive pscomppars 表，返回所有已知宿主星的概要信息。
+ * 结果缓存 12 小时，可通过 forceRefresh 强制刷新。
+ */
 export async function fetchExoplanetIndex(forceRefresh = false): Promise<ExoplanetIndexResponse> {
   if (!forceRefresh && isFresh(indexCache)) {
     return indexCache.data;
@@ -187,6 +202,11 @@ export async function fetchExoplanetIndex(forceRefresh = false): Promise<Exoplan
   return response;
 }
 
+/**
+ * 获取单个系外行星系统的完整详情
+ * 包含宿主星详细参数和所有已知行星的轨道/物理数据。
+ * 结果按 hostname 缓存，可通过 forceRefresh 强制刷新。
+ */
 export async function fetchExoplanetSystem(hostname: string, forceRefresh = false): Promise<ExoplanetSystemDetails> {
   const cacheKey = hostname.toLowerCase();
   const cached = systemCache.get(cacheKey);

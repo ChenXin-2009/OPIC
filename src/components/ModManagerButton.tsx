@@ -1,3 +1,9 @@
+/**
+ * MOD 管理器按钮 (Mod Manager Button)
+ *
+ * macOS 风格的 Dock 栏按钮，点击打开 MOD 管理器面板。
+ */
+
 'use client';
 
 /**

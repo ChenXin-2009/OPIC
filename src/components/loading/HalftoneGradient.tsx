@@ -22,6 +22,7 @@ interface HalftoneGradientProps {
   isComplete?: boolean;
 }
 
+/** 半色调网点渐变背景 — 使用 Canvas 绘制网点大小和颜色渐变 */
 export default function HalftoneGradient({ colors, isComplete = false }: HalftoneGradientProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 

@@ -7,8 +7,11 @@
 // Type Definitions
 // ============================================================================
 
+/** 距离单位：千米、天文单位、光年 */
 export type DistanceUnit = 'km' | 'au' | 'ly';
+/** 时间单位：秒、分、时、天 */
 export type TimeUnit = 'seconds' | 'minutes' | 'hours' | 'days';
+/** 温度单位：摄氏度、华氏度 */
 export type TemperatureUnit = 'celsius' | 'fahrenheit';
 
 // ============================================================================

@@ -41,13 +41,14 @@ interface UniverseScaleRenderer {
 
 ### Coordinate System
 
-All data uses the **Supergalactic Coordinate System** as the primary reference frame:
+OPIC 采用 **Frame Graph 架构**，以 **ICRF (J2000.0 赤道惯性系)** 为唯一惯性锚点，**RenderWorld (J2000 黄道系)** 为渲染出口：
 
-- **Origin**: Virgo Supercluster plane
-- **Advantages**: Best suited for visualizing local universe structures
-- **Conversion**: J2000.0 Equatorial → Galactic → Supergalactic
+- 各尺度数据按入口帧接入（Supergalactic / Galactic / ICRS / ECEF / TEME）
+- 统一通过 `src/lib/coordinates/frames/` 的帧变换函数投影到 RenderWorld
+- Supergalactic 数据保持原始格式，由 `UniverseGroupManager` 的 `computeSupergalacticToRenderWorldQuat` 定向
+- `metadata.json` 声明 `coordinate_system: "Supergalactic"`，所有 `.bin` 数据为 Supergalactic Cartesian
 
-坐标转换由 `src/lib/3d/utils/coordinates.ts` 中的工具函数处理。
+详见 `docs/coordinates/COORDINATE_SYSTEM_ALIGNMENT_PLAN.md` 和 `src/lib/coordinates/README.md`。
 
 ### Data Strategy
 

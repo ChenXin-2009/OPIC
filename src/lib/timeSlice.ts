@@ -1,8 +1,22 @@
+/**
+ * 时间状态切片 (Time Slice)
+ *
+ * 管理太阳系模拟的时间状态，包括：
+ * - 当前模拟时间
+ * - 播放/暂停状态
+ * - 时间流速倍率
+ * - 播放方向（前进/倒退）
+ *
+ * 时间推进逻辑：
+ * 每帧调用 tick(deltaSeconds) → 计算新时间 → 查询星历表 → 更新天体位置
+ */
+
 import { StateCreator } from 'zustand';
 import type { SolarSystemState, CelestialBody } from './state-types';
 import { getCelestialBodies } from './astronomy/orbit';
 import { dateToJulianDay } from './astronomy/time';
 
+/** 时间状态切片接口 — 管理模拟时间和播放控制 */
 export interface TimeSlice {
   currentTime: Date;
   isPlaying: boolean;

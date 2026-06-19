@@ -1,8 +1,24 @@
+/**
+ * Cesium 纹理映射行星渲染器 (Cesium-Mapped Planet Renderer)
+ *
+ * 通过深度遮罩球体将 Cesium 地球瓦片服务合成到 Three.js 场景中，
+ * 用于渲染拥有高精度瓦片地图数据的非地球天体（如月球）。
+ *
+ * 工作原理：
+ * 1. 创建一个仅写入深度的 Three.js 球体
+ * 2. 将 Cesium Widget 渲染到隐藏 Canvas
+ * 3. 根据相机位置同步 Cesium 相机姿态
+ * 4. 将深度信息和纹理合成到最终渲染
+ *
+ * 使用场景：月球等有高精度地形/影像数据的天体
+ */
+
 import * as THREE from 'three';
 import { CesiumEarthExtension } from '../cesium/CesiumEarthExtension';
 import { CesiumAdapterConfig } from '../cesium/CesiumAdapter';
 import { Planet, PlanetConfig } from './Planet';
 
+/** Cesium 纹理映射行星配置，继承 PlanetConfig 并添加 Cesium 瓦片相关选项 */
 export interface CesiumMappedPlanetConfig extends PlanetConfig {
   enableCesiumTiles?: boolean;
   cesiumConfig?: CesiumAdapterConfig;

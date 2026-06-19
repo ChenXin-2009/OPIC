@@ -1,3 +1,9 @@
+/**
+ * 系外行星数据 API
+ * GET /api/exoplanets - 获取系外行星宿主星索引列表
+ * GET /api/exoplanets?hostname={name} - 获取单个系统详情
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchExoplanetIndex, fetchExoplanetSystem } from '@/lib/server/exoplanetArchiveClient';
 

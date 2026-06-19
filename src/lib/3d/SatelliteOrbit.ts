@@ -1,3 +1,20 @@
+/**
+ * 卫星轨道渲染器 (Satellite Orbit Renderer)
+ *
+ * 在 Three.js 场景中渲染卫星绕行星运行的轨道路径。
+ * 支持母行星轴倾角导致的轨道平面倾斜。
+ *
+ * 物理原理：
+ * - 卫星轨道平面相对于母行星赤道面定义
+ * - 当母行星有轴倾角时，轨道平面跟随行星朝向旋转
+ * - 升交点经度（Ω）决定轨道在赤道面上的朝向
+ *
+ * 渲染特性：
+ * - 渐变色轨道线（近地点→远地点）
+ * - 支持黄道面或赤道面两种参考系
+ * - 透明度随距离渐隐
+ */
+
 import * as THREE from 'three';
 import { ORBIT_RENDER_CONFIG, SATELLITE_ORBIT_FADE_CONFIG, SATELLITE_ORBIT_STYLE_CONFIG } from '@/lib/config/visualConfig';
 import { calculateRotationAxis, CELESTIAL_BODIES } from '@/lib/types/celestialTypes';

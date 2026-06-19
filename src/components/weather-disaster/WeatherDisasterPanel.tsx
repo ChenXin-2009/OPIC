@@ -1,3 +1,10 @@
+/**
+ * 气象灾害监测面板 (Weather Disaster Panel)
+ *
+ * 显示全球地震、台风、洪水等气象灾害实时数据。
+ * 支持数据源筛选、灾害类型过滤和地图叠加显示。
+ */
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';

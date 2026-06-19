@@ -1,3 +1,10 @@
+/**
+ * 信息弹窗 (Info Modal)
+ *
+ * 模态对话框，展示关于页面（About）的内容。
+ * 支持 ESC 键关闭和点击遮罩层关闭。
+ */
+
 'use client';
 
 import { useEffect } from 'react';

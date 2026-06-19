@@ -1,6 +1,21 @@
+/**
+ * 相机动画器 (Camera Animator)
+ *
+ * 管理相机参数的平滑过渡动画，包括：
+ * - 极角（Polar Angle）过渡：控制相机的上下俯仰
+ * - 方位角（Azimuthal Angle）过渡：控制相机的水平旋转
+ * - 视场角（FOV）过渡：控制广角/长焦效果
+ *
+ * 使用线性插值（lerp）实现平滑过渡，
+ * 在每帧调用 update() 方法推进动画进度。
+ */
+
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+/**
+ * 相机动画器 — 管理极角、方位角和 FOV 的平滑过渡动画。
+ */
 export class CameraAnimator {
   private controls: OrbitControls;
   private camera: THREE.PerspectiveCamera;

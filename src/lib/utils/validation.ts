@@ -1,3 +1,16 @@
+/**
+ * 输入验证工具函数 (Validation Utilities)
+ *
+ * 提供类型安全的输入验证函数，在验证失败时抛出 ValidationError。
+ * 所有验证函数都使用类型守卫模式，验证通过后返回正确的类型。
+ *
+ * 验证函数：
+ * - validateNumber: 验证值为有限数字
+ * - validateString: 验证值为非空字符串
+ * - validateArray: 验证值为数组且元素满足验证器
+ * - validateObject: 验证对象包含必需字段
+ */
+
 import { ValidationError } from '../errors/base';
 
 /**

@@ -1,6 +1,20 @@
+/**
+ * 行星环渲染器 (Planet Ring Renderer)
+ *
+ * 渲染行星环（目前用于土星环）。使用带透明度纹理的平面圆环几何体。
+ *
+ * 实现细节：
+ * - 使用 RingGeometry 创建内外半径的圆环
+ * - 加载土星环纹理并应用为材质
+ * - 配置通过 SATURN_RING_CONFIG 控制（内外半径比、倾角、透明度等）
+ */
+
 import * as THREE from 'three';
 import { SATURN_RING_CONFIG } from '@/lib/config/visualConfig';
 
+/**
+ * 行星环渲染器 — 使用纹理圆环几何体渲染土星环等行星环。
+ */
 export class PlanetRingRenderer {
   private mesh: THREE.Mesh | null = null;
   private ringTexture: THREE.Texture | null = null;

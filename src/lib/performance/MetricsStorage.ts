@@ -1,3 +1,10 @@
+/**
+ * 性能指标存储 (Metrics Storage)
+ *
+ * 将性能指标持久化到 localStorage，支持历史数据查询和清理。
+ * 每条记录包含时间戳和完整的性能指标快照。
+ */
+
 import type { PerformanceMetrics } from './performance-types';
 
 interface StoredMetricsEntry {
@@ -7,6 +14,9 @@ interface StoredMetricsEntry {
   };
 }
 
+/**
+ * 性能指标存储 — 将性能快照持久化到 localStorage。
+ */
 export class MetricsStorage {
   private readonly STORAGE_KEY = 'opic_performance_metrics';
   private readonly RETENTION_DAYS = 7;

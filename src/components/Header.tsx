@@ -1,3 +1,10 @@
+/**
+ * 顶部导航栏 (Header)
+ *
+ * 渲染 OPIC Logo 和标题，支持浮动模式下的鼠标悬停显示。
+ * 在移动端自动切换为紧凑布局。
+ */
+
 'use client';
 
 import { useEffect, useState } from 'react';

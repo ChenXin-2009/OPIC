@@ -16,6 +16,7 @@ interface DecorativeOrbitsProps {
   color?: string;
 }
 
+/** 装饰性轨道线条 — 围绕中心恒星的椭圆轨道动画 */
 export default function DecorativeOrbits({ color = '#ffffff' }: DecorativeOrbitsProps) {
   const [rotation, setRotation] = useState(0);
 

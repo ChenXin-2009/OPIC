@@ -1,3 +1,9 @@
+/**
+ * 窗口管理器 (Window Manager)
+ *
+ * 统一渲染所有活动浮动窗口，从 WindowManagerStore 获取窗口状态。
+ */
+
 'use client';
 
 import React from 'react';

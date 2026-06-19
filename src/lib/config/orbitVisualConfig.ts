@@ -1,3 +1,16 @@
+/**
+ * 轨道视觉参数配置 (Orbit Visual Config)
+ *
+ * 定义行星和卫星轨道渲染的所有视觉参数：
+ * - ORBIT_COLORS: 各行星轨道颜色映射
+ * - ORBIT_CURVE_POINTS: 轨道曲线采样点数
+ * - ORBIT_GRADIENT_CONFIG: 轨道渐变透明度设置
+ * - ORBIT_STYLE_CONFIG: 轨道线宽、透明度等样式
+ * - SATELLITE_ORBIT_STYLE_CONFIG: 卫星轨道专属样式
+ * - ORBIT_RENDER_CONFIG: 轨道渲染开关和缓存配置
+ * - ORBIT_FADE_CONFIG / SATELLITE_ORBIT_FADE_CONFIG: 距离淡出参数
+ */
+
 export const ORBIT_COLORS: Record<string, string> = {
   mercury: '#c4cbcf',
   venus: '#fcc307',

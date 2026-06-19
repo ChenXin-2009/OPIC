@@ -1,3 +1,18 @@
+/**
+ * 天体自定义着色器 (Celestial Body Shaders)
+ *
+ * 提供太阳和行星的自定义 GLSL 着色器材质。
+ *
+ * 太阳着色器：
+ * - 临边昏暗（Limb Darkening）模拟恒星表面亮度分布
+ * - 湍流扰动（Turbulence）模拟太阳表面活动
+ * - 颗粒感（Granule）模拟对流颗粒
+ *
+ * 行星着色器：
+ * - 受光照面的漫反射 + 临边衰减
+ * - 基于法线方向的光照计算
+ */
+
 import * as THREE from 'three';
 import {
   SUN_SHADER_CONFIG,
@@ -5,6 +20,9 @@ import {
   getCelestialMaterialParams,
 } from '@/lib/config/visualConfig';
 
+/**
+ * 创建太阳自定义着色器材质 — 包含临边昏暗、湍流和颗粒感效果。
+ */
 export function createSunShaderMaterial(): THREE.ShaderMaterial {
   const vertexShader = `
     varying vec3 vNormal;
@@ -101,6 +119,11 @@ export function createSunShaderMaterial(): THREE.ShaderMaterial {
   });
 }
 
+/**
+ * 创建行星自定义着色器材质 — 受光照面的漫反射 + 临边衰减。
+ * @param planetName 天体名称，用于查找材质参数
+ * @param color 基础颜色
+ */
 export function createPlanetShaderMaterial(planetName: string, color: string): THREE.ShaderMaterial {
   const params = getCelestialMaterialParams(planetName);
   

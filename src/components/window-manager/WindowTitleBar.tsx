@@ -1,18 +1,36 @@
+/**
+ * 窗口标题栏 (Window Title Bar)
+ *
+ * 浮动窗口的标题栏组件，包含标题文本和窗口控制按钮（关闭、最小化、最大化）。
+ * 支持拖拽移动窗口。
+ */
+
 'use client';
 
 import React from 'react';
 import { motion } from 'framer-motion';
 
+/** 窗口标题栏属性 */
 export interface WindowTitleBarProps {
+  /** 窗口标题 */
   title: string;
+  /** 关闭按钮回调 */
   onClose?: () => void;
+  /** 最小化按钮回调 */
   onMinimize?: () => void;
+  /** 最大化按钮回调 */
   onMaximize?: () => void;
+  /** 是否显示关闭按钮 */
   closable?: boolean;
+  /** 是否显示最小化按钮 */
   minimizable?: boolean;
+  /** 是否显示最大化按钮 */
   maximizable?: boolean;
+  /** 当前是否处于最大化状态 */
   isMaximized?: boolean;
+  /** 标题栏鼠标按下回调（用于拖拽） */
   onMouseDown?: (e: React.MouseEvent) => void;
+  /** 标题栏触摸开始回调（用于拖拽） */
   onTouchStart?: (e: React.TouchEvent) => void;
 }
 

@@ -1,3 +1,16 @@
+/**
+ * 天体引力参数查询 (Celestial Gravity Lookup)
+ *
+ * 提供太阳系主要天体的标准引力参数（GM = G × M）查询。
+ * GM 值用于自由飞行模式下的引力加速计算。
+ *
+ * 数据单位：
+ * - GM_KM3_S2: km³/s²（千米立方每平方秒）
+ * - GM_AU3_S2: AU³/s²（天文单位立方每平方秒，自动换算）
+ *
+ * 数据来源：NASA JPL Planetary Fact Sheet
+ */
+
 import { AU_IN_KM } from '@/lib/astronomy/utils/constants';
 
 const AU_KM_CUBED = AU_IN_KM * AU_IN_KM * AU_IN_KM;
@@ -19,6 +32,10 @@ const GM_AU3_S2: Record<string, number> = Object.fromEntries(
   Object.entries(GM_KM3_S2).map(([name, mu]) => [name, mu / AU_KM_CUBED])
 );
 
+/**
+ * 获取天体的标准引力参数 (GM)，单位 AU³/s²。
+ * 返回 null 表示该天体不在查询表中。
+ */
 export function getGravitationalParameterAU(name: string): number | null {
   const key = name.toLowerCase();
   return GM_AU3_S2[key] ?? null;

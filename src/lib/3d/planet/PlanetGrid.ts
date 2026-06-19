@@ -1,6 +1,22 @@
+/**
+ * 行星经纬网格渲染器 (Planet Grid Renderer)
+ *
+ * 在行星表面叠加经纬线网格，用于增强空间方向感。
+ *
+ * 网格组成：
+ * - 经线（Meridians）: 从北极到南极的半圆弧线
+ * - 纬线（Parallels）: 绕行星赤道面的圆环
+ *
+ * 配置通过 PLANET_GRID_CONFIG 控制（经线数、纬线数、颜色、透明度等）。
+ * 网格略高于行星表面（outwardOffset）以避免 Z-fighting。
+ */
+
 import * as THREE from 'three';
 import { PLANET_GRID_CONFIG } from '@/lib/config/visualConfig';
 
+/**
+ * 行星经纬网格 — 在行星表面叠加经线和纬线，增强空间方向感。
+ */
 export class PlanetGrid {
   private group: THREE.Group | null = null;
   private parentObject: THREE.Object3D;

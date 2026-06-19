@@ -1,3 +1,16 @@
+/**
+ * 太阳光晕效果 (Sun Glow Effect)
+ *
+ * 为太阳渲染多层光晕和星芒效果，增强视觉真实感。
+ *
+ * 效果层次（由内到外）：
+ * 1. 核心光晕（Glow Sprite）— 太阳表面的柔和辉光
+ * 2. 彩虹光晕层（Rainbow Layers）— 多层半透明彩色渐变
+ * 3. 星芒（Star Spikes）— 十字/六角星芒衍射效果
+ *
+ * 所有参数通过 SUN_GLOW_CONFIG / SUN_RAINBOW_LAYERS / SUN_STAR_SPIKES_CONFIG 配置。
+ */
+
 import * as THREE from 'three';
 import {
   SUN_GLOW_CONFIG,
@@ -5,6 +18,9 @@ import {
   SUN_STAR_SPIKES_CONFIG,
 } from '@/lib/config/visualConfig';
 
+/**
+ * 太阳光晕效果 — 渲染多层光晕和星芒，增强太阳视觉真实感。
+ */
 export class SunGlowEffect {
   private parentObject: THREE.Object3D;
   private realRadius: number;

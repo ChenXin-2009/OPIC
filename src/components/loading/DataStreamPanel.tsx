@@ -64,6 +64,7 @@ const generateDataLine = (address: number): DataLine => {
   };
 };
 
+/** 右侧数据流面板 — 模拟二进制/十六进制数据滚动效果 */
 export default function DataStreamPanel({ isAnimating }: DataStreamProps) {
   const [dataLines, setDataLines] = useState<DataLine[]>([]);
   const lineIdCounter = useRef(0);

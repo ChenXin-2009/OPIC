@@ -1,6 +1,21 @@
+/**
+ * 视图状态切片 (View Slice)
+ *
+ * 管理太阳系 3D 场景的视图状态，包括：
+ * - 当前选中的天体
+ * - 视角偏移（平移量）
+ * - 缩放级别（限制在 MIN_ZOOM ~ MAX_ZOOM 范围）
+ * - 相机距离
+ *
+ * 视图操作：
+ * - centerOnPlanet(): 自动将视角对准指定天体
+ * - resetView(): 恢复默认视角
+ */
+
 import { StateCreator } from 'zustand';
 import type { SolarSystemState, ViewOffset } from './state-types';
 
+/** 视图状态切片接口 — 管理视角、缩放和天体选择 */
 export interface ViewSlice {
   selectedPlanet: string | null;
   viewOffset: ViewOffset;

@@ -1,3 +1,16 @@
+/**
+ * 拉尼亚凯亚超星系团渲染器 (Laniakea Supercluster Renderer)
+ *
+ * 渲染拉尼亚凯亚超星系团——包含室女座超星系团在内的最大引力束缚结构。
+ * 拉尼亚凯亚横跨约 5.2 亿光年，包含约 10 万个星系。
+ *
+ * 特性：
+ * - 多层超星系团结构渲染
+ * - 速度箭头指示星系本动速度方向
+ * - LODManager 管理远距离简化渲染
+ * - 高级连线算法展示引力流向
+ */
+
 import * as THREE from 'three';
 import type { SimpleGalaxy, Supercluster } from '../types/universeTypes';
 import { LANIAKEA_SUPERCLUSTER_CONFIG, MEGAPARSEC_TO_AU, UNIVERSE_SCALE_CONFIG } from '../config/universeConfig';
@@ -9,6 +22,9 @@ import { type LabelData, UniverseLabelManager } from './UniverseLabelManager';
 import { getNamePriorityBonus, LANIAKEA_SUPERCLUSTER_LABEL_CONFIG } from '../config/universeLabelConfig';
 import { getChineseName } from '../astronomy/universeNames';
 
+/**
+ * 拉尼亚凯亚超星系团渲染器 — 渲染包含室女座超星系团的最大引力束缚结构。
+ */
 export class LaniakeaSuperclusterRenderer extends BaseUniverseRenderer {
   private superclusters: Supercluster[] = [];
   private galaxies: SimpleGalaxy[] = [];

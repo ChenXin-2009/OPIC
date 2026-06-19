@@ -82,9 +82,10 @@ export const GALAXY_CONFIG = {
    - 天空盒：球体（从内部观看）
    - 大银河系：多层平面组合
 
-3. **不同的坐标系参考**
-   - 天空盒：银道坐标系转赤道坐标系
-   - 大银河系：直接在场景坐标系中
+3. **不同的旋转用途**
+   - 天空盒：纹理校准（@skybox_only），由 `StarsAlignmentCalculator` 处理
+   - 大银河系：纹理校准，由 `GALAXY_CONFIG.rotationX/Y/Z` 处理
+   - 物理数据：由 `src/lib/coordinates/frames/` 统一处理，与贴图旋转分离
 
 4. **不同的旋转顺序**
    - 天空盒：XYZ
@@ -223,9 +224,16 @@ gr?.setRotation(-64, 12, 103);
 
 ### 坐标系
 
-- **X 轴**：指向春分点（RA = 0°）
-- **Y 轴**：指向北天极（Dec = +90°）
-- **Z 轴**：完成右手坐标系
+> **2026-06-19 更新**：OPIC 坐标系已按 v2 审计方案重构，建立 ICRF 锚定的 Frame Graph 架构。
+> 以下旋转值为银河系艺术纹理朝向校准，不参与物理数据坐标变换。
+> 物理坐标变换由 `src/lib/coordinates/frames/galactic.ts`（IAU 1958 矩阵）和
+> `src/lib/coordinates/frames/supergalactic.ts`（de Vaucouleurs 矩阵）处理。
+> 详见 `docs/coordinates/COORDINATE_SYSTEM_ALIGNMENT_PLAN.md`。
+
+- **RenderWorld X 轴**：指向春分点（J2000 ecliptic, RA = 0°）
+- **RenderWorld Y 轴**：黄道面内 90°
+- **RenderWorld Z 轴**：黄道北极
+- **银河系贴图旋转**：见下表（纹理校准，非物理坐标）
 
 ## 完成状态
 

@@ -1,9 +1,16 @@
+/**
+ * Dock 初始化器 (Dock Initializer)
+ *
+ * 在应用启动时初始化 Dock 栏的默认项目和关联窗口。
+ * 注册设置、搜索、MOD 管理等窗口到窗口管理器。
+ */
+
 'use client';
 
 import { useEffect } from 'react';
-import { useDockStore } from '@/lib/state/dockStore';
+import { useDockStore } from '@/lib/state/DockStore';
 import { useWindowManagerStore } from '@/lib/state/WindowManagerStore';
-import { useSceneStore } from '@/lib/state/sceneStore';
+import { useSceneStore } from '@/lib/state/SceneStore';
 import { defaultDockItems } from '@/lib/config/defaultDockItems';
 import { SettingsWindow } from './windows/SettingsWindow';
 import { SearchWindow } from './windows/SearchWindow';

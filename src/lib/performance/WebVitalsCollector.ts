@@ -1,5 +1,15 @@
+/**
+ * Web Vitals 收集器 (Web Vitals Collector)
+ *
+ * 基于 web-vitals 库收集 Core Web Vitals 指标（FCP、LCP、INP、CLS、TTFB）。
+ * 动态导入 web-vitals 库以避免增加初始包体积。
+ */
+
 import type { WebVitalsMetrics } from './performance-types';
 
+/**
+ * Web Vitals 收集器 — 动态导入 web-vitals 库收集 Core Web Vitals。
+ */
 export class WebVitalsCollector {
   private webVitals: WebVitalsMetrics = {};
 

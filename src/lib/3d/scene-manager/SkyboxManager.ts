@@ -1,3 +1,16 @@
+/**
+ * 天空盒管理器 (Skybox Manager)
+ *
+ * 管理 Three.js 场景中的天空盒（星空背景）。
+ * 加载银河系全景贴图作为天空盒纹理，并在加载失败时回退到程序化星空。
+ *
+ * 特性：
+ * - 加载 8K 银河系星空贴图（webp 格式）
+ * - 内置贴图朝向校准（旋转角度经手工调整）
+ * - 回退机制：贴图加载失败时使用点粒子星空
+ * - 透明度控制：支持与其他渲染层的淡入淡出协调
+ */
+
 import * as THREE from 'three';
 import { TextureLoadError } from '@/lib/errors/base';
 import { logError } from '@/lib/utils/errors';
@@ -11,6 +24,9 @@ const MILKY_WAY_ORIENTATION = {
   rotationZ: 123.4,
 };
 
+/**
+ * 天空盒管理器 — 加载银河系贴图作为星空背景，失败时回退到点粒子星空。
+ */
 export class SkyboxManager {
   private skybox: THREE.Mesh | null = null;
   private fallbackStarfield: THREE.Points | null = null;

@@ -1,3 +1,10 @@
+/**
+ * 相机穿透防止工具 (Penetration Prevention Utils)
+ *
+ * 提供相机在操作过程中防止穿透天体表面的工具函数。
+ * 当相机位置过于接近天体时，自动将相机推回安全距离。
+ */
+
 import * as THREE from 'three';
 
 /**

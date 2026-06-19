@@ -1,7 +1,14 @@
+/**
+ * Dock 窗口同步器 (Dock Window Sync)
+ *
+ * 同步 Dock 栏的运行指示器和窗口管理器状态，
+ * 确保 Dock 图标的活跃状态与窗口的打开/关闭状态一致。
+ */
+
 'use client';
 
 import { useEffect } from 'react';
-import { useDockStore } from '@/lib/state/dockStore';
+import { useDockStore } from '@/lib/state/DockStore';
 import { useWindowManagerStore } from '@/lib/state/WindowManagerStore';
 
 /**

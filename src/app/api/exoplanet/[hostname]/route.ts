@@ -1,3 +1,10 @@
+/**
+ * 系外行星系统详情 API
+ * GET /api/exoplanet/[hostname]?hostname={name}
+ *
+ * 根据宿主星名称查询单个系外行星系统的详细信息。
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchExoplanetSystem } from '@/lib/server/exoplanetArchiveClient';
 

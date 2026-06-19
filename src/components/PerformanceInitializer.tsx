@@ -1,3 +1,10 @@
+/**
+ * 性能初始化器 (Performance Initializer)
+ *
+ * 客户端组件，在挂载时初始化 PerformanceMonitor 单例。
+ * 收集 FPS、内存、Web Vitals 等性能指标。
+ */
+
 'use client';
 
 import { useEffect } from 'react';

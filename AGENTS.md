@@ -31,6 +31,7 @@ src/
 │   ├── astronomy/          # 天文计算 (轨道、时间、星表)
 │   ├── cesium/             # Cesium 地球集成
 │   ├── config/             # 配置管理器
+│   ├── coordinates/        # 统一坐标系变换 (ICRF 锚定的 Frame Graph)
 │   ├── data/               # 宇宙数据加载器
 │   ├── errors/             # 基础错误类型
 │   ├── exoplanets/         # 系外行星坐标计算

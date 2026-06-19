@@ -1,3 +1,16 @@
+/**
+ * 本星系群渲染器 (Local Group Renderer)
+ *
+ * 负责渲染银河系所在的本星系群（Local Group）内的矮星系和伴星系，
+ * 包括仙女座（M31）、三角座（M33）等主要成员。
+ *
+ * 特性：
+ * - 基于粒子系统的高效大量星系渲染
+ * - 支持星系间连线显示星系群结构
+ * - 自动淡入淡出（根据相机距离）
+ * - 双语标签（中/英文）
+ */
+
 import * as THREE from 'three';
 import type { LocalGroupGalaxy, UniverseScaleRenderer } from '../types/universeTypes';
 import { MEGAPARSEC_TO_AU, UNIVERSE_SCALE_CONFIG } from '../config/universeConfig';
@@ -5,6 +18,9 @@ import { type LabelData, UniverseLabelManager } from './UniverseLabelManager';
 import { getNamePriorityBonus, LOCAL_GROUP_LABEL_CONFIG } from '../config/universeLabelConfig';
 import { getChineseName } from '../astronomy/universeNames';
 
+/**
+ * 本星系群渲染器 — 使用粒子系统渲染银河系附近的矮星系和伴星系。
+ */
 export class LocalGroupRenderer implements UniverseScaleRenderer {
   private group: THREE.Group;
   private galaxies: LocalGroupGalaxy[] = [];

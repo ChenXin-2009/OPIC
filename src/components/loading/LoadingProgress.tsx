@@ -1,3 +1,10 @@
+/**
+ * 加载进度条 (Loading Progress)
+ *
+ * 显示加载进度百分比、阶段信息和动态动画效果。
+ * 支持自定义颜色、大小和动画样式。
+ */
+
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';

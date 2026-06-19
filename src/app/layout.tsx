@@ -1,3 +1,16 @@
+/**
+ * 根布局 (Root Layout)
+ *
+ * Next.js 应用的根布局组件，提供：
+ * - HTML 结构和全局 CSS
+ * - Vercel Analytics 和 Speed Insights 集成
+ * - 语言检测器（LanguageDetector）
+ * - 顶部导航栏（Header）
+ * - 浮动窗口管理器（WindowManager）
+ * - macOS 风格 Dock 栏
+ * - 性能初始化器
+ */
+
 import type { Metadata } from "next";
 // import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";

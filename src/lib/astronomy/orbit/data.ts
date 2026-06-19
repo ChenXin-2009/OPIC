@@ -1,13 +1,27 @@
+/**
+ * 轨道元素数据 (Orbital Elements Data)
+ *
+ * 定义太阳系所有行星和主要卫星的开普勒轨道根数。
+ * 数据基于 J2000.0 历元，并包含长期变化率用于时间插值。
+ *
+ * 数据来源：JPL Solar System Dynamics
+ * 坐标系：黄道面 J2000.0
+ */
+
 import type { OrbitalElements } from './types';
 
+/** 两种计算模式的精度信息 */
 export const ACCURACY_INFO = {
   ephemeris: '±10m',
   analytical: '±1000km',
 };
 
+/** 位置缓存容差 — JD 变化小于此值时复用缓存 (天) */
 export const CACHE_TOLERANCE = 0.0001;
+/** 位置缓存最大有效期 (毫秒) */
 export const CACHE_MAX_AGE = 2000;
 
+/** 太阳系所有行星和主要卫星的开普勒轨道根数，按天体名称索引 */
 export const ORBITAL_ELEMENTS: Record<string, OrbitalElements> = {
   mercury: {
     name: 'Mercury',
@@ -147,6 +161,7 @@ export const ORBITAL_ELEMENTS: Record<string, OrbitalElements> = {
   }
 };
 
+/** 各行星的主要卫星定义，按母行星名称索引 */
 export const SATELLITE_DEFINITIONS: Record<string, Array<{
   name: string;
   a: number;

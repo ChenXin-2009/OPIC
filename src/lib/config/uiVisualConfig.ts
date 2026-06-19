@@ -1,3 +1,13 @@
+/**
+ * UI 布局常量配置 (UI Visual Config)
+ *
+ * 定义前端 UI 组件的布局参数和样式常量：
+ * - HEADER_CONFIG: 顶部 Logo 区域（位置、大小、浮动模式）
+ * - DISTANCE_DISPLAY_CONFIG: 天体距离显示面板
+ * - TIME_SLIDER_CONFIG: 时间控制滑块
+ * - TIME_CONTROL_CONFIG: 时间播放控制按钮
+ */
+
 export const HEADER_CONFIG = {
   enabled: true,
   logoPath: '/LOGO/logolw.svg',

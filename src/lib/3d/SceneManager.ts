@@ -1,3 +1,18 @@
+/**
+ * 场景管理器 (Scene Manager)
+ *
+ * 核心职责：
+ * - 持有并管理 Three.js 渲染器、场景和透视相机
+ * - 协调所有宇宙尺度渲染器（星系、星系团、超星系团等）
+ * - 管理天空盒（SkyboxManager）、参考网格（SolarSystemGrid）
+ * - 控制 Three.js / Cesium 混合渲染模式切换
+ * - 处理视锥体裁剪平面和内存管理
+ *
+ * 渲染层次：
+ * 1. 天空盒 → 2. 星系团/超星系团 → 3. 邻近星系群 → 4. 本星系群
+ * 5. 银河系 → 6. 太阳系网格 → 7. 行星/卫星
+ */
+
 import * as THREE from 'three';
 import { VIEW_SETTINGS } from '../config/cameraConfig';
 import { GalaxyRenderer } from './GalaxyRenderer';
@@ -9,6 +24,9 @@ import { SkyboxManager } from './scene-manager/SkyboxManager';
 import { StarsAlignmentCalculator } from './scene-manager/StarsAlignmentCalculator';
 import { UniverseGroupManager } from './scene-manager/UniverseGroupManager';
 
+/**
+ * 场景管理器 — 持有 Three.js 渲染器/场景/相机，协调所有宇宙尺度渲染器。
+ */
 export class SceneManager {
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;

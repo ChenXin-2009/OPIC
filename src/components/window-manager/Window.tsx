@@ -1,3 +1,10 @@
+/**
+ * 浮动窗口 (Window)
+ *
+ * 可拖拽、可调整大小的浮动窗口容器。
+ * 支持最小化、最大化、关闭操作和窗口边缘拖拽缩放。
+ */
+
 'use client';
 
 import React from 'react';
@@ -6,7 +13,9 @@ import { WindowState, ResizeDirection } from '@/types/window';
 import { useWindowManagerStore } from '@/lib/state/WindowManagerStore';
 import { WindowTitleBar } from './WindowTitleBar';
 
+/** 浮动窗口属性 */
 export interface WindowProps {
+  /** 窗口状态对象 */
   window: WindowState;
 }
 

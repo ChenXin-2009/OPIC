@@ -1,3 +1,10 @@
+/**
+ * 数据加载错误边界 (Data Loading Error Boundary)
+ *
+ * 捕获数据加载过程中的错误，提供重试机制和降级策略。
+ * 支持指数退避、线性退避和手动重试三种策略。
+ */
+
 'use client';
 
 import { Component, type ReactNode, type ErrorInfo } from 'react';

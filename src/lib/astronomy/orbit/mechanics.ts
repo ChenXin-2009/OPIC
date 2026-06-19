@@ -1,3 +1,16 @@
+/**
+ * 轨道力学核心计算 (Orbital Mechanics Core)
+ *
+ * 实现基于开普勒方程的天体位置解析计算。
+ *
+ * 计算流程：
+ * 1. 从轨道根数插值当前时刻参数（a, e, i, L, ω̃, Ω）
+ * 2. 求解开普勒方程 E - e·sin(E) = M 得到偏近点角
+ * 3. 转换为真近点角，计算日心距离
+ * 4. 通过轨道面→黄道面变换得到 3D 位置
+ * 5. 叠加母行星轴倾角得到最终位置
+ */
+
 import * as THREE from 'three';
 import {
   argumentOfPeriapsis,
@@ -84,6 +97,14 @@ function calculateSatellitePosition(
   return satellitePos;
 }
 
+/**
+ * 根据开普勒轨道根数计算天体在 RenderWorld 坐标系中的位置。
+ * 计算流程：轨道根数插值 → 开普勒方程求解 → 轨道面→黄道面变换。
+ *
+ * @param elements 开普勒轨道根数
+ * @param julianDay 儒略日 (JD)
+ * @returns 天体位置 {x, y, z} (AU) 和日心距离 r (AU)
+ */
 export function calculatePosition(
   elements: OrbitalElements,
   julianDay: number

@@ -1,3 +1,14 @@
+/**
+ * 太阳视觉参数配置 (Sun Visual Config)
+ *
+ * 定义太阳渲染的所有视觉参数：
+ * - SUN_LIGHT_CONFIG: 场景点光源参数（颜色、强度、衰减）
+ * - SUN_SHADER_CONFIG: 自定义着色器参数（临边昏暗、湍流、颗粒感）
+ * - SUN_GLOW_CONFIG: 光晕效果参数（尺寸、透明度、缩放）
+ * - SUN_RAINBOW_LAYERS: 彩虹光晕层参数
+ * - SUN_STAR_SPIKES_CONFIG: 星芒衍射效果参数
+ */
+
 export const SUN_LIGHT_CONFIG = {
   color: 0xFFF9F0,
   intensity: 3,

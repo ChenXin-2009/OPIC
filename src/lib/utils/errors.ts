@@ -1,3 +1,14 @@
+/**
+ * 错误处理工具 (Error Handling Utilities)
+ *
+ * 提供统一的错误记录和重试机制。
+ *
+ * 工具函数：
+ * - withRetry: 带指数退避的自动重试执行器
+ * - handleError: 统一错误处理器（记录日志 + 分类处理）
+ * - ErrorLogger: 可自定义的错误日志接口
+ */
+
 import { AppError } from '../errors/base';
 
 /**

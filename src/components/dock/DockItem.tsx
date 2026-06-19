@@ -1,12 +1,22 @@
+/**
+ * Dock 栏单项 (Dock Item)
+ *
+ * 渲染 Dock 栏中的单个图标项，支持悬停缩放动画和运行状态指示器。
+ */
+
 'use client';
 
 import React from 'react';
 import { motion } from 'framer-motion';
 import { DockItem as DockItemType } from '@/types/dock';
 
+/** Dock 栏单项属性 */
 export interface DockItemProps {
+  /** Dock 项数据 */
   item: DockItemType;
+  /** 是否显示标签文字 */
   showLabel?: boolean;
+  /** 是否显示运行状态指示器 */
   showRunningIndicator?: boolean;
 }
 

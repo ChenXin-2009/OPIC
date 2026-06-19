@@ -1,3 +1,10 @@
+/**
+ * MOD 错误边界 (Mod Error Boundary)
+ *
+ * 捕获 MOD 插件渲染和生命周期中的错误，防止单个 MOD 崩溃影响整个应用。
+ * 提供错误日志记录和用户友好的降级 UI。
+ */
+
 'use client';
 
 import { Component, type ReactNode, type ErrorInfo } from 'react';

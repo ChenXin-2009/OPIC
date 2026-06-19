@@ -1,6 +1,20 @@
+/**
+ * 轨道标签渲染器 (Orbit Label Renderer)
+ *
+ * 使用 troika-three-text 在轨道路径上渲染中英双语标签。
+ * 标签位置沿轨道路径跟随行星运动，并根据距离自动缩放。
+ *
+ * 特性：
+ * - 中英文双语同时显示（上下排列）
+ * - 根据轨道半径和间距自动定位
+ * - 远距离时自动隐藏避免拥挤
+ * - 支持自定义颜色和缩放比例
+ */
+
 import * as THREE from 'three';
 import { Text } from 'troika-three-text';
 
+/** 轨道标签配置参数 */
 export interface OrbitLabelConfig {
   textEn: string;
   textZh: string;
@@ -9,6 +23,9 @@ export interface OrbitLabelConfig {
   orbitSpacing: number;
 }
 
+/**
+ * 轨道标签 — 使用 troika-three-text 在轨道路径上渲染中英双语标签。
+ */
 export class OrbitLabel {
   private textMeshEn: Text;
   private textMeshZh: Text;

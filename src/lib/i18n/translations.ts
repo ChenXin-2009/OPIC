@@ -3,8 +3,10 @@
  * 支持中文和英文
  */
 
+/** 支持的语言代码 */
 export type Language = 'zh' | 'en';
 
+/** 多语言翻译字典，按功能模块组织 */
 export const translations = {
   // 通用
   common: {
@@ -144,4 +146,5 @@ export const translations = {
   },
 } as const;
 
+/** 翻译键类型 — 从翻译字典自动推导的嵌套路径类型 */
 export type TranslationKey = typeof translations;

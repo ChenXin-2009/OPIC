@@ -1,3 +1,15 @@
+/**
+ * FPS 追踪器 (FPS Tracker)
+ *
+ * 实时监控渲染帧率，通过 requestAnimationFrame 采样计算 FPS 和帧时间。
+ * 维护最近 60 帧的历史数据用于趋势分析。
+ *
+ * 用途：为 QualityController 提供帧率数据，触发自适应质量调整。
+ */
+
+/**
+ * FPS 追踪器 — 通过 requestAnimationFrame 实时采样帧率。
+ */
 export class FpsTracker {
   private fps: number = 60;
   private frameTime: number = 16.67;

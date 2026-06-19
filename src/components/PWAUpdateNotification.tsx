@@ -1,3 +1,9 @@
+/**
+ * PWA 更新通知 (PWA Update Notification)
+ *
+ * 监听 Service Worker 的更新事件，当新版本可用时在页面底部显示更新提示横幅。
+ */
+
 'use client';
 
 /**

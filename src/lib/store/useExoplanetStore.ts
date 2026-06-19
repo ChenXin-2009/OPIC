@@ -1,3 +1,15 @@
+/**
+ * 系外行星状态管理 (Exoplanet Store)
+ *
+ * 基于 Zustand 管理系外行星系统的全局状态。
+ *
+ * 状态职责：
+ * - 宿主星索引的加载与缓存
+ * - 当前选中/悬停的恒星和行星
+ * - 选中系统的详细数据加载
+ * - 加载状态和错误处理
+ */
+
 import { create } from 'zustand';
 import {
   ExoplanetHostIndex,
@@ -36,6 +48,7 @@ function buildSystemMap(systems: ExoplanetHostIndex[]): Map<string, ExoplanetHos
   return new Map(systems.map((system) => [system.hostname.toLowerCase(), system]));
 }
 
+/** 系外行星全局状态 Store — 管理索引加载、选择、悬停和系统详情。 */
 export const useExoplanetStore = create<ExoplanetStore>((set, get) => ({
   systems: [],
   systemsByName: new Map(),

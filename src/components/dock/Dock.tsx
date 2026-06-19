@@ -1,7 +1,13 @@
+/**
+ * macOS 风格 Dock 任务栏 (Dock Bar)
+ *
+ * 在屏幕底部渲染可交互的 Dock 栏，支持图标缩放和运行指示器。
+ */
+
 'use client';
 
 import { motion } from 'framer-motion';
-import { useDockStore } from '@/lib/state/dockStore';
+import { useDockStore } from '@/lib/state/DockStore';
 import { DockItem } from './DockItem';
 
 /**

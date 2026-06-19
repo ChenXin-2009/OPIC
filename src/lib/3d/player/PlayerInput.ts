@@ -1,3 +1,22 @@
+/**
+ * 自由飞行模式键盘输入处理器 (Player Input Handler)
+ *
+ * 处理 WASD 自由飞行模式下的键盘输入，将按键状态转换为飞行控制信号。
+ *
+ * 支持的输入：
+ * - W/S: 前进/后退（thrust）
+ * - A/D: 左右平移（strafe）
+ * - Q/E: 上升/下降（lift）
+ * - 方向键: 偏航（yaw）和俯仰（pitch）
+ * - Shift: 加速（boost）
+ *
+ * 特性：
+ * - 自动忽略输入框/文本区域的按键事件
+ * - 支持启用/禁用切换
+ * - 基于 Set 的按键状态跟踪，无重复触发
+ */
+
+/** 自由飞行模式的输入状态 */
 export interface PlayerInputState {
   thrust: number;
   strafe: number;
@@ -14,6 +33,9 @@ function isTextInputTarget(target: EventTarget | null): boolean {
   return tag === 'input' || tag === 'textarea' || target.isContentEditable;
 }
 
+/**
+ * 键盘输入处理器 — 将 WASD 按键状态转换为飞行控制信号。
+ */
 export class PlayerInput {
   private enabled = false;
   private keys = new Set<string>();

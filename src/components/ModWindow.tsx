@@ -1,3 +1,10 @@
+/**
+ * MOD 窗口 (Mod Window)
+ *
+ * 为 MOD 插件提供标准化的浮动窗口容器。
+ * 包含标题栏（支持拖拽、最小化、关闭）和内容区域。
+ */
+
 'use client';
 
 import React from 'react';

@@ -1,3 +1,12 @@
+/**
+ * 拖拽灵敏度曲线 (Drag Sensitivity Curve)
+ *
+ * 根据相机与目标的距离动态调整拖拽灵敏度。
+ * 使用 Catmull-Rom 样条插值在锚点之间平滑过渡。
+ *
+ * 用途：距离远时降低灵敏度避免过度旋转，距离近时提高灵敏度便于精细操作。
+ */
+
 import type { DragSensitivityCurve } from './CameraTypes';
 
 export const DEFAULT_DRAG_CURVE: DragSensitivityCurve = {

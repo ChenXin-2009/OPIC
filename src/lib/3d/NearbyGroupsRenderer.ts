@@ -1,3 +1,15 @@
+/**
+ * 邻近星系群渲染器 (Nearby Groups Renderer)
+ *
+ * 渲染本星系群周围的邻近星系群（如 M81 群、M83 群等），
+ * 在本星系群与室女座超星系团之间提供中间尺度的视觉过渡。
+ *
+ * 渲染技术：
+ * - 粒子系统渲染成员星系
+ * - 星系群间连线展示大尺度纤维状结构
+ * - 根据相机距离自动控制淡入淡出
+ */
+
 import * as THREE from 'three';
 import type { GalaxyGroup, SimpleGalaxy } from '../types/universeTypes';
 import { MEGAPARSEC_TO_AU, NEARBY_GROUPS_CONFIG, UNIVERSE_SCALE_CONFIG } from '../config/universeConfig';
@@ -8,6 +20,9 @@ import { type LabelData, UniverseLabelManager } from './UniverseLabelManager';
 import { getNamePriorityBonus, NEARBY_GROUPS_LABEL_CONFIG } from '../config/universeLabelConfig';
 import { getChineseName } from '../astronomy/universeNames';
 
+/**
+ * 邻近星系群渲染器 — 渲染本星系群周围的中间尺度星系群。
+ */
 export class NearbyGroupsRenderer extends BaseUniverseRenderer {
   private groups: GalaxyGroup[] = [];
   private galaxies: SimpleGalaxy[] = [];

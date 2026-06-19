@@ -1,3 +1,15 @@
+/**
+ * 宇宙尺度渲染组管理器 (Universe Group Manager)
+ *
+ * 管理所有宇宙尺度渲染器（超星系团、星系团、星系群等）的可见性和旋转。
+ * 核心功能是将超星系团坐标系（Supergalactic）变换到 OPIC RenderWorld 坐标系。
+ *
+ * 职责：
+ * - 计算 Supergalactic → RenderWorld 的旋转四元数
+ * - 根据相机距离控制各渲染组的可见性
+ * - 协调多个 UniverseScaleRenderer 的生命周期
+ */
+
 import * as THREE from 'three';
 import type { UniverseScaleRenderer } from '@/lib/types/universeTypes';
 import { logger } from '@/utils/logger';
@@ -34,6 +46,9 @@ function computeSupergalacticToRenderWorldQuat(): THREE.Quaternion {
   return new THREE.Quaternion().setFromRotationMatrix(m4).normalize();
 }
 
+/**
+ * 宇宙尺度渲染组管理器 — 根据相机距离控制各宇宙尺度渲染器的可见性。
+ */
 export class UniverseGroupManager {
   private universeGroup: THREE.Group;
   private localGroupRenderer: UniverseScaleRenderer | null = null;

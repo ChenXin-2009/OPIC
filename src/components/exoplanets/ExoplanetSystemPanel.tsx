@@ -1,3 +1,10 @@
+/**
+ * 系外行星系统面板 (Exoplanet System Panel)
+ *
+ * 显示选中系外行星系统的详细信息，包括宿主恒星和行星列表。
+ * 支持行星选择、悬停高亮和轨道参数展示。
+ */
+
 'use client';
 
 import { memo } from 'react';

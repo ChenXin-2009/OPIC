@@ -1,3 +1,14 @@
+/**
+ * 行星视觉参数配置 (Planet Visual Config)
+ *
+ * 定义行星 3D 渲染的所有视觉参数：
+ * - PLANET_LOD_CONFIG: 多层次细节（LOD）分段数配置
+ * - PLANET_GRID_CONFIG: 经纬网格线参数
+ * - PLANET_LIGHTING_CONFIG: 行星光照（环境光、漫反射、临边衰减）
+ * - CELESTIAL_MATERIAL_PARAMS: 各天体的自定义材质参数
+ * - SATURN_RING_CONFIG: 土星环几何和样式参数
+ */
+
 export const PLANET_LOD_CONFIG = {
   baseSegments: 32,
   minSegments: 16,
@@ -36,6 +47,7 @@ export const PLANET_LIGHTING_CONFIG = {
   poleSampleRadius: 0.02,
 };
 
+/** 单个天体的自定义材质参数覆盖 */
 export interface CelestialMaterialParams {
   ambientIntensity?: number;
   terminatorWidth?: number;
@@ -271,6 +283,7 @@ export const CELESTIAL_MATERIAL_PARAMS: Record<string, CelestialMaterialParams> 
   },
 };
 
+/** 获取指定天体的材质参数，未配置的字段使用 PLANET_LIGHTING_CONFIG 默认值 */
 export function getCelestialMaterialParams(bodyName: string): Required<CelestialMaterialParams> {
   const defaults: Required<CelestialMaterialParams> = {
     ambientIntensity: PLANET_LIGHTING_CONFIG.ambientIntensity,

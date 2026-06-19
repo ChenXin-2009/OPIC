@@ -319,6 +319,7 @@ const LOG_SEQUENCE = [
   { message: '========================================', type: 'info' as const, delay: 2470 },
 ];
 
+/** 科幻风格加载日志 — 在页面加载时显示实时系统日志作为背景 */
 export default function LoadingLogs({ isAnimating }: LoadingLogsProps) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const logIdCounter = useRef(0);

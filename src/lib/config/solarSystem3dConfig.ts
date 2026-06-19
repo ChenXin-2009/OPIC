@@ -1,3 +1,10 @@
+/**
+ * 太阳系 3D 场景配置 (Solar System 3D Config)
+ *
+ * - ROTATION_SPEEDS: 各天体自转角速度（弧度/帧）
+ * - CAMERA_ANGLE_CONFIG: 初始和目标相机角度参数
+ */
+
 export const ROTATION_SPEEDS: Record<string, number> = {
   mercury: 0.000000124,
   venus: -0.000000116,

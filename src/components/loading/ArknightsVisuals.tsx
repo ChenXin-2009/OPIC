@@ -12,6 +12,7 @@
 import { ArknightsVisualsProps } from './types';
 import HalftoneGradient from './HalftoneGradient';
 
+/** 明日方舟风格加载页面主视觉组件 — 组合背景、进度条、装饰元素 */
 export default function ArknightsVisuals({ isAnimating, isComplete = false }: ArknightsVisualsProps) {
   // ==================== 配色方案 ====================
   // 冷钢蓝色系 - 从浅到深的9个层次

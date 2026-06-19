@@ -1,10 +1,11 @@
-import type { CesiumAdapterConfig } from './CesiumAdapter';
-
 /**
  * Cesium 适配器默认配置
- * 
- * 提供合理的默认值以平衡性能和视觉质量
+ *
+ * 提供合理的默认值以平衡性能和视觉质量。
+ * 包含三套预设：默认、性能优化、高质量。
  */
+
+import type { CesiumAdapterConfig } from './CesiumAdapter';
 export const DEFAULT_CESIUM_ADAPTER_CONFIG: Partial<CesiumAdapterConfig> = {
   // Canvas 分辨率缩放 (0.1 - 2.0)
   // 1.0 = 原生分辨率，0.5 = 一半分辨率（性能优化），2.0 = 双倍分辨率（高质量）

@@ -1,14 +1,28 @@
+/**
+ * 太阳系状态类型定义 (Solar System State Types)
+ *
+ * 定义全局 Zustand Store 的完整状态结构和子切片接口。
+ */
+
 import type { CelestialBody } from './astronomy/orbit';
 
 export type { CelestialBody };
 
+/** 视角偏移量 (AU) — 相对于太阳系中心的平移 */
 export interface ViewOffset {
+  /** X 轴偏移 */
   x: number;
+  /** Y 轴偏移 */
   y: number;
 }
 
+/** 应用语言：中文或英文 */
 export type Language = 'en' | 'zh';
 
+/**
+ * 太阳系全局状态 — 包含时间、视图、天体数据和所有操作方法。
+ * 由 useSolarSystemStore (Zustand) 管理。
+ */
 export interface SolarSystemState {
   currentTime: Date;
   isPlaying: boolean;

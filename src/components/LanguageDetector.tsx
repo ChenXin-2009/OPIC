@@ -1,3 +1,9 @@
+/**
+ * 语言检测器 (Language Detector)
+ *
+ * 检测浏览器语言设置，自动设置应用的默认语言（中文/英文）。
+ */
+
 'use client';
 
 import { useEffect } from 'react';

@@ -7,7 +7,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
-import { useEarthControlStore } from '@/lib/state/earthControlStore';
+import { useEarthControlStore } from '@/lib/state/EarthControlStore';
 import { IMAGERY_CATEGORIES, IMAGERY_SOURCES, ImageryCategory, ImagerySourceDef, getCategoryName } from '@/lib/cesium/imageryProviders';
 
 interface CesiumControlWindowProps {

@@ -1,9 +1,26 @@
+/**
+ * 相机输入处理器 (Camera Input Handler)
+ *
+ * 处理鼠标滚轮缩放和触摸手势（双指缩放）的输入事件。
+ * 将原始 DOM 事件转换为相机缩放操作。
+ *
+ * 支持的输入：
+ * - 滚轮事件（wheel）→ 缩放增量
+ * - 触摸双指捏合（pinch）→ 缩放比例
+ *
+ * 集成方式：通过回调接口与 CameraController 解耦
+ */
+
+/** 相机输入回调接口 */
 export interface CameraInputHandlerCallbacks {
   zoom: (delta: number) => void;
   interruptFocusZoom: () => void;
   interruptTrackingZoom: () => void;
 }
 
+/**
+ * 相机输入处理器 — 处理滚轮缩放和触摸双指捏合的 DOM 事件。
+ */
 export class CameraInputHandler {
   private domElement: HTMLElement;
   private callbacks: CameraInputHandlerCallbacks;

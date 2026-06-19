@@ -1,3 +1,10 @@
+/**
+ * 相机跟随 Hook (useCameraFollow)
+ *
+ * 实现相机自动跟随指定卫星的功能。
+ * 当卫星在视野中时，相机自动聚焦并保持跟踪。
+ */
+
 import { useEffect } from 'react';
 import { useSatelliteStore } from '@/lib/store/useSatelliteStore';
 

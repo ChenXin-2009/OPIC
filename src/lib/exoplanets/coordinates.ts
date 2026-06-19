@@ -1,3 +1,10 @@
+/**
+ * 系外行星坐标变换 (Exoplanet Coordinate Transforms)
+ *
+ * 将系外行星宿主星从 ICRS/ICRF 天球坐标系转换到 OPIC RenderWorld 笛卡尔坐标系。
+ * 提供恒星/行星半径的 AU 换算、颜色映射等辅助功能。
+ */
+
 import * as THREE from 'three';
 import { PARSEC_TO_AU } from '@/lib/constants/units';
 
@@ -49,10 +56,12 @@ export function exoplanetEquatorialToCartesian(
   );
 }
 
+/** 将恒星半径从太阳半径转换为 AU，最小值为太阳半径的 15% */
 export function stellarRadiusSolarToAU(radiusSolar?: number): number {
   return Math.max((radiusSolar ?? 1) * SOLAR_RADIUS_TO_AU, SOLAR_RADIUS_TO_AU * 0.15);
 }
 
+/** 根据恒星表面温度 (K) 返回对应的 Three.js 颜色（O/B/A/F/G/K/M 光谱色） */
 export function stellarColorFromTemperature(temperatureK?: number): THREE.Color {
   if (!temperatureK || !Number.isFinite(temperatureK)) {
     return new THREE.Color(0xfff4ea);
@@ -68,6 +77,7 @@ export function stellarColorFromTemperature(temperatureK?: number): THREE.Color 
   return new THREE.Color(0xff7a45);
 }
 
+/** 根据行星半径和平衡温度返回渲染颜色（类地/类木/热木星区分） */
 export function planetColorFromRadius(radiusEarth?: number, equilibriumTemperatureK?: number): THREE.Color {
   if (equilibriumTemperatureK && equilibriumTemperatureK > 1000) {
     return new THREE.Color(0xff9a55);
@@ -80,6 +90,7 @@ export function planetColorFromRadius(radiusEarth?: number, equilibriumTemperatu
   return new THREE.Color(0xe0a36f);
 }
 
+/** 根据开普勒第三定律估算行星半半轴 (AU)：a³ = M * P² */
 export function estimateSemiMajorAxisAU(periodDays?: number, stellarMassSolar?: number): number | undefined {
   if (!periodDays || !Number.isFinite(periodDays) || periodDays <= 0) {
     return undefined;
@@ -90,6 +101,7 @@ export function estimateSemiMajorAxisAU(periodDays?: number, stellarMassSolar?: 
   return Math.cbrt(mass * periodYears * periodYears);
 }
 
+/** 安全格式化数值，undefined/null/NaN 返回 "-" */
 export function formatMaybe(value: number | undefined, digits = 2): string {
   if (value === undefined || value === null || !Number.isFinite(value)) {
     return '-';

@@ -83,3 +83,6 @@ desktop.ini
 *.bak
 *.swp
 *~
+
+# mimocode
+.mimocode/

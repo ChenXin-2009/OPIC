@@ -1,3 +1,16 @@
+/**
+ * 星历表集成层 (Ephemeris Integration Layer)
+ *
+ * 桥接轨道力学系统与高精度星历表系统。
+ * 根据时间精度需求自动切换计算模式：
+ * - 低精度场景（年级别变化）→ 解析轨道力学
+ * - 高精度场景（日/时级别变化）→ 星历表插值
+ *
+ * 提供的天体位置提供者：
+ * - 地球和木星位置（用于木星伽利略卫星计算）
+ * - 太阳位置（用于光行差修正）
+ */
+
 import { calculatePosition } from './mechanics';
 import { ORBITAL_ELEMENTS, ACCURACY_INFO } from './data';
 import {
@@ -82,10 +95,12 @@ function getSatelliteId(name: string): SatelliteId | null {
   }
 }
 
+/** 获取已初始化的全天体计算器实例，未初始化时返回 null */
 export function getAllBodiesCalculator(): AllBodiesCalculator | null {
   return allBodiesCalculator;
 }
 
+/** 初始化全天体高精度星历表计算器，加载数据块并缓存。可重复调用，已初始化时直接返回。 */
 export async function initializeAllBodiesCalculator(
   callbacks?: {
     setBodyStatus?: (bodyKey: string, status: string, error?: string) => void;

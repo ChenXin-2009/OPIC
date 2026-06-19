@@ -15,7 +15,7 @@
 
 import { useState } from 'react';
 import { useSolarSystemStore } from '@/lib/state';
-import { useEarthControlStore } from '@/lib/state/earthControlStore';
+import { useEarthControlStore } from '@/lib/state/EarthControlStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { 
   getLocaleManager,
