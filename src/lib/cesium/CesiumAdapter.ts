@@ -378,10 +378,6 @@ export class CesiumAdapter {
         console.log('[CesiumAdapter] Tileset created successfully');
         this._tileset = tileset;
 
-        // 为 3D Tiles 添加 CustomShader：基于太阳方向的简易昼夜光照
-        // 纹理自身是预烘焙山影图（unlit），不响应场景光源，需要手动在片元着色器中加深暗面
-        tileset.customShader = this.createNightSideShader();
-
         this.viewer.scene.primitives.add(tileset);
         this.viewer.scene.globe.show = false;
         this.log('info', `[CesiumAdapter] 3D Tiles asset ${assetId} loaded`);
@@ -394,36 +390,17 @@ export class CesiumAdapter {
   }
 
   /**
-   * 创建 3D Tiles Lambert 漫反射 CustomShader
+   * 创建 3D Tiles 光照 CustomShader
    *
-   * 3D Tiles（Cesium Moon/Mars）使用预烘焙山影纹理，默认 unlit 不响应场景光源。
-   * 此 shader 利用几何体法线与太阳方向的点积，重算漫反射光照，
-   * 使环形山、陨石坑等地形产生真实的光影立体感。GPU 开销极低。
+   * 3D Tiles（Cesium Moon/Mars）默认使用 unlit 材质（预烘焙山影纹理），
+   * 不响应场景光源。此 shader 切换为 PBR 光照模型，利用 Cesium 内建
+   * 的 SunLight 方向光 + 几何体法线，自动产生昼夜光影和环形山立体感。
+   * 不编写自定义 GLSL，完全由 Cesium PBR 管线处理。
    */
   private createNightSideShader(): Cesium.CustomShader {
     return new Cesium.CustomShader({
       mode: Cesium.CustomShaderMode.MODIFY_MATERIAL,
-      lightingModel: Cesium.LightingModel.UNLIT,
-      uniforms: {
-        u_sunDirectionWC: {
-          type: Cesium.UniformType.VEC3,
-          value: new Cesium.Cartesian3(1.0, 0.0, 0.0),
-        },
-      },
-      fragmentShaderText: `
-        void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material) {
-          vec3 normal = normalize(fsInput.attributes.normalMC);
-          float NdotL = dot(normal, u_sunDirectionWC);
-
-          // Lambert 漫反射：亮面增亮，暗面变暗
-          float ambient  = 0.12;
-          float diffuse  = max(NdotL, 0.0);
-          float lightFactor = ambient + 1.2 * diffuse;
-
-          material.diffuse.rgb *= lightFactor;
-          material.diffuse.rgb  = clamp(material.diffuse.rgb, 0.0, 1.0);
-        }
-      `,
+      lightingModel: Cesium.LightingModel.PBR,
     });
   }
 
@@ -434,9 +411,17 @@ export class CesiumAdapter {
    * @param y - 太阳方向 Y 分量  
    * @param z - 太阳方向 Z 分量
    */
+
+  /**
+   * 更新 3D Tiles 光照的太阳方向（世界坐标）
+   *
+   * @param x - 太阳方向 X 分量
+   * @param y - 太阳方向 Y 分量  
+   * @param z - 太阳方向 Z 分量
+   */
   setSunDirection(x: number, y: number, z: number): void {
-    if (!this._tileset?.customShader) return;
-    this._tileset.customShader.setUniform('u_sunDirectionWC', new Cesium.Cartesian3(x, y, z));
+    // PBR 模式下光照由 scene.light(SunLight) 自动处理，无需手动设置方向
+    // 保留此方法供将来扩展
   }
 
   private setupEventListeners(): void {
