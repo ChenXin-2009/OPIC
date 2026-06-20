@@ -1,6 +1,6 @@
 {
   "name": "opic",
-  "version": "11.8.1",
+  "version": "11.8.2",
   "description": "A Web-based multi-scale universe visualization and astronomical data integration system - Open Integrated Cosmos",
   "private": true,
   "scripts": {
@@ -21,6 +21,10 @@
     "release:major": "npx standard-version --release-as major",
     "release:minor": "npx standard-version --release-as minor",
     "release:patch": "npx standard-version --release-as patch",
+    "analyze": "cross-env ANALYZE=true next build",
+    "analyze:detailed": "cross-env ANALYZE=true next build --debug",
+    "perf:report": "cross-env ANALYZE=true next build",
+    "perf:lighthouse": "echo '请在生产环境运行: npx lighthouse <deployed-url> --view --preset=desktop'",
     "prepare": "husky"
   },
   "dependencies": {
@@ -50,6 +54,7 @@
   "devDependencies": {
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
+    "@next/bundle-analyzer": "^16.2.9",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -62,6 +67,7 @@
     "@types/three": "^0.170.0",
     "babel-plugin-react-compiler": "1.0.0",
     "copy-webpack-plugin": "^14.0.0",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
     "fast-check": "^4.4.0",

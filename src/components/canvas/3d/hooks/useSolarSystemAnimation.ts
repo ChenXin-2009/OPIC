@@ -15,6 +15,14 @@ import type { SceneRefs, SceneCallbacks } from './sceneTypes';
 import * as THREE from 'three';
 
 const LABEL_UPDATE_INTERVAL = 3;
+// 性能优化：分层更新间隔
+const LOD_UPDATE_INTERVAL = 3;       // LOD/网格每 3 帧更新
+const CESIUM_CHECK_INTERVAL = 1;     // Cesium 模式每帧检测（保持即时切换响应）
+const LABEL_OVERLAP_INTERVAL = 10;   // 标签重叠检测每 10 帧（从 3 帧改为 10 帧）
+const FAR_VIEW_INTERVAL = 30;        // 远景检查每 30 帧
+
+// 标签空间哈希网格 - 用于 O(n) 重叠检测替换 O(n²)
+const HASH_CELL_SIZE = 80; // 每个网格单元 80px
 
 const _v3 = {
   sun: new THREE.Vector3(),
@@ -32,6 +40,8 @@ export function useSolarSystemAnimation(
 ) {
   const animateRef = useRef<(() => void) | null>(null);
   const activeCesiumBodyRef = useRef<'earth' | 'moon' | 'mars' | null>(null);
+  // 帧计数器 - 用于分层更新
+  const frameCountRef = useRef(0);
 
   const stopAnimation = useCallback(() => {
     if (refs.animationFrameRef.current !== null) {
@@ -73,6 +83,10 @@ export function useSolarSystemAnimation(
     const sunPosition = _v3.sun.set(0, 0, 0);
     if (!refs.earthLightEnabledRef.current) sunPosition.set(1000000, 1000000, 1000000);
 
+    // 帧计数器 - 分层更新
+    frameCountRef.current++;
+    const fc = frameCountRef.current;
+
     if (!shouldPauseSolarSystem) {
       currentBodies.forEach((body: any) => {
         const key = body.name.toLowerCase();
@@ -94,19 +108,26 @@ export function useSolarSystemAnimation(
             planet.updateRotation(currentTimeInDays, currentState.timeSpeed);
           }
 
-          const planetWorldPos = _v3.planetWorld.set(body.x, body.y, body.z);
-          const cameraPos = _v3.cameraPos.set(camera.position.x, camera.position.y, camera.position.z);
-          const distance = planetWorldPos.distanceTo(cameraPos);
-          planet.updateLOD(distance);
-          planet.updateGridVisibility(distance);
+          // LOD 和网格可见性：每 LOD_UPDATE_INTERVAL 帧更新一次
+          if (fc % LOD_UPDATE_INTERVAL === 0) {
+            const planetWorldPos = _v3.planetWorld.set(body.x, body.y, body.z);
+            const cameraPos = _v3.cameraPos.set(camera.position.x, camera.position.y, camera.position.z);
+            const distance = planetWorldPos.distanceTo(cameraPos);
+            planet.updateLOD(distance);
+            planet.updateGridVisibility(distance);
+          }
 
           const orbit = refs.orbitsRef.current?.get(key);
           if (orbit) {
             const planetPosition = new THREE.Vector3(body.x, body.y, body.z);
             orbit.updatePlanetPosition(planetPosition);
-            const orbitCenterDistance = cameraPos.distanceTo(planetPosition);
-            if (orbit.updateCurveResolution) {
-              orbit.updateCurveResolution(orbitCenterDistance);
+            // 轨道曲线分辨率：每 LOD_UPDATE_INTERVAL 帧更新
+            if (fc % LOD_UPDATE_INTERVAL === 0) {
+              const cameraPos = _v3.cameraPos.set(camera.position.x, camera.position.y, camera.position.z);
+              const orbitCenterDistance = cameraPos.distanceTo(planetPosition);
+              if (orbit.updateCurveResolution) {
+                orbit.updateCurveResolution(orbitCenterDistance);
+              }
             }
           }
         }
@@ -223,11 +244,16 @@ export function useSolarSystemAnimation(
     discOpacity *= farViewOrbitOpacity;
     lineOpacity *= farViewOrbitOpacity;
 
-    refs.orbitsRef.current?.forEach((orbit) => {
-      if (orbit && orbit.setOpacity) orbit.setOpacity(discOpacity, lineOpacity);
-    });
+    // 轨道透明度应用：每 LOD_UPDATE_INTERVAL 帧
+    if (fc % LOD_UPDATE_INTERVAL === 0) {
+      refs.orbitsRef.current?.forEach((orbit) => {
+        if (orbit && orbit.setOpacity) orbit.setOpacity(discOpacity, lineOpacity);
+      });
+    }
 
-    if (FAR_VIEW_CONFIG.enabled && farViewPlanetOpacity < 1) {
+    // 远景行星可见性：每 FAR_VIEW_INTERVAL 帧
+    if (fc % FAR_VIEW_INTERVAL === 0) {
+      if (FAR_VIEW_CONFIG.enabled && farViewPlanetOpacity < 1) {
       currentBodies.forEach((body: any) => {
         if (body.isSun) return;
         const key = body.name.toLowerCase();
@@ -252,6 +278,7 @@ export function useSolarSystemAnimation(
         }
       });
     }
+    } {/* 关闭 fc % FAR_VIEW_INTERVAL === 0 */}
 
     const sunPlanet = refs.planetsRef.current?.get('sun');
     if (sunPlanet) {
@@ -320,6 +347,9 @@ export function useSolarSystemAnimation(
         distToMars = cameraPos.distanceTo(marsPos);
       }
       callbacks.onDistanceToEarthChange?.(distToEarth);
+
+      // Cesium 模式检查：每 CESIUM_CHECK_INTERVAL 帧执行一次
+      if (fc % CESIUM_CHECK_INTERVAL === 0) {
 
       // 阈值定义
       const moonCamEntryAU = 0.000025; // 月球 CESIUM 相机模式进入（~3,737 km）
@@ -474,6 +504,7 @@ export function useSolarSystemAnimation(
           }
         }
       }
+      } {/* 关闭 fc % CESIUM_CHECK_INTERVAL === 0 */}
     }
 
     const cameraDistance = Math.sqrt(
@@ -569,42 +600,76 @@ export function useSolarSystemAnimation(
 
       const selectedPlanetName = useSolarSystemStore.getState().selectedPlanet;
 
-      for (let i = 0; i < labelInfos.length; i++) {
-        const info1 = labelInfos[i];
-        if (!info1) continue;
-        const isSelected = info1.body.name === selectedPlanetName;
-        if (info1.body.isSun) {
-          if (info1.planet) info1.planet.setMarkerTargetOpacity(1.0);
-          continue;
-        }
-        if (isSelected) {
-          info1.planet.setMarkerTargetOpacity(1.0);
-          continue;
-        }
-        let hasOverlap = false;
-        for (let j = 0; j < labelInfos.length; j++) {
-          if (i === j) continue;
-          const info2 = labelInfos[j];
-          if (!info2) continue;
-          const labelWidth = info1.text.length * 10;
-          const labelHeight = 20;
-          const markerSize = 20;
-          const totalWidth = labelWidth + markerSize;
-          const distanceX = Math.abs(info1.screenX - info2.screenX);
-          const distanceY = Math.abs(info1.screenY - info2.screenY);
-          if (distanceX < totalWidth && distanceY < labelHeight) {
-            const isInfo2Selected = info2.body.name === selectedPlanetName;
-            if (isInfo2Selected) { hasOverlap = true; break; }
-            const container = refs.containerRef.current;
-            if (!container) continue;
-            const centerX = container.clientWidth / 2;
-            const centerY = container.clientHeight / 2;
-            const dist1 = Math.sqrt(Math.pow(info1.screenX - centerX, 2) + Math.pow(info1.screenY - centerY, 2));
-            const dist2 = Math.sqrt(Math.pow(info2.screenX - centerX, 2) + Math.pow(info2.screenY - centerY, 2));
-            if (dist1 > dist2 || (Math.abs(dist1 - dist2) < 1 && i > j)) { hasOverlap = true; break; }
+      // 性能优化：重叠检测使用空间哈希网格 (O(n) 替代 O(n²))
+      // 仅在 LABEL_OVERLAP_INTERVAL 帧执行
+      const shouldCheckOverlap = fc % LABEL_OVERLAP_INTERVAL === 0;
+
+      if (shouldCheckOverlap) {
+        // 空间哈希：将标签分配到网格单元
+        const grid = new Map<string, number[]>(); // cellKey -> [indices]
+        
+        for (let i = 0; i < labelInfos.length; i++) {
+          const info = labelInfos[i];
+          if (!info || info.body.isSun) continue;
+          const cellX = Math.floor(info.screenX / HASH_CELL_SIZE);
+          const cellY = Math.floor(info.screenY / HASH_CELL_SIZE);
+          // 每个标签可能属于多个相邻单元格（扩大检测范围）
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              const key = `${cellX + dx},${cellY + dy}`;
+              const arr = grid.get(key) || [];
+              arr.push(i);
+              grid.set(key, arr);
+            }
           }
         }
-        info1.planet.setMarkerTargetOpacity(hasOverlap ? 0.0 : 1.0);
+
+        for (let i = 0; i < labelInfos.length; i++) {
+          const info1 = labelInfos[i];
+          if (!info1) continue;
+          const isSelected = info1.body.name === selectedPlanetName;
+          if (info1.body.isSun) {
+            if (info1.planet) info1.planet.setMarkerTargetOpacity(1.0);
+            continue;
+          }
+          if (isSelected) {
+            info1.planet.setMarkerTargetOpacity(1.0);
+            continue;
+          }
+
+          let hasOverlap = false;
+          // 仅在同一个网格单元内检查重叠
+          const cellX = Math.floor(info1.screenX / HASH_CELL_SIZE);
+          const cellY = Math.floor(info1.screenY / HASH_CELL_SIZE);
+          const cellKey = `${cellX},${cellY}`;
+          const cellIndices = grid.get(cellKey);
+
+          if (cellIndices) {
+            for (const j of cellIndices) {
+              if (i === j) continue;
+              const info2 = labelInfos[j];
+              if (!info2) continue;
+              const labelWidth = info1.text.length * 10;
+              const labelHeight = 20;
+              const markerSize = 20;
+              const totalWidth = labelWidth + markerSize;
+              const distanceX = Math.abs(info1.screenX - info2.screenX);
+              const distanceY = Math.abs(info1.screenY - info2.screenY);
+              if (distanceX < totalWidth && distanceY < labelHeight) {
+                const isInfo2Selected = info2.body.name === selectedPlanetName;
+                if (isInfo2Selected) { hasOverlap = true; break; }
+                const container = refs.containerRef.current;
+                if (!container) continue;
+                const centerX = container.clientWidth / 2;
+                const centerY = container.clientHeight / 2;
+                const dist1 = Math.sqrt(Math.pow(info1.screenX - centerX, 2) + Math.pow(info1.screenY - centerY, 2));
+                const dist2 = Math.sqrt(Math.pow(info2.screenX - centerX, 2) + Math.pow(info2.screenY - centerY, 2));
+                if (dist1 > dist2 || (Math.abs(dist1 - dist2) < 1 && i > j)) { hasOverlap = true; break; }
+              }
+            }
+          }
+          info1.planet.setMarkerTargetOpacity(hasOverlap ? 0.0 : 1.0);
+        }
       }
 
       labelInfos.forEach((info) => {
@@ -628,30 +693,56 @@ export function useSolarSystemAnimation(
         }
       });
 
-      if (exoplanetRenderer?.systemRenderer && refs.containerRef.current) {
+      // 外行星标签重叠检测 - 同样使用空间哈希
+      if (shouldCheckOverlap && exoplanetRenderer?.systemRenderer && refs.containerRef.current) {
         const systemRenderer = exoplanetRenderer.systemRenderer;
         const planetPositions = systemRenderer.getPlanetScreenPositions(
           camera, refs.containerRef.current.clientWidth, refs.containerRef.current.clientHeight
         );
+        
+        // 空间哈希网格
+        const exoGrid = new Map<string, number[]>();
+        for (let i = 0; i < planetPositions.length; i++) {
+          const pos = planetPositions[i];
+          if (!pos) continue;
+          const cellX = Math.floor(pos.screenX / HASH_CELL_SIZE);
+          const cellY = Math.floor(pos.screenY / HASH_CELL_SIZE);
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              const key = `${cellX + dx},${cellY + dy}`;
+              const arr = exoGrid.get(key) || [];
+              arr.push(i);
+              exoGrid.set(key, arr);
+            }
+          }
+        }
+        
         for (let i = 0; i < planetPositions.length; i++) {
           const pos1 = planetPositions[i];
           if (!pos1) continue;
           let hasOverlap = false;
-          for (let j = 0; j < planetPositions.length; j++) {
-            if (i === j) continue;
-            const pos2 = planetPositions[j];
-            if (!pos2) continue;
-            const distanceX = Math.abs(pos1.screenX - pos2.screenX);
-            const distanceY = Math.abs(pos1.screenY - pos2.screenY);
-            const markerSize = pos1.markerSize;
-            if (distanceX < markerSize && distanceY < markerSize) {
-              const container = refs.containerRef.current;
-              if (!container) continue;
-              const centerX = container.clientWidth / 2;
-              const centerY = container.clientHeight / 2;
-              const dist1 = Math.sqrt(Math.pow(pos1.screenX - centerX, 2) + Math.pow(pos1.screenY - centerY, 2));
-              const dist2 = Math.sqrt(Math.pow(pos2.screenX - centerX, 2) + Math.pow(pos2.screenY - centerY, 2));
-              if (dist1 > dist2 || (Math.abs(dist1 - dist2) < 1 && i > j)) { hasOverlap = true; break; }
+          const cellX = Math.floor(pos1.screenX / HASH_CELL_SIZE);
+          const cellY = Math.floor(pos1.screenY / HASH_CELL_SIZE);
+          const cellKey = `${cellX},${cellY}`;
+          const cellIndices = exoGrid.get(cellKey);
+          
+          if (cellIndices) {
+            for (const j of cellIndices) {
+              if (i === j) continue;
+              const pos2 = planetPositions[j];
+              if (!pos2) continue;
+              const distanceX = Math.abs(pos1.screenX - pos2.screenX);
+              const distanceY = Math.abs(pos1.screenY - pos2.screenY);
+              const markerSize = pos1.markerSize;
+              if (distanceX < markerSize && distanceY < markerSize) {
+                const container = refs.containerRef.current;
+                if (!container) continue;
+                const centerX = container.clientWidth / 2;
+                const centerY = container.clientHeight / 2;
+                const dist1 = Math.sqrt(Math.pow(pos1.screenX - centerX, 2) + Math.pow(pos1.screenY - centerY, 2));
+                const dist2 = Math.sqrt(Math.pow(pos2.screenX - centerX, 2) + Math.pow(pos2.screenY - centerY, 2));
+                if (dist1 > dist2 || (Math.abs(dist1 - dist2) < 1 && i > j)) { hasOverlap = true; break; }
+              }
             }
           }
           systemRenderer.setMarkerTargetOpacity(pos1.name, hasOverlap ? 0.0 : 1.0);

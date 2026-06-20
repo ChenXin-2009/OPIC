@@ -2,7 +2,7 @@
  * 主页面 (Main Page)
  *
  * OPIC 宇宙可视化系统的根页面，负责：
- * - 初始化 3D 太阳系场景（SolarSystemCanvas3D）
+ * - 动态加载 3D 太阳系场景（SolarSystemCanvas3DDynamic - 延迟加载 Three.js/Cesium）
  * - 加载和初始化 MOD 管理器
  * - 渲染浮动 UI 控件（时间控制、信息面板、状态指示器）
  * - 管理初始化遮罩层的显示/隐藏
@@ -11,8 +11,8 @@
 // src/app/page.tsx 或 src/app/solar-system/page.tsx
 'use client';
 
-import { useEffect, useRef, useState } from "react";
-import SolarSystemCanvas3D from "@/components/canvas/3d/SolarSystemCanvas3D";
+import { useEffect, useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import TimeControl from "@/components/TimeControl";
 import InfoModal from "@/components/InfoModal";
 import { HEADER_CONFIG } from "@/lib/config/visualConfig";
@@ -28,26 +28,34 @@ import SpaceLaunchOverlay from "@/components/space-launches/SpaceLaunchOverlay";
 import GlobalTrafficOverlay from "@/components/global-traffic/GlobalTrafficOverlay";
 import InitializationOverlay, { type InitializationProgress } from "@/components/InitializationOverlay";
 
+// 动态延迟加载 3D 渲染管线 - 减少首屏 JS 体积约 40-60%
+const SolarSystemCanvas3D = dynamic(
+  () => import("@/components/canvas/3d/SolarSystemCanvas3D"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#000' }}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full border-2 animate-spin" style={{ borderColor: 'rgba(100,180,255,0.3)', borderTopColor: 'transparent' }} />
+          <div className="text-sm tracking-wider" style={{ color: 'rgba(180,220,255,0.6)' }}>正在加载 3D 引擎...</div>
+        </div>
+      </div>
+    ),
+  }
+);
+
 export default function SolarSystemPage() {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isEphemerisStatusOpen, setIsEphemerisStatusOpen] = useState(false);
   
-  // 使用全局状态管理地球控制
-  const {
-    cesiumEnabled: userCesiumEnabled,
-    earthLockEnabled,
-    earthLightEnabled,
-    earthPlanet,
-    // Unused setters - keeping state read-only for now
-    // setCesiumEnabled: setUserCesiumEnabled,
-    // setEarthLockEnabled,
-    // setEarthLightEnabled,
-    setEarthPlanet,
-  } = useEarthControlStore();
+  // 使用全局状态管理地球控制 - 细粒度 selector 减少重渲染
+  const userCesiumEnabled = useEarthControlStore((s) => s.cesiumEnabled);
+  const earthLockEnabled = useEarthControlStore((s) => s.earthLockEnabled);
+  const earthLightEnabled = useEarthControlStore((s) => s.earthLightEnabled);
+  const earthPlanet = useEarthControlStore((s) => s.earthPlanet);
+  const setEarthPlanet = useEarthControlStore((s) => s.setEarthPlanet);
   
   const [camera, setCamera] = useState<any>(null);
-  // 地球是否可见（相机足够近时显示按钮）
-  const [_earthVisible, setEarthVisible] = useState(false);
   
   // 初始化进度状态
   const [initProgress, setInitProgress] = useState<InitializationProgress>({
@@ -57,13 +65,13 @@ export default function SolarSystemPage() {
     isComplete: false,
   });
   
-  // 获取当前语言
+  // 获取当前语言 - 细粒度 selector
   const lang = useSolarSystemStore((state) => state.lang);
 
-  // 从MOD状态读取功能启用状态
-  const weatherDisasterModEnabled = useModStore((state) => state.mods['weather-disaster']?.state === 'enabled');
-  const globalTrafficModEnabled = useModStore((state) => state.mods['global-traffic']?.state === 'enabled');
-  const spaceLaunchesModEnabled = useModStore((state) => state.mods['space-launches']?.state === 'enabled');
+  // 从MOD状态读取功能启用状态 - 细粒度 selector
+  const weatherDisasterModEnabled = useModStore((s) => s.mods['weather-disaster']?.state === 'enabled');
+  const globalTrafficModEnabled = useModStore((s) => s.mods['global-traffic']?.state === 'enabled');
+  const spaceLaunchesModEnabled = useModStore((s) => s.mods['space-launches']?.state === 'enabled');
 
   // cesiumEnabled 直接由用户控制，不受 MOD 限制
   const cesiumEnabled = userCesiumEnabled;
@@ -79,32 +87,6 @@ export default function SolarSystemPage() {
       await autoEnableMods();
     };
     init();
-  }, []);
-
-  // 每帧检测相机到地球的距离，控制按钮显隐
-  // 距离阈值：10 AU 以内认为"可以看见地球"
-  const EARTH_VISIBLE_THRESHOLD = 10;
-  const cameraRef = useRef(camera);
-  const earthPlanetRef = useRef(earthPlanet);
-  useEffect(() => { cameraRef.current = camera; }, [camera]);
-  useEffect(() => { earthPlanetRef.current = earthPlanet; }, [earthPlanet]);
-
-  useEffect(() => {
-    let rafId: number;
-    const check = () => {
-      const cam = cameraRef.current;
-      const ep = earthPlanetRef.current;
-      if (cam && ep) {
-        const earthPos = ep.getMesh?.()?.position;
-        if (earthPos) {
-          const dist = cam.position.distanceTo(earthPos);
-          setEarthVisible(dist < EARTH_VISIBLE_THRESHOLD);
-        }
-      }
-      rafId = requestAnimationFrame(check);
-    };
-    rafId = requestAnimationFrame(check);
-    return () => cancelAnimationFrame(rafId);
   }, []);
 
   // 监听星历状态面板打开事件

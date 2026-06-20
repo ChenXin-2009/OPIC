@@ -64,7 +64,9 @@ export class SceneManager {
       (this.renderer as any).physicallyCorrectLights = true;
     }
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // 性能优化：降低 DPI 缩放上限（从 2.0 降到 1.5）
+    // 在高 DPI 设备上减少约 25% 像素填充量，对视觉影响极小
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     this.renderer.setClearColor(0x000000, 1);
 
     this.renderer.domElement.style.touchAction = 'none';

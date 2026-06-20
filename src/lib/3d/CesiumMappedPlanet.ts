@@ -41,6 +41,7 @@ export class CesiumMappedPlanet extends Planet {
   private cesiumNativeCameraMode = false;
   private visibleDistanceAu: number;
   private logLabel: string;
+  private _lastSyncedCameraPos = new THREE.Vector3(); // 消除黑边：追踪相机位置
 
   constructor(config: CesiumMappedPlanetConfig) {
     super(config);
@@ -104,6 +105,19 @@ export class CesiumMappedPlanet extends Planet {
 
     if (!this.cesiumNativeCameraMode) {
       this.cesiumExtension.syncCamera(camera, bodyPosition);
+
+      // 消除黑边：检测相机快速移动，强制 Cesium 立即渲染
+      const cameraPos = camera.position;
+      const dx = cameraPos.x - this._lastSyncedCameraPos.x;
+      const dy = cameraPos.y - this._lastSyncedCameraPos.y;
+      const dz = cameraPos.z - this._lastSyncedCameraPos.z;
+      const movedDistance = dx * dx + dy * dy + dz * dz;
+
+      if (movedDistance > 1e-12) {
+        this.cesiumExtension.forceRender();
+        this._lastSyncedCameraPos.copy(cameraPos);
+        return;
+      }
     }
 
     this.cesiumExtension.render();

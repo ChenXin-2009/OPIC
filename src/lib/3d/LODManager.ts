@@ -2,73 +2,51 @@
  * @module 3d/LODManager
  * @description LOD（Level of Detail）细节层次管理器
  * 
- * 本模块根据相机距离动态调整渲染质量,优化大规模宇宙可视化的性能。
- * 使用分级策略在不同距离下使用不同的粒子密度和纹理分辨率。
+ * 根据相机距离动态调整渲染质量,优化大规模宇宙可视化的性能。
+ * 同时提供基于屏幕像素占比的天体几何体 LOD 计算。
  * 
  * @architecture
  * - 所属子系统：3D 渲染
  * - 架构层级：优化层
  * - 职责边界：负责 LOD 级别计算和渲染器配置,不负责具体的渲染逻辑
- * 
- * @dependencies
- * - 直接依赖：config/galaxyConfig, types/universeTypes
- * - 被依赖：3d/SceneManager, 3d/BaseUniverseRenderer
- * - 循环依赖：无
- * 
- * @renderPipeline
- * LOD 管理管线：
- * 1. 距离计算：获取相机到场景中心的距离
- * 2. 级别查找：二分查找确定当前 LOD 级别
- * 3. 参数应用：更新渲染器的粒子比例和纹理大小
- * 4. 性能优化：减少远距离时的渲染负载
- * 
- * @performance
- * - 使用二分查找算法（O(log n)）快速定位 LOD 级别
- * - 4 个 LOD 级别覆盖从太阳系到宇宙尺度
- * - 粒子比例从 100% 降至 5%（20倍性能提升）
- * - 纹理大小从 512px 降至 64px（64倍内存节省）
- * 
- * @unit
- * - 距离：AU（天文单位）
- * - 粒子比例：0.0-1.0（百分比）
- * - 纹理大小：像素（px）
- * 
- * @note
- * - LOD 级别定义：
- *   - Level 0: 0 AU, 100% 粒子, 512px 纹理
- *   - Level 1: 1亿光年, 50% 粒子, 256px 纹理
- *   - Level 2: 5亿光年, 20% 粒子, 128px 纹理
- *   - Level 3: 10亿光年, 5% 粒子, 64px 纹理
- * - 支持自定义 LOD 级别配置
- * - 渲染器需要实现 setParticleRatio() 和 setTextureSize() 方法
- * 
- * @example
- * ```typescript
- * import { LODManager } from '@/lib/3d';
- * 
- * const lodManager = new LODManager();
- * 
- * // 在动画循环中
- * const cameraDistance = camera.position.length();
- * const currentLOD = lodManager.getCurrentLOD(cameraDistance);
- * 
- * // 应用到渲染器
- * lodManager.updateRendererLOD(galaxyRenderer, currentLOD);
- * ```
  */
 
 import { LIGHT_YEAR_TO_AU } from '../config/galaxyConfig';
 import type { LODLevel, UniverseScaleRenderer } from '../types/universeTypes';
+import * as THREE from 'three';
+
+// 屏幕像素占比 LOD 类型（新增）
+export type PixelLODLevel = 'high' | 'medium' | 'low' | 'sprite';
+
+export interface PixelLODResult {
+  level: PixelLODLevel;
+  segments: number;
+  useBillboard: boolean;
+  screenCoverage: number;
+}
+
+const PIXEL_LOD_CONFIG = {
+  HIGH_THRESHOLD: 0.05,
+  MEDIUM_THRESHOLD: 0.01,
+  LOW_THRESHOLD: 0.002,
+  HIGH_SEGMENTS: 128,
+  MEDIUM_SEGMENTS: 64,
+  LOW_SEGMENTS: 32,
+  SPRITE_SEGMENTS: 8,
+  BILLBOARD_MAX_PIXELS: 8,
+};
 
 /**
  * LOD 管理器
- * 根据相机距离自动调整渲染质量
+ * 
+ * 两大功能：
+ * 1. 宇宙尺度距离 LOD — getCurrentLOD() / updateRendererLOD() （原有 API）
+ * 2. 像素占比几何体 LOD — computeLOD() / getRecommendedSegments() （新增）
  */
 export class LODManager {
   private lodLevels: LODLevel[];
 
   constructor() {
-    // 定义 4 个 LOD 级别
     this.lodLevels = [
       {
         distance: 0,
@@ -76,29 +54,29 @@ export class LODManager {
         textureSize: 512,
       },
       {
-        distance: 100e6 * LIGHT_YEAR_TO_AU, // 1亿光年
+        distance: 100e6 * LIGHT_YEAR_TO_AU,
         particleRatio: 0.5,
         textureSize: 256,
       },
       {
-        distance: 500e6 * LIGHT_YEAR_TO_AU, // 5亿光年
+        distance: 500e6 * LIGHT_YEAR_TO_AU,
         particleRatio: 0.2,
         textureSize: 128,
       },
       {
-        distance: 1000e6 * LIGHT_YEAR_TO_AU, // 10亿光年
+        distance: 1000e6 * LIGHT_YEAR_TO_AU,
         particleRatio: 0.05,
         textureSize: 64,
       },
     ];
   }
 
+  // ============================================================
+  // 宇宙尺度距离 LOD（原有 API — LaniakeaSuperclusterRenderer 等使用）
+  // ============================================================
+
   /**
    * 获取当前相机距离对应的 LOD 级别
-   * 使用二分查找优化性能
-   * 
-   * @param cameraDistance - 相机距离（AU）
-   * @returns LOD 级别
    */
   getCurrentLOD(cameraDistance: number): LODLevel {
     for (let i = this.lodLevels.length - 1; i >= 0; i--) {
@@ -111,16 +89,11 @@ export class LODManager {
 
   /**
    * 更新渲染器的 LOD 设置
-   * 
-   * @param renderer - 宇宙尺度渲染器
-   * @param lod - LOD 级别
    */
   updateRendererLOD(renderer: UniverseScaleRenderer, lod: LODLevel): void {
-    // 检查渲染器是否支持 LOD 设置
     if (typeof (renderer as any).setParticleRatio === 'function') {
       (renderer as any).setParticleRatio(lod.particleRatio);
     }
-
     if (typeof (renderer as any).setTextureSize === 'function') {
       (renderer as any).setTextureSize(lod.textureSize);
     }
@@ -128,8 +101,6 @@ export class LODManager {
 
   /**
    * 获取所有 LOD 级别
-   * 
-   * @returns LOD 级别数组
    */
   getLODLevels(): LODLevel[] {
     return [...this.lodLevels];
@@ -137,19 +108,13 @@ export class LODManager {
 
   /**
    * 设置自定义 LOD 级别
-   * 
-   * @param levels - LOD 级别数组
    */
   setLODLevels(levels: LODLevel[]): void {
-    // 按距离排序
     this.lodLevels = [...levels].sort((a, b) => a.distance - b.distance);
   }
 
   /**
    * 获取 LOD 级别索引
-   * 
-   * @param cameraDistance - 相机距离（AU）
-   * @returns LOD 级别索引（0-3）
    */
   getLODIndex(cameraDistance: number): number {
     const currentLOD = this.getCurrentLOD(cameraDistance);
@@ -158,14 +123,94 @@ export class LODManager {
 
   /**
    * 获取 LOD 信息字符串（用于调试）
-   * 
-   * @param cameraDistance - 相机距离（AU）
-   * @returns LOD 信息字符串
    */
   getLODInfo(cameraDistance: number): string {
     const lod = this.getCurrentLOD(cameraDistance);
     const index = this.getLODIndex(cameraDistance);
-    
     return `LOD ${index}: Particle Ratio ${(lod.particleRatio * 100).toFixed(0)}%, Texture ${lod.textureSize}px`;
   }
+
+  // ============================================================
+  // 像素占比几何体 LOD（新增 API — Planet 等天体可用）
+  // ============================================================
+
+  /**
+   * 根据天体半径、距离和相机计算像素 LOD 级别
+   *
+   * @param radius - 天体实际半径（世界单位）
+   * @param distanceToCamera - 天体中心到相机距离（世界单位）
+   * @param camera - 透视相机
+   * @param fovScale - 可选的 FOV 缩放因子（默认 1.0）
+   */
+  computePixelLOD(
+    radius: number,
+    distanceToCamera: number,
+    camera: THREE.PerspectiveCamera,
+    fovScale: number = 1.0,
+  ): PixelLODResult {
+    const fov = (camera.fov * fovScale * Math.PI) / 180;
+    const viewHeight = 2 * Math.tan(fov / 2) * distanceToCamera;
+    const screenCoverage = (radius * 2) / viewHeight;
+
+    const screenHeight =
+      camera.view?.height ??
+      (typeof window !== 'undefined' ? window.innerHeight : 1080);
+    const pixelDiameter = screenCoverage * screenHeight;
+
+    if (screenCoverage > PIXEL_LOD_CONFIG.HIGH_THRESHOLD) {
+      return {
+        level: 'high',
+        segments: PIXEL_LOD_CONFIG.HIGH_SEGMENTS,
+        useBillboard: false,
+        screenCoverage,
+      };
+    }
+    if (screenCoverage > PIXEL_LOD_CONFIG.MEDIUM_THRESHOLD) {
+      return {
+        level: 'medium',
+        segments: PIXEL_LOD_CONFIG.MEDIUM_SEGMENTS,
+        useBillboard: false,
+        screenCoverage,
+      };
+    }
+    if (screenCoverage > PIXEL_LOD_CONFIG.LOW_THRESHOLD) {
+      return {
+        level: 'low',
+        segments: PIXEL_LOD_CONFIG.LOW_SEGMENTS,
+        useBillboard: false,
+        screenCoverage,
+      };
+    }
+    return {
+      level: 'sprite',
+      segments: PIXEL_LOD_CONFIG.SPRITE_SEGMENTS,
+      useBillboard: pixelDiameter < PIXEL_LOD_CONFIG.BILLBOARD_MAX_PIXELS,
+      screenCoverage,
+    };
+  }
+
+  /**
+   * 获取推荐的球体几何体分段数
+   */
+  getRecommendedSegments(
+    radius: number,
+    distanceToCamera: number,
+    camera: THREE.PerspectiveCamera,
+  ): number {
+    return this.computePixelLOD(radius, distanceToCamera, camera).segments;
+  }
+
+  /**
+   * 判断是否应该使用 Billboard
+   */
+  shouldUseBillboard(
+    radius: number,
+    distanceToCamera: number,
+    camera: THREE.PerspectiveCamera,
+  ): boolean {
+    return this.computePixelLOD(radius, distanceToCamera, camera).useBillboard;
+  }
 }
+
+/** 便捷单例导出 — 兼容新增用法 */
+export const lodManager = LODManager.prototype;

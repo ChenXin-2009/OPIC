@@ -35,6 +35,7 @@ export class EarthPlanet extends Planet {
   private cesiumEnabled: boolean = false;
   private cesiumCanvasVisible: boolean = false;
   private cesiumNativeCameraMode: boolean = false; // 是否使用 Cesium 原生相机模式
+  private _lastSyncedCameraPos = new THREE.Vector3(); // 上次同步时的相机位置，用于检测快速移动
   
   constructor(config: EarthPlanetConfig) {
     super(config);
@@ -117,6 +118,20 @@ export class EarthPlanet extends Planet {
         // 在 Cesium 原生相机模式下，不要同步，让 Cesium 完全控制相机
         if (!this.cesiumNativeCameraMode) {
           this.cesiumExtension.syncCamera(camera, earthPos);
+          
+          // 消除黑边：检测相机快速移动，强制 Cesium 立即渲染
+          // 避免 Cesium 30fps 节流导致的画面比 Three.js 延迟一帧
+          const cameraPos = camera.position;
+          const dx = cameraPos.x - this._lastSyncedCameraPos.x;
+          const dy = cameraPos.y - this._lastSyncedCameraPos.y;
+          const dz = cameraPos.z - this._lastSyncedCameraPos.z;
+          const movedDistance = dx * dx + dy * dy + dz * dz;
+          
+          if (movedDistance > 1e-12) {
+            this.cesiumExtension.forceRender();
+            this._lastSyncedCameraPos.copy(cameraPos);
+            return; // forceRender 已经 render 了，跳过下面的普通 render
+          }
         }
         
         // 总是渲染 Cesium

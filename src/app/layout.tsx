@@ -26,6 +26,7 @@ import { DockInitializer } from "@/components/DockInitializer";
 import { DockWindowSync } from "@/components/DockWindowSync";
 // import { ModDockSync } from "@/components/ModDockSync"; // Unused - migrated to DockInitializer
 import { PerformanceInitializer } from "@/components/PerformanceInitializer";
+import { PerformanceDashboard } from "@/components/ui/PerformanceDashboard";
 
 // 使用系统字体作为fallback
 // const geistSans = Geist({
@@ -210,6 +211,9 @@ export default async function RootLayout({
 
         {/* Vercel SpeedInsights - 性能分析 */}
         <SpeedInsights />
+
+        {/* Performance Dashboard - 实时性能监控面板 (开发模式，Ctrl+Shift+P 切换) */}
+        <PerformanceDashboard />
       </body>
     </html>
   );

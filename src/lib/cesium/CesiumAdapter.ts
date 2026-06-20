@@ -472,6 +472,23 @@ export class CesiumAdapter {
   }
   
   /**
+   * 强制渲染 Cesium 场景（无论帧率限制）
+   *
+   * 用于需要 Cesium 画面与当前 Three.js 相机位置严格对齐的场景，
+   * 例如快速缩放时消除 Cesium 画面的滞后黑边。
+   */
+  forceRender(): void {
+    if (!this.isAvailable) return;
+    
+    try {
+      this.viewer.render();
+      this._lastCesiumRenderTime = performance.now();
+    } catch (error) {
+      this.log('error', `Force render error: ${error}`);
+    }
+  }
+  
+  /**
    * 同步时间到 Cesium.Clock
    *
    * 将外部时间（通常来自 Three.js 场景的模拟时钟）写入 Cesium 内部时钟，

@@ -2,6 +2,10 @@
  * Earth Control Store - 管理地球控制相关的全局状态
  * 
  * 存储 Cesium、地球锁定、地球光照等状态
+ * 
+ * 设计意图：地球一直使用 Cesium 高精度 3D 地球渲染，
+ * 仅在缩放至极远距离时动画循环自动切换为 Three.js 简模（SceneMode.THREE_DOMINANT）。
+ * cesiumEnabled 控制 Cesium 适配器是否初始化（默认 true）。
  */
 
 import { create } from 'zustand';
@@ -24,7 +28,7 @@ interface EarthControlState {
 }
 
 export const useEarthControlStore = create<EarthControlState>((set) => ({
-  cesiumEnabled: true, // 默认开启 Cesium
+  cesiumEnabled: true, // 默认开启 Cesium — 地球一直使用 Cesium 渲染
   earthLockEnabled: true,
   earthLightEnabled: true,
   earthPlanet: null,

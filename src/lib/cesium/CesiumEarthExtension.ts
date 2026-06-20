@@ -65,6 +65,16 @@ export class CesiumEarthExtension {
   }
   
   /**
+   * 强制渲染 Cesium — 绕过帧率限制
+   *
+   * 在快速缩放等场景下，Cesium 的 30fps 节流可能导致画面比 Three.js 延迟一帧，
+   * 产生黑边闪烁。此时调用 forceRender 确保 Cesium 立即产出当前相机视角的画面。
+   */
+  forceRender(): void {
+    this.adapter.forceRender();
+  }
+  
+  /**
    * 同步时间到 Cesium 内部时钟
    *
    * 使地球光照、大气散射等时间相关效果与外部场景时钟保持一致。
