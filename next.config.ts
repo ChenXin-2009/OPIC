@@ -28,7 +28,8 @@ const nextConfig: NextConfig = withBundleAnalyzer({
   },
   
   // Cesium 配置
-  webpack: (config, { isServer }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  webpack: (config: any, { isServer }: { isServer: boolean }) => {
     // 配置 Cesium 静态资源
     if (!isServer) {
       config.resolve.alias = {
