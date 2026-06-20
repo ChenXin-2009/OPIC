@@ -75,6 +75,16 @@ export interface CesiumAdapterConfig {
    */
   maximumNumberOfLoadedTiles?: number;
 
+  /** 启用海拔自适应 LOD（默认 true）
+   *  靠近地表时自动降低地形精度以维持流畅帧率 */
+  enableAdaptiveLOD?: boolean;
+  /** 自适应 LOD 在最低海拔时的 screenSpaceError（默认 16，值越大精度越低） */
+  adaptiveLODMinQuality?: number;
+  /** 自适应 LOD 在最高海拔时的 screenSpaceError（默认 2，值越小精度越高） */
+  adaptiveLODMaxQuality?: number;
+  /** Cesium 渲染目标帧率（默认 30fps），0 表示不限制 */
+  targetCesiumFrameRate?: number;
+
   /**
    * 深度合成策略（默认 'render-order'）
    * - 'render-order'：按渲染顺序决定前后关系（Cesium 在下，Three.js 在上）

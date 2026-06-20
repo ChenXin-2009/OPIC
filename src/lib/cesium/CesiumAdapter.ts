@@ -60,6 +60,15 @@ export class CesiumAdapter {
   private terrainManager: CesiumTerrainManager | null = null;
   private _fallbackLayer: Cesium.ImageryLayer | null = null;
   
+  // 自适应 LOD 状态
+  private _currentAdaptiveSSE: number | null = null;
+  private _lastLODUpdateTime: number = 0;
+  private readonly _lodUpdateInterval: number = 500; // 每 500ms 更新一次 LOD，避免过于频繁
+  
+  // 帧率节流
+  private _lastCesiumRenderTime: number = 0;
+  private _targetFrameInterval: number = 0; // 0 = 不限制
+  
   /**
    * 创建 CesiumAdapter 实例并初始化 Cesium Viewer
    *
@@ -90,7 +99,7 @@ export class CesiumAdapter {
    * 验证并规范化配置参数
    */
   private validateConfig(config: CesiumAdapterConfig): CesiumAdapterConfig {
-    return {
+    const validated = {
       ...config,
       canvasResolutionScale: clampDefault(config.canvasResolutionScale, 1.0, 0.1, 2.0),
       maximumScreenSpaceError: clampDefault(config.maximumScreenSpaceError, 2, 1, Number.POSITIVE_INFINITY),
@@ -99,12 +108,21 @@ export class CesiumAdapter {
       enableTerrain: withDefault(config.enableTerrain, true),
       terrainProviderSource: withDefault(config.terrainProviderSource, 'arcgis-world-elevation'),
       requestTerrainVertexNormals: withDefault(config.requestTerrainVertexNormals, true),
-      requestTerrainWaterMask: withDefault(config.requestTerrainWaterMask, true),
-      terrainExaggeration: clampDefault(config.terrainExaggeration, 1.5, 0.1, 10),
+      requestTerrainWaterMask: withDefault(config.requestTerrainWaterMask, false),
+      terrainExaggeration: clampDefault(config.terrainExaggeration, 1.0, 0.1, 10),
       terrainExaggerationRelativeHeight: withDefault(config.terrainExaggerationRelativeHeight, 0),
       bodyRadiusMeters: withDefault(config.bodyRadiusMeters, 6371000),
-      exposeViewerToWindow: withDefault(config.exposeViewerToWindow, true)
+      exposeViewerToWindow: withDefault(config.exposeViewerToWindow, true),
+      enableAdaptiveLOD: withDefault(config.enableAdaptiveLOD, true),
+      adaptiveLODMinQuality: clampDefault(config.adaptiveLODMinQuality, 16, 2, 32),
+      adaptiveLODMaxQuality: clampDefault(config.adaptiveLODMaxQuality, 2, 1, 8),
+      targetCesiumFrameRate: clampDefault(config.targetCesiumFrameRate, 30, 0, 144),
     };
+    // 计算目标帧间隔（秒）
+    if (validated.targetCesiumFrameRate && validated.targetCesiumFrameRate > 0) {
+      this._targetFrameInterval = 1000 / validated.targetCesiumFrameRate;
+    }
+    return validated;
   }
 
   private createEllipsoid(): Cesium.Ellipsoid {
@@ -198,6 +216,8 @@ export class CesiumAdapter {
     // 配置 Globe
     this.viewer.scene.globe.maximumScreenSpaceError = this.config.maximumScreenSpaceError ?? 2;
     this.viewer.scene.globe.tileCacheSize = this.config.maximumNumberOfLoadedTiles ?? 1000;
+    // 初始化自适应 LOD 基准值
+    this._currentAdaptiveSSE = this.config.maximumScreenSpaceError ?? 2;
     
 
     
@@ -304,6 +324,15 @@ export class CesiumAdapter {
       return;
     }
     
+    // 帧率节流：若距离上次渲染不足目标帧间隔，跳过此次渲染
+    if (this._targetFrameInterval > 0) {
+      const now = performance.now();
+      if (now - this._lastCesiumRenderTime < this._targetFrameInterval) {
+        return;
+      }
+      this._lastCesiumRenderTime = now;
+    }
+    
     try {
       const startTime = performance.now();
       
@@ -372,22 +401,16 @@ export class CesiumAdapter {
         this.config.bodyRadiusMeters
       );
       
-      // 临时调试：每隔2秒输出一次相机高度，确认位置同步是否正确
-      const now = Date.now();
-      if (!this._lastDebugTime || now - this._lastDebugTime > 2000) {
-        this._lastDebugTime = now;
+      // 基于当前海拔动态调整地形 LOD（核心性能优化）
+      if (this.config.enableAdaptiveLOD) {
         const camPos = this.viewer.camera.position;
-        const altitude = Cesium.Cartesian3.magnitude(camPos) - (this.config.bodyRadiusMeters ?? 6371000);
-        const frustum = this.viewer.camera.frustum as any;
-        console.log('[CesiumAdapter] camera altitude (m):', altitude.toFixed(0), 
-          'near:', frustum?.near?.toFixed(1), 'far:', frustum?.far?.toFixed(0),
-          'cesiumPos(m):', camPos.x.toFixed(0), camPos.y.toFixed(0), camPos.z.toFixed(0));
+        const altitude = Math.max(0, Cesium.Cartesian3.magnitude(camPos) - (this.config.bodyRadiusMeters ?? 6371000));
+        this.updateAdaptiveLOD(altitude);
       }
     } catch (error) {
       console.error('[CesiumAdapter] Camera sync error:', error);
     }
-  }
-  private _lastDebugTime?: number; // 上次输出调试日志的时间戳（毫秒），用于限制日志频率（每 2 秒最多一次）
+  } // 上次输出调试日志的时间戳（毫秒），用于限制日志频率（每 2 秒最多一次）
   
   /**
    * 反向同步相机（Cesium → Three.js）
@@ -477,6 +500,72 @@ export class CesiumAdapter {
     } catch {
       return { loaded: 0, loading: 0 };
     }
+  }
+  
+  /**
+   * 根据相机海拔高度动态调整地形 LOD 精度
+   *
+   * 核心优化：靠近地表时自动降低地形精度以维持流畅帧率。
+   * 海拔越高 → 精度越高（能看到整个地球轮廓，低精度瓦片会显现）
+   * 海拔越低 → 精度越低（视野窄，地形细节感知弱，性能优先）
+   *
+   * 转换曲线为平滑插值：
+   *   ≥ 500km → maxQuality (2，最高精度)
+   *   10km~500km → 2~4（平滑过渡）
+   *   1km~10km → 4~8
+   *   100m~1km → 8~16
+   *   < 100m → minQuality (16，性能优先)
+   *
+   * @param altitudeMeters - 相机到地球表面的高度（米）
+   */
+  private updateAdaptiveLOD(altitudeMeters: number): void {
+    if (!this.config.enableAdaptiveLOD) return;
+    
+    // 防抖：限制更新频率，避免每帧修改 LOD 导致 Cesium 重新计算瓦片树
+    const now = performance.now();
+    if (now - this._lastLODUpdateTime < this._lodUpdateInterval) return;
+    this._lastLODUpdateTime = now;
+    
+    const minQ = this.config.adaptiveLODMinQuality ?? 16;
+    const maxQ = this.config.adaptiveLODMaxQuality ?? 2;
+    
+    // 使用 smoothstep 曲线插值，避免跳跃
+    let targetSSE: number;
+    
+    if (altitudeMeters >= 500000) {
+      targetSSE = maxQ; // 最高精度
+    } else if (altitudeMeters >= 10000) {
+      // 500km → 10km: 2 → 4
+      const t = 1 - (altitudeMeters - 10000) / (500000 - 10000);
+      targetSSE = maxQ + (4 - maxQ) * this.smoothstep(t);
+    } else if (altitudeMeters >= 1000) {
+      // 10km → 1km: 4 → 8
+      const t = 1 - (altitudeMeters - 1000) / (10000 - 1000);
+      targetSSE = 4 + 4 * this.smoothstep(t);
+    } else if (altitudeMeters >= 100) {
+      // 1km → 100m: 8 → minQuality
+      const t = 1 - (altitudeMeters - 100) / (1000 - 100);
+      targetSSE = 8 + (minQ - 8) * this.smoothstep(t);
+    } else {
+      targetSSE = minQ; // 性能优先
+    }
+    
+    // 添加滞后：只有变化超过 1 时才更新，避免微小波动
+    if (this._currentAdaptiveSSE !== null && Math.abs(this._currentAdaptiveSSE - targetSSE) < 1) {
+      return;
+    }
+    
+    this._currentAdaptiveSSE = targetSSE;
+    this.viewer.scene.globe.maximumScreenSpaceError = targetSSE;
+    this.log('info', `Adaptive LOD: altitude=${altitudeMeters.toFixed(0)}m → SSE=${targetSSE.toFixed(1)}`);
+  }
+  
+  /**
+   * Smoothstep 函数（Hermite 插值），使过渡平滑无跳跃
+   */
+  private smoothstep(t: number): number {
+    const clamped = Math.max(0, Math.min(1, t));
+    return clamped * clamped * (3 - 2 * clamped);
   }
   
   /**

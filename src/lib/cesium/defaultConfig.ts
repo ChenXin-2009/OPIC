@@ -20,12 +20,26 @@ export const DEFAULT_CESIUM_ADAPTER_CONFIG: Partial<CesiumAdapterConfig> = {
   // 限制内存使用，防止加载过多瓦片
   maximumNumberOfLoadedTiles: 1000,
 
+  // ── 地形配置 ──
   enableTerrain: true,
   terrainProviderSource: 'arcgis-world-elevation',
   requestTerrainVertexNormals: true,
-  requestTerrainWaterMask: true,
-  terrainExaggeration: 1.5,
+  requestTerrainWaterMask: false,   // 默认禁用水面遮罩，节省 GPU 内存和带宽
+  terrainExaggeration: 1.0,         // 默认 1.0 不夸大，保持真实比例
   terrainExaggerationRelativeHeight: 0,
+
+  // ── 自适应 LOD（核心性能优化）──
+  // 靠近地表时自动降低地形精度以维持流畅帧率
+  enableAdaptiveLOD: true,
+  // 最低精度（极近地表时）: 16（性能优先，地形细节肉眼难以分辨）
+  adaptiveLODMinQuality: 16,
+  // 最高精度（高空俯瞰时）: 2（全精度，能看到整个地球地形轮廓）
+  adaptiveLODMaxQuality: 2,
+
+  // ── 帧率控制 ──
+  // Cesium 独立渲染目标帧率（30fps），0 表示不限制
+  // 与 Three.js 主循环解耦，避免 Cesium 地形瓦片成为瓶颈
+  targetCesiumFrameRate: 30,
 
   // 深度合成策略
   // 'render-order': 渲染顺序法（先渲染地球，后渲染卫星）

@@ -169,9 +169,13 @@ export function useSolarSystemInit(
             enableTerrain: true,
             terrainProviderSource: 'arcgis-world-elevation',
             requestTerrainVertexNormals: true,
-            requestTerrainWaterMask: true,
-            terrainExaggeration: 1.5,
+            requestTerrainWaterMask: false,  // 禁用水面遮罩，节省 GPU 带宽
+            terrainExaggeration: 1.0,        // 不夸大，真实比例
             terrainExaggerationRelativeHeight: 0,
+            enableAdaptiveLOD: true,          // 海拔自适应 LOD
+            adaptiveLODMinQuality: 16,        // 近地表最低精度
+            adaptiveLODMaxQuality: 2,         // 高空最高精度
+            targetCesiumFrameRate: 30,        // Cesium 限制 30fps
             fallbackImageUrl: '/images/earth-fallback.jpg',
           },
           cesiumVisibleDistance: 2000,
