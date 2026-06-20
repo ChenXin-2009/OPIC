@@ -59,6 +59,7 @@ export class CesiumAdapter {
   private boundHandleContextLost!: (e: Event) => void;
   private terrainManager: CesiumTerrainManager | null = null;
   private _fallbackLayer: Cesium.ImageryLayer | null = null;
+  private _tileset: Cesium.Cesium3DTileset | null = null;
   
   // 自适应 LOD 状态
   private _currentAdaptiveSSE: number | null = null;
@@ -113,6 +114,10 @@ export class CesiumAdapter {
       terrainExaggerationRelativeHeight: withDefault(config.terrainExaggerationRelativeHeight, 0),
       bodyRadiusMeters: withDefault(config.bodyRadiusMeters, 6371000),
       exposeViewerToWindow: withDefault(config.exposeViewerToWindow, true),
+      enableTileset: withDefault(config.enableTileset, false),
+      tilesetIonAssetId: config.tilesetIonAssetId,
+      tilesetMaximumScreenSpaceError: clampDefault(config.tilesetMaximumScreenSpaceError, 16, 1, 64),
+      ionAccessToken: config.ionAccessToken,
       enableAdaptiveLOD: withDefault(config.enableAdaptiveLOD, true),
       adaptiveLODMinQuality: clampDefault(config.adaptiveLODMinQuality, 16, 2, 32),
       adaptiveLODMaxQuality: clampDefault(config.adaptiveLODMaxQuality, 2, 1, 8),
@@ -140,6 +145,9 @@ export class CesiumAdapter {
    * 初始化 Cesium Viewer 和 Canvas
    */
   private initializeCesium(): void {
+    // 确保 Cesium Ion token 已设置（在首次使用 fromIonAssetId 之前）
+    this.ensureIonToken();
+
     // 创建独立的容器 div（Cesium 需要一个有尺寸的容器）
     this.container = document.createElement('div');
     this.container.id = this.config.cesiumContainerId;
@@ -248,6 +256,12 @@ export class CesiumAdapter {
     this.viewer.scene.globe.showGroundAtmosphere = false;
     // 4. globe.baseColor 控制无瓦片区域底色，设为透明
     this.viewer.scene.globe.baseColor = Cesium.Color.TRANSPARENT;
+    
+    // 4.5. 初始化 3D Tiles 瓦片集（用于月球等非地球天体表面渲染）
+    if (this.config.enableTileset && this.config.tilesetIonAssetId) {
+      this.initializeTileset();
+    }
+    
     // 5. 添加单瓦片影像作为 fallback 层（如未加载到的区域的地球/月球底色）
     const fallbackUrl = this.config.fallbackImageUrl || '/images/earth-fallback.jpg';
     try {
@@ -300,6 +314,61 @@ export class CesiumAdapter {
     (window as unknown as Record<string, unknown>).__cesiumViewer = this.viewer;
     // 通知所有监听者 viewer 已就绪
     window.dispatchEvent(new CustomEvent('cesium:viewer-ready'));
+  }
+
+  /**
+   * 确保 Cesium Ion Access Token 已设置
+   *
+   * 在调用 Cesium3DTileset.fromIonAssetId 等依赖 Cesium ion 的 API 之前必须设置。
+   * 从环境变量 NEXT_PUBLIC_CESIUM_ION_TOKEN 读取 token。
+   * 幂等操作：多次调用不会重复设置。
+   */
+  private ensureIonToken(): void {
+    // 优先使用显式传入的 token，其次使用环境变量
+    const token = this.config.ionAccessToken || process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
+    if (!token) {
+      this.log('warn', '[CesiumAdapter] No Cesium Ion token found');
+      return;
+    }
+    // 始终覆盖：Cesium 内置默认 token 没有 Moon 资产权限
+    Cesium.Ion.defaultAccessToken = token;
+  }
+
+  /**
+   * 初始化 Cesium 3D Tiles 瓦片集
+   *
+   * 当 enableTileset 为 true 时调用，使用 Cesium ion asset ID 加载 3D Tiles 数据集。
+   * 加载成功后禁用 globe（tileset 自身包含完整的几何+纹理），直接渲染到场景 primitives。
+   * 失败时回退到 globe 渲染模式。
+   */
+  private initializeTileset(): void {
+    const assetId = this.config.tilesetIonAssetId!;
+    const maxSSE = this.config.tilesetMaximumScreenSpaceError ?? 16;
+
+    const token = Cesium.Ion.defaultAccessToken;
+    console.log('[CesiumAdapter] Ion token set:', !!token, 'token length:', token?.length ?? 0);
+    this.log('info', `[CesiumAdapter] Loading 3D Tiles from ion asset ${assetId} (token set: ${!!token})...`);
+
+    Cesium.IonResource.fromAssetId(assetId, {
+      accessToken: token || undefined,
+    })
+      .then((resource) => {
+        return Cesium.Cesium3DTileset.fromUrl(resource, {
+          maximumScreenSpaceError: maxSSE,
+        });
+      })
+      .then((tileset) => {
+        console.log('[CesiumAdapter] Tileset created successfully');
+        this._tileset = tileset;
+        this.viewer.scene.primitives.add(tileset);
+        this.viewer.scene.globe.show = false;
+        this.log('info', `[CesiumAdapter] 3D Tiles asset ${assetId} loaded`);
+      })
+      .catch((error: unknown) => {
+        this.log('error', `[CesiumAdapter] Tileset load failed for asset ${assetId}: ${(error as any)?.message || 'unknown'}`);
+        console.error(`[CesiumAdapter] 3D Tiles initialization failed:`, error);
+        this.viewer.scene.globe.show = true;
+      });
   }
 
   
@@ -499,6 +568,37 @@ export class CesiumAdapter {
       };
     } catch {
       return { loaded: 0, loading: 0 };
+    }
+  }
+
+  /**
+   * 获取当前 3D Tiles 瓦片集实例
+   *
+   * @returns tileset 实例，或 null（当未启用 tileset 模式时）
+   */
+  getTileset(): Cesium.Cesium3DTileset | null {
+    return this._tileset;
+  }
+
+  /**
+   * 获取 3D Tiles 瓦片加载统计
+   *
+   * @returns 包含 `tilesLoaded` 和 `loading` 状态的对象
+   */
+  getTilesetStats(): { tilesLoaded: number; loading: number } {
+    if (!this._tileset) {
+      return { tilesLoaded: 0, loading: 0 };
+    }
+    try {
+      // Cesium3DTileset 没有直接的 tilesLoaded 数字属性；
+      // 使用 tilesReceived 统计（Cesium 内部 API）
+      const stats = (this._tileset as any)._statistics?.visited ?? 0;
+      return {
+        tilesLoaded: typeof stats === 'number' ? stats : 0,
+        loading: 0,
+      };
+    } catch {
+      return { tilesLoaded: 0, loading: 0 };
     }
   }
   
@@ -789,6 +889,12 @@ export class CesiumAdapter {
     this.terrainManager?.cancelPendingLoads();
     // 停止渲染循环
     this.isAvailable = false;
+    
+    // 移除 3D Tiles 瓦片集
+    if (this._tileset && this.viewer && !this.viewer.isDestroyed()) {
+      this.viewer.scene.primitives.remove(this._tileset);
+    }
+    this._tileset = null;
     
     // 销毁 Cesium Viewer（自动清理所有资源）
     if (this.viewer) {

@@ -158,6 +158,15 @@ export class CesiumEarthExtension {
   getTileLoadingStats(): { loaded: number; loading: number } {
     return this.adapter.getTileLoadingStats();
   }
+
+  /**
+   * 获取 3D Tiles 瓦片集实例
+   *
+   * @returns tileset 实例，或 null（当未启用 tileset 模式时）
+   */
+  getTileset(): any | null {
+    return this.adapter.getTileset();
+  }
   
   /**
    * 注册错误回调

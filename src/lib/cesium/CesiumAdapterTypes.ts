@@ -56,6 +56,15 @@ export interface CesiumAdapterConfig {
   /** Expose this viewer as window.__cesiumViewer for earth-specific MOD integrations. */
   exposeViewerToWindow?: boolean;
 
+  /** 3D Tiles 模式：用 Cesium 3D Tiles 瓦片集渲染天体表面，替代 globe */
+  enableTileset?: boolean;
+  /** Cesium ion Asset ID，用于通过 Cesium3DTileset.fromIonAssetId 加载（月球 = 2684829） */
+  tilesetIonAssetId?: number;
+  /** 3D Tiles 最大屏幕空间误差，控制 LOD 精度（默认 16，值越小越精细） */
+  tilesetMaximumScreenSpaceError?: number;
+  /** Cesium ion Access Token（显式传入，优先级高于环境变量） */
+  ionAccessToken?: string;
+
   /** URL for a single-tile fallback imagery layer placed at the bottom of the stack. */
   fallbackImageUrl?: string;
 
