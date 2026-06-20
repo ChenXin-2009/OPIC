@@ -1,158 +1,294 @@
 # MOD API Reference
 
-> **Note:** Parts of this document were affected by an encoding issue in the original source. Content has been recovered to the best extent possible.
-
 ## Overview
 
-OPIC MOD APIs provide controlled access to core system functionality. Each API is accessed through a dedicated interface within the MOD context.
+OPIC MOD APIs provide controlled access to core system functionality. Each API is accessed through a dedicated interface within the MOD context. All APIs require appropriate permission declarations in the MOD manifest.
+
+---
 
 ## Time API
 
-Access simulation time, speed, and pause state.
+Access simulation time, speed, and playback state.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `currentTime` | `Date` | Current simulation time |
+| `isPlaying` | `boolean` | Whether animation is playing |
+| `timeSpeed` | `number` | Time speed in days/second |
+| `playDirection` | `'forward' \| 'backward'` | Time flow direction |
 
 ### Methods
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `getCurrentTime` | `() => Date` | Returns current simulation time |
-| `setTime` | `(date: Date) => void` | Sets simulation time |
-| `getTimeScale` | `() => number` | Returns time speed multiplier |
-| `setTimeScale` | `(scale: number) => void` | Sets time speed (1 = real-time) |
-| `isPaused` | `() => boolean` | Checks if simulation is paused |
-| `setPaused` | `(paused: boolean) => void` | Pauses/resumes simulation |
+| `setCurrentTime` | `(date: Date) => void` | Sets simulation time |
+| `togglePlayPause` | `() => void` | Toggles play/pause state |
+| `setTimeSpeed` | `(speed: number) => void` | Sets time speed (clamped to valid range) |
+| `setPlayDirection` | `(direction: 'forward' \| 'backward') => void` | Sets playback direction |
+| `onTimeChange` | `(callback: (time: Date) => void) => () => void` | Subscribes to time changes; returns unsubscribe function |
 
 ### Permissions Required
 
-- `time:read` — getCurrentTime, getTimeScale, isPaused
-- `time:write` — setTime, setTimeScale, setPaused
+- `time:read` — currentTime, isPlaying, timeSpeed, playDirection
+- `time:write` — setCurrentTime, togglePlayPause, setTimeSpeed, setPlayDirection
 
 ### Example
 
 ```typescript
 const time = context.time;
-const now = time.getCurrentTime();
-time.setTimeScale(100); // 100x speed
+const now = time.currentTime;
+time.setTimeSpeed(100); // 100x speed
+time.togglePlayPause(); // Start playing
 ```
 
 ---
 
 ## Camera API
 
-Control the 3D camera position, target, and behavior.
+Control the 3D camera position, zoom, and planet focus.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `cameraDistance` | `number` | Camera distance from target in AU |
+| `viewOffset` | `ViewOffset` | View offset `{ x, y }` in AU |
+| `zoom` | `number` | Current zoom level (10–200) |
 
 ### Methods
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `getPosition` | `() => THREE.Vector3` | Returns camera position in AU |
-| `setPosition` | `(pos: THREE.Vector3) => void` | Sets camera position |
-| `getTarget` | `() => THREE.Vector3` | Returns camera look-at target |
-| `setTarget` | `(target: THREE.Vector3) => void` | Sets camera look-at target |
-| `getDistance` | `() => number` | Returns distance from target in AU |
-| `setDistance` | `(dist: number) => void` | Sets distance from target |
-| `flyTo` | `(target: THREE.Vector3, distance?: number) => Promise<void>` | Smoothly animates camera to target |
-| `isEarthLocked` | `() => boolean` | Returns whether camera is locked to Earth |
-| `setEarthLocked` | `(locked: boolean) => void` | Locks/unlocks camera to Earth |
+| `setCameraDistance` | `(distance: number) => void` | Sets camera distance (min 0.1) |
+| `setViewOffset` | `(offset: ViewOffset) => void` | Sets view offset |
+| `setZoom` | `(zoom: number) => void` | Sets zoom level (clamped 10–200) |
+| `centerOnPlanet` | `(name: string) => boolean` | Centers camera on named planet; returns true if found |
+| `onCameraChange` | `(callback: (state: CameraState) => void) => () => void` | Subscribes to camera changes; returns unsubscribe function |
+
+### Types
+
+```typescript
+interface ViewOffset { x: number; y: number }
+interface CameraState {
+  distance: number;
+  offset: ViewOffset;
+  zoom: number;
+  focusedPlanet: string | null;
+}
+```
 
 ### Permissions Required
 
-- `camera:read` — getPosition, getTarget, getDistance, isEarthLocked
-- `camera:write` — setPosition, setTarget, setDistance, flyTo, setEarthLocked
+- `camera:read` — cameraDistance, viewOffset, zoom
+- `camera:write` — setCameraDistance, setViewOffset, setZoom, centerOnPlanet
 
 ### Example
 
 ```typescript
 const camera = context.camera;
-await camera.flyTo(new THREE.Vector3(2, 0, 0), 1.5);
+camera.centerOnPlanet('Mars');
+camera.setCameraDistance(2.5); // 2.5 AU
 ```
 
 ---
 
 ## Celestial API
 
-Query celestial body positions, orbits, and properties.
+Query celestial body positions, orbital elements, and coordinate conversion.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `ORBITAL_ELEMENTS` | `Record<string, OrbitalElementsData>` | Orbital elements catalog |
+| `CELESTIAL_BODIES` | `Record<string, unknown>` | Celestial body metadata |
 
 ### Methods
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `getBodyPosition` | `(id: string, time: Date) => THREE.Vector3` | Returns body position at given time |
-| `getBodyOrbit` | `(id: string) => OrbitalElements` | Returns orbital elements for body |
-| `getBodies` | `() => string[]` | Returns list of known celestial body IDs |
-| `searchBodies` | `(query: string) => SearchResult[]` | Searches celestial bodies by name |
-| `getBodyInfo` | `(id: string) => CelestialBodyInfo` | Returns detailed body information |
+| `getCelestialBodies` | `() => CelestialBodyData[]` | Returns all celestial body data |
+| `getOrbitalElements` | `(bodyName: string) => OrbitalElementsData \| null` | Gets orbital elements for a named body |
+| `calculatePosition` | `(elements: OrbitalElementsData, jd: number) => { x, y, z, r }` | Computes position from orbital elements at Julian date |
+| `dateToJulianDay` | `(date: Date) => number` | Converts Date to Julian Day |
+| `julianDayToDate` | `(jd: number) => Date` | Converts Julian Day to Date |
+| `onBodiesUpdate` | `(callback: (bodies: CelestialBodyData[]) => void) => () => void` | Subscribes to body data updates; returns unsubscribe function |
 
-### Permissions Required
-
-- `celestial:read` — all methods
-
-### Example
+### Types
 
 ```typescript
-const celestial = context.celestial;
-const earthPos = celestial.getBodyPosition('earth', new Date());
-const bodies = celestial.searchBodies('mar');
+interface CelestialBodyData {
+  name: string;
+  x: number; y: number; z: number;
+  r: number;
+  radius: number;
+  color: string;
+  isSun?: boolean;
+  parent?: string;
+  isSatellite?: boolean;
+}
+
+interface OrbitalElementsData {
+  a: number;   // Semi-major axis (AU)
+  e: number;   // Eccentricity
+  i: number;   // Inclination (radians)
+  L: number;   // Mean longitude (radians)
+  w_bar: number; // Longitude of perihelion (radians)
+  O: number;   // Longitude of ascending node (radians)
+}
 ```
 
----
-
-## Render API
-
-Register 3D objects, overlays, and manage render layers.
-
-### Methods
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `registerObject` | `(obj: THREE.Object3D) => string` | Registers a 3D object for rendering |
-| `unregisterObject` | `(id: string) => void` | Removes a registered 3D object |
-| `registerCesiumLayer` | `(layer: LayerConfig) => void` | Registers a Cesium imagery layer |
-| `unregisterCesiumLayer` | `(id: string) => void` | Removes a Cesium layer |
-| `getObjectById` | `(id: string) => THREE.Object3D \| undefined` | Retrieves a registered object |
-| `createLabel` | `(text: string, pos: THREE.Vector3) => string` | Creates a 3D text label |
-
 ### Permissions Required
 
-- `render:read` — getObjectById
-- `render:write` — registerObject, unregisterObject, createLabel
-- `render:cesium` — registerCesiumLayer, unregisterCesiumLayer
+- `celestial:read` — All properties and methods
 
 ### Example
 
 ```typescript
-const render = context.render;
-const sphere = new THREE.Mesh(
-  new THREE.SphereGeometry(0.1, 16, 16),
-  new THREE.MeshBasicMaterial({ color: 0xff0000 })
+const cel = context.celestial;
+const bodies = cel.getCelestialBodies();
+const jd = cel.dateToJulianDay(new Date());
+const pos = cel.calculatePosition(
+  cel.getOrbitalElements('Earth')!,
+  jd
 );
-const id = render.registerObject(sphere);
 ```
 
 ---
 
 ## Satellite API
 
-Track Earth satellites with real-time position data.
+Query and track Earth-orbiting satellites.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `satellites` | `SatelliteData[]` | All satellite data |
+| `visibleSatellites` | `SatelliteData[]` | Satellites with position data |
 
 ### Methods
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `getSatellitePosition` | `(noradId: number, time: Date) => SatellitePosition` | Returns satellite position at time |
-| `getSatellites` | `() => SatelliteInfo[]` | Returns list of tracked satellites |
-| `searchSatellites` | `(query: string) => SatelliteInfo[]` | Searches satellites by name/NORAD ID |
-| `getSatelliteInfo` | `(noradId: number) => SatelliteInfo` | Returns detailed satellite info |
-| `getGroundTrack` | `(noradId: number) => GroundTrackPoint[]` | Returns ground track for satellite |
-| `getPasses` | `(noradId: number, lat: number, lng: number) => PassPrediction[]` | Returns pass predictions |
+| `fetchSatellites` | `(source?: string) => Promise<void>` | Loads satellite data from external source |
+| `selectSatellite` | `(noradId: number) => SatelliteData \| null` | Looks up satellite by NORAD ID |
+| `calculateSatellitePosition` | `(noradId: number, time: Date) => { x, y, z } \| null` | Gets cached satellite position |
+| `isLoading` | `() => boolean` | Returns whether satellite data is loading |
+| `getError` | `() => Error \| null` | Returns last load error, if any |
+| `onSatellitesUpdate` | `(callback: (satellites: SatelliteData[]) => void) => () => void` | Subscribes to satellite updates; returns unsubscribe function |
+
+### Types
+
+```typescript
+interface SatelliteData {
+  noradId: number;
+  name: string;
+  tle?: { line1: string; line2: string };
+  position?: { x: number; y: number; z: number };
+}
+```
 
 ### Permissions Required
 
-- `satellite:read` — all methods
+- `satellite:read` — All properties and methods
 
 ### Example
 
 ```typescript
-const satellite = context.satellite;
-const iss = satellite.getSatelliteInfo(25544); // ISS
-const pos = satellite.getSatellitePosition(25544, new Date());
+const sat = context.satellite;
+await sat.fetchSatellites();
+const selected = sat.selectSatellite(25544); // ISS
+```
+
+---
+
+## Render API
+
+Register 3D renderers, Cesium layers, and render lifecycle hooks.
+
+### Methods
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `registerRenderer` | `(id: string, factory: RendererFactory) => void` | Registers a 3D renderer; factory receives ModContext |
+| `unregisterRenderer` | `(id: string) => void` | Unregisters and disposes a renderer |
+| `getScene` | `() => unknown` | Returns the Three.js scene reference |
+| `getCamera` | `() => unknown` | Returns the Three.js camera reference |
+| `getRenderer` | `() => unknown` | Returns the Three.js WebGLRenderer reference |
+| `registerCesiumLayer` | `(options: CesiumLayerOptions) => void` | Registers a Cesium imagery/terrain layer |
+| `unregisterCesiumLayer` | `(id: string) => void` | Unregisters a Cesium layer |
+| `onBeforeRender` | `(callback: () => void) => () => void` | Registers pre-render callback; returns unsubscribe |
+| `onAfterRender` | `(callback: () => void) => () => void` | Registers post-render callback; returns unsubscribe |
+| `getRendererIds` | `() => string[]` | Lists all registered renderer IDs |
+| `getCesiumLayerIds` | `() => string[]` | Lists all registered Cesium layer IDs |
+
+### Types
+
+```typescript
+type RendererFactory = (context: ModContext) => unknown;
+
+interface CesiumLayerOptions {
+  id: string;
+  type: 'imagery' | 'terrain';
+  url: string;
+  options?: Record<string, unknown>;
+}
+```
+
+### Permissions Required
+
+- `render:write` — registerRenderer, unregisterRenderer
+- `render:read` — getScene, getCamera, getRenderer, getRendererIds, getCesiumLayerIds
+
+### Example
+
+```typescript
+const render = context.render;
+render.registerRenderer('my-effect', (ctx) => {
+  const geometry = new THREE.SphereGeometry(0.1, 16, 16);
+  const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+  const mesh = new THREE.Mesh(geometry, material);
+  return mesh;
+});
+```
+
+---
+
+## API Version
+
+The current MOD API version is `1.0.0`.
+
+Accessible as `MOD_API_VERSION` from `@/lib/mod-manager/api`.
+
+---
+
+## Complete MOD Context
+
+The full MOD runtime context (`ModContext`) provides access to all APIs:
+
+```typescript
+interface ModContext {
+  id: string;
+  manifest: ModManifest;
+  time: TimeAPI;
+  camera: CameraAPI;
+  celestial: CelestialAPI;
+  satellite: SatelliteAPI;
+  render: RenderAPI;
+  config: Record<string, unknown>;
+  setState(key: string, value: unknown): void;
+  getState(key: string): unknown;
+  subscribe(event: string, handler: Function): () => void;
+  emit(event: string, ...args: unknown[]): void;
+  on(event: string, handler: Function): void;
+  off(event: string, handler: Function): void;
+  logger: Console;
+  setTimeout(handler: TimerHandler, timeout?: number): number;
+  setInterval(handler: TimerHandler, timeout?: number): number;
+  clearTimeout(id: number): void;
+  clearInterval(id: number): void;
+}
 ```

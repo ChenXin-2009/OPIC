@@ -77,7 +77,7 @@ function generateSatelliteDetails(
   // T^2 = (4π²/μ) * a³，其中μ = 398600.4418 km³/s² (地球引力常数)
   const mu = 398600.4418; // km³/s²
   const periodSeconds = period * 60;
-  const semiMajorAxis = Math.pow((mu * periodSeconds * periodSeconds) / (4 * Math.PI * Math.PI), 1/3);
+  const semiMajorAxis = ((mu * periodSeconds * periodSeconds) / (4 * Math.PI * Math.PI)) ** (1/3);
   
   // 计算近地点和远地点高度
   const earthRadius = 6371; // km

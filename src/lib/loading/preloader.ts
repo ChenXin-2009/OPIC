@@ -37,6 +37,7 @@
  * @see Requirements 4.15, 4.16, 4.17
  */
 
+import { ensureError } from '@/lib/utils/errors';
 import { logger } from '@/utils/logger';
 
 /**
@@ -272,12 +273,12 @@ export class ResourcePreloader {
       this.loadedCount++;
       logger.debug(`[ResourcePreloader] Loaded ${resource.critical ? 'critical' : 'optional'}: ${resource.name}`);
     } catch (error) {
-      console.error(`[ResourcePreloader] Failed to load ${resource.name}:`, error);
+      const err = ensureError(error);
+      console.error(`[ResourcePreloader] Failed to load ${resource.name}:`, err);
       this.failedResources.push(resource.name);
-      
-      // Critical resource failure is more severe
+
       if (resource.critical) {
-        throw new Error(`Failed to load critical resource: ${resource.name}`);
+        throw new Error(`Failed to load critical resource: ${resource.name}`, { cause: err });
       }
     } finally {
       this.currentResource = null;
@@ -308,7 +309,8 @@ export class ResourcePreloader {
     try {
       await document.fonts.load(`1em ${fontFamily}`);
     } catch (error) {
-      throw new Error(`Failed to load font: ${fontFamily}`);
+      const err = ensureError(error);
+      throw new Error(`Failed to load font: ${fontFamily}`, { cause: err });
     }
   }
 

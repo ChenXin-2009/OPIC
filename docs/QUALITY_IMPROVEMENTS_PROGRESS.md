@@ -263,8 +263,8 @@ performanceMonitor.setObjectCount(scene.children.length);
 
 ## 📚 相关文档
 
-- [Spec 文档](./.kiro/specs/project-quality-improvements.md) - 完整的任务规格说明
-- [代码注释改进总结](./CODE_COMMENTS_IMPROVEMENT_SUMMARY.md) - 之前完成的注释补充
+- [Spec 文档](../.kiro/specs/project-quality-improvements.md) - 完整的任务规格说明
+<!-- 代码注释改进总结文档已不存在，此处保留占位 -->
 - [React 错误边界文档](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
 - [Web Performance API](https://developer.mozilla.org/en-US/docs/Web/API/Performance)
 

@@ -6,6 +6,7 @@
  */
 import * as THREE from 'three';
 
+/** Configuration options for the CC0 cinematic lens flare effect. */
 export interface LensFlareConfig {
   enabled?: boolean;
   lensPosition?: THREE.Vector3;
@@ -173,6 +174,13 @@ void main(){
   if(enabled)gl_FragColor=vec4(finalColor,mix(finalColor,-vec3(.15),.5)*opacity);
 }`;
 
+/** Create a cinematic lens flare for the sun, with atmospheric glow, ghost elements,
+ * and planet occlusion detection. Based on CC0 film-grade lens flare techniques.
+ * @param scene - Three.js scene to add the flare to
+ * @param sunPosition - world-space position of the sun
+ * @param config - visual tuning parameters
+ * @returns object with update(), setOcclusionEnabled(), and dispose() methods
+ */
 export function createLensFlare(config: LensFlareConfig = {}) {
   const c = { enabled: true, opacity: 1.0, ...config };
   const worldPos = c.lensPosition?.clone() ?? new THREE.Vector3();

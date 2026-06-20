@@ -124,6 +124,7 @@ export class CoordinateConstants {
 
 const IS_PRODUCTION = typeof process !== 'undefined' && process.env?.NODE_ENV === 'production';
 
+/** 调试用旋转偏移量，用于微调 Cesium 与 Three.js 之间的旋转对齐 */
 export const debugRotationOffset = {
   /** 绕 X 轴的额外旋转偏移（度），正值为右手定则正方向 */
   x: 0,

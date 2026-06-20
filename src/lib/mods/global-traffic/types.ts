@@ -21,6 +21,7 @@ export type DataSourceId =
   | 'natural_earth_routes'
   | 'cargo_tracker_demo';
 
+/** Configuration for a traffic data source API. */
 export interface TrafficDataSource {
   id: DataSourceId;
   name: string;
@@ -75,6 +76,7 @@ export interface FlightPosition {
   sourceId: DataSourceId;
 }
 
+/** A maritime trade route with origin, destination, and waypoints. */
 export interface TradeRoute {
   id: string;
   name: string;

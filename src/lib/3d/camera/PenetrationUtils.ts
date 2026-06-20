@@ -11,7 +11,7 @@ import * as THREE from 'three';
  * 四次方缓出（easeOutQuart）缓动函数
  */
 export function easeOutQuart(t: number): number {
-  return 1 - Math.pow(1 - t, 4);
+  return 1 - (1 - t) ** 4;
 }
 
 /**

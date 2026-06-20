@@ -31,6 +31,7 @@
  */
 
 export type ImageryCategory = 'general' | 'nasa';
+/** 月面影像分类，目前仅支持 NASA Moon Trek */
 export type LunarImageryCategory = 'nasa-moon-trek';
 
 /**
@@ -65,6 +66,7 @@ export interface ImagerySourceDef {
   create: (date?: string) => Promise<any>;
 }
 
+/** 月面影像图源定义接口，描述单个月面影像图层的元数据和工厂函数 */
 export interface LunarImagerySourceDef {
   id: string;
   name: { zh: string; en: string };
@@ -324,6 +326,7 @@ export const IMAGERY_SOURCES: ImagerySourceDef[] = [
   },
 ];
 
+/** 月面影像图源列表，包含 NASA Moon Trek 提供的多种月面影像数据 */
 export const LUNAR_IMAGERY_SOURCES: LunarImagerySourceDef[] = [
   {
     id: 'moon-trek-lro-wac-global',

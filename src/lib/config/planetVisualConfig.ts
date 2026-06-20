@@ -9,6 +9,7 @@
  * - SATURN_RING_CONFIG: 土星环几何和样式参数
  */
 
+/** Level-of-detail thresholds for planet rendering (distance-based). */
 export const PLANET_LOD_CONFIG = {
   baseSegments: 32,
   minSegments: 16,
@@ -17,6 +18,7 @@ export const PLANET_LOD_CONFIG = {
   smoothness: 0.15,
 };
 
+/** Configuration for planet axis/ring grid lines. */
 export const PLANET_GRID_CONFIG = {
   enabled: true,
   meridians: 12,
@@ -27,6 +29,7 @@ export const PLANET_GRID_CONFIG = {
   outwardOffset: 0.002,
 };
 
+//** Lighting defaults per planet (ambient, diffuse, specular colors). */
 export const PLANET_LIGHTING_CONFIG = {
   ambientIntensity: 0.08,
   terminatorWidth: 0.15,

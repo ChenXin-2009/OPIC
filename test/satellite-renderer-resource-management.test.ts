@@ -13,6 +13,28 @@ import { SceneManager } from '../src/lib/3d/SceneManager';
 import { SGP4Calculator } from '../src/lib/satellite/sgp4Calculator';
 import { OrbitType, SatelliteCategory, SatelliteState } from '../src/lib/types/satellite';
 
+// Mock WebGLRenderer since jsdom doesn't support WebGL
+jest.mock('three', () => {
+  const actual = jest.requireActual('three');
+  const MockWebGLRenderer = jest.fn().mockImplementation(() => ({
+    domElement: document.createElement('canvas'),
+    setSize: jest.fn(),
+    setPixelRatio: jest.fn(),
+    render: jest.fn(),
+    dispose: jest.fn(),
+    setClearColor: jest.fn(),
+    getContext: jest.fn().mockReturnValue(null),
+    shadowMap: { enabled: false },
+    outputColorSpace: 0,
+    toneMapping: 0,
+    info: { render: { calls: 0 } },
+  }));
+  return {
+    ...actual,
+    WebGLRenderer: MockWebGLRenderer,
+  };
+});
+
 describe('SatelliteRenderer - 资源管理和优化', () => {
   let sceneManager: SceneManager;
   let renderer: SatelliteRenderer;

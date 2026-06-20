@@ -1,6 +1,12 @@
 import * as THREE from 'three';
 import type { OrbitalElements } from '@/lib/astronomy/orbit';
+import { J2000_JD } from '@/lib/astronomy/utils/constants';
 
+/** Generate 3D orbit points from Keplerian elements.
+ * If julianDay is provided, applies secular precession rates for epoch adjustment.
+ * @param segments - number of sampling points
+ * @param julianDay - optional epoch for precession-adjusted elements
+ */
 export function generateOrbitPoints(
   elements: OrbitalElements,
   segments: number,
@@ -10,7 +16,7 @@ export function generateOrbitPoints(
 
   let elem = elements;
   if (julianDay !== undefined) {
-    const T = (julianDay - 2451545.0) / 36525.0;
+    const T = (julianDay - J2000_JD) / 36525.0;
     elem = {
       ...elements,
       a: elements.a + elements.a_dot * T,

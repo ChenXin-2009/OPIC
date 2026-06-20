@@ -11,6 +11,7 @@
  */
 
 import * as THREE from 'three';
+import { ensureError } from '@/lib/utils/errors';
 import type { SceneManager } from '../3d/SceneManager';
 import type { CameraController } from '../3d/CameraController';
 import { SceneMode } from '../3d/SceneModeManager';
@@ -98,8 +99,9 @@ export class NavigationHandler {
       this.store.selectPlanet(result.nameEn);
 
     } catch (error) {
-      console.error('导航失败:', error);
-      throw new Error(`无法导航到 ${result.nameZh || result.nameEn}: ${error instanceof Error ? error.message : '未知错误'}`);
+      const err = ensureError(error);
+      console.error('导航失败:', err);
+      throw new Error(`无法导航到 ${result.nameZh || result.nameEn}: ${err.message}`, { cause: err });
     }
   }
 

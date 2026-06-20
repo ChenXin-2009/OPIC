@@ -64,20 +64,18 @@ interface OrbitalParameters {
  * 提供更符合物理规律的卫星运动。
  */
 export class OrbitalInterpolator {
-  /** 插值状态映射表 */
   private states: Map<number, OrbitalInterpolationState>;
-  
-  /** 地球引力常数 (AU³/s²) */
-  private readonly MU = 1.327e20 / Math.pow(1.496e11, 3); // GM_Earth in AU³/s²
-  
-  /** 是否启用轨道动力学插值 */
+
+  private readonly MU = 1.327e20 / (1.496e11 ** 3);
+
   private enableOrbitalDynamics: boolean;
-  
-  /**
-   * 创建轨道插值器实例
-   * 
-   * @param enableOrbitalDynamics - 是否启用轨道动力学插值，默认true
-   */
+
+  private scratchV = new Vector3();
+  private scratchV2 = new Vector3();
+  private scratchV3 = new Vector3();
+  private scratchV4 = new Vector3();
+  private reusablePositions = new Map<number, Vector3>();
+
   constructor(enableOrbitalDynamics: boolean = true) {
     this.states = new Map();
     this.enableOrbitalDynamics = enableOrbitalDynamics;
@@ -99,42 +97,40 @@ export class OrbitalInterpolator {
   ): void {
     const existingState = this.states.get(noradId);
     const currentTime = Date.now();
-    
+
     if (existingState) {
-      // 使用当前插值位置作为新的起始位置
       const currentPosition = this.getInterpolatedPosition(noradId, currentTime);
-      
-      // 估算当前速度（基于位置变化）
-      const dt = (currentTime - existingState.startTime) / 1000; // 秒
+
+      const dt = (currentTime - existingState.startTime) / 1000;
       const currentVelocity = dt > 0
-        ? new Vector3(
+        ? this.scratchV.set(
             (currentPosition.x - existingState.startPosition.x) / dt,
             (currentPosition.y - existingState.startPosition.y) / dt,
             (currentPosition.z - existingState.startPosition.z) / dt
           )
-        : existingState.startVelocity.clone();
-      
+        : existingState.startVelocity;
+
+      const startVel = dt > 0 ? currentVelocity.clone() : existingState.startVelocity.clone();
+
       const newState: OrbitalInterpolationState = {
         noradId,
-        startPosition: currentPosition,
-        startVelocity: currentVelocity,
+        startPosition: currentPosition.clone(),
+        startVelocity: startVel,
         endPosition: newPosition.clone(),
         endVelocity: newVelocity.clone(),
         startTime: currentTime,
-        endTime: timestamp
+        endTime: timestamp,
       };
-      
-      // 计算轨道参数
+
       if (this.enableOrbitalDynamics) {
         newState.orbitalParams = this.calculateOrbitalParameters(
           currentPosition,
-          currentVelocity
+          startVel
         );
       }
-      
+
       this.states.set(noradId, newState);
     } else {
-      // 首次设置
       const newState: OrbitalInterpolationState = {
         noradId,
         startPosition: newPosition.clone(),
@@ -142,16 +138,16 @@ export class OrbitalInterpolator {
         endPosition: newPosition.clone(),
         endVelocity: newVelocity.clone(),
         startTime: currentTime,
-        endTime: timestamp
+        endTime: timestamp,
       };
-      
+
       if (this.enableOrbitalDynamics) {
         newState.orbitalParams = this.calculateOrbitalParameters(
           newPosition,
           newVelocity
         );
       }
-      
+
       this.states.set(noradId, newState);
     }
   }
@@ -203,7 +199,7 @@ export class OrbitalInterpolator {
       }
       
       // 计算轨道周期
-      const period = 2 * Math.PI * Math.sqrt(Math.pow(semiMajorAxis, 3) / this.MU);
+      const period = 2 * Math.PI * Math.sqrt((semiMajorAxis ** 3) / this.MU);
       
       // 平均角速度
       const meanMotion = 2 * Math.PI / period;
@@ -250,49 +246,33 @@ export class OrbitalInterpolator {
     elapsedTime: number
   ): Vector3 | null {
     const params = state.orbitalParams;
-    if (!params) {
-      return null;
-    }
-    
+    if (!params) return null;
+
     try {
-      // 计算当前时刻的平近点角
       const M = params.meanAnomalyStart + params.meanMotion * elapsedTime;
-      
-      // 求解开普勒方程：E - e*sin(E) = M
-      // 使用牛顿迭代法
-      let E = M; // 初始猜测
+
+      let E = M;
       for (let i = 0; i < 10; i++) {
         const dE = (E - params.eccentricity * Math.sin(E) - M) /
                    (1 - params.eccentricity * Math.cos(E));
         E -= dE;
         if (Math.abs(dE) < 1e-8) break;
       }
-      
-      // 偏近点角 → 真近点角
+
       const nu = 2 * Math.atan(
         Math.sqrt((1 + params.eccentricity) / (1 - params.eccentricity)) *
         Math.tan(E / 2)
       );
-      
-      // 计算轨道半径
+
       const r = params.semiMajorAxis * (1 - params.eccentricity * Math.cos(E));
-      
-      // 在轨道平面内的位置
-      const cosNu = Math.cos(nu);
-      const sinNu = Math.sin(nu);
-      
-      // 构建轨道坐标系
-      // x轴：近地点方向
-      // y轴：垂直于近地点方向，在轨道平面内
-      const xAxis = params.periapsisDirection.clone();
-      const yAxis = new Vector3().crossVectors(params.normal, xAxis).normalize();
-      
-      // 计算位置向量
-      const position = new Vector3();
-      position.addScaledVector(xAxis, r * cosNu);
-      position.addScaledVector(yAxis, r * sinNu);
-      
-      return position;
+
+      this.scratchV.copy(params.periapsisDirection);
+      this.scratchV2.crossVectors(params.normal, this.scratchV).normalize();
+
+      this.scratchV3.copy(this.scratchV).multiplyScalar(r * Math.cos(nu));
+      this.scratchV3.addScaledVector(this.scratchV2, r * Math.sin(nu));
+
+      return this.scratchV3.clone();
     } catch (error) {
       console.warn('[OrbitalInterpolator] 轨道位置计算失败:', error);
       return null;
@@ -305,47 +285,49 @@ export class OrbitalInterpolator {
   private slerp(start: Vector3, end: Vector3, t: number): Vector3 {
     if (t <= 0) return start.clone();
     if (t >= 1) return end.clone();
-    
-    const startLength = start.length();
-    const endLength = end.length();
-    
-    if (startLength === 0 || endLength === 0) {
-      return new Vector3(
+
+    const startLen = start.length();
+    const endLen = end.length();
+
+    if (startLen === 0 || endLen === 0) {
+      this.scratchV.set(
         start.x + (end.x - start.x) * t,
         start.y + (end.y - start.y) * t,
         start.z + (end.z - start.z) * t
       );
+      return this.scratchV.clone();
     }
-    
-    const startNorm = start.clone().normalize();
-    const endNorm = end.clone().normalize();
-    
-    let dot = startNorm.dot(endNorm);
+
+    this.scratchV.copy(start).normalize();
+    this.scratchV2.copy(end).normalize();
+
+    let dot = this.scratchV.dot(this.scratchV2);
     dot = Math.max(-1, Math.min(1, dot));
-    
+
     const theta = Math.acos(dot);
-    
+
     if (Math.abs(theta) < 0.001) {
-      return new Vector3(
+      this.scratchV3.set(
         start.x + (end.x - start.x) * t,
         start.y + (end.y - start.y) * t,
         start.z + (end.z - start.z) * t
       );
+      return this.scratchV3.clone();
     }
-    
+
     const sinTheta = Math.sin(theta);
-    const weight1 = Math.sin((1 - t) * theta) / sinTheta;
-    const weight2 = Math.sin(t * theta) / sinTheta;
-    
-    const direction = new Vector3(
-      startNorm.x * weight1 + endNorm.x * weight2,
-      startNorm.y * weight1 + endNorm.y * weight2,
-      startNorm.z * weight1 + endNorm.z * weight2
+    const w1 = Math.sin((1 - t) * theta) / sinTheta;
+    const w2 = Math.sin(t * theta) / sinTheta;
+
+    this.scratchV3.set(
+      this.scratchV.x * w1 + this.scratchV2.x * w2,
+      this.scratchV.y * w1 + this.scratchV2.y * w2,
+      this.scratchV.z * w1 + this.scratchV2.z * w2
     );
-    
-    const radius = startLength + (endLength - startLength) * t;
-    
-    return direction.multiplyScalar(radius);
+
+    const radius = startLen + (endLen - startLen) * t;
+
+    return this.scratchV3.multiplyScalar(radius).clone();
   }
   
   /**
@@ -353,39 +335,35 @@ export class OrbitalInterpolator {
    */
   getInterpolatedPosition(noradId: number, currentTime: number): Vector3 {
     const state = this.states.get(noradId);
-    
+
     if (!state) {
       return new Vector3(0, 0, 0);
     }
-    
+
     const duration = state.endTime - state.startTime;
-    
+
     if (duration <= 0) {
       return state.endPosition.clone();
     }
-    
+
     const elapsed = currentTime - state.startTime;
     let progress = elapsed / duration;
     progress = Math.max(0, Math.min(1, progress));
-    
-    // 尝试使用轨道动力学插值
+
     if (this.enableOrbitalDynamics && state.orbitalParams) {
-      const elapsedSeconds = elapsed / 1000;
-      const orbitalPosition = this.calculateOrbitalPosition(state, elapsedSeconds);
-      
+      const orbitalPosition = this.calculateOrbitalPosition(state, elapsed / 1000);
+
       if (orbitalPosition) {
-        // 使用混合策略：轨道计算为主，Slerp修正误差
-        // 随着接近目标时刻，逐渐过渡到目标位置
-        const blendFactor = Math.pow(progress, 2); // 平方曲线，后期加速收敛
-        return new Vector3(
+        const blendFactor = progress * progress;
+        this.scratchV.set(
           orbitalPosition.x * (1 - blendFactor) + state.endPosition.x * blendFactor,
           orbitalPosition.y * (1 - blendFactor) + state.endPosition.y * blendFactor,
           orbitalPosition.z * (1 - blendFactor) + state.endPosition.z * blendFactor
         );
+        return this.scratchV.clone();
       }
     }
-    
-    // Fallback: 使用Slerp
+
     return this.slerp(state.startPosition, state.endPosition, progress);
   }
   
@@ -393,14 +371,12 @@ export class OrbitalInterpolator {
    * 批量获取所有卫星的插值位置
    */
   getInterpolatedPositions(currentTime: number): Map<number, Vector3> {
-    const positions = new Map<number, Vector3>();
-    
+    this.reusablePositions.clear();
     this.states.forEach((_state, noradId) => {
       const position = this.getInterpolatedPosition(noradId, currentTime);
-      positions.set(noradId, position);
+      this.reusablePositions.set(noradId, position);
     });
-    
-    return positions;
+    return this.reusablePositions;
   }
   
   /**

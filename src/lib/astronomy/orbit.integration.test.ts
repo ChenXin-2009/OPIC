@@ -94,9 +94,9 @@ describe('Orbit System Integration', () => {
       expect(io2).toBeDefined();
 
       const distance = Math.sqrt(
-        Math.pow(io2!.x - io1!.x, 2) +
-        Math.pow(io2!.y - io1!.y, 2) +
-        Math.pow(io2!.z - io1!.z, 2)
+        (io2!.x - io1!.x) * (io2!.x - io1!.x) +
+        (io2!.y - io1!.y) * (io2!.y - io1!.y) +
+        (io2!.z - io1!.z) * (io2!.z - io1!.z)
       );
 
       expect(distance).toBeGreaterThan(0.001);
@@ -125,9 +125,9 @@ describe('Orbit System Integration', () => {
 
       for (const moon of jupiterMoons) {
         const distance = Math.sqrt(
-          Math.pow(moon.x - jupiter!.x, 2) +
-          Math.pow(moon.y - jupiter!.y, 2) +
-          Math.pow(moon.z - jupiter!.z, 2)
+          (moon.x - jupiter!.x) * (moon.x - jupiter!.x) +
+          (moon.y - jupiter!.y) * (moon.y - jupiter!.y) +
+          (moon.z - jupiter!.z) * (moon.z - jupiter!.z)
         );
 
         expect(distance).toBeLessThan(0.02);
@@ -152,27 +152,27 @@ describe('Orbit System Integration', () => {
       expect(callisto).toBeDefined();
 
       const distanceIo = Math.sqrt(
-        Math.pow(io!.x - jupiter!.x, 2) +
-        Math.pow(io!.y - jupiter!.y, 2) +
-        Math.pow(io!.z - jupiter!.z, 2)
+        (io!.x - jupiter!.x) * (io!.x - jupiter!.x) +
+        (io!.y - jupiter!.y) * (io!.y - jupiter!.y) +
+        (io!.z - jupiter!.z) * (io!.z - jupiter!.z)
       );
 
       const distanceEuropa = Math.sqrt(
-        Math.pow(europa!.x - jupiter!.x, 2) +
-        Math.pow(europa!.y - jupiter!.y, 2) +
-        Math.pow(europa!.z - jupiter!.z, 2)
+        (europa!.x - jupiter!.x) * (europa!.x - jupiter!.x) +
+        (europa!.y - jupiter!.y) * (europa!.y - jupiter!.y) +
+        (europa!.z - jupiter!.z) * (europa!.z - jupiter!.z)
       );
 
       const distanceGanymede = Math.sqrt(
-        Math.pow(ganymede!.x - jupiter!.x, 2) +
-        Math.pow(ganymede!.y - jupiter!.y, 2) +
-        Math.pow(ganymede!.z - jupiter!.z, 2)
+        (ganymede!.x - jupiter!.x) * (ganymede!.x - jupiter!.x) +
+        (ganymede!.y - jupiter!.y) * (ganymede!.y - jupiter!.y) +
+        (ganymede!.z - jupiter!.z) * (ganymede!.z - jupiter!.z)
       );
 
       const distanceCallisto = Math.sqrt(
-        Math.pow(callisto!.x - jupiter!.x, 2) +
-        Math.pow(callisto!.y - jupiter!.y, 2) +
-        Math.pow(callisto!.z - jupiter!.z, 2)
+        (callisto!.x - jupiter!.x) * (callisto!.x - jupiter!.x) +
+        (callisto!.y - jupiter!.y) * (callisto!.y - jupiter!.y) +
+        (callisto!.z - jupiter!.z) * (callisto!.z - jupiter!.z)
       );
 
       expect(distanceIo).toBeLessThan(distanceEuropa);

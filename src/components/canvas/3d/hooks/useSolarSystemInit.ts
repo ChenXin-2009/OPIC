@@ -27,9 +27,18 @@ import { initializeUniverseRenderers } from '@/components/canvas/3d/universeRend
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { Raycaster } from 'three';
 import * as THREE from 'three';
+import { ensureError } from '@/lib/utils/errors';
 import type { SceneRefs } from './sceneTypes';
 import { logger } from '@/utils/logger';
 
+/** Initialize the full 3D solar system scene: scene manager, camera, planets, orbits,
+ * labels, satellites, exoplanets, Cesium integration, and texture loading.
+ * Reports progress through onProgress callback.
+ * @param containerRef - DOM element to mount the Three.js renderer
+ * @param sceneRefs - mutable refs populated with initialized objects
+ * @param onProgress - progress callback (stage, fraction, isComplete)
+ * @param callbacks - scene lifecycle callbacks
+ */
 export function useSolarSystemInit(
   refs: SceneRefs,
   props: {
@@ -60,7 +69,14 @@ export function useSolarSystemInit(
     const renderer = sceneManager.getRenderer();
 
     initializeUniverseRenderers(sceneManager).catch(error => {
-      console.error('Failed to initialize universe renderers:', error);
+      const err = ensureError(error);
+      logger.error('[SolarSystemCanvas3D] Failed to initialize universe renderers:', err);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('scene:init:error', {
+          detail: { stage: 'universeRenderers', error: err.message }
+        }));
+      }
     });
 
     const satelliteLayer = new SatelliteLayer(sceneManager);
@@ -79,7 +95,14 @@ export function useSolarSystemInit(
     void exoplanetState.fetchIndex().then((systems) => {
       refs.exoplanetRendererRef.current?.setIndex(systems);
     }).catch((error) => {
-      console.error('[ExoplanetRenderer] Failed to load NASA exoplanet index:', error);
+      const err = ensureError(error);
+      logger.error('[ExoplanetRenderer] Failed to load NASA exoplanet index:', err);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('scene:init:error', {
+          detail: { stage: 'exoplanetIndex', error: err.message }
+        }));
+      }
     });
 
     getRenderAPI()._setThreeContext(scene, camera, renderer);
@@ -268,7 +291,8 @@ export function useSolarSystemInit(
             const cesiumExt = (planet as EarthPlanet).getCesiumExtension();
             if (cesiumExt && provider) cesiumExt.setImageryProvider(provider);
           }).catch((error) => {
-            console.error('[SolarSystemCanvas3D] Failed to load default imagery provider:', error);
+            const err = ensureError(error);
+            logger.error('[SolarSystemCanvas3D] Failed to load default imagery provider:', err);
           });
         }
 
@@ -284,7 +308,8 @@ export function useSolarSystemInit(
             const cesiumExt = (planet as CesiumMappedPlanet).getCesiumExtension();
             if (cesiumExt && provider) cesiumExt.setImageryProvider(provider);
           }).catch((error) => {
-            console.error('[SolarSystemCanvas3D] Failed to load lunar imagery provider:', error);
+            const err = ensureError(error);
+            logger.error('[SolarSystemCanvas3D] Failed to load lunar imagery provider:', err);
           });
         }
         if ('setCesiumEnabled' in planet) {

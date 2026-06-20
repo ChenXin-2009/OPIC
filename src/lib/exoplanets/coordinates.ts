@@ -7,6 +7,7 @@
 
 import * as THREE from 'three';
 import { PARSEC_TO_AU } from '@/lib/constants/units';
+import { OBLIQUITY_J2000_RAD } from '@/lib/astronomy/utils/constants';
 
 const SOLAR_RADIUS_TO_AU = 0.00465047;
 
@@ -45,7 +46,7 @@ export function exoplanetEquatorialToCartesian(
   const zi = distanceAU * Math.sin(dec);
 
   // 步骤 2: ICRF → RenderWorld (J2000 mean ecliptic)
-  const epsilon = 23.43928 * Math.PI / 180;
+  const epsilon = OBLIQUITY_J2000_RAD;
   const cosEps = Math.cos(epsilon);
   const sinEps = Math.sin(epsilon);
 

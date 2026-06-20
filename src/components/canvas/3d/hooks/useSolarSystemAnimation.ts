@@ -34,6 +34,10 @@ const _v3 = {
   parentPos2: new THREE.Vector3(),
 };
 
+/** Main animation loop hook: drives render, LOD updates, label management,
+ * Cesium sync, satellite/exoplanet updates, and far-view fading.
+ * Uses requestAnimationFrame with delta-time-based throttling for expensive operations.
+ */
 export function useSolarSystemAnimation(
   refs: SceneRefs,
   callbacks: SceneCallbacks
@@ -508,7 +512,7 @@ export function useSolarSystemAnimation(
     }
 
     const cameraDistance = Math.sqrt(
-      Math.pow(camera.position.x, 2) + Math.pow(camera.position.y, 2) + Math.pow(camera.position.z, 2)
+      camera.position.x * camera.position.x + camera.position.y * camera.position.y + camera.position.z * camera.position.z
     );
     const maxDistance = Math.max(cameraDistance * 3, 50);
     const trackingInfo = cameraController?.getTrackingInfo();
@@ -662,8 +666,8 @@ export function useSolarSystemAnimation(
                 if (!container) continue;
                 const centerX = container.clientWidth / 2;
                 const centerY = container.clientHeight / 2;
-                const dist1 = Math.sqrt(Math.pow(info1.screenX - centerX, 2) + Math.pow(info1.screenY - centerY, 2));
-                const dist2 = Math.sqrt(Math.pow(info2.screenX - centerX, 2) + Math.pow(info2.screenY - centerY, 2));
+                const dist1 = Math.sqrt((info1.screenX - centerX) * (info1.screenX - centerX) + (info1.screenY - centerY) * (info1.screenY - centerY));
+                const dist2 = Math.sqrt((info2.screenX - centerX) * (info2.screenX - centerX) + (info2.screenY - centerY) * (info2.screenY - centerY));
                 if (dist1 > dist2 || (Math.abs(dist1 - dist2) < 1 && i > j)) { hasOverlap = true; break; }
               }
             }
@@ -739,8 +743,8 @@ export function useSolarSystemAnimation(
                 if (!container) continue;
                 const centerX = container.clientWidth / 2;
                 const centerY = container.clientHeight / 2;
-                const dist1 = Math.sqrt(Math.pow(pos1.screenX - centerX, 2) + Math.pow(pos1.screenY - centerY, 2));
-                const dist2 = Math.sqrt(Math.pow(pos2.screenX - centerX, 2) + Math.pow(pos2.screenY - centerY, 2));
+                const dist1 = Math.sqrt((pos1.screenX - centerX) * (pos1.screenX - centerX) + (pos1.screenY - centerY) * (pos1.screenY - centerY));
+                const dist2 = Math.sqrt((pos2.screenX - centerX) * (pos2.screenX - centerX) + (pos2.screenY - centerY) * (pos2.screenY - centerY));
                 if (dist1 > dist2 || (Math.abs(dist1 - dist2) < 1 && i > j)) { hasOverlap = true; break; }
               }
             }

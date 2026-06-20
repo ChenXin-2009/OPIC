@@ -24,6 +24,7 @@
  */
 
 import { Vector3 } from './types';
+import { OBLIQUITY_J2000_RAD } from '@/lib/astronomy/utils/constants';
 
 // 帧变换的权威实现已迁移到统一坐标层。
 // 本文件 re-export 新实现，并让 CoordinateTransformer 委托给它，
@@ -57,7 +58,7 @@ export class CoordinateTransformer {
    * @deprecated 权威常量已迁移至 `@/lib/coordinates/frames/ecliptic` 的 `OBLIQUITY_J2000_RAD`。
    *             本字段保留仅为向后兼容，值与新模块一致。
    */
-  private static readonly OBLIQUITY_J2000 = 23.43928 * Math.PI / 180;
+  private static readonly OBLIQUITY_J2000 = OBLIQUITY_J2000_RAD;
 
   /**
    * NAIF IDs for supported planets

@@ -12,6 +12,7 @@ import type {
 import { getRegistry } from './ModRegistry';
 import { getEventBus } from './EventBus';
 import { LifecycleError } from '../error/ModError';
+import { ensureError } from '@/lib/utils/errors';
 
 /**
  * 状态转换表
@@ -69,8 +70,9 @@ export class ModLifecycle {
       this.registry.setState(modId, 'loaded');
       instance.loadTime = Date.now();
     } catch (error) {
-      this.registry.recordError(modId, error as Error);
-      throw new LifecycleError(modId, 'load', error as Error);
+      const err = ensureError(error);
+      this.registry.recordError(modId, err);
+      throw new LifecycleError(modId, 'load', err);
     }
   }
 
@@ -139,14 +141,14 @@ export class ModLifecycle {
       // 发送事件
       this.eventBus.emit('mod:enabled', { modId });
     } catch (error) {
-      this.registry.recordError(modId, error as Error);
+      const err = ensureError(error);
+      this.registry.recordError(modId, err);
 
-      // 调用错误处理钩子
       if (updatedInstance.lifecycleHooks?.onError && updatedInstance.context) {
-        updatedInstance.lifecycleHooks.onError(error as Error, updatedInstance.context);
+        updatedInstance.lifecycleHooks.onError(err, updatedInstance.context);
       }
 
-      throw new LifecycleError(modId, 'enable', error as Error);
+      throw new LifecycleError(modId, 'enable', err);
     }
   }
 
@@ -181,8 +183,9 @@ export class ModLifecycle {
       // 发送事件
       this.eventBus.emit('mod:disabled', { modId });
     } catch (error) {
-      this.registry.recordError(modId, error as Error);
-      throw new LifecycleError(modId, 'disable', error as Error);
+      const err = ensureError(error);
+      this.registry.recordError(modId, err);
+      throw new LifecycleError(modId, 'disable', err);
     }
   }
 
@@ -219,8 +222,9 @@ export class ModLifecycle {
       // 更新状态
       this.registry.setState(modId, 'unloaded');
     } catch (error) {
-      this.registry.recordError(modId, error as Error);
-      throw new LifecycleError(modId, 'unload', error as Error);
+      const err = ensureError(error);
+      this.registry.recordError(modId, err);
+      throw new LifecycleError(modId, 'unload', err);
     }
   }
 

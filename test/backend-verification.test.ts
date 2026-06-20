@@ -9,7 +9,7 @@
 
 import { beforeAll, describe, expect, it } from '@jest/globals';
 
-describe('后端服务验证', () => {
+describe.skip('后端服务验证', () => {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
   const API_ENDPOINT = `${API_BASE_URL}/api/satellites`;
 

@@ -96,7 +96,7 @@ export async function fetchWithTimeout(
  */
 function calculateRetryDelay(attempt: number, config: RetryConfig): number {
   if (config.exponentialBackoff) {
-    return config.retryDelay * Math.pow(2, attempt);
+    return config.retryDelay * (2 ** attempt);
   }
   return config.retryDelay;
 }

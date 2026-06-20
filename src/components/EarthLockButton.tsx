@@ -42,6 +42,7 @@ interface EarthLockButtonProps {
   initialEnabled?: boolean;
 }
 
+/** 地球锁定按钮组件，切换相机是否锁定跟随地球旋转 */
 export default function EarthLockButton({ onToggle, initialEnabled = false }: EarthLockButtonProps) {
   /** 当前锁定的启用/禁用状态 */
   const [enabled, setEnabled] = useState(initialEnabled);

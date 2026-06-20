@@ -29,7 +29,7 @@ function calcZoomDelta(normalizedOffset: number): number {
   if (abs < DEAD_ZONE) return 0;
   // 死区外的有效范围映射到 0~1
   const effective = (abs - DEAD_ZONE) / (1 - DEAD_ZONE);
-  const speed = Math.pow(effective, SPEED_EXPONENT) * MAX_ZOOM_DELTA;
+  const speed = effective ** SPEED_EXPONENT * MAX_ZOOM_DELTA;
   return normalizedOffset < 0 ? speed : -speed; // 向上（负偏移）→ 正delta → 放大
 }
 

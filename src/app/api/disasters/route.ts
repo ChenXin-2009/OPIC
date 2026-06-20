@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { ensureError } from '@/lib/utils/errors';
 
 const CACHE = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL: Record<string, number> = {
@@ -190,6 +191,10 @@ const FETCHERS: Record<string, () => Promise<unknown[]>> = {
   reliefweb: fetchReliefWeb,
 };
 
+/** GET /api/disasters - Fetch natural disaster data from multiple sources.
+ * Sources: USGS earthquakes, GDACS alerts, NASA FIRMS wildfires, Copernicus EMS.
+ * Each source fetcher handles its own cache TTL. Results are merged and sorted.
+ */
 export async function GET(request: NextRequest) {
   const source = request.nextUrl.searchParams.get('source');
   if (!source || !FETCHERS[source]) {
@@ -207,12 +212,12 @@ export async function GET(request: NextRequest) {
     const events = await FETCHERS[source]();
     CACHE.set(source, { data: events, ts: Date.now() });
     return NextResponse.json({ events, cached: false, count: events.length });
-  } catch (err: any) {
-    console.error(`[Disasters API] ${source} 获取失败:`, err.message);
-    // Return cached stale data if available
+  } catch (err: unknown) {
+    const msg = ensureError(err).message;
+    console.error(`[Disasters API] ${source} 获取失败:`, msg);
     if (cached) {
       return NextResponse.json({ events: cached.data, cached: true, stale: true, count: (cached.data as unknown[]).length });
     }
-    return NextResponse.json({ error: err.message, events: [], count: 0 }, { status: 500 });
+    return NextResponse.json({ error: msg, events: [], count: 0 }, { status: 500 });
   }
 }

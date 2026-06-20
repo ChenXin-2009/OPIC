@@ -566,8 +566,7 @@ export class SatelliteRenderer {
     const orbitLine = this.orbitCurves.get(noradId);
     if (orbitLine) {
       this.scene.remove(orbitLine.line);
-      orbitLine.geometry.dispose();
-      orbitLine.material.dispose();
+      orbitLine.inUse = false;
       this.orbitCurves.delete(noradId);
     }
   }

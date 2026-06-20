@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { ensureError } from '@/lib/utils/errors';
 
 const CACHE = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL: Record<string, number> = {
@@ -238,6 +239,11 @@ const FETCHERS: Record<string, () => Promise<unknown[]>> = {
   nextspaceflight: fetchPreviousLaunches,
 };
 
+/** GET /api/launches - Fetch upcoming space launches from multiple data sources.
+ * Sources: Launch Library 2, SpaceX API, Astra, Rocket Lab, ULA.
+ * Each source is fetched independently; failures are logged but don't block others.
+ * Results are merged and sorted by launch date.
+ */
 export async function GET(request: NextRequest) {
   const source = request.nextUrl.searchParams.get('source');
   if (!source || !FETCHERS[source]) {
@@ -254,11 +260,12 @@ export async function GET(request: NextRequest) {
     const launches = await FETCHERS[source]();
     CACHE.set(source, { data: launches, ts: Date.now() });
     return NextResponse.json({ launches, cached: false, count: launches.length });
-  } catch (err: any) {
-    console.error(`[Launches API] ${source} 获取失败:`, err.message);
+  } catch (err: unknown) {
+    const msg = ensureError(err).message;
+    console.error(`[Launches API] ${source} 获取失败:`, msg);
     if (cached) {
       return NextResponse.json({ launches: cached.data, cached: true, stale: true, count: (cached.data as unknown[]).length });
     }
-    return NextResponse.json({ error: err.message, launches: [], count: 0 }, { status: 500 });
+    return NextResponse.json({ error: msg, launches: [], count: 0 }, { status: 500 });
   }
 }

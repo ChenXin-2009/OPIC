@@ -178,7 +178,7 @@ export default function TimeSlider({
       const progress = Math.min(elapsed / duration, 1);
       
       // 使用 easeOutCubic 缓动函数
-      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      const easeProgress = 1 - (1 - progress) * (1 - progress) * (1 - progress);
       
       const newPosition = startPosition + (targetPosition - startPosition) * easeProgress;
       setSliderPosition(newPosition);

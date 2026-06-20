@@ -8,9 +8,15 @@ import { logger } from '@/utils/logger';
 import type { SceneRefs } from './sceneTypes';
 import * as THREE from 'three';
 
+/** Minimum drag distance (px) to distinguish click from drag. */
 const dragThreshold = 5;
+/** Max click duration (ms) to register as a click vs hold. */
 const clickTimeThreshold = 300;
 
+/** Hook managing mouse interaction (click/drag/hover) on the 3D canvas.
+ * Handles: satellite picking, exoplanet picking, celestial body focusing,
+ * marker/label hit-testing, and drag-vs-click disambiguation.
+ */
 export function useSolarSystemInteraction(
   refs: SceneRefs,
   focusCallbacks: {
@@ -19,6 +25,7 @@ export function useSolarSystemInteraction(
     prepareDeepSpaceFocus: () => void;
   }
 ) {
+  /** Update exoplanet hover state and cursor based on raycasting. */
   const handleExoplanetHover = useCallback((event: MouseEvent, camera: THREE.PerspectiveCamera) => {
     if (!refs.exoplanetRendererRef.current || !refs.containerRef.current) return;
     const cameraController = refs.cameraControllerRef.current;
@@ -32,18 +39,20 @@ export function useSolarSystemInteraction(
     }
   }, [refs]);
 
+  /** Record initial mouse position/time for drag detection. */
   const handleMouseDown = useCallback((event: MouseEvent) => {
     refs.isDraggingRef.current = false;
     refs.mouseDownPositionRef.current = { x: event.clientX, y: event.clientY };
     refs.mouseDownTimeRef.current = Date.now();
   }, [refs]);
 
+  /** Handle mouse move: detect drag, hover over satellites/exoplanets. */
   const handleMouseMove = useCallback((event: MouseEvent) => {
     if (refs.mouseDownTimeRef.current > 0) {
       const deltaX = event.clientX - refs.mouseDownPositionRef.current.x;
       const deltaY = event.clientY - refs.mouseDownPositionRef.current.y;
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      if (distance > dragThreshold) refs.isDraggingRef.current = true;
+      if (distance > dragThreshold) refs.isDraggingRef.current = true; /* mark as drag */
     }
 
     const container = refs.containerRef.current;
@@ -93,6 +102,7 @@ export function useSolarSystemInteraction(
     // handled by click
   }, []);
 
+  /** Handle click: prioritize satellite > exoplanet > celestial body, skip if dragging. */
   const handleClick = useCallback((event: MouseEvent) => {
     const container = refs.containerRef.current;
     const raycaster = refs.raycasterRef.current;
@@ -167,7 +177,7 @@ export function useSolarSystemInteraction(
           camera, container.clientWidth, container.clientHeight
         );
         for (const pos of planetPositions) {
-          const distance = Math.sqrt(Math.pow(clickX - pos.screenX, 2) + Math.pow(clickY - pos.screenY, 2));
+          const distance = Math.sqrt((clickX - pos.screenX) * (clickX - pos.screenX) + (clickY - pos.screenY) * (clickY - pos.screenY));
           if (distance <= markerSize / 2) {
             const selectedSystem = useExoplanetStore.getState().selectedSystem;
             if (selectedSystem) {
@@ -203,7 +213,7 @@ export function useSolarSystemInteraction(
           const clickX = event.clientX - rect.left;
           const clickY = event.clientY - rect.top;
           const markerSize = 20;
-          const dist = Math.sqrt(Math.pow(clickX - screenX, 2) + Math.pow(clickY - screenY, 2));
+          const dist = Math.sqrt((clickX - screenX) * (clickX - screenX) + (clickY - screenY) * (clickY - screenY));
           if (dist <= markerSize / 2) {
             intersects.push({ planet, body, distance: 0, type: 'marker', isSatellite });
           }
@@ -266,6 +276,7 @@ export function useSolarSystemInteraction(
     refs.mouseDownTimeRef.current = 0;
   }, [refs, focusCallbacks]);
 
+  /** Attach mouse event listeners to the WebGL and label renderers. */
   const setupInteraction = useCallback(() => {
     const sceneManager = refs.sceneManagerRef.current;
     const labelRenderer = refs.labelRendererRef.current;
@@ -285,6 +296,7 @@ export function useSolarSystemInteraction(
     }
   }, [refs, handleMouseDown, handleMouseMove, handleMouseUp, handleClick]);
 
+  /** Remove mouse event listeners. */
   const cleanupInteraction = useCallback(() => {
     const sceneManager = refs.sceneManagerRef.current;
     const labelRenderer = refs.labelRendererRef.current;

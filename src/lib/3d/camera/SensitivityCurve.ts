@@ -33,7 +33,7 @@ export function evalSensitivityCurve(
   const sorted = [...curve.anchors].sort((a, b) => a.nx - b.nx);
   const logMin = Math.log10(Math.max(curve.yMin, 1e-9));
   const logMax = Math.log10(Math.max(curve.yMax, 1e-9));
-  const nyToVal = (ny: number) => Math.pow(10, logMin + Math.max(0, Math.min(1, ny)) * (logMax - logMin));
+  const nyToVal = (ny: number) => 10 ** (logMin + Math.max(0, Math.min(1, ny)) * (logMax - logMin));
   if (sorted.length === 0) return 1;
   if (sorted.length === 1) return nyToVal(sorted[0].ny);
   if (nx <= sorted[0].nx) return nyToVal(sorted[0].ny);

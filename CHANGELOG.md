@@ -1,5 +1,72 @@
 # Changelog
 
+## v11.8.4 (2026-06-20)
+- 修复 Cesium ion 认证
+
+## v11.8.3 (2026-06-20)
+- 修复构建错误
+
+## v11.8.2 (2026-06-20)
+- perf: 动画循环分层、标签空间哈希 O(n)、3D 动态导入、Bundle 分析、DPI 2→1.5
+- Cesium forceRender 消除黑边
+- 修复 LODManager 覆盖、Cesium 未激活、缩放弹性延迟
+
+## v11.8.1 (2026-06-20)
+- 修复月球和火星的 3D Tiles
+
+## v11.8.0 (2026-06-20)
+- feat(cesium): 集成 Cesium Moon/Mars 3D Tiles 地形渲染
+- 恢复昼夜光照，修复 token 配置和 fallback 材质
+
+## v11.7.0 (2026-06-20)
+- feat(cesium): 集成 Cesium Moon 3D Tiles 月面地形渲染
+- 支持近距离环形山和陨石坑高度显示
+
+## v11.6.1 (2026-06-20)
+- perf(cesium): 缓解 3D 地形靠近地表卡顿
+- 海拔自适应 LOD (maximumScreenSpaceError 动态调整 2→16)
+- Cesium 独立帧率限制 30fps，关闭水面遮罩
+
+## v11.6.0 (2026-06-19)
+- feat(visual): CC0 电影级太阳镜头光晕
+- 大气光晕、行星遮挡检测及实时调参 Store
+
+## v11.5.0 (2026-06-19)
+- feat(moon): 新增月球 Cesium 沉浸模式
+- 修复地球黑边/暗面/贴图 fallback
+- 优化卫星可见与 camera 灵敏度
+
+## v11.4.0 (2026-06-19)
+- refactor(core): 拆分 SolarSystemCanvas3D、OrbitCurve 超大文件
+- 修复大小写导入，新增测试
+
+## v11.3.0 (2026-06-19)
+- feat(coordinates): 建立 ICRF 锚定的多尺度坐标系对齐系统
+- 新增 src/lib/coordinates 目录（ecliptic/galactic/supergalactic/teme/world 帧变换）
+- 废弃 CoordinateTransformer.ecefToSolarSystem 等魔法旋转
+- 修正 exoplanets 的 RA/Dec→ICRF→RenderWorld 坐标链
+- 引入 Astropy 8.0 验证矩阵 fixture 及回归测试
+
+## v11.2.8 (2026-06-19)
+- fix(cesium): 使用类型断言绕过 Cesium 1.139 类型不兼容
+
+## v11.2.7 (2026-06-19)
+- 拆分 CameraController、Planet、CesiumAdapter、UniverseDataLoader、PerformanceMonitor、state 六大模块
+- 删除废弃代码，精简配置与渲染逻辑
+
+## v11.2.6 (2026-06-07)
+- 修复
+
+## v11.2.5 (2026-06-07)
+- 修复了一些问题
+
+## v11.2.4 (2026-06-07)
+- 修复了一些问题
+
+## v11.2.3 (2026-06-07)
+- 修复了一些问题
+- 清理废弃工具目录
+
 ## v11.0.1 (2026-06-07)
 - 添加测试和注释
 

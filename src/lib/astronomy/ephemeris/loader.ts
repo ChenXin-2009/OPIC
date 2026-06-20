@@ -7,6 +7,8 @@
  */
 
 import pako from 'pako';
+import { ensureError } from '@/lib/utils/errors';
+import { J2000_JD } from '@/lib/astronomy/utils/constants';
 import { 
   ChunkMetadata, 
   EphemerisChunk, 
@@ -58,10 +60,8 @@ export class EphemerisDataLoader {
 
       return this.parseChunk(decompressed);
     } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to load ephemeris chunk: ${error.message}`);
-      }
-      throw new Error('Failed to load ephemeris chunk: Unknown error');
+      const err = ensureError(error);
+      throw new Error(`Failed to load ephemeris chunk: ${err.message}`, { cause: err });
     }
   }
 
@@ -95,10 +95,8 @@ export class EphemerisDataLoader {
 
       return data;
     } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to load ephemeris data: ${error.message}`);
-      }
-      throw new Error('Failed to load ephemeris data: Unknown error');
+      const err = ensureError(error);
+      throw new Error(`Failed to load ephemeris data: ${err.message}`, { cause: err });
     }
   }
 
@@ -121,9 +119,9 @@ export class EphemerisDataLoader {
    */
   getValidityPeriod(data: EphemerisData): { start: Date; end: Date } {
     // Convert Julian Date (TDB) to JavaScript Date (approximate)
-    // JD 2451545.0 = 2000-01-01 12:00:00 TT
+    // JD J2000_JD = 2000-01-01 12:00:00 TT
     const jdToDate = (jd: number): Date => {
-      const millisSinceJ2000 = (jd - 2451545.0) * 86400 * 1000;
+      const millisSinceJ2000 = (jd - J2000_JD) * 86400 * 1000;
       const j2000 = new Date('2000-01-01T12:00:00Z');
       return new Date(j2000.getTime() + millisSinceJ2000);
     };
@@ -158,7 +156,7 @@ export class EphemerisDataLoader {
     };
 
     // Read data for each satellite
-    const numSatellites = (header as any).numSatellites ?? 0;
+    const numSatellites = header.numBodies ?? 0;
     for (let i = 0; i < numSatellites; i++) {
       // Read satellite ID (4 bytes)
       const satId = view.getInt32(offset, true);

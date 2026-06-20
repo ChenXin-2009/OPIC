@@ -34,6 +34,6 @@ describe('CameraConfigManager', () => {
     cameraConfigManager.updateConfig({ zoomEasingSpeed: 0.99 });
     cameraConfigManager.resetToDefaults();
     const config = cameraConfigManager.getConfig();
-    expect(config.zoomEasingSpeed).toBe(0.12);
+    expect(config.zoomEasingSpeed).toBe(0.35);
   });
 });

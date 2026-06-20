@@ -212,8 +212,9 @@ opic/
 │   │   │   └── performance/   # Мониторинг производительности
 │   │   ├── config/            # Файлы конфигурации
 │   │   ├── data/              # Загрузчики данных
+│   │   ├── state/             # Управление состоянием Zustand
+│   │   ├── store/             # Хуки Zustand store
 │   │   └── types/             # Типы TypeScript
-│   └── stores/                # Управление состоянием Zustand
 ├── public/
 │   ├── data/                  # Астрономические данные
 │   │   ├── ephemeris/        # Данные эфемерид NASA JPL

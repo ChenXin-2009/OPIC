@@ -33,7 +33,7 @@ function generateDetailsFromTLE(noradId: number, tleData: TLEData): SatelliteDet
   // 估算半长轴
   const mu = 398600.4418; // km³/s²
   const periodSeconds = period * 60;
-  const semiMajorAxis = Math.pow((mu * periodSeconds * periodSeconds) / (4 * Math.PI * Math.PI), 1/3);
+  const semiMajorAxis = ((mu * periodSeconds * periodSeconds) / (4 * Math.PI * Math.PI)) ** (1/3);
   
   // 计算近地点和远地点高度
   const earthRadius = 6371; // km
@@ -208,7 +208,10 @@ export function useSatelliteDetail(noradId: number | null): UseSatelliteDetailRe
       // 并行获取元数据
       const metadataPromise = fetch(`/api/satellites/metadata?noradId=${id}`, {
         signal: controller.signal,
-      }).then(res => res.ok ? res.json() : null).catch(() => null);
+      }).then(res => res.ok ? res.json() : null).catch((e) => {
+        console.warn(`[useSatelliteDetail] Failed to fetch metadata for ${id}:`, e);
+        return null;
+      });
 
       const metadata = await metadataPromise;
 

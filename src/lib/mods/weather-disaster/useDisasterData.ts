@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { ensureError } from '@/lib/utils/errors';
 import type { DisasterPoint } from './DisasterRenderer';
 
 export type DataSourceId =
@@ -61,10 +62,11 @@ export function useDisasterData(enabledSources: DataSourceId[]) {
         ...prev,
         [id]: { id, loading: false, error: null, lastUpdated: Date.now(), count: events.length },
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = ensureError(err).message;
       setStates(prev => ({
         ...prev,
-        [id]: { ...(prev[id] || { id, count: 0 }), loading: false, error: err.message || '获取失败' },
+        [id]: { ...(prev[id] || { id, count: 0 }), loading: false, error: msg || '获取失败' },
       }));
     }
   }, []);

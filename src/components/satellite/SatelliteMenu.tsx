@@ -2,6 +2,9 @@
  * SatelliteMenu - 卫星控制菜单
  * 负责：类别切换、搜索、轨道分布统计、刷新
  * 卫星详情由 SatelliteDetailModal 负责
+ *
+ * 架构层级：UI 组件层 → 卫星控制
+ * 主要依赖：useSatelliteStore、SatelliteCategory
  */
 'use client';
 
@@ -33,6 +36,7 @@ const ORBIT_TYPES = [
 
 interface SatelliteMenuProps { lang?: 'zh' | 'en'; }
 
+/** 卫星菜单组件，提供按类别筛选卫星的下拉菜单 */
 export function SatelliteMenu({ lang = 'zh' }: SatelliteMenuProps) {
   const [isOpen, setIsOpen]           = useState(false);
   const [isHovered, setIsHovered]     = useState(false);

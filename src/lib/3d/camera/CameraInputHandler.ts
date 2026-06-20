@@ -89,8 +89,8 @@ export class CameraInputHandler {
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
         initialDistance = Math.sqrt(
-          Math.pow(touch2.clientX - touch1.clientX, 2) +
-          Math.pow(touch2.clientY - touch1.clientY, 2)
+          (touch2.clientX - touch1.clientX) * (touch2.clientX - touch1.clientX) +
+          (touch2.clientY - touch1.clientY) * (touch2.clientY - touch1.clientY)
         );
         isPinching = true;
         lastUpdateTime = performance.now();
@@ -116,8 +116,8 @@ export class CameraInputHandler {
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
         const currentDistance = Math.sqrt(
-          Math.pow(touch2.clientX - touch1.clientX, 2) +
-          Math.pow(touch2.clientY - touch1.clientY, 2)
+          (touch2.clientX - touch1.clientX) * (touch2.clientX - touch1.clientX) +
+          (touch2.clientY - touch1.clientY) * (touch2.clientY - touch1.clientY)
         );
 
         if (currentDistance > 10 && initialDistance > 10) {

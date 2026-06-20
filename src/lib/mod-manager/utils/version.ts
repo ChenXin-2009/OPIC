@@ -103,15 +103,13 @@ export function hasApiFeature(feature: string): boolean {
  * 获取所有可用的API功能
  */
 export function getAvailableFeatures(): string[] {
-  return Object.entries(hasApiFeature('') ? {} : {
-    'time:direction': true,
-    'camera:focus': true,
-    'render:cesium': true,
-    'satellite:visible': true,
-    'events:system': true,
-    'state:persistent': true,
-    'performance:monitor': true,
-  })
-    .filter(([, available]) => available)
-    .map(([feature]) => feature);
+  return [
+    'time:direction',
+    'camera:focus',
+    'render:cesium',
+    'satellite:visible',
+    'events:system',
+    'state:persistent',
+    'performance:monitor',
+  ];
 }

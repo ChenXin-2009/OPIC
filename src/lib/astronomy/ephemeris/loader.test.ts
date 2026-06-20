@@ -109,7 +109,7 @@ describe('EphemerisDataLoader', () => {
       const result = await loader.load('http://example.com/data.bin.gz');
 
       expect(result.header.version).toBe(1);
-      expect(result.header.numSatellites).toBe(4);
+      expect(result.header.numBodies).toBe(4);
       expect(result.header.numSamples).toBe(2);
       expect(result.header.startJD).toBe(2451545.0);
       expect(result.header.endJD).toBe(2451545.1);

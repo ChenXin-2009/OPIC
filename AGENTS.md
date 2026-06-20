@@ -38,8 +38,9 @@ src/
 │   ├── i18n/               # 国际化
 │   ├── mod-manager/        # MOD 插件系统 (核心子系统)
 │   ├── mods/               # 内置 MOD 实现
-│   ├── search/             # 搜索引�擎
+│   ├── search/             # 搜索引擎
 │   ├── state/              # Zustand 状态管理
+│   ├── store/              # Zustand store hooks
 │   ├── utils/              # 数学/通用工具函数
 │   └── types/              # 共享类型定义
 └── test/                   # 集成和手动测试

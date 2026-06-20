@@ -1,3 +1,5 @@
+import { ensureError } from '@/lib/utils/errors';
+
 /**
  * Cesium 配置模块
  * 
@@ -27,13 +29,13 @@ export function getCesiumIonToken(): string {
 export function initializeCesiumIon(): void {
   if (typeof window === 'undefined') return;
   
-  // 动态导入 Cesium（仅在客户端）
   import('cesium').then((Cesium) => {
     const token = getCesiumIonToken();
     if (token) {
       Cesium.Ion.defaultAccessToken = token;
     }
   }).catch((error) => {
-    console.error('Failed to initialize Cesium Ion:', error);
+    const err = ensureError(error);
+    console.error('Failed to initialize Cesium Ion:', err.message);
   });
 }

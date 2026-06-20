@@ -63,6 +63,7 @@ export interface LaunchVehicle {
   imageUrl?: string;
 }
 
+/** A physical launch site/pad location. */
 export interface LaunchSite {
   name: string;
   nameZh?: string;
@@ -89,6 +90,7 @@ export interface LaunchMission {
   payloadMass?: number; // kg
 }
 
+/** A milestone event during a launch countdown or mission. */
 export interface LaunchEvent {
   id: string;
   sourceId: DataSourceId;

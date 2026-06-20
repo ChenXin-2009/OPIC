@@ -196,7 +196,7 @@ export function calculateSpeed(position: number): SpeedResult {
         const zoneWidth = zone.end - zone.start;
         const zoneProgress = startDiff / zoneWidth;
         const speedRange = maxSpeed - minSpeed;
-        const exponentialProgress = Math.pow(zoneProgress, zone.exponent);
+        const exponentialProgress = zoneProgress ** zone.exponent;
         speed = minSpeed + speedRange * exponentialProgress;
       }
       

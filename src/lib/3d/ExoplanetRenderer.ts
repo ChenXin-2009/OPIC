@@ -55,6 +55,9 @@ const PLANET_PICK_RADIUS_PX = 16;
 /**
  * 系外行星渲染器 — 将 NASA 系外行星数据渲染到 Three.js 场景中，支持拾取和交互。
  */
+/** Renders exoplanet systems (host stars + planets) in the 3D scene.
+ * Supports raycasting for hover/click picking, system focusing, and screen-space planet markers.
+ */
 export class ExoplanetRenderer {
   private group = new THREE.Group();
   private hostsGroup = new THREE.Group();

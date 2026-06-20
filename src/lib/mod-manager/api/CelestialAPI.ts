@@ -11,6 +11,7 @@ import type {
   OrbitalElementsData,
 } from '../types';
 import { getEventBus } from '../core/EventBus';
+import { J2000_JD } from '@/lib/astronomy/utils/constants';
 
 /**
  * 天体API实现类
@@ -49,7 +50,7 @@ export class CelestialAPIImpl implements ICelestialAPI {
     jd: number
   ): { x: number; y: number; z: number; r: number } {
     // 简化计算（实际应用中需要更精确的算法）
-    const T = (jd - 2451545.0) / 36525.0; // 世纪数
+    const T = (jd - J2000_JD) / 36525.0; // 世纪数
 
     // 平近点角
     const M = (elements.L - elements.w_bar + (0.9856474 * T * 365.25)) % (2 * Math.PI);

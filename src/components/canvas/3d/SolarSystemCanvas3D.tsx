@@ -39,6 +39,7 @@ interface SolarSystemCanvas3DProps {
   onInitializationProgress?: (stage: string, progress: number, isComplete: boolean) => void;
 }
 
+/** Main 3D solar system canvas component. Orchestrates init, animation, and interaction hooks. */
 export default function SolarSystemCanvas3D({
   onCameraDistanceChange,
   cesiumEnabled = false,
@@ -183,6 +184,7 @@ export default function SolarSystemCanvas3D({
     cm.focusOnTarget(planetPosition, { name: planetName, radius }, () => er.getPlanetWorldPosition(planetName) ?? planetPosition.clone(), { distance: Math.max(radius * 12, 0.45) });
   };
 
+  /* user interaction (click, drag, hover) */
   const { setupInteraction, cleanupInteraction } = useSolarSystemInteraction(refs, {
     focusOnExoplanetHost,
     focusOnExoplanetPlanet,

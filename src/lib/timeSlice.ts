@@ -12,6 +12,8 @@
  */
 
 import { StateCreator } from 'zustand';
+import { ensureError } from '@/lib/utils/errors';
+import { logger } from '@/utils/logger';
 import type { SolarSystemState, CelestialBody } from './state-types';
 import { getCelestialBodies } from './astronomy/orbit';
 import { dateToJulianDay } from './astronomy/time';
@@ -46,12 +48,13 @@ export const createTimeSlice: StateCreator<SolarSystemState, [], [], TimeSlice> 
       getCelestialBodies(jd).then(bodies => {
         set({ currentTime: date, celestialBodies: bodies as CelestialBody[] });
       }).catch(error => {
-        console.error('Failed to get celestial bodies:', error);
+        const err = ensureError(error);
+        logger.error('Failed to get celestial bodies on time set:', err);
         set({ currentTime: date });
 
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('ephemeris:bodies:ready', {
-            detail: { stage: 'bodies', error: true }
+            detail: { stage: 'bodies', error: err.message }
           }));
         }
       });
@@ -91,7 +94,8 @@ export const createTimeSlice: StateCreator<SolarSystemState, [], [], TimeSlice> 
       getCelestialBodies(jd).then(bodies => {
         set({ celestialBodies: bodies as CelestialBody[] });
       }).catch(error => {
-        console.error('Failed to get celestial bodies:', error);
+        const err = ensureError(error);
+        logger.error('Failed to get celestial bodies on tick:', err);
       });
     },
 

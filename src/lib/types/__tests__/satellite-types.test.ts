@@ -59,8 +59,8 @@ describe('卫星类型系统验证', () => {
 
     test('渲染配置应有合理的默认值', () => {
       expect(satelliteConfig.rendering.maxSatellites).toBe(100000);
-      expect(satelliteConfig.rendering.pointSize).toBe(0.05);
-      expect(satelliteConfig.rendering.opacity).toBe(0.8);
+      expect(satelliteConfig.rendering.pointSize).toBe(5);
+      expect(satelliteConfig.rendering.opacity).toBe(1);
       expect(satelliteConfig.rendering.lodDistances).toEqual([10, 50, 100]);
     });
 
@@ -72,7 +72,7 @@ describe('卫星类型系统验证', () => {
     });
 
     test('计算配置应有合理的默认值', () => {
-      expect(satelliteConfig.computation.maxBatchSize).toBe(1000);
+      expect(satelliteConfig.computation.maxBatchSize).toBe(5000);
       expect(satelliteConfig.computation.workerCount).toBe(1);
       expect(satelliteConfig.computation.cacheSize).toBe(10000);
     });

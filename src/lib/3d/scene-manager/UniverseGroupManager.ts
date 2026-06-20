@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import type { UniverseScaleRenderer } from '@/lib/types/universeTypes';
 import { logger } from '@/utils/logger';
 import { SUPERGALACTIC_TO_ICRF_RAW } from '@/lib/coordinates/frames/supergalactic';
+import { OBLIQUITY_J2000_RAD } from '@/lib/astronomy/utils/constants';
 
 /**
  * 计算 Supergalactic Cartesian → OPIC RenderWorld (J2000 ecliptic) 的旋转四元数。
@@ -24,7 +25,7 @@ import { SUPERGALACTIC_TO_ICRF_RAW } from '@/lib/coordinates/frames/supergalacti
  * fixtures: src/lib/coordinates/fixtures/astropy-frames.json
  */
 function computeSupergalacticToRenderWorldQuat(): THREE.Quaternion {
-  const eps = 23.43928 * Math.PI / 180;
+  const eps = OBLIQUITY_J2000_RAD;
   const cosE = Math.cos(eps);
   const sinE = Math.sin(eps);
 

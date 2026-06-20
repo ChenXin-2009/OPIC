@@ -200,7 +200,7 @@ export class SGP4Calculator {
     // μ = 398600.4418 km^3/s^2 (地球引力常数)
     const mu = 398600.4418;
     const periodSeconds = period * 60;
-    const semiMajorAxis = Math.pow((mu * periodSeconds * periodSeconds) / (4 * Math.PI * Math.PI), 1/3);
+    const semiMajorAxis = ((mu * periodSeconds * periodSeconds) / (4 * Math.PI * Math.PI)) ** (1/3);
     
     // 计算远地点和近地点高度(km)
     const apogee = semiMajorAxis * (1 + eccentricity) - EARTH_RADIUS;

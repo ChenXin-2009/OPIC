@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { ensureError } from '@/lib/utils/errors';
 import type { DataSourceId, DataSourceState, VesselPosition, FlightPosition } from './types';
 
 // 静态数据源（无需 API 请求，直接标记已加载）
@@ -95,8 +96,9 @@ export function useTrafficData(enabledSources: DataSourceId[]) {
 
       setStates(prev => ({ ...prev, [id]: { id, enabled: true, loading: false, error: null, lastUpdated: Date.now(), count } }));
       scheduleNext(id, false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (!mounted.current) return;
+      const errMsg = ensureError(err).message;
       failCount.current[id] = (failCount.current[id] ?? 0) + 1;
       const n = failCount.current[id];
       const nextDelay = BACKOFF[Math.min(n - 1, BACKOFF.length - 1)];
@@ -104,7 +106,7 @@ export function useTrafficData(enabledSources: DataSourceId[]) {
       setStates(prev => ({
         ...prev,
         [id]: { ...(prev[id] ?? { id, enabled: true, count: 0 }), loading: false,
-          error: `${err.message}（${nextIn}s 后重试）` },
+          error: `${errMsg}（${nextIn}s 后重试）` },
       }));
       scheduleNext(id, true);
     }

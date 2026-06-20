@@ -226,8 +226,9 @@ opic/
 │   │   │   └── performance/   # Performance monitoring
 │   │   ├── config/            # Configuration files
 │   │   ├── data/              # Data loaders
+│   │   ├── state/             # Zustand state management
+│   │   ├── store/             # Zustand store hooks
 │   │   └── types/             # TypeScript types
-│   └── stores/                # Zustand state management
 ├── public/
 │   ├── data/                  # Ephemeris and universe data
 │   │   ├── ephemeris/        # NASA JPL ephemeris data

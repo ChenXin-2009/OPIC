@@ -104,7 +104,7 @@ export class GalaxyRenderer {
           
           const d2 = distToCenter * distToCenter;
           const d4 = d2 * d2;
-          const edgeFalloff = Math.max(0, 1 - (bulgeExp === 4 ? d4 : Math.pow(distToCenter, bulgeExp)));
+          const edgeFalloff = Math.max(0, 1 - (bulgeExp === 4 ? d4 : distToCenter ** bulgeExp));
           
           const bulge = (sechSquared * cfg.coreThicknessFactor + cfg.diskMinThickness) * edgeFalloff * layerBulge;
           

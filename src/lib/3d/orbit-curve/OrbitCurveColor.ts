@@ -1,12 +1,14 @@
 import * as THREE from 'three';
 import { ORBIT_GRADIENT_CONFIG, ORBIT_STYLE_CONFIG } from '@/lib/config/visualConfig';
 
+/** RGB color components in [0,1] range. */
 export interface RGB {
   r: number;
   g: number;
   b: number;
 }
 
+/** Parse hex color string (#RRGGBB or #RGB) to normalized RGB. */
 export function parseHexColor(hex: string): RGB {
   if (hex.length === 7) {
     return {
@@ -25,17 +27,20 @@ export function parseHexColor(hex: string): RGB {
   return { r: 1, g: 1, b: 1 };
 }
 
+/** Get line opacity from style config (lower in filled mode). */
 export function getLineOpacity(): number {
   return ORBIT_STYLE_CONFIG.style === 'filled' && ORBIT_STYLE_CONFIG.showLine
     ? (ORBIT_STYLE_CONFIG.lineOpacity ?? 0.5)
     : 1.0;
 }
 
+/** Result of closest-point search on an orbit path. */
 export interface ClosestPointResult {
   closestIdx: number;
   maxDist: number;
 }
 
+/** Find closest point index and max distance from a given position. */
 export function findClosestPointAndMaxDist(
   points: THREE.Vector3[],
   position: THREE.Vector3
@@ -62,6 +67,7 @@ export function findClosestPointAndMaxDist(
   return { closestIdx, maxDist };
 }
 
+/** Compute per-vertex opacity gradient, fading orbit line away from planet. */
 export function computeGradientColors(
   points: THREE.Vector3[],
   planetPos: THREE.Vector3,

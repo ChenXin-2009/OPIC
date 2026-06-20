@@ -144,7 +144,7 @@ function propagateSatellite(
     // 半长轴
     const mu = 398600.4418; // km³/s²
     const n = meanMotion;
-    const a = Math.pow(mu / (n * n), 1 / 3);
+    const a = (mu / (n * n)) ** (1 / 3);
 
     // 轨道平面内坐标
     const r = a * (1 - eccentricity * Math.cos(E));

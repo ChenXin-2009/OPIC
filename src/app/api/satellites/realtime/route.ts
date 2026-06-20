@@ -86,7 +86,7 @@ function propagate(
     );
 
     const mu = 398600.4418;
-    const a = Math.pow(mu / (meanMotion * meanMotion), 1 / 3);
+    const a = (mu / (meanMotion * meanMotion)) ** (1 / 3);
     const r = a * (1 - eccentricity * Math.cos(E));
     const u = argPerigee + trueAnomaly;
 

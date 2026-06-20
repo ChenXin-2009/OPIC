@@ -10,6 +10,7 @@
  */
 
 import { create } from 'zustand';
+import { ensureError } from '@/lib/utils/errors';
 import type { SolarSystemState } from './state-types';
 import { createTimeSlice } from './timeSlice';
 import { createViewSlice } from './viewSlice';
@@ -50,10 +51,11 @@ export const useSolarSystemStore = create<SolarSystemState>()((...a) => {
         detail: { stage: 'bodies' }
       }));
     }).catch(error => {
-      console.error('Failed to load initial celestial bodies:', error);
+      const err = ensureError(error);
+      logger.error('Failed to load initial celestial bodies:', err);
 
       window.dispatchEvent(new CustomEvent('ephemeris:bodies:ready', {
-        detail: { stage: 'bodies', error: true }
+        detail: { stage: 'bodies', error: err.message }
       }));
     });
   }

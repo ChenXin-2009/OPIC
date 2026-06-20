@@ -1,3 +1,5 @@
+import { ensureError } from '@/lib/utils/errors';
+
 /**
  * Manifest File Loader for Multi-Body Ephemeris System
  * 
@@ -120,10 +122,8 @@ export class ManifestLoader {
       
       return this.manifest;
     } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to load manifest from ${url}: ${error.message}`);
-      }
-      throw error;
+      const err = ensureError(error);
+      throw new Error(`Failed to load manifest from ${url}: ${err.message}`, { cause: err });
     }
   }
 

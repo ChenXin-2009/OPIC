@@ -228,7 +228,7 @@ export class ExoplanetSystemRenderer {
     
     // 创建点光源
     const luminosity = system.star.stellarLuminosityLogSolar ?? 0;
-    const lightIntensity = THREE.MathUtils.clamp(Math.pow(10, luminosity) * 2, 0.5, 10);
+    const lightIntensity = THREE.MathUtils.clamp(10 ** luminosity * 2, 0.5, 10);
     const light = new THREE.PointLight(starColor, lightIntensity, 0, 2);
     light.position.set(0, 0, 0);
     light.castShadow = true;

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - npm 9+
 - A Cesium Ion access token (for Cesium features)
 
@@ -82,7 +82,7 @@ pm2 start npm --name "opic" -- start
 ## Docker Deployment
 
 ```dockerfile
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci

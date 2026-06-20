@@ -212,8 +212,9 @@ opic/
 │   │   │   └── performance/   # パフォーマンス監視
 │   │   ├── config/            # 設定ファイル
 │   │   ├── data/              # データローダー
+│   │   ├── state/             # Zustand状態管理
+│   │   ├── store/             # Zustand store hooks
 │   │   └── types/             # TypeScript型
-│   └── stores/                # Zustand状態管理
 ├── public/
 │   ├── data/                  # 天文データ
 │   │   ├── ephemeris/        # NASA JPL暦データ

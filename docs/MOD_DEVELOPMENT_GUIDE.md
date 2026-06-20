@@ -1,27 +1,27 @@
-# MOD 开发指�?
+# MOD 开发指南
 
-## 简�?
+## 简介
 
-欢迎使用 OPIC MOD 系统！本指南将帮助你开发功能强大且安全�?MOD，充分利�?OPIC 提供的企业级插件平台能力�?
+欢迎使用 OPIC MOD 系统！本指南将帮助你开发功能强大且安全的 MOD，充分利用 OPIC 提供的企业级插件平台能力。
 
 <div align="center">
-  <img src="images/mod-manager-interface.gif" alt="MOD管理器界�? width="300">
+  <img src="images/mod-manager-interface.gif" alt="MOD管理器界面" width="300">
   <p><em>MOD 管理器界面与示例模组展示</em></p>
 </div>
 
-OPIC MOD 系统提供以下核心功能�?
+OPIC MOD 系统提供以下核心功能：
 
 - **权限系统**: 细粒度的 API 访问控制
-- **扩展点机�?*: 声明�?UI 扩展(Dock 图标、窗口、命�?
+- **扩展点机制**: 声明式 UI 扩展(Dock 图标、窗口、命令)
 - **配置 Schema**: 自动生成配置 UI
-- **服务注册�?*: MOD 间安全通信
-- **沙箱隔离**: 资源配额�?API 调用隔离
+- **服务注册表**: MOD 间安全通信
+- **沙箱隔离**: 资源配额和 API 调用隔离
 
-## 快速开�?
+## 快速开始
 
 ### 1. MOD 清单结构
 
-每个 MOD 都需要一�?`manifest.json` 文件来声明其元数据、权限和扩展�?
+每个 MOD 都需要一`manifest.json` 文件来声明其元数据、权限和扩展
 
 \`\`\`json
 {
@@ -70,7 +70,7 @@ import type { ModContext } from '@/lib/mod-manager/types';
 
 export default {
   /**
-   * MOD 启用时调�?
+   * MOD 启用时调
    */
   onEnable(context: ModContext) {
     console.log('My MOD enabled!');
@@ -86,7 +86,7 @@ export default {
   },
   
   /**
-   * MOD 禁用时调�?
+   * MOD 禁用时调
    */
   onDisable(context: ModContext) {
     console.log('My MOD disabled!');
@@ -94,7 +94,7 @@ export default {
   },
   
   /**
-   * 配置变更时调�?
+   * 配置变更时调
    */
   onConfigChange(context: ModContext, newConfig: any) {
     console.log('Config changed:', newConfig);
@@ -106,7 +106,7 @@ export default {
 
 ### 权限声明
 
-MOD 必须在清单中声明所需的权限才能访问系�?API。权限格式为 \`category:action\`�?
+MOD 必须在清单中声明所需的权限才能访问系API。权限格式为 \`category:action\`
 
 #### 权限类别
 
@@ -124,7 +124,7 @@ MOD 必须在清单中声明所需的权限才能访问系�?API。权限格式�
 - \`read\`: 读取数据
 - \`write\`: 修改数据
 - \`execute\`: 执行操作
-- \`*\`: 所有操�?通配�?
+- \`*\`: 所有操作(通配)置?
 
 #### 示例
 
@@ -132,27 +132,27 @@ MOD 必须在清单中声明所需的权限才能访问系�?API。权限格式�
 {
   "permissions": [
     "time:read",           // 读取当前时间
-    "time:write",          // 修改时间和时间流�?
+    "time:write",          // 修改时间和时间流
     "camera:*",            // 完全控制相机
     "render:write",        // 添加渲染对象
     "network:execute"      // 发起网络请求
   ],
   
   "optionalPermissions": [
-    "storage:write"        // 可选权�?用户可以撤销
+    "storage:write"        // 可选权限，用户可以撤销
   ]
 }
 \`\`\`
 
-### 权限最佳实�?
+### 权限最佳实践
 
-1. **最小权限原�?*: 只声明必需的权�?
-2. **使用可选权�?*: 对于非核心功�?使用 \`optionalPermissions\`
-3. **权限说明**: 在文档中解释为什么需要每个权�?
-4. **优雅降级**: 当可选权限被拒绝�?提供降级功能
+1. **最小权限原则?*: 只声明必需的权限。
+2. **使用可选权限**:: 对于非核心功能，使用 \`optionalPermissions\`
+3. **权限说明**: 在文档中解释为什么需要每个权限?
+4. **优雅降级**: 当可选权限被拒绝提供降级功能
 
 \`\`\`typescript
-// 检查权�?
+// 检查权限?
 if (context.hasPermission('network:execute')) {
   // 使用网络功能
   await fetchData();
@@ -162,11 +162,11 @@ if (context.hasPermission('network:execute')) {
 }
 \`\`\`
 
-## 扩展点机�?
+## 扩展点机制?
 
-### Dock 图标扩展�?
+### Dock 图标扩展
 
-�?Dock 中添加图�?点击时执行命令�?
+Dock 中添加图标，点击时执行命令
 
 \`\`\`json
 {
@@ -187,24 +187,24 @@ if (context.hasPermission('network:execute')) {
 \`\`\`
 
 **字段说明**:
-- \`id\`: 图标唯一标识�?
-- \`icon\`: 图标 URL 或路�?
+- \`id\`: 图标唯一标识。?
+- \`icon\`: 图标 URL 或路
 - \`label\`: 英文标签
-- \`labelZh\`: 中文标签(可�?
-- \`order\`: 排序顺序(数字越小越靠�?
+- \`labelZh\`: 中文标签(可
+- \`order\`: 排序顺序(数字越小越靠
 - \`command\`: 点击时执行的命令 ID
-- \`badge\`: 徽章(数字或字符串,可�?
+- \`badge\`: 徽章(数字或字符串,可
 
-**动态更新徽�?*:
+**动态更新徽*:
 
 \`\`\`typescript
-// �?MOD 代码中更新徽�?
+// MOD 代码中更新徽
 context.updateDockIconBadge('my-mod.my-icon', 10);
 \`\`\`
 
-### 窗口扩展�?
+### 窗口扩展
 
-注册自定义窗�?系统自动管理窗口生命周期�?
+注册自定义窗系统自动管理窗口生命周期
 
 \`\`\`json
 {
@@ -225,12 +225,12 @@ context.updateDockIconBadge('my-mod.my-icon', 10);
 }
 \`\`\`
 
-**�?MOD 中定义窗口组�?*:
+**MOD 中定义窗口组*:
 
 \`\`\`typescript
 export default {
   onEnable(context: ModContext) {
-    // 窗口组件会自动注�?
+    // 窗口组件会自动注册?
   },
   
   // 窗口组件
@@ -250,9 +250,9 @@ export default {
 };
 \`\`\`
 
-### 命令扩展�?
+### 命令扩展
 
-注册全局命令,可通过命令面板或快捷键触发�?
+注册全局命令,可通过命令面板或快捷键触发
 
 \`\`\`json
 {
@@ -271,17 +271,17 @@ export default {
 }
 \`\`\`
 
-**命令处理�?*:
+**命令处理*:
 
 \`\`\`typescript
 export default {
-  // 命令处理器函�?
+  // 命令处理器函
   openWindow(context: ModContext) {
     console.log('Opening window...');
     context.openWindow('my-mod.my-window');
   },
   
-  // 也可以接收参�?
+  // 也可以接收参数?
   executeWithArgs(context: ModContext, arg1: string, arg2: number) {
     console.log('Args:', arg1, arg2);
   },
@@ -290,7 +290,7 @@ export default {
 
 ## 配置 Schema
 
-使用 JSON Schema 声明配置�?系统自动生成配置 UI�?
+使用 JSON Schema 声明配置系统自动生成配置 UI
 
 ### 基本示例
 
@@ -332,11 +332,11 @@ export default {
 }
 \`\`\`
 
-### 支持的类�?
+### 支持的类?
 
 - \`string\`: 文本输入
 - \`number\`: 数字输入
-- \`boolean\`: 开�?
+- \`boolean\`: 开
 - \`array\`: 数组(列表)
 - \`object\`: 嵌套对象
 
@@ -344,11 +344,11 @@ export default {
 
 - \`required\`: 必填字段
 - \`minimum\` / \`maximum\`: 数字范围
-- \`minLength\` / \`maxLength\`: 字符串长�?
-- \`pattern\`: 正则表达�?
-- \`enum\`: 枚举�?
+- \`minLength\` / \`maxLength\`: 字符串长
+- \`pattern\`: 正则表达
+- \`enum\`: 枚举
 
-### 嵌套对象和数�?
+### 嵌套对象和数组?
 
 \`\`\`json
 {
@@ -386,14 +386,14 @@ export default {
   
   onConfigChange(context: ModContext, newConfig: any) {
     console.log('Config updated:', newConfig);
-    // 应用新配�?
+    // 应用新配置?
   },
 };
 \`\`\`
 
-## 服务注册�?
+## 服务注册表?
 
-MOD 可以注册服务供其�?MOD 调用,实现功能复用�?
+MOD 可以注册服务供其MOD 调用,实现功能复用
 
 ### 注册服务
 
@@ -438,7 +438,7 @@ export default {
 \`\`\`typescript
 export default {
   async onEnable(context: ModContext) {
-    // 获取其他 MOD 的服�?
+    // 获取其他 MOD 的服
     const dataProvider = await context.getService<IDataProvider>(
       'other-mod.data-provider'
     );
@@ -451,11 +451,11 @@ export default {
 };
 \`\`\`
 
-### 服务可见�?
+### 服务可见性?
 
-- \`public\`: 所�?MOD 可访�?
-- \`internal\`: 仅同一作者的 MOD 可访�?
-- \`private\`: 仅当�?MOD 可访�?
+- \`public\`: 所MOD 可访
+- \`internal\`: 仅同一作者的 MOD 可访
+- \`private\`: 仅当MOD 可访
 
 ### 服务权限
 
@@ -469,17 +469,17 @@ export default {
 }
 \`\`\`
 
-## API 参�?
+## API 参数?
 
 ### Time API
 
 \`\`\`typescript
-// 读取时间(需�?time:read 权限)
+// 读取时间(需time:read 权限)
 const currentTime = context.api.time.currentTime;
 const isPlaying = context.api.time.isPlaying;
 const timeSpeed = context.api.time.timeSpeed;
 
-// 修改时间(需�?time:write 权限)
+// 修改时间(需time:write 权限)
 context.api.time.setCurrentTime(new Date('2024-01-01'));
 context.api.time.togglePlayPause();
 context.api.time.setTimeSpeed(10);
@@ -496,11 +496,11 @@ unsubscribe();
 ### Camera API
 
 \`\`\`typescript
-// 读取相机状�?需�?camera:read 权限)
+// 读取相机状态(需camera:read 权限)
 const position = context.api.camera.getPosition();
 const target = context.api.camera.getTarget();
 
-// 控制相机(需�?camera:write 权限)
+// 控制相机(需camera:write 权限)
 context.api.camera.flyTo({
   position: [0, 0, 10000000],
   duration: 2000,
@@ -520,7 +520,7 @@ const unsubscribe = context.api.camera.onCameraMove((camera) => {
 ### Render API
 
 \`\`\`typescript
-// 注册渲染�?需�?render:write 权限)
+// 注册渲染器(需render:write 权限)
 context.api.render.registerRenderer('my-renderer', (scene, camera) => {
   // 自定义渲染逻辑
   const mesh = new THREE.Mesh(geometry, material);
@@ -537,10 +537,10 @@ context.api.render.registerRenderer('my-renderer', (scene, camera) => {
   };
 });
 
-// 注销渲染�?
+// 注销渲染器?
 context.api.render.unregisterRenderer('my-renderer');
 
-// 渲染回调(需�?render:execute 权限)
+// 渲染回调(需render:execute 权限)
 const unsubscribe = context.api.render.onBeforeRender(() => {
   // 在渲染前执行
 });
@@ -549,7 +549,7 @@ const unsubscribe = context.api.render.onBeforeRender(() => {
 ### Celestial API
 
 \`\`\`typescript
-// 获取天体数据(需�?celestial:read 权限)
+// 获取天体数据(需celestial:read 权限)
 const planets = context.api.celestial.getPlanets();
 const earth = context.api.celestial.getPlanet('earth');
 
@@ -561,7 +561,7 @@ const unsubscribe = context.api.celestial.onPositionUpdate((body, position) => {
 
 ## 资源配额
 
-系统会限制每�?MOD 的资源使�?防止单个 MOD 影响系统性能�?
+系统会限制每个 MOD 的资源使用，防止单个 MOD 影响系统性能
 
 ### 默认配额
 
@@ -579,16 +579,16 @@ const unsubscribe = context.api.celestial.onPositionUpdate((body, position) => {
 
 ### 配额超限处理
 
-�?MOD 超过配额�?系统会抛�?\`QuotaExceededError\` 异常:
+MOD 超过配额系统会抛\`QuotaExceededError\` 异常:
 
 \`\`\`typescript
 try {
-  // 可能超过配额的操�?
+  // 可能超过配额的操
   context.api.render.registerRenderer('renderer', factory);
 } catch (error) {
   if (error instanceof QuotaExceededError) {
     console.error('Quota exceeded:', error.message);
-    // 清理一些资�?
+    // 清理一些资
   }
 }
 \`\`\`
@@ -602,11 +602,11 @@ console.log('Render objects:', usage.renderObjects);
 console.log('Event listeners:', usage.eventListeners);
 \`\`\`
 
-## 最佳实�?
+## 最佳实
 
 ### 1. 错误处理
 
-始终捕获和处理错�?防止 MOD 崩溃影响系统:
+始终捕获和处理错防止 MOD 崩溃影响系统:
 
 \`\`\`typescript
 export default {
@@ -623,7 +623,7 @@ export default {
 
 ### 2. 资源清理
 
-�?\`onDisable\` 中清理所有资�?
+\`onDisable\` 中清理所有资
 
 \`\`\`typescript
 export default {
@@ -635,13 +635,13 @@ export default {
   },
   
   onDisable(context: ModContext) {
-    // 取消所有订�?
+    // 取消所有订
     this.unsubscribers.forEach(unsub => unsub());
     
-    // 注销渲染�?
+    // 注销渲染器?
     context.api.render.unregisterRenderer('my-renderer');
     
-    // 清理定时�?
+    // 清理定时
     clearInterval(this.intervalId);
   },
 };
@@ -650,7 +650,7 @@ export default {
 ### 3. 性能优化
 
 - 避免在渲染回调中执行耗时操作
-- 使用节流(throttle)或防�?debounce)处理高频事件
+- 使用节流(throttle)或防debounce)处理高频事件
 - 延迟加载大型资源
 
 \`\`\`typescript
@@ -668,9 +668,9 @@ export default {
 };
 \`\`\`
 
-### 4. 国际�?
+### 4. 国际
 
-支持中英文双�?
+支持中英文双
 
 \`\`\`typescript
 function getLabel(context: ModContext) {
@@ -694,14 +694,14 @@ interface MyConfig {
 export default {
   onEnable(context: ModContext) {
     const config = context.getConfig<MyConfig>();
-    // config 现在有类型提�?
+    // config 现在有类型提
   },
 };
 \`\`\`
 
-## 调试技�?
+## 调试技
 
-### 1. 使用控制台日�?
+### 1. 使用控制台日
 
 \`\`\`typescript
 console.log('[MyMOD] Initializing...');
@@ -711,14 +711,14 @@ console.error('[MyMOD] Error:', error);
 
 ### 2. 查看 API 调用日志
 
-在浏览器控制台中查看 MOD �?API 调用统计:
+在浏览器控制台中查看 MOD API 调用统计:
 
 \`\`\`javascript
-// 在浏览器控制台执�?
+// 在浏览器控制台执
 window.__MOD_DEBUG__.getAPICallStats('my-mod');
 \`\`\`
 
-### 3. 检查权�?
+### 3. 检查权限?
 
 \`\`\`typescript
 if (!context.hasPermission('time:write')) {
@@ -737,9 +737,9 @@ setInterval(() => {
 
 ## 常见问题
 
-### Q: 如何处理权限被拒�?
+### Q: 如何处理权限被拒绝?
 
-A: 捕获 \`PermissionDeniedError\` 并提供降级功�?
+A: 捕获 \`PermissionDeniedError\` 并提供降级功能?
 
 \`\`\`typescript
 try {
@@ -751,12 +751,12 @@ try {
 }
 \`\`\`
 
-### Q: 如何�?MOD 间共享数�?
+### Q: 如何MOD 间共享数
 
 A: 使用服务注册表或事件系统:
 
 \`\`\`typescript
-// 方式 1: 服务注册�?
+// 方式 1: 服务注册表?
 context.registerService('my-mod.data-service', {
   getData: () => sharedData,
 });
@@ -771,26 +771,26 @@ context.on('other-mod:event', (data) => {
 ### Q: 如何优化渲染性能?
 
 A: 
-1. 使用 LOD(细节层次)技�?
+1. 使用 LOD(细节层次)技
 2. 批量渲染相似对象
-3. 使用 GPU 实例�?
+3. 使用 GPU 实例
 4. 避免在每帧创建新对象
 
 ### Q: 如何测试 MOD?
 
 A: 
-1. 使用浏览器开发者工�?
+1. 使用浏览器开发者工
 2. 编写单元测试(使用 Jest)
 3. 在开发环境中启用调试模式
-4. 使用 MOD 管理面板�?重新加载"功能
+4. 使用 MOD 管理面板重新加载"功能
 
 ## 示例 MOD
 
-完整的示�?MOD 可以�?\`examples/\` 目录中找�?
+完整的示MOD 可以\`examples/\` 目录中找
 
 - \`examples/simple-mod\`: 基础 MOD 示例
 - \`examples/dock-icon-mod\`: Dock 图标扩展示例
-- \`examples/window-mod\`: 自定义窗口示�?
+- \`examples/window-mod\`: 自定义窗口示
 - \`examples/service-mod\`: 服务注册示例
 - \`examples/config-mod\`: 配置 Schema 示例
 
@@ -806,7 +806,7 @@ A:
 
 1. 查看[常见问题](#常见问题)
 2. 阅读[API 参考文档](./API_REFERENCE.md)
-3. �?GitHub 上提�?Issue
-4. 加入开发者社区讨�?
+3. GitHub 上提Issue
+4. 加入开发者社区讨
 
-祝你开发愉�? 🚀
+祝你开发愉 🚀

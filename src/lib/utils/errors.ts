@@ -18,6 +18,16 @@ import { AppError } from '../errors/base';
 export type ErrorLogger = (error: Error, context?: Record<string, unknown>) => void;
 
 /**
+ * Safely converts any thrown value to an Error object.
+ * Preserves the original error as `cause` when wrapping non-Error values.
+ */
+export function ensureError(error: unknown): Error {
+  if (error instanceof Error) return error;
+  if (typeof error === 'string') return new Error(error);
+  return new Error('Unknown error', { cause: error });
+}
+
+/**
  * Default error logger that logs to console.
  * In production, this should be replaced with a proper logging service.
  * 

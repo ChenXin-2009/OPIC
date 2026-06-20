@@ -49,7 +49,7 @@ OPIC 是一个基于 Web 的多尺度宇宙可视化与天文数据集成系统�
 ## 技术栈
 
 - **前端框架**：Next.js 16 / React 19
-- **3D渲染**：Three.js 0.170
+- **3D渲染**：Three.js 0.170 + Cesium 1.139
 - **语言**：TypeScript 5
 - **样式**：Tailwind CSS 4
 - **状态管理**：Zustand 5
@@ -111,22 +111,9 @@ OPIC 是一个基于 Web 的多尺度宇宙可视化与天文数据集成系统�
 本项目采用 Apache License 2.0 许可证。详见项目 LICENSE 文件。
 
 ## 联系方式
-- **《明日方舟：终末地》**: 1087483396
-- **《鸣潮》**: 132704239
-- **《崩坏：星穹铁道》**: 114178599
-- **《绝区零》**: 10063323
-- **《原神》**: 205416012
-- **米游社**: 291665232
 
 - GitHub: [@ChenXin-2009](https://github.com/ChenXin-2009)
 - 项目地址: [https://github.com/ChenXin-2009/OPIC](https://github.com/ChenXin-2009/OPIC)
+- 网站: [https://opic.cxin.tech](https://opic.cxin.tech)
 
-## 支持项目
-
-如果这个项目对你有帮助，欢迎通过微信赞赏支持：
-
-![微信赞赏码](/textures/wechat-donate.png)
-
-你的支持是项目持续更新的动力！
-
-### 项目由个人维护，项目在2025/11月份启动，当时在读高二，仅假期有时间
+### 项目由个人维护，2025年11月启动

@@ -86,6 +86,9 @@ export const useSunVisualDebugStore = create<SunLensFlareState>((set, get) => ({
   enhanceOpacityMultiplier: ${s.enhanceOpacityMultiplier},
   farLimitDistance: ${s.farLimitDistance},
 };`;
-    navigator.clipboard.writeText(config).catch(() => console.log(config));
+    navigator.clipboard.writeText(config).catch((e) => {
+      console.error('Failed to copy config to clipboard:', e);
+      console.log(config);
+    });
   },
 }));

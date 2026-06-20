@@ -27,6 +27,9 @@ import { UniverseGroupManager } from './scene-manager/UniverseGroupManager';
 /**
  * 场景管理器 — 持有 Three.js 渲染器/场景/相机，协调所有宇宙尺度渲染器。
  */
+/** Orchestrates the Three.js scene lifecycle: renderer, scene, camera setup,
+ * renderer registration, resize handling, and mode switching (3D/Cesium).
+ */
 export class SceneManager {
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;

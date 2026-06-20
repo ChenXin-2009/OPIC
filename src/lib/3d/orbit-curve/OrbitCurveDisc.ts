@@ -3,6 +3,7 @@ import { ORBIT_STYLE_CONFIG } from '@/lib/config/visualConfig';
 
 let gradientTexture: THREE.Texture | null = null;
 
+/** Create or return cached radial gradient texture for orbit disc fade. */
 function getOrCreateGradientTexture(): THREE.Texture {
   if (gradientTexture) return gradientTexture;
 
@@ -34,6 +35,7 @@ function getOrCreateGradientTexture(): THREE.Texture {
   return texture;
 }
 
+/** Dispose the shared gradient texture when no longer needed. */
 export function disposeOrbitDiscTexture(): void {
   if (gradientTexture) {
     gradientTexture.dispose();
@@ -41,6 +43,7 @@ export function disposeOrbitDiscTexture(): void {
   }
 }
 
+/** Create a filled orbit disc mesh (ring between outer path and scaled inner path). */
 export function createOrbitDisc(points: THREE.Vector3[], orbitColor: string): THREE.Mesh | null {
   if (points.length < 2) return null;
 

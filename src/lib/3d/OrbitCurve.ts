@@ -6,6 +6,9 @@ import { parseHexColor, computeGradientColors, getLineOpacity } from './orbit-cu
 import { createOrbitDisc } from './orbit-curve/OrbitCurveDisc';
 import { createOrbitLine } from './orbit-curve/OrbitCurveGradientLine';
 
+/** Manages the 3D visual representation of a planetary orbit curve (line + optional filled disc).
+ * Supports LOD resolution scaling, gradient coloring, opacity control, and Kepler position calculation.
+ */
 export class OrbitCurve {
   readonly root: THREE.Group;
   private visualObjects: THREE.Object3D[] = [];
@@ -22,6 +25,13 @@ export class OrbitCurve {
   private currentDiscOpacity: number = 1.0;
   private currentLineOpacity: number = 1.0;
 
+  /**
+   * @param elements - Keplerian orbital elements
+   * @param color - hex color string for the orbit
+   * @param segments - initial curve resolution
+   * @param julianDay - epoch for precession-adjusted elements
+   * @param planetPosition - starting position of the orbiting body
+   */
   constructor(
     elements: OrbitalElements,
     color: string,
@@ -40,6 +50,7 @@ export class OrbitCurve {
     this.createVisualObject();
   }
 
+  /** Create or rebuild the orbit visual (disc and/or line) based on style config. */
   private createVisualObject(): void {
     if (this.visualObjects.length > 0) {
       this.visualObjects.forEach(obj => {
@@ -79,6 +90,7 @@ export class OrbitCurve {
     }
   }
 
+  /** Compute LOD resolution: farther camera = fewer segments (64-1200). */
   private calculateOptimalResolution(cameraDistance: number): number {
     const minResolution = 64;
     const maxResolution = 1200;
@@ -91,6 +103,7 @@ export class OrbitCurve {
     return Math.max(minResolution, Math.min(maxResolution, targetResolution));
   }
 
+  /** Update curve LOD when camera distance changes significantly. */
   updateCurveResolution(cameraDistance: number): void {
     const distanceChange = Math.abs(cameraDistance - this.lastCameraDistance);
     const relativeChange = distanceChange / Math.max(0.1, this.lastCameraDistance);
@@ -111,6 +124,7 @@ export class OrbitCurve {
     }
   }
 
+  /** Set visual opacity for the disc and/or line components. */
   setOpacity(discOpacity: number, lineOpacity?: number): void {
     this.currentDiscOpacity = discOpacity;
     this.currentLineOpacity = lineOpacity ?? discOpacity;
@@ -138,6 +152,7 @@ export class OrbitCurve {
     this.applyCurrentOpacity();
   }
 
+  /** Update gradient colors when the orbiting body moves along the orbit. */
   updatePlanetPosition(position: THREE.Vector3): void {
     this.planetPosition = position;
 
@@ -166,6 +181,7 @@ export class OrbitCurve {
     }
   }
 
+  /** Validate how well a planet aligns with the orbit curve (min distance check). */
   validatePlanetAlignment(planetPosition: THREE.Vector3, _tolerance: number = 0.001): number {
     if (this.points.length === 0) {
       return -1;
@@ -189,6 +205,7 @@ export class OrbitCurve {
     return minDistance;
   }
 
+  /** Find the closest point on the orbit path to a given position. */
   getClosestPointOnOrbit(position: THREE.Vector3): THREE.Vector3 | null {
     if (this.points.length === 0) return null;
 
@@ -212,6 +229,7 @@ export class OrbitCurve {
     return closestPoint ? closestPoint.clone() : null;
   }
 
+  /** Replace orbital elements and rebuild the curve. */
   updateOrbit(elements: OrbitalElements, segments: number = 300): void {
     this.elements = elements;
     this.currentResolution = segments;
@@ -221,10 +239,12 @@ export class OrbitCurve {
     this.createVisualObject();
   }
 
+  /** Get the root group containing the orbit visuals. */
   getLine(): THREE.Object3D {
     return this.root;
   }
 
+  /** Compute the 3D position of the orbiting body at a given epoch using Kepler's equation. */
   calculatePosition(_julianDay: number): THREE.Vector3 {
     const elem = this.elements;
 
@@ -265,6 +285,7 @@ export class OrbitCurve {
     return new THREE.Vector3(x, y, z);
   }
 
+  /** Compute the normal vector of the orbital plane. */
   getOrbitNormal(): THREE.Vector3 {
     const i = this.elements.i;
     const O = this.elements.O;
@@ -276,6 +297,7 @@ export class OrbitCurve {
     return new THREE.Vector3(nx, ny, nz).normalize();
   }
 
+  /** Clean up all Three.js geometry and material resources. */
   dispose(): void {
     this.visualObjects.forEach(obj => {
       if (obj instanceof THREE.Line || obj instanceof THREE.Mesh) {

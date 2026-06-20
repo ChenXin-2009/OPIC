@@ -194,6 +194,7 @@ export class DependencyResolver {
    * 计算启用顺序
    * 
    * 返回按依赖关系排序的MOD ID列表，确保依赖先于依赖者启用。
+   * 依赖（根节点）先加载，被依赖者（叶节点）后加载。
    */
   getEnableOrder(modIds: string[]): DependencyResolution {
     // 检查循环依赖
@@ -223,8 +224,9 @@ export class DependencyResolver {
       };
     }
 
-    // 获取拓扑排序
-    const sorted = this.topologicalSort();
+    // 反转拓扑排序：topologicalSort 返回 dependents-first，
+    // 启用时需要 dependencies-first（先加载被依赖的根节点）
+    const sorted = this.topologicalSort().reverse();
 
     // 只返回请求的MOD，保持拓扑顺序
     const modIdSet = new Set(modIds);
@@ -242,12 +244,14 @@ export class DependencyResolver {
    * 计算禁用顺序
    * 
    * 返回按依赖关系排序的MOD ID列表，确保依赖者先于依赖禁用。
+   * 叶节点（被依赖者）先卸载，根节点（依赖）后卸载。
    */
   getDisableOrder(modIds: string[]): string[] {
-    // 反向拓扑排序
-    const sorted = this.topologicalSort().reverse();
+    // topologicalSort 返回 dependents-first 顺序，
+    // 禁用时需要 dependents-first（先卸载无依赖者的叶节点）
+    const sorted = this.topologicalSort();
 
-    // 只返回请求的MOD，保持反向拓扑顺序
+    // 只返回请求的MOD，保持拓扑顺序
     const modIdSet = new Set(modIds);
     return sorted.filter(id => modIdSet.has(id));
   }

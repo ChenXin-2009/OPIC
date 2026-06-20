@@ -62,36 +62,14 @@ function calculateSatellitePosition(
   parentAxisQuaternion: THREE.Quaternion
 ): THREE.Vector3 {
   const theta = (2 * Math.PI * (daysSinceJ2000 / sat.periodDays + (sat.phase || 0))) % (2 * Math.PI);
-  const r_orb = sat.a;
-  const x_orb = r_orb * Math.cos(theta);
-  const y_orb = r_orb * Math.sin(theta);
-  const z_orb = 0;
-  let satellitePos: THREE.Vector3;
-
-  if (sat.eclipticOrbit) {
-    const cos_Om = Math.cos(sat.Omega);
-    const sin_Om = Math.sin(sat.Omega);
-    const x_1 = x_orb * cos_Om - y_orb * sin_Om;
-    const y_1 = x_orb * sin_Om + y_orb * cos_Om;
-    const z_1 = z_orb;
-    const cos_i = Math.cos(sat.i);
-    const sin_i = Math.sin(sat.i);
-    const x_final = x_1;
-    const y_final = y_1 * cos_i - z_1 * sin_i;
-    const z_final = y_1 * sin_i + z_1 * cos_i;
-    satellitePos = new THREE.Vector3(x_final, y_final, z_final);
-  } else {
-    const cos_Om = Math.cos(sat.Omega);
-    const sin_Om = Math.sin(sat.Omega);
-    const x_1 = x_orb * cos_Om - y_orb * sin_Om;
-    const y_1 = x_orb * sin_Om + y_orb * cos_Om;
-    const z_1 = z_orb;
-    const cos_i = Math.cos(sat.i);
-    const sin_i = Math.sin(sat.i);
-    const x_2 = x_1;
-    const y_2 = y_1 * cos_i - z_1 * sin_i;
-    const z_2 = y_1 * sin_i + z_1 * cos_i;
-    satellitePos = new THREE.Vector3(x_2, y_2, z_2);
+  const cos_Om = Math.cos(sat.Omega);
+  const sin_Om = Math.sin(sat.Omega);
+  const x_1 = sat.a * Math.cos(theta) * cos_Om - sat.a * Math.sin(theta) * sin_Om;
+  const y_1 = sat.a * Math.cos(theta) * sin_Om + sat.a * Math.sin(theta) * cos_Om;
+  const cos_i = Math.cos(sat.i);
+  const sin_i = Math.sin(sat.i);
+  const satellitePos = new THREE.Vector3(x_1, y_1 * cos_i, y_1 * sin_i);
+  if (!sat.eclipticOrbit) {
     satellitePos.applyQuaternion(parentAxisQuaternion);
   }
   return satellitePos;

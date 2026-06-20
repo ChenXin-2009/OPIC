@@ -147,7 +147,7 @@ export class DataLoadingErrorBoundary extends Component<
 
     switch (retryStrategy) {
       case 'exponential':
-        return retryDelay * Math.pow(2, retryCount);
+        return retryDelay * (2 ** retryCount);
       case 'linear':
         return retryDelay;
       case 'manual':

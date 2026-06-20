@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import { ORBIT_GRADIENT_CONFIG, ORBIT_RENDER_CONFIG } from '@/lib/config/visualConfig';
 import { parseHexColor, computeGradientColors, getLineOpacity } from './OrbitCurveColor';
 
+/** Create a 3D orbit line with optional distance-based gradient.
+ * When planetPosition is provided, colors fade with distance for a trailing effect.
+ */
 export function createOrbitLine(
   points: THREE.Vector3[],
   orbitColor: string,

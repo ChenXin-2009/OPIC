@@ -20,6 +20,7 @@ import {
 } from '../ephemeris';
 import { AllBodiesCalculator } from '../ephemeris/all-bodies-calculator';
 import { logger } from '@/utils/logger';
+import { AU_IN_KM } from '@/lib/astronomy/utils/constants';
 
 class OrbitSystemPositionProvider implements PlanetaryPositionProvider {
   getEarthPosition(jd_tdb: number): EphemerisVector3 {
@@ -39,7 +40,7 @@ class OrbitSystemPositionProvider implements PlanetaryPositionProvider {
     const vx = (pos2.x - pos1.x) / dt;
     const vy = (pos2.y - pos1.y) / dt;
     const vz = (pos2.z - pos1.z) / dt;
-    const AU_TO_KM = 149597870.7;
+    const AU_TO_KM = AU_IN_KM;
     const DAYS_TO_SECONDS = 86400.0;
     const scale = AU_TO_KM / DAYS_TO_SECONDS;
     return new EphemerisVector3(vx * scale, vy * scale, vz * scale);
@@ -136,12 +137,12 @@ export async function initializeAllBodiesCalculator(
         const bodyKey = bodyKeyMap[bodyConfig.naifId];
         if (bodyKey && bodyConfig.timeRange) {
           callbacks?.setBodyTimeRange?.(
-            bodyKey as any,
+            bodyKey,
             bodyConfig.timeRange.start,
             bodyConfig.timeRange.end
           );
           callbacks?.setBodyAccuracy?.(
-            bodyKey as any,
+            bodyKey,
             ACCURACY_INFO.ephemeris,
             ACCURACY_INFO.analytical
           );

@@ -44,10 +44,16 @@ export class WindowManager {
   private focusedWindowId: string | null = null;
 
   constructor(private eventBus: EventBus) {
-    // 监听窗口注销事件,自动关闭窗口
+    // 监听窗口注销事件,自动关闭该窗口定义的所有实例
     this.eventBus.on('contribution:window-unregistered', (event: any) => {
-      const windowId = event.windowId as string;
-      this.closeWindow(windowId);
+      const fullId = event.windowId as string;
+      // 关闭所有使用该窗口定义的实例
+      const instances = Array.from(this.instances.values()).filter(
+        (instance) => instance.definition.fullId === fullId
+      );
+      for (const instance of instances) {
+        this.closeWindow(instance.id);
+      }
     });
   }
 

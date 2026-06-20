@@ -17,6 +17,7 @@ import { ORBITAL_ELEMENTS, SATELLITE_DEFINITIONS, CACHE_TOLERANCE, CACHE_MAX_AGE
 import { calculatePosition, getParentAxisQuaternion, calculateSatellitePosition } from './mechanics';
 import { shouldUseEphemeris, initializeAllBodiesCalculator, getAllBodiesCalculator } from './ephemeris-integration';
 import { logger } from '@/utils/logger';
+import { J2000_JD } from '@/lib/astronomy/utils/constants';
 
 interface PositionCache {
   jd: number;
@@ -122,13 +123,11 @@ async function calculatePlanetPositions(
     if (shouldUseHighPrecision) {
       if (!getAllBodiesCalculator()) {
         try {
-          const bodyKey = key as any;
-          setBodyStatus?.(bodyKey, 'LOADING');
+          setBodyStatus?.(key, 'LOADING');
           await initializeAllBodiesCalculator();
         } catch (error) {
           console.warn(`[Ephemeris] Failed to initialize calculator for ${key}, using analytical model:`, error);
-          const bodyKey = key as any;
-          setBodyStatus?.(bodyKey, 'ERROR', String(error));
+          setBodyStatus?.(key, 'ERROR', String(error));
         }
       }
 
@@ -141,13 +140,11 @@ async function calculatePlanetPositions(
             pos.y = result.position.y;
             pos.z = result.position.z;
             pos.r = Math.sqrt(result.position.x ** 2 + result.position.y ** 2 + result.position.z ** 2);
-            const bodyKey = key as any;
-            setBodyStatus?.(bodyKey, 'LOADED');
+            setBodyStatus?.(key, 'LOADED');
           }
         } catch (error) {
           console.warn(`[Ephemeris] Error for ${key}, using analytical model:`, error);
-          const bodyKey = key as any;
-          setBodyStatus?.(bodyKey, 'ERROR', String(error));
+          setBodyStatus?.(key, 'ERROR', String(error));
         }
       }
     }
@@ -173,7 +170,7 @@ async function calculateSatellitePositions(
   bodies: CelestialBody[],
   setBodyStatus?: (bodyKey: string, status: string, error?: string) => void
 ): Promise<void> {
-  const daysSinceJ2000 = julianDay - 2451545.0;
+  const daysSinceJ2000 = julianDay - J2000_JD;
 
   const satelliteNaifIds: Record<string, number> = {
     'Moon': 301,
@@ -201,8 +198,7 @@ async function calculateSatellitePositions(
         sats.forEach(sat => {
           const naifId = satelliteNaifIds[sat.name];
           if (naifId && shouldUseEphemeris(naifId)) {
-            const bodyKey = sat.name.toLowerCase() as any;
-            setBodyStatus?.(bodyKey, 'LOADING');
+            setBodyStatus?.(sat.name.toLowerCase(), 'LOADING');
           }
         });
         await initializeAllBodiesCalculator();
@@ -211,8 +207,7 @@ async function calculateSatellitePositions(
         sats.forEach(sat => {
           const naifId = satelliteNaifIds[sat.name];
           if (naifId && shouldUseEphemeris(naifId)) {
-            const bodyKey = sat.name.toLowerCase() as any;
-            setBodyStatus?.(bodyKey, 'ERROR', String(error));
+            setBodyStatus?.(sat.name.toLowerCase(), 'ERROR', String(error));
           }
         });
       }
@@ -238,8 +233,7 @@ async function calculateSatellitePositions(
               result.position.x, result.position.y, result.position.z
             );
             useEphemeris = true;
-            const bodyKey = sat.name.toLowerCase() as any;
-            setBodyStatus?.(bodyKey, 'LOADED');
+            setBodyStatus?.(sat.name.toLowerCase(), 'LOADED');
           } else {
             const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
             satellitePos = calculateSatellitePosition(sat, daysSinceJ2000, parentAxisQuaternion);
@@ -248,8 +242,7 @@ async function calculateSatellitePositions(
           console.warn(`[Ephemeris] Error for ${sat.name}, using analytical model:`, error);
           const parentAxisQuaternion = getParentAxisQuaternion(parentKey);
           satellitePos = calculateSatellitePosition(sat, daysSinceJ2000, parentAxisQuaternion);
-          const bodyKey = sat.name.toLowerCase() as any;
-          setBodyStatus?.(bodyKey, 'ERROR', String(error));
+          setBodyStatus?.(sat.name.toLowerCase(), 'ERROR', String(error));
         }
       } else {
         const parentAxisQuaternion = getParentAxisQuaternion(parentKey);

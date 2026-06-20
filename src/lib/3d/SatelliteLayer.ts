@@ -26,6 +26,7 @@ import { PerformanceMonitor } from '../performance/PerformanceMonitor';
 import { QualityController } from '../performance/QualityController';
 import { logDebug, logError } from '../performance/performanceConfig';
 import { useModStore } from '../mod-manager/store';
+import { OBLIQUITY_J2000_RAD, AU_IN_KM } from '@/lib/astronomy/utils/constants';
 
 /**
  * 卫星 TEME-like 位置到 RenderWorld 的帧变换。
@@ -39,26 +40,22 @@ import { useModStore } from '../mod-manager/store';
  * @param gmstRad - 格林尼治平恒星时 (弧度)，由 satellite.gstime(date) 获取
  * @returns RenderWorld 位置 (AU)，X=春分点, Z=黄道北极
  */
+const ECI_COS_E = Math.cos(OBLIQUITY_J2000_RAD);
+const ECI_SIN_E = Math.sin(OBLIQUITY_J2000_RAD);
+
 function eciSwappedToRenderWorld(
   inputPos: THREE.Vector3,
-  gmstRad: number
+  cosG: number,
+  sinG: number
 ): THREE.Vector3 {
-  const eps = 23.43928 * Math.PI / 180;
-  const cosE = Math.cos(eps);
-  const sinE = Math.sin(eps);
-  const cosG = Math.cos(gmstRad);
-  const sinG = Math.sin(gmstRad);
-
-  // 推导自 eciToThreeJS(x, z, -y) 输出经
-  // ECI→ECF (-GMST) → ICRF → RenderWorld (R_x(-ε)) 的完整复合
   const x = inputPos.x;
   const y = inputPos.y;
   const z = inputPos.z;
 
   return new THREE.Vector3(
     x * cosG - z * sinG,
-    -x * sinG * cosE - z * cosG * cosE + y * sinE,
-    x * sinG * sinE + z * cosG * sinE + y * cosE
+    -x * sinG * ECI_COS_E - z * cosG * ECI_COS_E + y * ECI_SIN_E,
+    x * sinG * ECI_SIN_E + z * cosG * ECI_SIN_E + y * ECI_COS_E
   );
 }
 
@@ -101,18 +98,18 @@ export class SatelliteLayer {
   private renderer: SatelliteRenderer;
   private calculator: SGP4Calculator;
   private visible: boolean = true;
-  
-  // 性能优化组件（使用轨道动力学插值器）
+
   private interpolator: OrbitalInterpolator;
   private performanceMonitor: PerformanceMonitor;
   private qualityController: QualityController;
-  
-  // 双缓冲：存储完整的卫星状态
+
   private satelliteStates: Map<number, any>;
-  
-  // 计算调度
+
   private nextCalculationTime: number = 0;
   private isCalculating: boolean = false;
+
+  private scratchVec3 = new THREE.Vector3();
+  private scratchVec3b = new THREE.Vector3();
   
   /**
    * 创建卫星图层实例
@@ -213,26 +210,19 @@ export class SatelliteLayer {
       const earthBody = solarSystemState.celestialBodies.find((b: any) => b.name.toLowerCase() === 'earth');
       
       if (earthBody) {
-        const earthPosition = new THREE.Vector3(earthBody.x, earthBody.y, earthBody.z);
-        
-        // 计算 GMST（格林尼治平恒星时）用于 TEME→ECF 旋转
-        // 公式：JD = (timestamp_ms / 86400000) + 2440587.5
-        //        GMST(deg) = 280.46061837 + 360.98564736629 * (JD - 2451545.0)
+        this.scratchVec3.set(earthBody.x, earthBody.y, earthBody.z);
+        const earthPosition = this.scratchVec3;
+
         const jd = currentSimulatedTime / 86400000 + 2440587.5;
         const gmstDeg = (280.46061837 + 360.98564736629 * (jd - 2451545.0)) % 360;
         const gmstRad = THREE.MathUtils.degToRad(gmstDeg);
-        
-        // 卫星位置保持在地球相对坐标系，不叠加地球绝对位置
-        // 改为通过 pointCloud.position 设置整体偏移，避免 Float32 精度丢失：
-        // Float32 在 ~1 AU 尺度精度仅 ~10⁻⁷ AU，
-        // 卫星轨道半径 ~10⁻⁴ AU，每帧移动 ~10⁻⁹ AU，
-        // 叠加后低 4 位小数丢失 → 位置量化跳跃 → 抖动。
+        const cosG = Math.cos(gmstRad);
+        const sinG = Math.sin(gmstRad);
+
         const relativePositions = new Map<number, any>();
         interpolatedPositions.forEach((position, noradId) => {
-          // 使用帧变换替代旧版 rotationX(66.56°) 静态补偿
-          // 参见 COORDINATE_SYSTEM_ALIGNMENT_PLAN.md §4 阶段 4
-          const rotatedPosition = eciSwappedToRenderWorld(position, gmstRad);
-          
+          const rotatedPosition = eciSwappedToRenderWorld(position, cosG, sinG);
+
           const savedState = this.satelliteStates.get(noradId);
           if (savedState) {
             relativePositions.set(noradId, {
@@ -525,7 +515,7 @@ export class SatelliteLayer {
     const steps = 120;
     const stepMinutes = periodMinutes / steps;
 
-    const AU_TO_KM = 149597870.7;
+    const AU_TO_KM = AU_IN_KM;
     const worldPoints: THREE.Vector3[] = [];
     const startDate = new Date();
 
@@ -533,19 +523,20 @@ export class SatelliteLayer {
     const jd = startDate.getTime() / 86400000 + 2440587.5;
     const gmstDeg = (280.46061837 + 360.98564736629 * (jd - 2451545.0)) % 360;
     const gmstRad = THREE.MathUtils.degToRad(gmstDeg);
+    const cosG = Math.cos(gmstRad);
+    const sinG = Math.sin(gmstRad);
 
     for (let i = 0; i < steps; i++) {
       const t = new Date(startDate.getTime() + i * stepMinutes * 60000);
       const pv = satLib.propagate(satrec, t);
       if (!pv || !pv.position || typeof pv.position === 'boolean') continue;
       const pos = pv.position as { x: number; y: number; z: number };
-      // ECI km → AU + eciToThreeJS 轴映射，然后经帧变换到 RenderWorld
       const eciSwapped = new THREE.Vector3(
         pos.x / AU_TO_KM,
         pos.z / AU_TO_KM,
         -pos.y / AU_TO_KM
       );
-      const worldPoint = eciSwappedToRenderWorld(eciSwapped, gmstRad);
+      const worldPoint = eciSwappedToRenderWorld(eciSwapped, cosG, sinG);
       worldPoint.add(earthPosition);
       worldPoints.push(worldPoint);
     }
@@ -559,7 +550,7 @@ export class SatelliteLayer {
       const ecc = parseFloat('0.' + tleData.line2.substring(26, 33).trim());
       const n = meanMotionRadPerSec / 60; // rad/s
       const mu = 398600.4418;
-      const a = Math.pow(mu / (n * n), 1 / 3);
+      const a = (mu / (n * n)) ** (1 / 3);
       const alt = a * (1 - ecc) - 6371;
       orbitType = getOrbitType(alt, ecc);
     }

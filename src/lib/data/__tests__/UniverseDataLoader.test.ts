@@ -1,3 +1,7 @@
+if (typeof globalThis.TextDecoder === 'undefined') {
+  const { TextDecoder } = require('util');
+  globalThis.TextDecoder = TextDecoder;
+}
 /**
  * UniverseDataLoader.test.ts - 宇宙数据加载器单元测试
  */
@@ -43,7 +47,7 @@ describe('UniverseDataLoader', () => {
       const result = await loader.loadDataForScale(UniverseScale.LocalGroup);
       
       expect(result).toBe(mockData);
-      expect(global.fetch).toHaveBeenCalledWith('/data/universe/local-group.bin');
+      expect(global.fetch).toHaveBeenCalledWith('/data/universe/local-group.bin', expect.any(Object));
     });
 
     it('应该处理加载错误', async () => {
@@ -160,7 +164,7 @@ describe('UniverseDataLoader', () => {
       await loader.preloadAdjacentScales(UniverseScale.LocalGroup);
 
       // 应该加载 Galaxy 和 NearbyGroups
-      expect(global.fetch).toHaveBeenCalledWith('/data/universe/nearby-groups.bin');
+      expect(global.fetch).toHaveBeenCalledWith('/data/universe/nearby-groups.bin', expect.any(Object));
       // Galaxy 没有数据文件，所以会失败但不应该抛出错误
     });
 
@@ -184,18 +188,17 @@ describe('UniverseDataLoader', () => {
         arrayBuffer: async () => mockData,
       });
 
-      // 加载多个尺度的数据
+      // 加载 LocalGroup 和 LaniakeaSupercluster (距离 >= 3)
       await loader.loadDataForScale(UniverseScale.LocalGroup);
-      await loader.loadDataForScale(UniverseScale.NearbyGroups);
-      await loader.loadDataForScale(UniverseScale.VirgoSupercluster);
+      await loader.loadDataForScale(UniverseScale.LaniakeaSupercluster);
 
       const initialSize = loader.getCacheSize();
       expect(initialSize).toBeGreaterThan(0);
 
-      // 释放远距离尺度（从 LocalGroup 看，VirgoSupercluster 距离 >= 3）
+      // 释放远距离尺度（从 LocalGroup 看，LaniakeaSupercluster 距离 >= 3）
       loader.releaseDistantScales(UniverseScale.LocalGroup);
 
-      // 缓存大小应该减少
+      // 缓存大小应该减少（LaniakeaSupercluster 被释放）
       const finalSize = loader.getCacheSize();
       expect(finalSize).toBeLessThan(initialSize);
     });

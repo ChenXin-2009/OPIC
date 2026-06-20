@@ -146,7 +146,7 @@ export class SunGlowEffect {
       for (let i = segments - 1; i >= 0; i--) {
         const t = i / segments;
         const r = outerRadius * (0.3 + t * 0.7);
-        const alpha = Math.pow(1 - t, cfg.crescentFalloff) * cfg.crescentOpacity;
+        const alpha = (1 - t) ** cfg.crescentFalloff * cfg.crescentOpacity;
 
         crescentCtx.beginPath();
         crescentCtx.arc(center, center, r, 0, Math.PI * 2);
@@ -186,8 +186,8 @@ export class SunGlowEffect {
         const x2 = nextT * spikeLength;
         const w1 = spikeWidth * (1 - t * 0.9);
         const w2 = spikeWidth * (1 - nextT * 0.9);
-        const alpha1 = Math.pow(1 - t, cfg.falloffExponent);
-        const alpha2 = Math.pow(1 - nextT, cfg.falloffExponent);
+        const alpha1 = (1 - t) ** cfg.falloffExponent;
+        const alpha2 = (1 - nextT) ** cfg.falloffExponent;
 
         ctx.beginPath();
         ctx.moveTo(x1, -w1 / 2);

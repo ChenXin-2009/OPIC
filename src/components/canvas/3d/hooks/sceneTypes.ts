@@ -10,25 +10,26 @@ import { Raycaster } from 'three';
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import * as THREE from 'three';
 
+/** Refs shared across 3D canvas hooks for scene objects and state. */
 export interface SceneRefs {
-  containerRef: RefObject<HTMLDivElement | null>;
+  containerRef: RefObject<HTMLDivElement | null>; /* Three.js renderer DOM container */
   sceneManagerRef: RefObject<SceneManager | null>;
   cameraControllerRef: RefObject<CameraController | null>;
   labelRendererRef: RefObject<CSS2DRenderer | null>;
   planetsRef: RefObject<Map<string, Planet> | null>;
   orbitsRef: RefObject<Map<string, OrbitCurve> | null>;
   labelsRef: RefObject<Map<string, OrbitLabel> | null>;
-  animationFrameRef: RefObject<number | null>;
+  animationFrameRef: RefObject<number | null>; /* requestAnimationFrame handle */
   lastTimeRef: RefObject<number>;
-  raycasterRef: RefObject<Raycaster | null>;
+  raycasterRef: RefObject<Raycaster | null>; /* Mouse raycasting for hover/click */
   mouseRef: RefObject<THREE.Vector2>;
   cameraRef: RefObject<THREE.PerspectiveCamera | null>;
   satelliteLayerRef: RefObject<SatelliteLayer | null>;
   exoplanetRendererRef: RefObject<ExoplanetRenderer | null>;
-  cesiumEnabledRef: RefObject<boolean>;
-  earthLockEnabledRef: RefObject<boolean>;
+  cesiumEnabledRef: RefObject<boolean>; /* Cesium globe overlay toggle */
+  earthLockEnabledRef: RefObject<boolean>; /* Camera locked to Earth */
   earthLightEnabledRef: RefObject<boolean>;
-  isTrackingSatelliteRef: RefObject<boolean>;
+  isTrackingSatelliteRef: RefObject<boolean>; /* Camera following a satellite */
   lastFollowTargetRef: RefObject<number | null>;
   labelUpdateFrameCounterRef: RefObject<number>;
   isDraggingRef: RefObject<boolean>;
@@ -36,6 +37,7 @@ export interface SceneRefs {
   mouseDownTimeRef: RefObject<number>;
 }
 
+/** Callbacks for scene lifecycle events. */
 export interface SceneCallbacks {
   onCameraDistanceChange?: (distance: number) => void;
   onInitializationProgress?: (stage: string, progress: number, isComplete: boolean) => void;

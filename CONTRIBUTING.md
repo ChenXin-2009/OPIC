@@ -82,8 +82,9 @@ src/
 │   │   └── performance/   # 性能监控
 │   ├── data/              # 数据加载器
 │   └── config/            # 配置文件
+├── lib/state/             # Zustand 状态管理（窗口、场景、地球控制）
 ├── lib/store/             # Zustand 数据存储（卫星、星历、系外行星）
-└── lib/state/             # Zustand 状态管理（窗口、场景、地球控制）
+└── lib/types/             # TypeScript 类型定义
 ```
 
 ## 开发指南

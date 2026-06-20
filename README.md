@@ -226,8 +226,9 @@ opic/
 │   │   │   └── performance/   # 性能监控
 │   │   ├── config/            # 配置文件
 │   │   ├── data/              # 数据加载器
+│   │   ├── state/             # Zustand 状态管理
+│   │   ├── store/             # Zustand store hooks
 │   │   └── types/             # TypeScript 类型
-│   └── stores/                # Zustand 状态管理
 ├── public/
 │   ├── data/                  # 天文数据
 │   │   ├── ephemeris/        # NASA JPL 星历数据

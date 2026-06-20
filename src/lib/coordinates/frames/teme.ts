@@ -18,6 +18,7 @@
  */
 
 import * as Cesium from 'cesium';
+import { OBLIQUITY_J2000_RAD } from '@/lib/astronomy/utils/constants';
 
 export interface TemeToWorldInput {
   /** TEME-like 位置 (km), e.g. from satellite.propagate() */
@@ -99,9 +100,8 @@ export function temeToRenderWorld(input: TemeToWorldInput): WorldPosition {
   }
 
   // 步骤 3: ICRF → RenderWorld (J2000 ecliptic)
-  const obliquity = 23.43928 * Math.PI / 180;
-  const cosEps = Math.cos(obliquity);
-  const sinEps = Math.sin(obliquity);
+  const cosEps = Math.cos(OBLIQUITY_J2000_RAD);
+  const sinEps = Math.sin(OBLIQUITY_J2000_RAD);
 
   return {
     x_au: icrfX,
@@ -129,9 +129,8 @@ export function temeToRenderWorldSimple(
   const ecfY = -x_km * sinGMST + y_km * cosGMST;
   const ecfZ = z_km;
 
-  const obliquity = 23.43928 * Math.PI / 180;
-  const cosEps = Math.cos(obliquity);
-  const sinEps = Math.sin(obliquity);
+  const cosEps = Math.cos(OBLIQUITY_J2000_RAD);
+  const sinEps = Math.sin(OBLIQUITY_J2000_RAD);
 
   // ECF → ICRF (GMST only, skip EOP) → RenderWorld
   // 注意：ECF 的 GMST-only 逆 = TEME, 所以这里实际上是 TEME→RenderWorld

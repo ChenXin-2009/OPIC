@@ -5,13 +5,11 @@
  */
 
 import { useSatelliteStore } from '../src/lib/store/useSatelliteStore';
-import { SatelliteCategory } from '../src/lib/types/satellite';
 
 describe('SatelliteStore - 基础功能', () => {
   beforeEach(() => {
     // 重置Store状态
     const store = useSatelliteStore.getState();
-    store.setSelectedCategories(new Set([SatelliteCategory.ACTIVE]));
     store.setSearchQuery('');
     store.clearAllOrbits();
     store.selectSatellite(null);
@@ -26,7 +24,6 @@ describe('SatelliteStore - 基础功能', () => {
       expect(state.loading).toBe(false);
       expect(state.error).toBe(null);
       expect(state.lastUpdate).toBe(null);
-      expect(state.selectedCategories.has(SatelliteCategory.ACTIVE)).toBe(true);
       expect(state.searchQuery).toBe('');
       expect(state.visibleSatellites.size).toBe(0);
       expect(state.selectedSatellite).toBe(null);
@@ -34,34 +31,6 @@ describe('SatelliteStore - 基础功能', () => {
       expect(state.showOrbits.size).toBe(0);
       expect(state.showSatellites).toBe(true);
       expect(state.showInfoPanel).toBe(false);
-    });
-  });
-
-  describe('类别筛选', () => {
-    it('应该能够设置选中的类别', () => {
-      const store = useSatelliteStore.getState();
-      const categories = new Set([SatelliteCategory.GPS, SatelliteCategory.ISS]);
-
-      store.setSelectedCategories(categories);
-
-      const state = useSatelliteStore.getState();
-      expect(state.selectedCategories.size).toBe(2);
-      expect(state.selectedCategories.has(SatelliteCategory.GPS)).toBe(true);
-      expect(state.selectedCategories.has(SatelliteCategory.ISS)).toBe(true);
-    });
-
-    it('应该支持多选类别', () => {
-      const store = useSatelliteStore.getState();
-      const categories = new Set([
-        SatelliteCategory.ACTIVE,
-        SatelliteCategory.GPS,
-        SatelliteCategory.WEATHER,
-      ]);
-
-      store.setSelectedCategories(categories);
-
-      const state = useSatelliteStore.getState();
-      expect(state.selectedCategories.size).toBe(3);
     });
   });
 

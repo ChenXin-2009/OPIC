@@ -71,7 +71,7 @@ function propagateSatellite(
 
     const mu = 398600.4418;
     const n = meanMotion;
-    const a = Math.pow(mu / (n * n), 1 / 3);
+    const a = (mu / (n * n)) ** (1 / 3);
     const r = a * (1 - eccentricity * Math.cos(E));
     const u = argPerigee + trueAnomaly;
 
