@@ -50,7 +50,7 @@ export interface CesiumAdapterConfig {
   /** Reference height for vertical terrain exaggeration. */
   terrainExaggerationRelativeHeight?: number;
   /** Ellipsoid used by Cesium's globe. Defaults to WGS84 Earth. */
-  ellipsoid?: 'wgs84' | 'moon' | { x: number; y: number; z: number };
+  ellipsoid?: 'wgs84' | 'moon' | 'mars' | { x: number; y: number; z: number };
   /** Mean body radius in meters, used for camera clipping and altitude logs. */
   bodyRadiusMeters?: number;
   /** Expose this viewer as window.__cesiumViewer for earth-specific MOD integrations. */

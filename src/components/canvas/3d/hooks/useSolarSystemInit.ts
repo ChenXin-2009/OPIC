@@ -212,6 +212,36 @@ export function useSolarSystemInit(
           cesiumVisibleDistanceAu: 0.0015,
           logLabel: 'MoonPlanet',
         });
+      } else if (bodyKey === 'mars') {
+        planet = new CesiumMappedPlanet({
+          body,
+          ...(celestialConfig && { config: celestialConfig }),
+          rotationSpeed: 0,
+          enableCesiumTiles: true,
+          cesiumConfig: {
+            cesiumContainerId: 'cesium-mars-canvas',
+            parentElement: container ?? undefined,
+            canvasResolutionScale: 0.85,
+            maximumScreenSpaceError: 3.5,
+            maximumNumberOfLoadedTiles: 350,
+            enableTerrain: false,
+            terrainProviderSource: 'none',
+            requestTerrainVertexNormals: false,
+            requestTerrainWaterMask: false,
+            terrainExaggeration: 1,
+            terrainExaggerationRelativeHeight: 0,
+            ellipsoid: 'mars',
+            bodyRadiusMeters: 3389500,
+            exposeViewerToWindow: false,
+            fallbackImageUrl: '/images/mars-fallback.jpg',
+            enableTileset: true,
+            tilesetIonAssetId: 3644333,
+            tilesetMaximumScreenSpaceError: 16,
+            ionAccessToken: process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN,
+          },
+          cesiumVisibleDistanceAu: 0.003,
+          logLabel: 'MarsPlanet',
+        });
       } else {
         planet = new Planet({
           body,
@@ -262,6 +292,12 @@ export function useSolarSystemInit(
         }
       }
 
+      if (bodyKey === 'mars') {
+        if ('setCesiumEnabled' in planet) {
+          (planet as any).setCesiumEnabled(!!props.cesiumEnabled);
+        }
+      }
+
       // 地球和月球：加载 fallback 瓦片作为 Three.js 贴图（替换已移除的高精贴图）
       if (bodyKey === 'earth') {
         const textureLoader = new THREE.TextureLoader();
@@ -271,6 +307,11 @@ export function useSolarSystemInit(
       } else if (bodyKey === 'moon') {
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load('/images/moon-fallback.jpg', (tex) => {
+          planet.applyTexture(tex, bodyKey);
+        });
+      } else if (bodyKey === 'mars') {
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load('/images/mars-fallback.jpg', (tex) => {
           planet.applyTexture(tex, bodyKey);
         });
       } else {
@@ -284,7 +325,7 @@ export function useSolarSystemInit(
       }
 
       // 地球和月球不显示经纬网格线
-      if (bodyKey === 'earth' || bodyKey === 'moon') {
+      if (bodyKey === 'earth' || bodyKey === 'moon' || bodyKey === 'mars') {
         planet.setGridVisible(false);
       }
 

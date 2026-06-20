@@ -135,6 +135,9 @@ export class CesiumAdapter {
     if (ellipsoid === 'moon') {
       return Cesium.Ellipsoid.MOON;
     }
+    if (ellipsoid === 'mars') {
+      return Cesium.Ellipsoid.MARS;
+    }
     if (ellipsoid && typeof ellipsoid === 'object') {
       return new Cesium.Ellipsoid(ellipsoid.x, ellipsoid.y, ellipsoid.z);
     }
@@ -233,6 +236,9 @@ export class CesiumAdapter {
     if (this.config.imageryProvider) {
       this.viewer.imageryLayers.removeAll();
       this.viewer.imageryLayers.addImageryProvider(this.config.imageryProvider as unknown as Cesium.ImageryProvider);
+    } else if (this.config.ellipsoid && this.config.ellipsoid !== 'wgs84') {
+      // 非地球椭球体：清除 Cesium 默认的 Bing Maps 地球影像，避免火星/月球显示地球纹理
+      this.viewer.imageryLayers.removeAll();
     }
     
     // 配置 TerrainProvider（如果提供）
@@ -267,6 +273,8 @@ export class CesiumAdapter {
     try {
       const fallbackProvider = new Cesium.SingleTileImageryProvider({
         url: fallbackUrl,
+        tileWidth: 256,
+        tileHeight: 256,
       });
       const fallbackLayer = this.viewer.imageryLayers.addImageryProvider(fallbackProvider);
       this.viewer.imageryLayers.lowerToBottom(fallbackLayer);
@@ -279,8 +287,17 @@ export class CesiumAdapter {
     this.viewer.scene.globe.show = true;
     this.viewer.scene.globe.depthTestAgainstTerrain = false;
     
-    // 禁用太阳光照：Cesium globe 始终透出，避免暗面呈现黑色
-    this.viewer.scene.globe.enableLighting = false;
+    // 启用 Cesium 内建 Lambert 漫反射光照（shader level，零额外性能开销）
+    // 基于 Cesium 时钟的太阳方向自动计算昼夜分界线
+    this.viewer.scene.globe.enableLighting = true;
+    // 添加微量环境光，避免黑夜面完全不可见
+    this.viewer.scene.globe.nightFadeOutDistance = 1.0e7;
+
+    // 场景级光照：确保 3D Tiles 瓦片集（月球、火星）也收到方向光
+    // scene.light 默认为 SunLight，跟随时钟太阳方向
+    if (this.viewer.scene.light) {
+      this.viewer.scene.light.intensity = 1.2; // 略微增强，补偿无大气散射
+    }
     
     // 获取 Cesium 内部创建的 canvas
     this.cesiumCanvas = this.viewer.scene.canvas;
@@ -360,6 +377,11 @@ export class CesiumAdapter {
       .then((tileset) => {
         console.log('[CesiumAdapter] Tileset created successfully');
         this._tileset = tileset;
+
+        // 为 3D Tiles 添加 CustomShader：基于太阳方向的简易昼夜光照
+        // 纹理自身是预烘焙山影图（unlit），不响应场景光源，需要手动在片元着色器中加深暗面
+        tileset.customShader = this.createNightSideShader();
+
         this.viewer.scene.primitives.add(tileset);
         this.viewer.scene.globe.show = false;
         this.log('info', `[CesiumAdapter] 3D Tiles asset ${assetId} loaded`);
@@ -371,7 +393,52 @@ export class CesiumAdapter {
       });
   }
 
-  
+  /**
+   * 创建 3D Tiles Lambert 漫反射 CustomShader
+   *
+   * 3D Tiles（Cesium Moon/Mars）使用预烘焙山影纹理，默认 unlit 不响应场景光源。
+   * 此 shader 利用几何体法线与太阳方向的点积，重算漫反射光照，
+   * 使环形山、陨石坑等地形产生真实的光影立体感。GPU 开销极低。
+   */
+  private createNightSideShader(): Cesium.CustomShader {
+    return new Cesium.CustomShader({
+      mode: Cesium.CustomShaderMode.MODIFY_MATERIAL,
+      lightingModel: Cesium.LightingModel.UNLIT,
+      uniforms: {
+        u_sunDirectionWC: {
+          type: Cesium.UniformType.VEC3,
+          value: new Cesium.Cartesian3(1.0, 0.0, 0.0),
+        },
+      },
+      fragmentShaderText: `
+        void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material) {
+          vec3 normal = normalize(fsInput.attributes.normalMC);
+          float NdotL = dot(normal, u_sunDirectionWC);
+
+          // Lambert 漫反射：亮面增亮，暗面变暗
+          float ambient  = 0.12;
+          float diffuse  = max(NdotL, 0.0);
+          float lightFactor = ambient + 1.2 * diffuse;
+
+          material.diffuse.rgb *= lightFactor;
+          material.diffuse.rgb  = clamp(material.diffuse.rgb, 0.0, 1.0);
+        }
+      `,
+    });
+  }
+
+  /**
+   * 更新 3D Tiles 光照的太阳方向（世界坐标）
+   *
+   * @param x - 太阳方向 X 分量
+   * @param y - 太阳方向 Y 分量  
+   * @param z - 太阳方向 Z 分量
+   */
+  setSunDirection(x: number, y: number, z: number): void {
+    if (!this._tileset?.customShader) return;
+    this._tileset.customShader.setUniform('u_sunDirectionWC', new Cesium.Cartesian3(x, y, z));
+  }
+
   private setupEventListeners(): void {
     // 监听 WebGL Context Lost（使用 Cesium 的 canvas）
     this.boundHandleContextLost = this.handleContextLost.bind(this);

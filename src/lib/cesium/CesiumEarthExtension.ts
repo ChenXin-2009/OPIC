@@ -167,6 +167,13 @@ export class CesiumEarthExtension {
   getTileset(): any | null {
     return this.adapter.getTileset();
   }
+
+  /**
+   * 更新 3D Tiles 光照的太阳方向
+   */
+  setSunDirection(x: number, y: number, z: number): void {
+    this.adapter.setSunDirection(x, y, z);
+  }
   
   /**
    * 注册错误回调

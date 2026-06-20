@@ -89,6 +89,8 @@ export class CesiumMappedPlanet extends Planet {
       if (this.cesiumCanvasVisible) {
         this.cesiumExtension.setVisible(false);
         this.cesiumCanvasVisible = false;
+        // 距离过远时恢复 Three.js 纹理材质，避免显示黑色圆
+        this.restoreOriginalMaterial();
       }
       return;
     }
@@ -96,6 +98,8 @@ export class CesiumMappedPlanet extends Planet {
     if (!this.cesiumCanvasVisible) {
       this.cesiumExtension.setVisible(true);
       this.cesiumCanvasVisible = true;
+      // 回到可见距离内，切换为深度-only 材质以合成 Cesium 画面
+      this.applyDepthOnlyMaterial();
     }
 
     if (!this.cesiumNativeCameraMode) {
@@ -103,6 +107,23 @@ export class CesiumMappedPlanet extends Planet {
     }
 
     this.cesiumExtension.render();
+  }
+
+  override updateSunPosition(sunPosition: THREE.Vector3): void {
+    super.updateSunPosition(sunPosition);
+
+    // 更新 3D Tiles CustomShader 的太阳方向
+    // 太阳在原点 (0,0,0)，天体位置在 this.getMesh().position
+    const bodyPos = this.getMesh().position;
+    const sunDir = new THREE.Vector3(
+      -bodyPos.x,
+      -bodyPos.y,
+      -bodyPos.z
+    ).normalize();
+
+    if (this.cesiumExtension) {
+      this.cesiumExtension.setSunDirection(sunDir.x, sunDir.y, sunDir.z);
+    }
   }
 
   setCesiumNativeCameraMode(enabled: boolean): void {
@@ -200,6 +221,21 @@ export class CesiumMappedPlanet extends Planet {
     }
 
     super.dispose();
+  }
+
+  private restoreOriginalMaterial(): void {
+    const mesh = this.getMesh();
+    if (mesh instanceof THREE.Mesh && this.originalMaterial) {
+      mesh.material = this.originalMaterial;
+    }
+  }
+
+  private applyDepthOnlyMaterial(): void {
+    if (!this.depthOnlyMaterial) return;
+    const mesh = this.getMesh();
+    if (mesh instanceof THREE.Mesh) {
+      mesh.material = this.depthOnlyMaterial;
+    }
   }
 
   private fallbackToPlanetRendering(): void {

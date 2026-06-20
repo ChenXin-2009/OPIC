@@ -31,7 +31,7 @@ export function useSolarSystemAnimation(
   callbacks: SceneCallbacks
 ) {
   const animateRef = useRef<(() => void) | null>(null);
-  const activeCesiumBodyRef = useRef<'earth' | 'moon' | null>(null);
+  const activeCesiumBodyRef = useRef<'earth' | 'moon' | 'mars' | null>(null);
 
   const stopAnimation = useCallback(() => {
     if (refs.animationFrameRef.current !== null) {
@@ -300,6 +300,7 @@ export function useSolarSystemAnimation(
 
     const earthBody = currentBodies.find((b: any) => b.name.toLowerCase() === 'earth');
     const moonBody = currentBodies.find((b: any) => b.name.toLowerCase() === 'moon');
+    const marsBody = currentBodies.find((b: any) => b.name.toLowerCase() === 'mars');
 
     if (earthBody) {
       const earthPos = new THREE.Vector3(earthBody.x, earthBody.y, earthBody.z);
@@ -312,11 +313,19 @@ export function useSolarSystemAnimation(
         moonPos = new THREE.Vector3(moonBody.x, moonBody.y, moonBody.z);
         distToMoon = cameraPos.distanceTo(moonPos);
       }
+      let marsPos: THREE.Vector3 | null = null;
+      let distToMars = Infinity;
+      if (marsBody) {
+        marsPos = new THREE.Vector3(marsBody.x, marsBody.y, marsBody.z);
+        distToMars = cameraPos.distanceTo(marsPos);
+      }
       callbacks.onDistanceToEarthChange?.(distToEarth);
 
       // 阈值定义
       const moonCamEntryAU = 0.000025; // 月球 CESIUM 相机模式进入（~3,737 km）
       const moonCamExitAU  = 0.000035; // 月球 CESIUM 相机模式退出（滞回）
+      const marsCamEntryAU = 0.00005;  // 火星 CESIUM 相机模式进入（~7,480 km）
+      const marsCamExitAU  = 0.00007;  // 火星 CESIUM 相机模式退出（滞回）
       const earthEntryAU = 0.000076;  // 地球 CESIUM 进入
       const earthExitAU  = 0.000096;  // 地球 CESIUM 退出（滞回）
 
@@ -332,26 +341,39 @@ export function useSolarSystemAnimation(
         }
       }
 
+      // Mars 是否需要 CESIUM 相机
+      let marsNeedsCam = false;
+      if (marsPos) {
+        if (activeBody === 'mars') {
+          marsNeedsCam = distToMars < marsCamExitAU;
+        } else {
+          marsNeedsCam = distToMars < marsCamEntryAU && distToMars < distToEarth;
+        }
+      }
+
       // Earth 是否需要 CESIUM（使用 SceneModeManager 滞回）
       const earthNeedsCam = distToEarth < (activeBody === 'earth' ? earthExitAU : earthEntryAU);
 
-      // CESIUM 模式激活条件：Earth 或 Moon 任意一者需要
-      const wantsCesium = earthNeedsCam || moonNeedsCam;
+      // CESIUM 模式激活条件：Earth、Moon 或 Mars 任意一者需要
+      const wantsCesium = earthNeedsCam || moonNeedsCam || marsNeedsCam;
 
       if (sceneManager) {
         const sceneModeManager = sceneManager.getSceneModeManager();
         sceneModeManager.getTransitionProgress();
         const earthPlanet = refs.planetsRef.current?.get('earth');
         const moonPlanet = refs.planetsRef.current?.get('moon');
+        const marsPlanet = refs.planetsRef.current?.get('mars');
         const cesiumActive = sceneModeManager.getCurrentMode() === SceneMode.CESIUM_DOMINANT;
 
-        // 确定目标天体
+        // 确定目标天体（优先级：earth > moon > mars）
         let newTargetBody: typeof activeBody = null;
         if (wantsCesium) {
           if (moonNeedsCam) {
             newTargetBody = 'moon';
           } else if (earthNeedsCam) {
             newTargetBody = 'earth';
+          } else if (marsNeedsCam) {
+            newTargetBody = 'mars';
           }
         }
 
@@ -360,6 +382,10 @@ export function useSolarSystemAnimation(
           if (activeBody === 'moon' && moonPlanet) {
             if ('setCesiumNativeCameraMode' in moonPlanet) (moonPlanet as any).setCesiumNativeCameraMode(false);
             if ('getCesiumExtension' in moonPlanet) (moonPlanet as any).getCesiumExtension()?.setNativeCameraEnabled(false);
+          }
+          if (activeBody === 'mars' && marsPlanet) {
+            if ('setCesiumNativeCameraMode' in marsPlanet) (marsPlanet as any).setCesiumNativeCameraMode(false);
+            if ('getCesiumExtension' in marsPlanet) (marsPlanet as any).getCesiumExtension()?.setNativeCameraEnabled(false);
           }
           if (activeBody === 'earth' && earthPlanet) {
             if ('setCesiumNativeCameraMode' in earthPlanet) (earthPlanet as any).setCesiumNativeCameraMode(false);
@@ -396,6 +422,13 @@ export function useSolarSystemAnimation(
                 (moonPlanet as any).getCesiumExtension()?.syncCamera(camera, moonPos);
                 (moonPlanet as any).getCesiumExtension()?.setNativeCameraEnabled(true);
               }
+            } else if (newTargetBody === 'mars' && marsPos) {
+              if (cameraController) cameraController.getControls().target.copy(marsPos);
+              if (marsPlanet && 'setCesiumNativeCameraMode' in marsPlanet) (marsPlanet as any).setCesiumNativeCameraMode(true);
+              if (marsPlanet && 'getCesiumExtension' in marsPlanet) {
+                (marsPlanet as any).getCesiumExtension()?.syncCamera(camera, marsPos);
+                (marsPlanet as any).getCesiumExtension()?.setNativeCameraEnabled(true);
+              }
             } else {
               if (cameraController) cameraController.getControls().target.copy(earthPos);
               if (earthPlanet && 'setCesiumNativeCameraMode' in earthPlanet) (earthPlanet as any).setCesiumNativeCameraMode(true);
@@ -414,6 +447,13 @@ export function useSolarSystemAnimation(
                 (moonPlanet as any).getCesiumExtension()?.syncCamera(camera, moonPos);
                 (moonPlanet as any).getCesiumExtension()?.setNativeCameraEnabled(true);
               }
+            } else if (newTargetBody === 'mars' && marsPos) {
+              if (cameraController) cameraController.getControls().target.copy(marsPos);
+              if (marsPlanet && 'setCesiumNativeCameraMode' in marsPlanet) (marsPlanet as any).setCesiumNativeCameraMode(true);
+              if (marsPlanet && 'getCesiumExtension' in marsPlanet) {
+                (marsPlanet as any).getCesiumExtension()?.syncCamera(camera, marsPos);
+                (marsPlanet as any).getCesiumExtension()?.setNativeCameraEnabled(true);
+              }
             } else {
               if (cameraController) cameraController.getControls().target.copy(earthPos);
               if (earthPlanet && 'setCesiumNativeCameraMode' in earthPlanet) (earthPlanet as any).setCesiumNativeCameraMode(true);
@@ -427,6 +467,8 @@ export function useSolarSystemAnimation(
           // 每帧从 CESIUM 原生相机同步回 Three.js
           if (activeBody === 'moon' && moonPos && moonPlanet && 'getCesiumExtension' in moonPlanet) {
             (moonPlanet as any).getCesiumExtension()?.syncCameraFromCesium(camera, moonPos);
+          } else if (activeBody === 'mars' && marsPos && marsPlanet && 'getCesiumExtension' in marsPlanet) {
+            (marsPlanet as any).getCesiumExtension()?.syncCameraFromCesium(camera, marsPos);
           } else if (earthPlanet && 'getCesiumExtension' in earthPlanet) {
             (earthPlanet as any).getCesiumExtension()?.syncCameraFromCesium(camera, earthPos);
           }

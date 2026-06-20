@@ -202,6 +202,7 @@ export default function SolarSystemCanvas3D({
       }
     }
     (planetsRef.current?.get('moon') as any)?.setCesiumEnabled?.(cesiumEnabled, cesiumEnabled ? cameraRef.current : undefined);
+    (planetsRef.current?.get('mars') as any)?.setCesiumEnabled?.(cesiumEnabled, cesiumEnabled ? cameraRef.current : undefined);
   }, [cesiumEnabled]);
 
   React.useEffect(() => {
