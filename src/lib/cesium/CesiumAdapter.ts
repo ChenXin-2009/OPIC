@@ -29,6 +29,15 @@ if (typeof window !== 'undefined') {
 }
 
 import * as Cesium from 'cesium';
+
+// 第一时间覆盖 Cesium 内置默认 token（user 259），
+// 必须在任何 CesiumAdapter / Viewer 构造之前执行，
+// 否则 Cesium3DTileset.fromIonAssetId 会缓存内置 token 导致 401。
+const _IonToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
+if (typeof window !== 'undefined' && _IonToken) {
+  Cesium.Ion.defaultAccessToken = _IonToken;
+}
+
 import { CameraSynchronizer } from './CameraSynchronizer';
 import {
   CesiumAdapterConfig,
