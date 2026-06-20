@@ -65,7 +65,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useModStore } from '@/lib/mod-manager/store';
+import { useModStore, type ModStateEntry } from '@/lib/mod-manager/store';
 import { getRegistry } from '@/lib/mod-manager/core/ModRegistry';
 import { getModLifecycle } from '@/lib/mod-manager/core/ModLifecycle';
 import { getDependencyResolver } from '@/lib/mod-manager/core/DependencyResolver';
@@ -76,13 +76,6 @@ import { getSatelliteAPI } from '@/lib/mod-manager/api/SatelliteAPI';
 import { getRenderAPI } from '@/lib/mod-manager/api/RenderAPI';
 import { getEventBus } from '@/lib/mod-manager/core/EventBus';
 import type { ModManifest, ModState, ModContext } from '@/lib/mod-manager/types';
-
-/**
- * MOD管理器Hook返回类型
- * 
- * 定义了useModManager返回的完整API接口。
- */
-import type { ModStateEntry } from '@/lib/mod-manager/store';
 
 export interface UseModManagerReturn {
   // ========== 状态数据 ==========

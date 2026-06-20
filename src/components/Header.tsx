@@ -261,10 +261,18 @@ function FloatingHeader({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       style={getFloatingContainerStyles(cfg, isHovered, isMobile)}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
       <Logo size={logoSize} />
     </div>

@@ -47,21 +47,36 @@ function generateFunctionName(modName) {
  */
 function scanModsDirectory() {
   const mods = [];
-  
-  const entries = fs.readdirSync(MODS_DIR, { withFileTypes: true });
+  const seen = new Set();
+
+  if (!fs.existsSync(MODS_DIR)) {
+    console.warn(`\n⚠️  MOD目录不存在: ${MODS_DIR}`);
+    return mods;
+  }
+
+  let entries;
+  try {
+    entries = fs.readdirSync(MODS_DIR, { withFileTypes: true });
+  } catch (err) {
+    console.error(`\n❌ 读取MOD目录失败: ${err.message}`);
+    return mods;
+  }
   
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
     
     const modPath = path.join(MODS_DIR, entry.name);
     
-    // 跳过特殊目录
     if (entry.name.startsWith('.') || entry.name === 'node_modules') {
       continue;
     }
     
-    // 检查是否是有效的MOD
     if (isValidMod(modPath)) {
+      if (seen.has(entry.name)) {
+        console.warn(`⚠️  重复MOD名称: ${entry.name}，已跳过`);
+        continue;
+      }
+      seen.add(entry.name);
       mods.push({
         name: entry.name,
         functionName: generateFunctionName(entry.name),
@@ -161,7 +176,12 @@ function main() {
   console.log('📝 生成注册表文件...');
   
   const content = generateRegistryContent(mods);
-  fs.writeFileSync(OUTPUT_FILE, content, 'utf-8');
+  try {
+    fs.writeFileSync(OUTPUT_FILE, content, 'utf-8');
+  } catch (err) {
+    console.error(`\n❌ 写入注册表文件失败: ${err.message}`);
+    process.exit(1);
+  }
   
   console.log(`✅ 注册表已生成: ${OUTPUT_FILE}`);
   console.log('\n已注册的MOD:');

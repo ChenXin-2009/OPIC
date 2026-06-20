@@ -94,7 +94,7 @@ describe('useEphemerisStore', () => {
 
   describe('启用/禁用天体', () => {
     it('应该能够启用天体', () => {
-      const { enableBody, bodies } = useEphemerisStore.getState();
+      const { enableBody } = useEphemerisStore.getState();
       
       enableBody('earth');
       

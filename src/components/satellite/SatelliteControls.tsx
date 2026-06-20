@@ -175,6 +175,7 @@ export function SatelliteControls({ lang = 'zh' }: SatelliteControlsProps) {
             placeholder={
               lang === 'zh' ? '名称或NORAD ID...' : 'Name or NORAD ID...'
             }
+            aria-label={lang === 'zh' ? '搜索卫星' : 'Search satellites'}
             className="w-full px-3 py-2 text-xs font-mono"
             style={{
               background: ARKNIGHTS_CONFIG.colors.darkLight,
@@ -182,7 +183,6 @@ export function SatelliteControls({ lang = 'zh' }: SatelliteControlsProps) {
               border: `1px solid ${ARKNIGHTS_CONFIG.colors.border}`,
               clipPath:
                 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)',
-              outline: 'none',
             }}
           />
         </div>

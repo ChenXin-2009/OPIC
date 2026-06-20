@@ -213,9 +213,30 @@ export default function TimeSlider({
   usePlaybackControl(isDragging || isAnimating, sliderPosition);
   useDragListeners(isDragging, handleDragMove, handleDragEnd);
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const step = 0.05;
+    let newPosition = sliderPosition;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      newPosition = Math.min(1, sliderPosition + step);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      newPosition = Math.max(0, sliderPosition - step);
+    }
+    if (newPosition !== sliderPosition) {
+      setSliderPosition(newPosition);
+    }
+  };
+
   return (
     <div
       ref={containerRef}
+      role="slider"
+      tabIndex={0}
+      aria-valuenow={Math.round(sliderPosition * 100)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={t('timeControl.speedSlider') ?? 'Time speed slider'}
       style={{
         width: `${width}px`,
         height: `${height}px`,
@@ -226,6 +247,7 @@ export default function TimeSlider({
       }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
+      onKeyDown={handleKeyDown}
     >
       <svg
         width={width}

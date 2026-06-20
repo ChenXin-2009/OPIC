@@ -140,6 +140,7 @@ export function SatelliteInfoPanel({ lang = 'zh' }: SatelliteInfoPanelProps) {
           </div>
           <button
             onClick={() => selectSatellite(null)}
+            aria-label={lang === 'zh' ? '关闭' : 'Close'}
             className="text-xs hover:opacity-70 transition-opacity"
             style={{ color: ARKNIGHTS_CONFIG.colors.textDim }}
           >

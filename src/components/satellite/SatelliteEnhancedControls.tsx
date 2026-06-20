@@ -123,6 +123,9 @@ export function SatelliteEnhancedControls({ lang = 'zh' }: SatelliteEnhancedCont
         className="flex items-center justify-between px-3 py-2.5 cursor-pointer"
         style={{ borderBottom: `1px solid ${C.border}` }}
         onClick={() => setCollapsed(!collapsed)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCollapsed(!collapsed); } }}
       >
         <div className="flex items-center gap-2">
           <div style={{ width: 3, height: 12, background: C.accent }} />
@@ -161,12 +164,12 @@ export function SatelliteEnhancedControls({ lang = 'zh' }: SatelliteEnhancedCont
               value={localSearch}
               onChange={e => setLocalSearch(e.target.value)}
               placeholder={lang === 'zh' ? '搜索名称或NORAD ID...' : 'Search name or NORAD ID...'}
+              aria-label={lang === 'zh' ? '搜索卫星' : 'Search satellites'}
               className="w-full px-2.5 py-1.5 text-xs font-mono"
               style={{
                 background: C.darkLight,
                 color: C.text,
                 border: `1px solid ${C.border}`,
-                outline: 'none',
                 clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)',
               }}
             />

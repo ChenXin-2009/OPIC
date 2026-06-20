@@ -230,7 +230,7 @@ export class PerformanceMonitor {
     this.marks.set(name, timestamp);
 
     if (typeof window !== 'undefined' && 'performance' in window) {
-      try { performance.mark(name); } catch (e) {}
+      try { performance.mark(name); } catch (_e) {}
     }
   }
 
@@ -247,7 +247,7 @@ export class PerformanceMonitor {
     this.measures.set(name, duration);
 
     if (typeof window !== 'undefined' && 'performance' in window) {
-      try { performance.measure(name, startMark, endMark); } catch (e) {}
+      try { performance.measure(name, startMark, endMark); } catch (_e) {}
     }
 
     return duration;
@@ -269,7 +269,7 @@ export class PerformanceMonitor {
       try {
         performance.clearMarks();
         performance.clearMeasures();
-      } catch (e) {}
+      } catch (_e) {}
     }
   }
 

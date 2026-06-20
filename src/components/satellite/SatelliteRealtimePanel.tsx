@@ -233,6 +233,7 @@ export function SatelliteRealtimePanel({ lang = 'zh' }: SatelliteRealtimePanelPr
         </div>
         <button
           onClick={() => selectSatellite(null)}
+          aria-label={lang === 'zh' ? '关闭' : 'Close'}
           className="text-xs ml-2 flex-shrink-0 hover:opacity-70 transition-opacity"
           style={{ color: C.dim }}
         >

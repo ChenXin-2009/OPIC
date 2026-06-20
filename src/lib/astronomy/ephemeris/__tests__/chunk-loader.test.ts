@@ -1,5 +1,4 @@
-import { PolynomialType } from '../types';
-import type { EphemerisChunk } from '../types';
+import { PolynomialType, type EphemerisChunk } from '../types';
 
 jest.mock('../loader', () => {
   const mockLoadChunk = jest.fn();

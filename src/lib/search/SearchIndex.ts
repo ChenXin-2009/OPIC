@@ -7,13 +7,13 @@
 
 import * as THREE from 'three';
 import type { CelestialBody, SolarSystemState } from '../state';
-import type { 
-  GalaxyCluster, 
-  GalaxyGroup, 
-  LocalGroupGalaxy, 
-  Supercluster
+import {
+  UniverseScale,
+  type GalaxyCluster,
+  type GalaxyGroup,
+  type LocalGroupGalaxy,
+  type Supercluster,
 } from '../types/universeTypes';
-import { UniverseScale } from '../types/universeTypes';
 import { planetNames } from '../astronomy/names';
 import { 
   getChineseName, 

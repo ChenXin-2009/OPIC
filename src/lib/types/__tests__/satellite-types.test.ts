@@ -7,11 +7,7 @@ import {
   ECIPosition,
   OrbitalElements,
   OrbitType,
-  PropagationResult,
-  SatelliteAPIResponse,
   SatelliteCategory,
-  SatelliteConfig,
-  SatelliteState,
   TLEData
 } from '../index';
 

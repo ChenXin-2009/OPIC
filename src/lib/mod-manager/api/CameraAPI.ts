@@ -5,8 +5,7 @@
  * 提供MOD对相机系统的访问和控制。
  */
 
-import type { CameraAPI as ICameraAPI, ViewOffset, CameraState } from '../types';
-import { ZOOM_BOUNDS } from '../types';
+import { ZOOM_BOUNDS, type CameraAPI as ICameraAPI, type CameraState, type ViewOffset } from '../types';
 import { getEventBus } from '../core/EventBus';
 
 /**

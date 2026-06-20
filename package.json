@@ -1,6 +1,6 @@
 {
   "name": "opic",
-  "version": "11.9.0",
+  "version": "11.9.1",
   "description": "A Web-based multi-scale universe visualization and astronomical data integration system - Open Integrated Cosmos",
   "private": true,
   "scripts": {
@@ -24,13 +24,15 @@
     "analyze": "cross-env ANALYZE=true next build",
     "analyze:detailed": "cross-env ANALYZE=true next build --debug",
     "perf:report": "cross-env ANALYZE=true next build",
-    "perf:lighthouse": "echo '请在生产环境运行: npx lighthouse <deployed-url> --view --preset=desktop'",
+    "perf:lighthouse": "npx tsx scripts/perf-lighthouse.ts",
+    "perf:baseline": "npm run build && npx tsx scripts/perf-baseline.ts",
     "prepare": "husky"
   },
   "dependencies": {
     "@cesium/engine": "^23.0.1",
     "@types/cesium": "^1.67.14",
     "@vercel/analytics": "^1.5.0",
+    "@vercel/og": "^0.11.1",
     "@vercel/speed-insights": "^1.2.0",
     "cesium": "^1.139.1",
     "csv-parse": "^6.1.0",
@@ -75,6 +77,7 @@
     "husky": "^9.1.7",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
+    "lighthouse": "^13.4.0",
     "lint-staged": "^17.0.7",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",

@@ -50,6 +50,7 @@
     "selectDate": "日付を選択",
     "accuracyWarning": "精度が低下する可能性があります",
     "paused": "一時停止中",
+    "speedSlider": "時間速度制御",
     "future": "未来",
     "past": "過去",
     "year": "年",

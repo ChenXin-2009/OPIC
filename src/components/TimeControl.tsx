@@ -347,6 +347,7 @@ const TimeControl = React.memo(() => {
               onClick={handleCalendarClick}
               className="p-1 rounded-md transition-all hover:bg-white/10"
               title={t('timeControl.selectDate')}
+              aria-label={t('timeControl.selectDate')}
               style={{ pointerEvents: 'auto', color: 'rgba(255, 255, 255, 0.6)' }}
             >
               <svg 

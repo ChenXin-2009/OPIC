@@ -122,9 +122,9 @@ export class ClientAPIValidator {
     try {
       // 在Node.js环境中，尝试动态导入
       // 注意：这在实际运行时可能需要根据项目结构调整
-      const module = await import(modulePath);
-      return module.default || module;
-    } catch (error) {
+      const mod = await import(modulePath);
+      return mod.default || mod;
+    } catch (_error) {
       // 如果无法动态导入，返回null
       return null;
     }
@@ -179,8 +179,8 @@ export class ClientAPIValidator {
    */
   private validateTypeDefinitions(modulePath: string): boolean {
     try {
-      const fs = require('fs');
-      const path = require('path');
+      const fs = require('fs') as typeof import('fs');
+      const path = require('path') as typeof import('path');
 
       // 将模块路径转换为文件系统路径
       const filePath = modulePath.replace('@/', 'src/');

@@ -20,8 +20,7 @@
  */
 
 import * as THREE from 'three';
-import { LIGHT_YEAR_TO_AU } from '../config/galaxyConfig';
-import { SCALE_VIEW_CONFIG } from '../config/galaxyConfig';
+import { LIGHT_YEAR_TO_AU, SCALE_VIEW_CONFIG } from '../config/galaxyConfig';
 
 // 网格显示的距离阈值（AU）
 const GRID_FADE_START = SCALE_VIEW_CONFIG.nearbyStarsShowStart * 0.5; // 15000 AU

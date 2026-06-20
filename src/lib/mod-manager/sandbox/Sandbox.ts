@@ -3,8 +3,7 @@
  * @description 沙箱实现（简化版，用于 API 代理）
  */
 
-import type { ResourceQuota, ResourceUsage } from './types';
-import { DEFAULT_QUOTA, QuotaExceededError } from './types';
+import { DEFAULT_QUOTA, QuotaExceededError, type ResourceQuota, type ResourceUsage } from './types';
 
 /**
  * 沙箱

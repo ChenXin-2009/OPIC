@@ -7,8 +7,7 @@ import * as THREE from 'three';
 import { globalTrafficManifest } from './manifest';
 import { TrafficRenderer } from './TrafficRenderer';
 import { DEMO_TRADE_ROUTES, DEMO_AIR_ROUTES, MAJOR_PORTS, MAJOR_AIRPORTS } from './demoData';
-import type { GlobalTrafficConfig } from './types';
-import { DEFAULT_CONFIG } from './types';
+import { DEFAULT_CONFIG, type GlobalTrafficConfig } from './types';
 
 export const globalTrafficHooks: ModLifecycleHooks = {
   onLoad: async (context: ModContext) => {

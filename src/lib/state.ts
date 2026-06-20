@@ -26,7 +26,7 @@ export type { ViewOffset, Language, SolarSystemState, CelestialBody } from './st
  * 在客户端挂载时自动加载初始天体位置。
  */
 export const useSolarSystemStore = create<SolarSystemState>()((...a) => {
-  const [set, get] = a;
+  const [set, _get] = a;
   const initialTime = new Date();
   const initialJD = dateToJulianDay(initialTime);
 

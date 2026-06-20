@@ -75,38 +75,37 @@ interface SatelliteMetadata {
   orbitType?: string;
 }
 
+const LOCAL_CACHE_PATH = path.join(__dirname, 'data', 'ucs-satellite-database.csv');
+
 // ============ 下载函数 ============
 
 /**
  * 从URL下载文件(支持多个备用源)
  */
-function downloadFile(urls: string[]): Promise<string> {
-  return new Promise(async (resolve, reject) => {
-    let lastError: Error | null = null;
-    
-    for (const url of urls) {
-      try {
-        console.log(`正在尝试: ${url}`);
-        const data = await downloadFromURL(url);
-        console.log(`下载完成: ${(data.length / 1024).toFixed(2)} KB`);
-        resolve(data);
-        return;
-      } catch (error) {
-        console.warn(`下载失败: ${error instanceof Error ? error.message : error}`);
-        lastError = error instanceof Error ? error : new Error(String(error));
-      }
+async function downloadFile(urls: string[]): Promise<string> {
+  let lastError: Error | null = null;
+  
+  for (const url of urls) {
+    try {
+      console.log(`正在尝试: ${url}`);
+      const data = await downloadFromURL(url);
+      console.log(`下载完成: ${(data.length / 1024).toFixed(2)} KB`);
+      return data;
+    } catch (error) {
+      console.warn(`下载失败: ${error instanceof Error ? error.message : error}`);
+      lastError = error instanceof Error ? error : new Error(String(error));
     }
-    
-    reject(lastError || new Error('所有数据源均不可用'));
-  });
+  }
+  
+  throw lastError || new Error('所有数据源均不可用');
 }
 
 /**
- * 从单个URL下载
+ * 从单个URL下载（带超时控制）
  */
-function downloadFromURL(url: string): Promise<string> {
+function downloadFromURL(url: string, timeoutMs = 30000): Promise<string> {
   return new Promise((resolve, reject) => {
-    https.get(url, (response) => {
+    const req = https.get(url, (response) => {
       if (response.statusCode === 302 || response.statusCode === 301) {
         // 处理重定向
         const redirectUrl = response.headers.location;
@@ -130,7 +129,14 @@ function downloadFromURL(url: string): Promise<string> {
       response.on('end', () => {
         resolve(data);
       });
-    }).on('error', (error) => {
+    });
+
+    req.setTimeout(timeoutMs, () => {
+      req.destroy();
+      reject(new Error(`请求超时 (${timeoutMs}ms): ${url}`));
+    });
+
+    req.on('error', (error) => {
       reject(error);
     });
   });
@@ -206,30 +212,53 @@ function convertRecord(record: UCSRecord): SatelliteMetadata | null {
 async function main() {
   console.log('=== UCS卫星数据库自动下载和转换工具 ===\n');
 
-  // 1. 下载CSV文件
+  // 1. 下载CSV文件（或使用本地缓存）
   let csvContent: string;
   try {
     csvContent = await downloadFile(UCS_DATA_URLS);
   } catch (error) {
-    console.error('下载失败:', error);
-    console.error('\n备选方案: 手动下载UCS数据库');
-    console.error('1. 访问: https://www.ucs.org/resources/satellite-database');
-    console.error('2. 下载CSV文件');
-    console.error('3. 保存到: scripts/data/ucs-satellite-database.csv');
-    console.error('4. 重新运行此脚本');
-    process.exit(1);
+    console.warn('网络下载失败，尝试本地缓存...');
+    if (fs.existsSync(LOCAL_CACHE_PATH)) {
+      console.log(`使用本地缓存: ${LOCAL_CACHE_PATH}`);
+      csvContent = fs.readFileSync(LOCAL_CACHE_PATH, 'utf-8');
+    } else {
+      console.error('下载失败且无本地缓存:', error);
+      console.error('\n备选方案: 手动下载UCS数据库');
+      console.error('1. 访问: https://www.ucs.org/resources/satellite-database');
+      console.error('2. 下载CSV文件');
+      console.error(`3. 保存到: ${LOCAL_CACHE_PATH}`);
+      console.error('4. 重新运行此脚本');
+      process.exit(1);
+    }
   }
+
+  // 保存本地缓存供离线使用
+  const cacheDir = path.dirname(LOCAL_CACHE_PATH);
+  if (!fs.existsSync(cacheDir)) {
+    fs.mkdirSync(cacheDir, { recursive: true });
+  }
+  fs.writeFileSync(LOCAL_CACHE_PATH, csvContent, 'utf-8');
 
   console.log('\n开始解析数据...');
 
-  // 2. 解析CSV
+  // 2. 解析CSV（自动检测分隔符）
+  const detectDelimiter = (content: string): string => {
+    const firstLine = content.split('\n')[0];
+    const tabCount = (firstLine.match(/\t/g) || []).length;
+    const commaCount = (firstLine.match(/,/g) || []).length;
+    return tabCount > commaCount ? '\t' : ',';
+  };
+
+  const delimiter = detectDelimiter(csvContent);
+  console.log(`检测到分隔符: ${delimiter === '\t' ? '制表符(TAB)' : '逗号(,)'}`);
   let records: UCSRecord[];
   try {
     records = parse(csvContent, {
       columns: true,
       skip_empty_lines: true,
       trim: true,
-      delimiter: '\t', // UCS使用制表符分隔
+      delimiter,
+      bom: true, // 处理BOM头
     });
     console.log(`解析成功: ${records.length} 条记录\n`);
   } catch (error) {

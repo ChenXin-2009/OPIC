@@ -3,8 +3,7 @@
  * @description 配置 Schema 解析器
  */
 
-import type { JSONSchema } from './types';
-import { SchemaParseError } from './types';
+import { SchemaParseError, type JSONSchema } from './types';
 
 /**
  * 配置 Schema 解析器

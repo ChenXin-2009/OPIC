@@ -181,9 +181,9 @@ export class ModDiscovery {
     try {
       // 使用动态require.context来发现所有MOD
       // 这需要Webpack在构建时处理
-      // @ts-ignore - require.context是Webpack特性
+      // @ts-expect-error - require.context是Webpack特性
       if (typeof require !== 'undefined' && require.context) {
-        // @ts-ignore
+        // @ts-expect-error - require.context是Webpack特性
         const modsContext = require.context('@/lib/mods', true, /^\.\/[^/]+\/index\.ts$/);
         
         modsContext.keys().forEach((key: string) => {

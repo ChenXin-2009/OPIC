@@ -70,6 +70,14 @@ const metadataZh: Metadata = {
     title: 'OPIC — Open Integrated Cosmos',
     description: '一个基于 Web 的多尺度宇宙可视化与天文数据集成系统，探索从太阳系到可观测宇宙',
     siteName: 'OPIC',
+    images: [
+      {
+        url: '/opengraph-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'OPIC 宇宙可视化',
+      },
+    ],
   },
 };
 
@@ -96,18 +104,42 @@ const metadataEn: Metadata = {
     title: 'OPIC — Open Integrated Cosmos',
     description: 'A web-based multi-scale universe visualization system, exploring from the solar system to the observable universe',
     siteName: 'OPIC',
+    images: [
+      {
+        url: '/opengraph-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'OPIC Universe Visualization',
+      },
+    ],
   },
 };
 
 export async function generateMetadata(): Promise<Metadata> {
   const lang = await detectLanguage();
   const baseMetadata = lang === 'zh' ? metadataZh : metadataEn;
+  const siteUrl = 'https://opic.cxin.tech';
+  
+  const openGraphImage = {
+    url: '/opengraph-image.png',
+    width: 1200,
+    height: 630,
+    alt: lang === 'zh' ? 'OPIC 宇宙可视化' : 'OPIC Universe Visualization',
+  };
   
   return {
+    metadataBase: new URL(siteUrl),
     ...baseMetadata,
+    applicationName: 'OPIC',
     authors: [{ name: "ChenXin-2009", url: "https://github.com/ChenXin-2009" }],
     creator: "ChenXin-2009",
     publisher: "ChenXin-2009",
+    alternates: {
+      languages: {
+        'zh-CN': `${siteUrl}/zh`,
+        'en-US': `${siteUrl}/en`,
+      },
+    },
     robots: {
       index: true,
       follow: true,
@@ -125,6 +157,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description: lang === 'zh' 
         ? '一个基于 Web 的多尺度宇宙可视化与天文数据集成系统'
         : 'A web-based multi-scale universe visualization system',
+      images: ['/opengraph-image.png'],
     },
     icons: {
       icon: [
@@ -132,7 +165,12 @@ export async function generateMetadata(): Promise<Metadata> {
         { url: "/favicon.svg?v=2", type: "image/svg+xml" },
       ],
       shortcut: "/favicon.png?v=2",
-      apple: "/favicon.png?v=2",
+      apple: [
+        { url: "/apple-touch-icon.png?v=2", sizes: "180x180", type: "image/png" },
+      ],
+    },
+    other: {
+      'theme-color': '#000000',
     },
     viewport: {
       width: 'device-width',

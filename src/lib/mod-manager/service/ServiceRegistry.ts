@@ -5,17 +5,15 @@
 
 import type { PermissionSystem } from '../permission/PermissionSystem';
 import type { ModRegistry } from '../core/ModRegistry';
-import type {
-  ServiceDescriptor,
-  ServiceRegistrationOptions,
-  ServiceCallLog,
-  ServiceStats,
-} from './types';
 import {
-  ServiceNotFoundError,
+  CircularDependencyError,
   ServiceAccessDeniedError,
   ServiceIdConflictError,
-  CircularDependencyError,
+  ServiceNotFoundError,
+  type ServiceCallLog,
+  type ServiceDescriptor,
+  type ServiceRegistrationOptions,
+  type ServiceStats,
 } from './types';
 
 /**

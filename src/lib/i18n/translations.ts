@@ -22,6 +22,11 @@ export const translations = {
     hide: { zh: '隐藏', en: 'HIDE' },
     refresh: { zh: '刷新数据', en: 'REFRESH DATA' },
     refreshing: { zh: '刷新中...', en: 'REFRESHING...' },
+    close: { zh: '关闭', en: 'Close' },
+    cancel: { zh: '取消', en: 'Cancel' },
+    confirm: { zh: '确认', en: 'Confirm' },
+    save: { zh: '保存', en: 'Save' },
+    delete: { zh: '删除', en: 'Delete' },
   },
 
   // 设置菜单
@@ -47,6 +52,7 @@ export const translations = {
     selectDate: { zh: '选择日期', en: 'Select date' },
     accuracyWarning: { zh: '精度可能降低', en: 'Accuracy may be reduced' },
     paused: { zh: '暂停', en: 'Paused' },
+    speedSlider: { zh: '时间速度控制', en: 'Time speed slider' },
     future: { zh: '未来', en: '' },
     past: { zh: '过去', en: '' },
     // 时间单位
@@ -143,6 +149,33 @@ export const translations = {
     switch: { zh: '切换语言', en: 'Switch language' },
     chinese: { zh: '中文', en: 'Chinese' },
     english: { zh: '英文', en: 'English' },
+    spanish: { zh: '西班牙语', en: 'Spanish' },
+    french: { zh: '法语', en: 'French' },
+    german: { zh: '德语', en: 'German' },
+    japanese: { zh: '日语', en: 'Japanese' },
+  },
+
+  // 错误提示
+  errors: {
+    initializationFailed: { zh: '初始化失败', en: 'Initialization Failed' },
+    networkError: { zh: '网络错误', en: 'Network Error' },
+    loadingFailed: { zh: '加载失败', en: 'Loading Failed' },
+    unexpectedError: { zh: '发生意外错误', en: 'Unexpected Error Occurred' },
+  },
+
+  // 加载状态
+  loading: {
+    assets: { zh: '资源加载', en: 'Asset Loading' },
+    data: { zh: '数据初始化', en: 'Data Initialization' },
+    rendering: { zh: '渲染准备', en: 'Rendering Preparation' },
+    complete: { zh: '初始化完成', en: 'Initialization Complete' },
+    timeoutWarning: { zh: '初始化时间较长', en: 'Initialization is taking longer than expected' },
+    suggestions: {
+      checkNetwork: { zh: '检查网络连接', en: 'Check your network connection' },
+      refresh: { zh: '刷新页面重试', en: 'Try refreshing the page' },
+      clearCache: { zh: '清除浏览器缓存', en: 'Clear browser cache' },
+      checkConsole: { zh: '检查浏览器控制台错误信息', en: 'Check browser console for errors' },
+    },
   },
 } as const;
 

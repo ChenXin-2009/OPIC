@@ -6,8 +6,8 @@ import {
   applyTheme,
   watchSystemTheme,
   defaultThemeConfig,
+  type ThemeConfig,
 } from '../theme';
-import type { ThemeConfig } from '../theme';
 
 describe('getSystemTheme', () => {
   it('should return "light" when matchMedia says light', () => {

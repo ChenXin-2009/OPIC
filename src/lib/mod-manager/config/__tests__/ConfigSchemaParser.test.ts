@@ -1,6 +1,5 @@
 import { ConfigSchemaParser } from '../ConfigSchemaParser';
-import type { JSONSchema } from '../types';
-import { SchemaParseError } from '../types';
+import { SchemaParseError, type JSONSchema } from '../types';
 
 describe('ConfigSchemaParser', () => {
   describe('parse', () => {

@@ -8,8 +8,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { DATA_SOURCES } from './dataSources';
 import { useLaunchData } from './useLaunchData';
-import { ORBIT_LABELS, STATUS_LABELS } from './types';
-import type { DataSourceId, LaunchEvent } from './types';
+import { ORBIT_LABELS, STATUS_LABELS, type DataSourceId, type LaunchEvent } from './types';
 import type { LaunchRenderer, LaunchPoint } from '@/lib/mods/space-launches/LaunchRenderer';
 import { useSolarSystemStore } from '@/lib/state';
 

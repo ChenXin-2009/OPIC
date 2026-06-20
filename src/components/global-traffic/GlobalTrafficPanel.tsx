@@ -10,8 +10,7 @@ import { TRAFFIC_DATA_SOURCES, CATEGORY_LABELS } from '@/lib/mods/global-traffic
 import { useTrafficData } from '@/lib/mods/global-traffic/useTrafficData';
 import { TrafficRenderer } from '@/lib/mods/global-traffic/TrafficRenderer';
 import { DEMO_TRADE_ROUTES, DEMO_AIR_ROUTES, MAJOR_PORTS, MAJOR_AIRPORTS } from '@/lib/mods/global-traffic/demoData';
-import type { DataSourceId, GlobalTrafficConfig } from '@/lib/mods/global-traffic/types';
-import { DEFAULT_CONFIG } from '@/lib/mods/global-traffic/types';
+import { DEFAULT_CONFIG, type DataSourceId, type GlobalTrafficConfig } from '@/lib/mods/global-traffic/types';
 
 /** 面板属性：渲染器、语言、配置回调、窗口模式等 */
 interface GlobalTrafficPanelProps {

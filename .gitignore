@@ -86,3 +86,6 @@ desktop.ini
 
 # mimocode
 .mimocode/
+
+# 测试网站（独立于项目代码）
+/website_test/

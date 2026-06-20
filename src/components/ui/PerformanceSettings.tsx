@@ -93,6 +93,7 @@ export function PerformanceSettingsPanel({ settings, onUpdate, onClose }: Perfor
         </span>
         <button
           onClick={onClose}
+          aria-label="关闭"
           style={{
             background: 'none', border: 'none', color: '#888',
             cursor: 'pointer', fontSize: '16px', padding: '0 4px',
@@ -150,10 +151,11 @@ export function PerformanceSettingsPanel({ settings, onUpdate, onClose }: Perfor
 
       {/* 标签密度 */}
       <div className="px-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <div className="mb-2" style={{ color: '#888' }}>标签密度</div>
+        <label className="mb-2" style={{ color: '#888', display: 'block' }}>标签密度</label>
         <select
           value={settings.labelDensity}
           onChange={(e) => onUpdate({ labelDensity: e.target.value as PerfSettings['labelDensity'] })}
+          aria-label="标签密度"
           style={{
             width: '100%',
             padding: '6px 8px',
@@ -162,7 +164,6 @@ export function PerformanceSettingsPanel({ settings, onUpdate, onClose }: Perfor
             backgroundColor: 'rgba(0,0,0,0.3)',
             color: '#ccc',
             fontSize: '11px',
-            outline: 'none',
           }}
         >
           <option value="all">全部显示</option>
@@ -173,10 +174,11 @@ export function PerformanceSettingsPanel({ settings, onUpdate, onClose }: Perfor
 
       {/* 纹理分辨率 */}
       <div className="px-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <div className="mb-2" style={{ color: '#888' }}>纹理分辨率</div>
+        <label className="mb-2" style={{ color: '#888', display: 'block' }}>纹理分辨率</label>
         <select
           value={settings.textureResolution}
           onChange={(e) => onUpdate({ textureResolution: e.target.value as PerfSettings['textureResolution'] })}
+          aria-label="纹理分辨率"
           style={{
             width: '100%',
             padding: '6px 8px',
@@ -185,7 +187,6 @@ export function PerformanceSettingsPanel({ settings, onUpdate, onClose }: Perfor
             backgroundColor: 'rgba(0,0,0,0.3)',
             color: '#ccc',
             fontSize: '11px',
-            outline: 'none',
           }}
         >
           <option value="full">完整</option>
@@ -195,7 +196,7 @@ export function PerformanceSettingsPanel({ settings, onUpdate, onClose }: Perfor
       </div>
 
       {/* 提示 */}
-      <div className="px-3 py-2 text-center" style={{ color: '#555', fontSize: '10px' }}>
+      <div className="px-3 py-2 text-center" style={{ color: '#999', fontSize: '10px' }}>
         设置自动保存到本地浏览器
       </div>
     </div>
@@ -217,10 +218,11 @@ function ToggleRow({
     <div className="flex items-center justify-between">
       <div>
         <div style={{ color: '#ccc' }}>{label}</div>
-        <div style={{ color: '#666', fontSize: '10px' }}>{description}</div>
+        <div style={{ color: '#999', fontSize: '10px' }}>{description}</div>
       </div>
       <button
         onClick={() => onChange(!enabled)}
+        aria-label={label}
         style={{
           width: '36px',
           height: '20px',

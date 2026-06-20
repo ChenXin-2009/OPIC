@@ -11,8 +11,7 @@
 import * as THREE from 'three';
 import { SatelliteRenderer } from '../src/lib/3d/SatelliteRenderer';
 import { SGP4Calculator } from '../src/lib/satellite/sgp4Calculator';
-import type { SatelliteState } from '../src/lib/types/satellite';
-import { OrbitType, SatelliteCategory } from '../src/lib/types/satellite';
+import { OrbitType, SatelliteCategory, type SatelliteState } from '../src/lib/types/satellite';
 
 // Mock SceneManager
 const createMockSceneManager = () => {

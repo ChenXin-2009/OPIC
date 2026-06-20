@@ -1,7 +1,5 @@
 import { PolynomialEvaluator } from '../polynomial-evaluator';
-import { PolynomialType } from '../types';
-import type { ChebyshevSegment, HermiteSegment, PolynomialSegment } from '../types';
-import { Vector3 } from '../types';
+import { PolynomialType, Vector3, type ChebyshevSegment, type HermiteSegment, type PolynomialSegment } from '../types';
 
 describe('PolynomialEvaluator', () => {
   const evaluator = new PolynomialEvaluator();

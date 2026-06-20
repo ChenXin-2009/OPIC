@@ -5,7 +5,7 @@ let mockNow = 0;
 beforeEach(() => {
   mockNow = 1000;
   jest.spyOn(performance, 'now').mockImplementation(() => mockNow);
-  (global as any).requestAnimationFrame = jest.fn((cb: FrameRequestCallback) => {
+  (global as any).requestAnimationFrame = jest.fn((_cb: FrameRequestCallback) => {
     return 1;
   });
   (global as any).cancelAnimationFrame = jest.fn();

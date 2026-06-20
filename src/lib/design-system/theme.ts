@@ -4,10 +4,8 @@
  * 提供主题切换和主题相关的工具函数
  */
 
-import type { Theme } from './tokens';
-import { designTokens } from './tokens';
-export type { Theme } from './tokens';
-export { designTokens } from './tokens';
+import { designTokens, type Theme } from './tokens';
+export { designTokens, type Theme } from './tokens';
 
 /**
  * 主题配置接口

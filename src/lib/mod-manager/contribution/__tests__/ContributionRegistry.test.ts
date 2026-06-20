@@ -1,6 +1,5 @@
 import { ContributionRegistry } from '../ContributionRegistry';
-import { ContributionError } from '../types';
-import type { ContributionPoints } from '../types';
+import { ContributionError, type ContributionPoints } from '../types';
 
 function createMockRegistry() {
   return {

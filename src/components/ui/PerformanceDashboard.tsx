@@ -230,6 +230,7 @@ export function PerformanceDashboard() {
         </span>
         <button
           onClick={() => setVisible(false)}
+          aria-label="Close"
           style={{
             background: 'none',
             border: 'none',

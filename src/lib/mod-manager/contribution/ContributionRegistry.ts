@@ -5,16 +5,7 @@
 
 import type { ModRegistry } from '../core/ModRegistry';
 import type { EventBus } from '../core/EventBus';
-import type {
-  ContributionPoints,
-  DockIconContribution,
-  WindowContribution,
-  CommandContribution,
-  RegisteredDockIcon,
-  RegisteredWindow,
-  RegisteredCommand,
-} from './types';
-import { ContributionError } from './types';
+import { ContributionError, type ContributionPoints, type DockIconContribution, type WindowContribution, type CommandContribution, type RegisteredDockIcon, type RegisteredWindow, type RegisteredCommand } from './types';
 
 /**
  * 扩展点注册表

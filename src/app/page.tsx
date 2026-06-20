@@ -111,7 +111,7 @@ export default function SolarSystemPage() {
       style={{ 
         height: '100vh',
         // 使用 dvh 适配移动端动态视口
-        // @ts-ignore - dvh 是较新的 CSS 单位
+        // @ts-expect-error - dvh 是较新的 CSS 单位
         height: '100dvh',
       }}
     >

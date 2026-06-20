@@ -23,8 +23,8 @@ export {
 import {
   initializeAllBodiesCalculator as pureInitializeAllBodiesCalculator,
   getCelestialBodies as pureGetCelestialBodies,
+  type CelestialBody,
 } from './orbit';
-import type { CelestialBody } from './orbit';
 import { useEphemerisStore, LoadingStatus } from '@/lib/store/useEphemerisStore';
 
 export async function initializeAllBodiesCalculator(): Promise<void> {

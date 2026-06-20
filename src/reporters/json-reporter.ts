@@ -74,7 +74,7 @@ export class JSONReporter {
     try {
       JSON.parse(jsonContent);
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

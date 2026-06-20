@@ -3,9 +3,8 @@
  * @description MOD错误边界 - 捕获和处理MOD错误
  */
 
-import type { ModContext } from '../types';
+import { ERROR_THRESHOLD, type ModContext } from '../types';
 import { LifecycleError } from './ModError';
-import { ERROR_THRESHOLD } from '../types';
 
 /**
  * 错误恢复策略

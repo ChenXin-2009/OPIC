@@ -5,8 +5,7 @@
  * 提供MOD对时间系统的访问和控制。
  */
 
-import type { TimeAPI as ITimeAPI } from '../types';
-import { TIME_SPEED_BOUNDS } from '../types';
+import { TIME_SPEED_BOUNDS, type TimeAPI as ITimeAPI } from '../types';
 import { getEventBus } from '../core/EventBus';
 
 /**

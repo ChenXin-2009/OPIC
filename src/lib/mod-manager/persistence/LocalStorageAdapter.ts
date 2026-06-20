@@ -4,8 +4,7 @@
  */
 
 import type { StorageAdapter } from './StorageAdapter';
-import type { EnabledModsStorage, ModConfigStorage, ModStateStorage } from '../types';
-import { STORAGE_KEYS, STORAGE_VERSION } from '../types';
+import { STORAGE_KEYS, STORAGE_VERSION, type EnabledModsStorage, type ModConfigStorage, type ModStateStorage } from '../types';
 
 /**
  * localStorage存储适配器

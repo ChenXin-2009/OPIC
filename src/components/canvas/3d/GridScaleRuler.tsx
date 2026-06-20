@@ -20,7 +20,6 @@ export default function GridScaleRuler({ sceneManager }: GridScaleRulerProps) {
 
     // 使用节流更新（每 500ms）替代 requestAnimationFrame 轮询
     // 减少不必要的每秒 60 次调用
-    let intervalId: ReturnType<typeof setInterval>;
     const tick = () => {
       const info = sceneManager.getGridInfo();
       if (info && info.opacity > 0.01 && info.label) {
@@ -34,7 +33,7 @@ export default function GridScaleRuler({ sceneManager }: GridScaleRulerProps) {
     // 初始更新
     tick();
     // 节流更新 - 500ms 对于比例尺更新足够了
-    intervalId = setInterval(tick, 500);
+    const intervalId = setInterval(tick, 500);
 
     return () => clearInterval(intervalId);
   }, [sceneManager]);

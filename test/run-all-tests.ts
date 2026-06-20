@@ -23,7 +23,7 @@ tests.forEach(({ name, file }, index) => {
   try {
     execSync(`npx tsx ${file}`, { stdio: 'inherit' });
     console.log(`✓ ${name} 通过\n`);
-  } catch (error) {
+  } catch (_error) {
     console.log(`✗ ${name} 失败\n`);
     allPassed = false;
   }

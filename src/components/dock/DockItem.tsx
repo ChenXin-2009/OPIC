@@ -40,6 +40,7 @@ export function DockItem({
     <div className="relative flex flex-col items-center">
       {/* 图标容器 */}
       <motion.button
+        aria-label={item.label}
         className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg cursor-pointer overflow-hidden"
         style={{ backgroundColor: item.color }}
         onClick={handleClick}

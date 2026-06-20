@@ -3,8 +3,7 @@
  * @description 版本兼容性检查工具
  */
 
-import type { SemVer } from '../types';
-import { API_VERSION } from '../types';
+import { API_VERSION, type SemVer } from '../types';
 
 /**
  * 解析语义化版本字符串
