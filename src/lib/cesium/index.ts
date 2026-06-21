@@ -18,3 +18,6 @@ export {
   PERFORMANCE_OPTIMIZED_CONFIG, 
   HIGH_QUALITY_CONFIG 
 } from './defaultConfig';
+
+export { flyToEarthLocation } from './flyToLocation';
+export type { FlyToOptions } from './flyToLocation';

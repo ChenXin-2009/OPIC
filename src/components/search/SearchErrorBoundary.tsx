@@ -75,7 +75,7 @@ const ERROR_MESSAGES = {
  * @example
  * ```tsx
  * <SearchErrorBoundary lang="zh">
- *   <CelestialSearch />
+ *   <SearchWindow />
  * </SearchErrorBoundary>
  * ```
  */
@@ -126,7 +126,7 @@ export class SearchErrorBoundary extends Component<
       boundaryId: 'search-error-boundary',
       componentStack: errorInfo.componentStack,
       errorBoundary: true,
-      component: 'CelestialSearch',
+      component: 'SearchWindow',
     });
 
     // 调用可选的错误回调

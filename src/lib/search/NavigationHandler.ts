@@ -1,15 +1,3 @@
-/**
- * NavigationHandler.ts - 天体导航处理器
- * 
- * 负责处理搜索结果的导航逻辑，支持太阳系天体和宇宙尺度天体的平滑导航
- * 
- * 导航策略：
- * - 太阳系天体：使用 CameraController 的 focusOnTarget 方法
- * - 宇宙尺度天体：使用对应渲染器的聚焦方法（如果可用）
- * - 平滑相机过渡动画
- * - 更新 Store 中的 selectedPlanet 状态
- */
-
 import * as THREE from 'three';
 import { ensureError } from '@/lib/utils/errors';
 import type { SceneManager } from '../3d/SceneManager';
@@ -20,11 +8,6 @@ import type { IndexedCelestial } from './SearchIndex';
 import { UniverseScale } from '../types/universeTypes';
 import type { CelestialObject } from '../3d/FocusManager';
 
-/**
- * 导航处理器类
- * 
- * 协调相机控制器和场景管理器，实现平滑的天体导航
- */
 export class NavigationHandler {
   private sceneManager: SceneManager;
   private cameraController: CameraController;
@@ -51,18 +34,17 @@ export class NavigationHandler {
 
     const earthPlanet = this.sceneManager.getEarthPlanet();
     if (earthPlanet && 'setCesiumNativeCameraMode' in earthPlanet) {
-      earthPlanet.setCesiumNativeCameraMode(false);
+      (earthPlanet as any).setCesiumNativeCameraMode(false);
     }
     if (earthPlanet && 'getCesiumExtension' in earthPlanet) {
-      const cesiumExt = earthPlanet.getCesiumExtension();
+      const cesiumExt = (earthPlanet as any).getCesiumExtension();
       cesiumExt?.setNativeCameraEnabled?.(false);
     }
 
     const controls = this.cameraController.getControls();
     controls.enabled = true;
-    const controlsAny = controls as any;
-    controlsAny._sphericalDelta?.set?.(0, 0, 0);
-    controlsAny._panOffset?.set?.(0, 0, 0);
+    (controls as any)._sphericalDelta?.set?.(0, 0, 0);
+    (controls as any)._panOffset?.set?.(0, 0, 0);
     controls.update();
     this.cameraController.syncStateFromCamera();
 
@@ -71,17 +53,15 @@ export class NavigationHandler {
     renderer.domElement.style.zIndex = '1';
   }
 
-  /**
-   * 导航到指定天体
-   * @param result - 搜索结果（索引中的天体数据）
-   * @throws {Error} 当导航失败时抛出错误
-   */
   async navigateTo(result: IndexedCelestial): Promise<void> {
     try {
-      // 根据天体尺度选择导航策略
       switch (result.scale) {
         case UniverseScale.SolarSystem:
           this.navigateToSolarSystem(result);
+          break;
+
+        case UniverseScale.NearbyStars:
+          this.navigateToExoplanet(result);
           break;
 
         case UniverseScale.LocalGroup:
@@ -92,10 +72,9 @@ export class NavigationHandler {
           break;
 
         default:
-          throw new Error(`不支持的天体尺度: ${result.scale}`);
+          this.navigateToSolarSystem(result);
       }
 
-      // 更新 Store 状态
       this.store.selectPlanet(result.nameEn);
 
     } catch (error) {
@@ -105,31 +84,43 @@ export class NavigationHandler {
     }
   }
 
-  /**
-   * 导航到太阳系天体
-   * @param celestial - 天体数据
-   * @private
-   */
+  private navigateToExoplanet(celestial: IndexedCelestial): void {
+    const raDeg = celestial.metadata?.raDeg;
+    const decDeg = celestial.metadata?.decDeg;
+    const distancePc = celestial.metadata?.distancePc;
+    if (typeof raDeg !== 'number' || typeof decDeg !== 'number' || typeof distancePc !== 'number') {
+      throw new Error(`系外恒星缺少位置数据`);
+    }
+    const raRad = THREE.MathUtils.degToRad(raDeg);
+    const decRad = THREE.MathUtils.degToRad(decDeg);
+    const dist = distancePc * 206264.806247;
+    const x = dist * Math.cos(decRad) * Math.cos(raRad);
+    const y = dist * Math.cos(decRad) * Math.sin(raRad);
+    const z = dist * Math.sin(decRad);
+    const pos = new THREE.Vector3(x, y, z);
+
+    this.prepareDeepSpaceNavigation();
+    this.cameraController.focusOnTarget(pos, undefined, undefined, {
+      distance: dist * 0.15,
+    });
+  }
+
   private navigateToSolarSystem(celestial: IndexedCelestial): void {
-    // 从 Store 中获取天体的详细信息
     const body = this.store.celestialBodies.find(b => b.name === celestial.nameEn);
-    
+
     if (!body) {
       throw new Error(`未找到太阳系天体: ${celestial.nameEn}`);
     }
 
-    // 构建 CelestialObject 用于 focusOnTarget
     const celestialObject: CelestialObject = {
       name: body.name,
       radius: body.radius,
-      isSun: body.name === 'Sun', // 添加 isSun 字段
-      isSatellite: body.parent !== undefined && body.parent !== 'Sun', // 添加 isSatellite 字段
+      isSun: body.name === 'Sun',
+      isSatellite: body.parent !== undefined && body.parent !== 'Sun',
     };
 
-    // 获取天体的当前位置
     const targetPosition = new THREE.Vector3(body.x, body.y, body.z);
 
-    // 创建跟踪函数，用于动态跟踪天体位置
     const trackingTargetGetter = () => {
       const currentBody = this.store.celestialBodies.find(b => b.name === celestial.nameEn);
       if (currentBody) {
@@ -138,7 +129,6 @@ export class NavigationHandler {
       return targetPosition;
     };
 
-    // 使用 CameraController 的 focusOnTarget 方法
     this.cameraController.focusOnTarget(
       targetPosition,
       celestialObject,
@@ -146,15 +136,9 @@ export class NavigationHandler {
     );
   }
 
-  /**
-   * 导航到宇宙尺度天体
-   * @param celestial - 天体数据
-   * @private
-   */
   private navigateToUniverse(celestial: IndexedCelestial): void {
-    // 获取对应的渲染器
     let renderer: any = null;
-    
+
     switch (celestial.scale) {
       case UniverseScale.LocalGroup:
         renderer = this.sceneManager.getLocalGroupRenderer();
@@ -174,15 +158,11 @@ export class NavigationHandler {
       throw new Error(`未找到 ${celestial.scale} 尺度的渲染器`);
     }
 
-    // 使用 CameraController 的 focusOnTarget 方法进行导航
-    // 对于宇宙尺度天体，我们不提供 CelestialObject，让系统使用默认距离
     this.prepareDeepSpaceNavigation();
 
     const targetPosition = celestial.position.clone();
-    
-    // 根据天体类型和距离计算合适的观察距离
     const distance = this.calculateUniverseViewDistance(celestial);
-    
+
     this.cameraController.focusOnTarget(
       targetPosition,
       undefined,
@@ -191,17 +171,8 @@ export class NavigationHandler {
     );
   }
 
-  /**
-   * 计算宇宙尺度天体的观察距离
-   * @param celestial - 天体数据
-   * @returns 观察距离（AU）
-   * @private
-   */
   private calculateUniverseViewDistance(celestial: IndexedCelestial): number {
-    // 基础距离倍数
     const baseMultiplier = 2.5;
-    
-    // 根据天体类型调整距离
     let typeMultiplier = 1.0;
     switch (celestial.type) {
       case 'galaxy':
@@ -218,20 +189,16 @@ export class NavigationHandler {
         break;
     }
 
-    // 如果有半径信息，使用半径计算距离
     if (celestial.metadata?.radius) {
       const radius = celestial.metadata.radius;
-      // 将 Mpc 转换为 AU（假设 radius 是 Mpc）
       const MEGAPARSEC_TO_AU = 206264806.247;
       return radius * MEGAPARSEC_TO_AU * baseMultiplier * typeMultiplier;
     }
 
-    // 如果有距离信息，使用距离的一定比例
     if (celestial.distance) {
       return celestial.distance * 0.1 * typeMultiplier;
     }
 
-    // 默认距离
     return 1000 * typeMultiplier;
   }
 }

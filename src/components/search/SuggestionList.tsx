@@ -40,24 +40,27 @@ const ARKNIGHTS_COLORS = {
 const CELESTIAL_TYPE_COLORS: Record<CelestialType, string> = {
   sun: '#ffaa00',
   planet: '#4488ff',
-  satellite: '#88ccff',
-  galaxy: '#88ccff',
+  moon: '#88ccff',
+  satellite: '#66dd88',
+  exoplanet: '#ff66aa',
+  galaxy: '#aa88ff',
   group: '#ffaa88',
   cluster: '#ffcc66',
   supercluster: '#ff88cc',
+  place: '#44ddb8',
 };
 
-/**
- * 天体类型显示名称（中英文）
- */
 const CELESTIAL_TYPE_NAMES: Record<CelestialType, { zh: string; en: string }> = {
   sun: { zh: '恒星', en: 'Star' },
   planet: { zh: '行星', en: 'Planet' },
-  satellite: { zh: '卫星', en: 'Satellite' },
+  moon: { zh: '卫星', en: 'Moon' },
+  satellite: { zh: '人造卫星', en: 'Satellite' },
+  exoplanet: { zh: '系外行星', en: 'Exoplanet' },
   galaxy: { zh: '星系', en: 'Galaxy' },
   group: { zh: '星系群', en: 'Group' },
   cluster: { zh: '星系团', en: 'Cluster' },
   supercluster: { zh: '超星系团', en: 'Supercluster' },
+  place: { zh: '地点', en: 'Place' },
 };
 
 // ==================== 接口定义 ====================

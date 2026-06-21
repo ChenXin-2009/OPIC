@@ -124,9 +124,11 @@ describe('SearchEngine', () => {
       expect(result).toHaveProperty('relevance');
     });
 
-    it('should include position as Vector3', () => {
+    it('should include position as object with x,y,z', () => {
       const results = engine.search('Earth');
-      expect(results[0].position).toBeInstanceOf(THREE.Vector3);
+      expect(results[0].position).toHaveProperty('x');
+      expect(results[0].position).toHaveProperty('y');
+      expect(results[0].position).toHaveProperty('z');
     });
 
     it('should have name field set (nameZh preferred over nameEn)', () => {

@@ -46,6 +46,10 @@ export interface SearchBoxProps {
   placeholder: string;
   /** 是否处于聚焦状态 */
   isFocused: boolean;
+  /** 外部 input ref (optional) */
+  inputRef?: React.RefObject<HTMLInputElement | null>;
+  /** 键盘事件回调 */
+  onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
 // ==================== SearchBox 组件 ====================
@@ -74,8 +78,11 @@ const SearchBox = memo(function SearchBox({
   onClear,
   placeholder,
   isFocused,
+  inputRef: externalRef,
+  onKeyDown,
 }: SearchBoxProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const internalRef = useRef<HTMLInputElement>(null);
+  const inputRef = externalRef || internalRef;
 
   // 处理输入变化
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,7 +101,7 @@ const SearchBox = memo(function SearchBox({
     if (isFocused && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isFocused]);
+  }, [isFocused, inputRef]);
 
   return (
     <div
@@ -166,6 +173,7 @@ const SearchBox = memo(function SearchBox({
           onChange={handleChange}
           onFocus={onFocus}
           onBlur={onBlur}
+          onKeyDown={onKeyDown}
           placeholder={placeholder}
           aria-label={placeholder}
           className="flex-1 bg-transparent outline-none text-sm"

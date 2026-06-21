@@ -391,6 +391,9 @@ export function useSolarSystemAnimation(
       // CESIUM 模式激活条件：Earth、Moon 或 Mars 任意一者需要
       const wantsCesium = earthNeedsCam || moonNeedsCam || marsNeedsCam;
 
+      // Search navigation override: force Earth Cesium mode when flying to a place
+      const cesiumOverride = !!(window as any).__cesiumModeOverride;
+
       if (sceneManager) {
         const sceneModeManager = sceneManager.getSceneModeManager();
         sceneModeManager.getTransitionProgress();
@@ -409,6 +412,11 @@ export function useSolarSystemAnimation(
           } else if (marsNeedsCam) {
             newTargetBody = 'mars';
           }
+        }
+
+        // If search navigation override is active, force Earth Cesium mode
+        if (cesiumOverride) {
+          newTargetBody = 'earth';
         }
 
         const modeChanged = wantsCesium !== cesiumActive;

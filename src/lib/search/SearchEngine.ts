@@ -1,126 +1,119 @@
-/**
- * SearchEngine.ts - 天体搜索引擎
- * 
- * 使用 Fuse.js 进行模糊匹配搜索，支持中英文双语搜索
- * 实现结果排序（太阳系天体优先）和数量限制
- */
-
 import Fuse, { IFuseOptions } from 'fuse.js';
-import type { CelestialType, IndexedCelestial, SearchIndex } from './SearchIndex';
-import { UniverseScale } from '../types/universeTypes';
-import * as THREE from 'three';
+import type { IndexedCelestial, SearchIndex } from './SearchIndex';
+import type { SearchResult, SearchCategory } from './types';
+import { TYPE_CATEGORY_MAP } from './types';
 
-/**
- * 搜索结果接口
- */
-export interface SearchResult {
-  id: string;              // 唯一标识符
-  name: string;            // 天体名称（当前语言）
-  nameEn: string;          // 英文名称
-  nameZh: string;          // 中文名称
-  type: CelestialType;     // 天体类型
-  scale: UniverseScale;    // 宇宙尺度
-  position: THREE.Vector3; // 3D 位置
-  distance?: number;       // 距离（AU 或 Mpc）
-  relevance: number;       // 相关性评分（0-1，越小越相关）
-}
-
-/**
- * Fuse.js 配置选项
- */
 const FUSE_OPTIONS: IFuseOptions<IndexedCelestial> = {
   keys: [
     { name: 'nameEn', weight: 0.5 },
-    { name: 'nameZh', weight: 0.5 }
+    { name: 'nameZh', weight: 0.5 },
   ],
-  threshold: 0.4,        // 模糊匹配阈值（0-1，越小越严格）
-  distance: 100,         // 匹配距离
-  minMatchCharLength: 1, // 最小匹配字符数
-  includeScore: true,    // 包含相关性评分
+  threshold: 0.4,
+  distance: 100,
+  minMatchCharLength: 1,
+  includeScore: true,
 };
 
-/**
- * 天体类型优先级（用于排序）
- * 数值越小优先级越高
- */
-const TYPE_PRIORITY: Record<CelestialType, number> = {
+const TYPE_PRIORITY: Record<string, number> = {
   sun: 1,
   planet: 2,
+  moon: 3,
   satellite: 3,
-  galaxy: 4,
-  group: 5,
-  cluster: 6,
-  supercluster: 7,
+  exoplanet: 4,
+  galaxy: 5,
+  group: 6,
+  cluster: 7,
+  supercluster: 8,
 };
 
-/**
- * 天体搜索引擎类
- * 
- * 提供高效的模糊匹配搜索功能，支持中英文双语搜索
- * 自动按相关性和天体类型排序结果
- */
 export class SearchEngine {
   private index: SearchIndex;
   private fuse: Fuse<IndexedCelestial>;
 
-  /**
-   * 构造函数
-   * @param index - 搜索索引实例
-   */
   constructor(index: SearchIndex) {
     this.index = index;
     this.fuse = new Fuse(this.index.getAll(), FUSE_OPTIONS);
   }
 
-  /**
-   * 搜索天体
-   * @param query - 搜索查询字符串
-   * @param maxResults - 最大结果数量（默认 10）
-   * @returns 搜索结果数组，按相关性和类型排序
-   */
-  search(query: string, maxResults: number = 10): SearchResult[] {
-    // 空查询返回空结果
+  search(query: string, maxResults: number = 20, category?: SearchCategory): SearchResult[] {
     if (!query || query.trim().length === 0) {
       return [];
     }
 
-    // 使用 Fuse.js 进行模糊搜索
-    const fuseResults = this.fuse.search(query.trim());
+    let celestials: IndexedCelestial[];
 
-    // 转换为 SearchResult 格式
-    const results: SearchResult[] = fuseResults.map(result => ({
-      id: result.item.id,
-      name: result.item.nameZh || result.item.nameEn, // 优先使用中文名称
-      nameEn: result.item.nameEn,
-      nameZh: result.item.nameZh,
-      type: result.item.type,
-      scale: result.item.scale,
-      position: result.item.position,
-      distance: result.item.distance,
-      relevance: result.score ?? 0, // Fuse.js 评分（0-1，越小越相关）
+    const trimmed = query.trim().toLowerCase();
+
+    // Try exact match first
+    const exactResults = this.index.getAll().filter(c =>
+      c.nameEn.toLowerCase() === trimmed || c.nameZh.toLowerCase() === trimmed
+    );
+
+    if (exactResults.length > 0) {
+      celestials = exactResults;
+    } else {
+      const fuseResults = this.fuse.search(trimmed);
+      celestials = fuseResults.map(r => r.item);
+    }
+
+    // Convert to SearchResult
+    let results: SearchResult[] = celestials.map(c => ({
+      id: c.id,
+      name: c.nameZh || c.nameEn,
+      nameEn: c.nameEn,
+      nameZh: c.nameZh,
+      type: c.type,
+      category: TYPE_CATEGORY_MAP[c.type] || 'deep-space',
+      relevance: 0,
+      scale: c.scale,
+      position: c.position ? { x: c.position.x, y: c.position.y, z: c.position.z } : undefined,
+      distance: c.distance,
+      distanceUnit: String(c.scale) === 'solar-system' ? 'AU' : 'Mpc',
+      metadata: c.metadata,
     }));
 
-    // 排序：先按类型优先级，再按相关性评分
+    // Apply category filter
+    if (category && category !== 'all') {
+      results = results.filter(r => r.category === category);
+    }
+
+    // Sort: type priority then relevance
     results.sort((a, b) => {
-      const priorityDiff = TYPE_PRIORITY[a.type] - TYPE_PRIORITY[b.type];
-      if (priorityDiff !== 0) {
-        return priorityDiff;
-      }
-      // 相关性评分越小越好
+      const priorityDiff = (TYPE_PRIORITY[a.type] || 99) - (TYPE_PRIORITY[b.type] || 99);
+      if (priorityDiff !== 0) return priorityDiff;
       return a.relevance - b.relevance;
     });
 
-    // 限制结果数量
     return results.slice(0, maxResults);
   }
 
-  /**
-   * 更新搜索索引
-   * @param index - 新的搜索索引
-   */
+  searchByCategory(query: string, category: SearchCategory, maxResults: number = 10): SearchResult[] {
+    return this.search(query, maxResults, category);
+  }
+
+  getResultsByCategory(query: string, maxResults: number = 5): Record<SearchCategory, SearchResult[]> {
+    const categories: SearchCategory[] = ['solar-system', 'exoplanet', 'satellite', 'deep-space', 'places'];
+    const result: Record<SearchCategory, SearchResult[]> = {
+      'all': [],
+      'solar-system': [],
+      'exoplanet': [],
+      'satellite': [],
+      'deep-space': [],
+      'places': [],
+    };
+
+    for (const cat of categories) {
+      result[cat] = this.search(query, maxResults, cat);
+    }
+
+    result['all'] = this.search(query, maxResults * 4);
+    return result;
+  }
+
   updateIndex(index: SearchIndex): void {
     this.index = index;
-    // 重新创建 Fuse 实例
     this.fuse = new Fuse(this.index.getAll(), FUSE_OPTIONS);
   }
 }
+
+export type { SearchResult, SearchCategory } from './types';

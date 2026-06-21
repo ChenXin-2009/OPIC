@@ -27,6 +27,7 @@ import { DockWindowSync } from "@/components/DockWindowSync";
 // import { ModDockSync } from "@/components/ModDockSync"; // Unused - migrated to DockInitializer
 import { PerformanceInitializer } from "@/components/PerformanceInitializer";
 import { PerformanceDashboard } from "@/components/ui/PerformanceDashboard";
+import { SearchProvider } from "@/components/search/SearchProvider";
 
 // 使用系统字体作为fallback
 // const geistSans = Geist({
@@ -232,6 +233,9 @@ export default async function RootLayout({
         
         {/* Dock 和窗口同步 */}
         <DockWindowSync />
+
+        {/* 全局搜索初始化 */}
+        <SearchProvider />
         
         {/* MOD 和 Dock 同步 - 已迁移到新架构（DockInitializer） */}
         {/* <ModDockSync /> */}

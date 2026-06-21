@@ -90,24 +90,14 @@ export function DockInitializer() {
                   break;
 
                 case 'search':
-                  // 搜索窗口需要 sceneManager 和 cameraController
-                  if (sceneManager && cameraController) {
-                    openWindow({
-                      id: config.windowId,
-                      title: config.label,
-                      content: (
-                        <SearchWindow
-                          sceneManager={sceneManager}
-                          cameraController={cameraController}
-                        />
-                      ),
-                      defaultPosition: { x: 150, y: 100 },
-                      defaultSize: { width: 400, height: 600 },
-                      icon: config.icon,
-                    });
-                  } else {
-                    console.warn('SceneManager 或 CameraController 尚未初始化');
-                  }
+                  openWindow({
+                    id: config.windowId,
+                    title: config.label,
+                    content: <SearchWindow />,
+                    defaultPosition: { x: 150, y: 100 },
+                    defaultSize: { width: 500, height: 600 },
+                    icon: config.icon,
+                  });
                   break;
 
                 case 'ephemeris':
