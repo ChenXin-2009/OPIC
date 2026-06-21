@@ -169,18 +169,20 @@ export class CesiumAdapter {
     this.container.style.pointerEvents = 'none'; // 默认不拦截事件，只有 globe 区域才响应
     this.container.style.zIndex = '0'; // 地球层在最底层，Three.js canvas 叠在上面
     this.container.style.display = 'none'; // 默认隐藏，等待 setCesiumEnabled(true) 调用
-    
-    // 设置容器尺寸（CSS 尺寸，Cesium 需要这个来确定 canvas 大小）
-    const width = window.innerWidth * (this.config.canvasResolutionScale ?? 1.0);
-    const height = window.innerHeight * (this.config.canvasResolutionScale ?? 1.0);
-    this.container.style.width = `${width}px`;
-    this.container.style.height = `${height}px`;
-    
-    // 挂载到指定父容器（默认 document.body）
-    // 强烈建议传入 Three.js canvas 的父容器，确保在同一 stacking context 内
-    // 这样 z-index 才能正确工作，UI 元素不会被 Cesium canvas 遮挡
+    this.container.style.overflow = 'hidden'; // 防止渲染溢出
+
+    // 挂载到指定父容器，必须在设置尺寸前完成（Cesium Viewer 构造时读取容器尺寸）
     const parent = this.config.parentElement ?? document.body;
     parent.appendChild(this.container);
+
+    // 设置容器尺寸：使用父容器的实际尺寸，而非 window.innerWidth/Height
+    // 确保在各种宽高比（横屏/竖屏/手机）下 Cesium canvas 与容器完全对齐
+    const pw = parent.clientWidth || window.innerWidth;
+    const ph = parent.clientHeight || window.innerHeight;
+    const width = pw * (this.config.canvasResolutionScale ?? 1.0);
+    const height = ph * (this.config.canvasResolutionScale ?? 1.0);
+    this.container.style.width = `${width}px`;
+    this.container.style.height = `${height}px`;
     
     const ellipsoid = this.createEllipsoid();
 
@@ -322,8 +324,9 @@ export class CesiumAdapter {
     this.viewer.scene.screenSpaceCameraController.enableInputs = false;
     
     // 手动调整 Cesium canvas 尺寸（Cesium 有时不能正确读取容器尺寸）
-    const canvasWidth = window.innerWidth * (this.config.canvasResolutionScale ?? 1.0);
-    const canvasHeight = window.innerHeight * (this.config.canvasResolutionScale ?? 1.0);
+    // 使用父容器实际尺寸，确保竖屏/横屏/任意宽高比下对齐
+    const canvasWidth = pw * (this.config.canvasResolutionScale ?? 1.0);
+    const canvasHeight = ph * (this.config.canvasResolutionScale ?? 1.0);
     this.cesiumCanvas.width = canvasWidth;
     this.cesiumCanvas.height = canvasHeight;
     
@@ -554,6 +557,11 @@ export class CesiumAdapter {
         const altitude = Math.max(0, Cesium.Cartesian3.magnitude(camPos) - (this.config.bodyRadiusMeters ?? 6371000));
         this.updateAdaptiveLOD(altitude);
       }
+
+      // 智能地形：俯视时自动关闭三维地形
+      if (this.config.enableSmartTerrain && this.terrainManager) {
+        this.updateSmartTerrain();
+      }
     } catch (error) {
       console.error('[CesiumAdapter] Camera sync error:', error);
     }
@@ -600,8 +608,11 @@ export class CesiumAdapter {
           this.viewer.scene.screenSpaceCameraController.enableInputs = false;
           // 重新设置容器和 canvas 尺寸（display:none 期间可能丢失）
           const parent = this.config.parentElement ?? document.body;
-          const w = parent.clientWidth || window.innerWidth;
-          const h = parent.clientHeight || window.innerHeight;
+          const rawW = parent.clientWidth || window.innerWidth;
+          const rawH = parent.clientHeight || window.innerHeight;
+          const scale = this.config.canvasResolutionScale ?? 1.0;
+          const w = rawW * scale;
+          const h = rawH * scale;
           this.container.style.width = `${w}px`;
           this.container.style.height = `${h}px`;
           this.cesiumCanvas.width = w;
@@ -744,6 +755,50 @@ export class CesiumAdapter {
   private smoothstep(t: number): number {
     const clamped = Math.max(0, Math.min(1, t));
     return clamped * clamped * (3 - 2 * clamped);
+  }
+
+  /**
+   * 智能地形：根据相机高度和视角决定是否启用三维地形
+   *
+   * 启用条件（全部满足）：
+   *   1. 相机距地表高度 < 阈值（默认 10km）
+   *   2. 视角与天底方向夹角 > 阈值（默认 25°），即非俯视
+   *
+   * 原理：
+   *   - 俯视时地形在屏幕上几乎无起伏，加载高程数据纯属浪费
+   *   - 侧视/平视时地形起伏明显，值得加载
+   *   - 高空时地形细节本身不可见，无需加载
+   */
+  private updateSmartTerrain(): void {
+    if (!this.terrainManager || !this.viewer) return;
+
+    const camera = this.viewer.camera;
+    const camPos = camera.position;
+    const camDir = camera.direction;
+    const bodyRadius = this.config.bodyRadiusMeters ?? 6371000;
+
+    // 相机距地表高度（米）
+    const altitude = Math.max(0, Cesium.Cartesian3.magnitude(camPos) - bodyRadius);
+
+    // 地表法线方向（远离地心 = 相机位置的归一化向量）
+    const upDir = Cesium.Cartesian3.normalize(camPos, new Cesium.Cartesian3());
+
+    // dot(upDir, camDir)：
+    //   -1 → 俯视（对着球心）
+    //    0 → 平视（看地平线）
+    //   +1 → 仰望太空
+    const nadirCosine = Cesium.Cartesian3.dot(upDir, camDir);
+
+    // 视角阈值：angleThreshold 度内视为俯视
+    const angleThreshold = this.config.smartTerrainAngleThreshold ?? 25;
+    const nadirThreshold = -Math.cos((angleThreshold * Math.PI) / 180);
+
+    const altitudeThreshold = this.config.smartTerrainAltitudeThreshold ?? 10000;
+
+    // 贴近地表 且 非俯视 → 启用三维地形
+    const shouldEnable = altitude < altitudeThreshold && nadirCosine > nadirThreshold;
+
+    this.terrainManager.setTerrainEnabled(shouldEnable);
   }
   
   /**

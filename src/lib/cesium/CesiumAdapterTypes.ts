@@ -91,6 +91,28 @@ export interface CesiumAdapterConfig {
   adaptiveLODMinQuality?: number;
   /** 自适应 LOD 在最高海拔时的 screenSpaceError（默认 2，值越小精度越高） */
   adaptiveLODMaxQuality?: number;
+
+  /**
+   * 智能地形开关（默认 true）
+   *
+   * 启用后，仅在相机贴近地表且不俯视地球时加载三维地形。
+   * 俯视（视角对着球心）或高空时自动切换为平坦地形以节省性能。
+   */
+  enableSmartTerrain?: boolean;
+  /**
+   * 智能地形海拔阈值（米，默认 10000 = 10km）
+   *
+   * 相机距地表高度低于此值时，才可能启用三维地形。
+   */
+  smartTerrainAltitudeThreshold?: number;
+  /**
+   * 智能地形视角阈值（度，默认 25）
+   *
+   * 相机视角与天底方向（指向球心）的夹角。当视角在此角度范围内
+   * （即接近俯视）时禁用三维地形；超出此角度（侧视/平视）时启用。
+   * 值越大 → 更保守（更晚启用地形）。
+   */
+  smartTerrainAngleThreshold?: number;
   /** Cesium 渲染目标帧率（默认 30fps），0 表示不限制 */
   targetCesiumFrameRate?: number;
 

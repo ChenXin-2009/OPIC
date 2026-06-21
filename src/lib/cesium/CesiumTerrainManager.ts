@@ -15,12 +15,22 @@ type LogFn = (level: 'info' | 'warn' | 'error', message: string) => void;
  *
  * 封装地形提供者的创建、加载、应用和回退逻辑。
  * 生命周期由 CesiumAdapter 控制。
+ *
+ * 智能地形：根据相机高度和视角动态启用/禁用三维地形，
+ * 俯视地球或高空时自动切换为平坦地形以节省性能。
  */
 export class CesiumTerrainManager {
   private viewer: Cesium.Viewer;
   private config: CesiumAdapterConfig;
   private log: LogFn;
   private terrainLoadVersion = 0;
+
+  /** 缓存的真实地形提供者（ArcGIS 或 Cesium World Terrain），用于恢复 */
+  private realTerrainProvider: Cesium.TerrainProvider | null = null;
+  /** 当前地形是否启用 */
+  private terrainEnabled: boolean = true;
+  /** 上次启用地形的时间戳（毫秒），仅对启用地形做防抖 */
+  private lastEnableTime: number = 0;
 
   constructor(viewer: Cesium.Viewer, config: CesiumAdapterConfig, log: LogFn) {
     this.viewer = viewer;
@@ -117,11 +127,59 @@ export class CesiumTerrainManager {
         return;
       }
 
+      this.realTerrainProvider = provider;
       this.viewer.terrainProvider = provider;
       this.viewer.scene.globe.maximumScreenSpaceError = this.config.maximumScreenSpaceError ?? 2;
+      this.terrainEnabled = true;
       this.log('info', `Cesium terrain provider loaded: ${source}`);
     } catch (error) {
       this.log('warn', `Applying terrain provider failed: ${error}`);
+    }
+  }
+
+  /**
+   * 运行时切换三维地形启用状态
+   *
+   * 启用时恢复真实地形提供者，禁用时切换为平坦椭球体地形。
+   * - 启用：500ms 防抖，避免快速进出阈值区导致频繁加载
+   * - 禁用：立即执行，离开条件区域后立刻关闭高程节省资源
+   *
+   * @param enabled - 是否启用三维地形
+   */
+  setTerrainEnabled(enabled: boolean): void {
+    if (!this.viewer || (this.viewer as any).isDestroyed?.()) return;
+
+    // 状态未变化，跳过
+    if (enabled === this.terrainEnabled) return;
+
+    const now = performance.now();
+
+    if (enabled) {
+      // 启用地形有防抖：500ms 内不允许重复启用，避免边界抖动
+      if (now - this.lastEnableTime < 500) return;
+      this.lastEnableTime = now;
+
+      if (this.realTerrainProvider) {
+        this.viewer.terrainProvider = this.realTerrainProvider;
+        this.viewer.scene.globe.maximumScreenSpaceError = this.config.maximumScreenSpaceError ?? 2;
+        this.terrainEnabled = true;
+        this.log('info', 'Smart terrain: 3D terrain ENABLED (oblique view, low altitude)');
+      }
+    } else {
+      // 禁用地形：立即执行，不防抖
+      // 离开条件区域后应立刻关闭高程以节省带宽和 GPU
+      if (!this.realTerrainProvider && this.viewer.terrainProvider) {
+        const isFlat = this.viewer.terrainProvider instanceof Cesium.EllipsoidTerrainProvider;
+        if (!isFlat) {
+          this.realTerrainProvider = this.viewer.terrainProvider;
+        }
+      }
+
+      if (this.realTerrainProvider) {
+        this.viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+        this.terrainEnabled = false;
+        this.log('info', 'Smart terrain: 3D terrain DISABLED (top-down view or high altitude)');
+      }
     }
   }
 }

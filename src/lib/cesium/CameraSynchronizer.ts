@@ -223,12 +223,27 @@ export class CameraSynchronizer {
 
     // ── 7. 同步 FOV 和动态 near/far 裁剪面 ──────────────────────────────────
     if (cesiumCamera.frustum instanceof Cesium.PerspectiveFrustum) {
-      // Cesium 使用水平 FOV（hFov），Three.js 使用垂直 FOV（vFov），需要换算
-      // 换算公式：hFov = 2 * atan(tan(vFov/2) * aspect)
+      // Cesium 的 PerspectiveFrustum.fov 解释规则（与 Three.js 不同）：
+      //   - canvas 宽 ≥ 高（横屏）→ fov = 水平 FOV（Horizontal）
+      //   - canvas 宽 < 高（竖屏）→ fov = 垂直 FOV（Vertical）
+      // Three.js 始终使用垂直 FOV。
+      //
+      // 因此需要根据当前画布宽高比选择正确的转换方式：
       const vFovRad = THREE.MathUtils.degToRad(threeCamera.fov);
       const aspect = threeCamera.aspect;
-      const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
-      cesiumCamera.frustum.fov = hFovRad;
+
+      if (aspect >= 1.0) {
+        // 横屏/方屏：Cesium fov 是水平角 → 从垂直角换算
+        // hFov = 2 * atan(tan(vFov/2) * aspect)
+        const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
+        cesiumCamera.frustum.fov = hFovRad;
+      } else {
+        // 竖屏（手机等）：Cesium fov 是垂直角 → 与 Three.js 一致，直接使用
+        cesiumCamera.frustum.fov = vFovRad;
+      }
+
+      // 显式设置宽高比，确保与 Three.js 相机完全对齐
+      cesiumCamera.frustum.aspectRatio = aspect;
       
       // 动态计算 near/far 裁剪面距离（单位：米）
       // 不能直接使用 Three.js 的 near/far（AU 单位），因为宇宙尺度下换算后的 near

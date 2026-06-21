@@ -41,6 +41,14 @@ export const DEFAULT_CESIUM_ADAPTER_CONFIG: Partial<CesiumAdapterConfig> = {
   // 与 Three.js 主循环解耦，避免 Cesium 地形瓦片成为瓶颈
   targetCesiumFrameRate: 30,
 
+  // ── 智能地形（Smart Terrain）──
+  // 仅在贴近地表且非俯视时启用三维地形，俯视或高空自动切换为平坦地形
+  enableSmartTerrain: true,
+  // 海拔阈值：低于 6km 时才可能启用三维地形（更严格，仅在低层大气中可见地形起伏）
+  smartTerrainAltitudeThreshold: 6000,
+  // 视角阈值：与天底方向夹角 > 30° 时才启用三维地形（更严格，需要明显的侧视角度）
+  smartTerrainAngleThreshold: 30,
+
   // 深度合成策略
   // 'render-order': 渲染顺序法（先渲染地球，后渲染卫星）
   // 'satellite-always-front': 卫星始终在前（暂未实现）
