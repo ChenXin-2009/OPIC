@@ -5,6 +5,7 @@ import { useSolarSystemStore } from '@/lib/state';
 import { useSatelliteStore } from '@/lib/store/useSatelliteStore';
 import { useExoplanetStore } from '@/lib/store/useExoplanetStore';
 import { useEarthControlStore } from '@/lib/state/EarthControlStore';
+import { useModStore } from '@/lib/mod-manager/store';
 import { getRenderAPI } from '@/lib/mod-manager/api/RenderAPI';
 import { SceneMode } from '@/lib/3d/SceneModeManager';
 import { dateToJulianDay } from '@/lib/astronomy/time';
@@ -332,19 +333,21 @@ export function useSolarSystemAnimation(
 
     if (cameraController) cameraController.update(deltaTime);
 
-    // 月球天文状态更新：每 LUNAR_UPDATE_INTERVAL 帧，基于模拟时间更新月球计算状态
-    if (fc % LUNAR_UPDATE_INTERVAL === 0) {
+    // 月球天文状态更新：仅在 moon MOD 启用时执行
+    if (fc % LUNAR_UPDATE_INTERVAL === 0 && useModStore.getState().mods['moon']?.state === 'enabled') {
       const simTime = currentState.currentTime;
       if (simTime) {
         useLunarStore.getState().update(simTime);
       }
     }
 
-    // 更新月球着陆点标记位置
-    const moonPlanetForMarkers = refs.planetsRef.current?.get('moon');
-    if (moonPlanetForMarkers) {
-      const moonWorldPos = moonPlanetForMarkers.getMesh().position;
-      updateMoonSiteMarkers(moonWorldPos, camera.position);
+    // 月球着陆点标记：仅在 moon MOD 启用时更新，每 3 帧节流
+    if (fc % 3 === 0 && useModStore.getState().mods['moon']?.state === 'enabled') {
+      const moonPlanetForMarkers = refs.planetsRef.current?.get('moon');
+      if (moonPlanetForMarkers) {
+        const moonWorldPos = moonPlanetForMarkers.getMesh().position;
+        updateMoonSiteMarkers(moonWorldPos, camera.position);
+      }
     }
 
     const earthBody = currentBodies.find((b: any) => b.name.toLowerCase() === 'earth');

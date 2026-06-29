@@ -24,6 +24,8 @@ interface MarkerEntry {
 
 /** 标记的可见距离阈值 (AU) */
 const VISIBLE_DISTANCE_AU = 0.00015; // ~22,400 km
+/** 距离超过此值完全跳过更新 */
+const SKIP_UPDATE_AU = 0.003; // ~448,000 km
 
 let _markers: MarkerEntry[] = [];
 let _initialized = false;
@@ -117,6 +119,9 @@ export function updateMoonSiteMarkers(
   if (_markers.length === 0) return;
 
   const distToMoon = cameraPos.distanceTo(moonWorldPos);
+
+  // 距离过远，完全跳过
+  if (distToMoon > SKIP_UPDATE_AU) return;
   const shouldShow = distToMoon < VISIBLE_DISTANCE_AU;
 
   // 月球自转 + 天平动：需要统一旋转
