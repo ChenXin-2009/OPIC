@@ -81,6 +81,7 @@ export { getCesiumIntegrationMod } from './cesium-integration';
 export { getWeatherDisasterMod } from './weather-disaster';
 export { getGlobalTrafficMod } from './global-traffic';
 export { getSpaceLaunchesMod } from './space-launches';
+export { getMoonMod } from './moon';
 
 
 // 导出注册表工具

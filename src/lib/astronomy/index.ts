@@ -92,3 +92,38 @@ export {
 } from './utils';
 
 export type { Position3D, OrbitalOrientation } from './utils';
+
+// Lunar module
+export {
+  getMoonPhase,
+  getLunarLibration,
+  getEarthMoonDistance,
+  getLunarIllumination,
+  getSubSolarPoint,
+  getSubEarthPoint,
+  getNextLunarApsis,
+  getNextLunarEclipse,
+  toAstroTime,
+  LIBRATION_RANGE,
+} from './lunar';
+
+export type {
+  MoonPhaseResult,
+  LunarLibrationResult,
+  LunarIlluminationResult,
+  LunarApsisResult,
+} from './lunar';
+
+// Lunar surface sites
+export {
+  APOLLO_LANDING_SITES,
+  OTHER_LANDING_SITES,
+  MAJOR_CRATERS,
+  MAJOR_MARIA,
+  ALL_LANDING_SITES,
+  ALL_LUNAR_SITES,
+  validateSites,
+  lunarCoordToCartesian,
+} from './lunar-sites';
+
+export type { LunarSite } from './lunar-sites';

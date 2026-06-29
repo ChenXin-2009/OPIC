@@ -26,6 +26,7 @@ import { useModManager } from "@/hooks/useModManager";
 import WeatherDisasterOverlay from "@/components/weather-disaster/WeatherDisasterOverlay";
 import SpaceLaunchOverlay from "@/components/space-launches/SpaceLaunchOverlay";
 import GlobalTrafficOverlay from "@/components/global-traffic/GlobalTrafficOverlay";
+import { MoonOverlay } from "@/components/moon/MoonOverlay";
 import InitializationOverlay, { type InitializationProgress } from "@/components/InitializationOverlay";
 
 // 动态延迟加载 3D 渲染管线 - 减少首屏 JS 体积约 40-60%
@@ -122,6 +123,9 @@ export default function SolarSystemPage() {
       {weatherDisasterModEnabled && <WeatherDisasterOverlay lang={lang} />}
       {spaceLaunchesModEnabled && <SpaceLaunchOverlay lang={lang} />}
       {globalTrafficModEnabled && <GlobalTrafficOverlay lang={lang} />}
+      
+      {/* 月球探索 MOD (Dock 图标触发，数据由动画循环驱动) */}
+      <MoonOverlay lang={lang} />
       
       {/* 模态框 */}
       <InfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} />

@@ -22,6 +22,7 @@ import { CesiumControlWindow } from './windows/CesiumControlWindow';
 import { SpaceLaunchWindow } from './windows/SpaceLaunchWindow';
 import { GlobalTrafficWindow } from './windows/GlobalTrafficWindow';
 import { WeatherDisasterWindow } from './windows/WeatherDisasterWindow';
+import { MoonWindow } from './windows/MoonWindow';
 import { getRegistry } from '@/lib/mod-manager/core/ModRegistry';
 import { getEventBus } from '@/lib/mod-manager/core/EventBus';
 
@@ -50,7 +51,12 @@ const MOD_WINDOWS: Record<string, { component: React.ReactNode; size: { width: n
   'weather-disaster': {
     component: <WeatherDisasterWindow lang="zh" />,
     size: { width: 450, height: 550 },
-    icon: '🌪️',
+    icon: '',
+  },
+  'moon': {
+    component: <MoonWindow lang="zh" />,
+    size: { width: 320, height: 480 },
+    icon: '',
   },
 };
 

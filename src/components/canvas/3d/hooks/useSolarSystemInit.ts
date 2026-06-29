@@ -214,7 +214,7 @@ export function useSolarSystemInit(
           cesiumConfig: {
             cesiumContainerId: 'cesium-moon-canvas',
             parentElement: container ?? undefined,
-            canvasResolutionScale: 0.85,
+            canvasResolutionScale: 1.0,
             maximumScreenSpaceError: 3.5,
             maximumNumberOfLoadedTiles: 350,
             enableTerrain: false,

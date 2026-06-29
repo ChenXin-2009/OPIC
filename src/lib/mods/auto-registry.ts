@@ -3,8 +3,8 @@
  * 
  * ⚠️ 此文件由脚本自动生成，请勿手动编辑！
  * 
- * 生成时间: 2026-06-21T05:04:34.561Z
- * MOD数量: 5
+ * 生成时间: 2026-06-29T14:00:00.000Z
+ * MOD数量: 6
  * 
  * 要重新生成此文件，运行: npm run generate-mods
  */
@@ -12,6 +12,7 @@
 // 自动导入所有MOD
 import { getCesiumIntegrationMod } from './cesium-integration';
 import { getGlobalTrafficMod } from './global-traffic';
+import { getMoonMod } from './moon';
 import { getSatelliteTrackingMod } from './satellite-tracking';
 import { getSpaceLaunchesMod } from './space-launches';
 import { getWeatherDisasterMod } from './weather-disaster';
@@ -23,6 +24,7 @@ import { getWeatherDisasterMod } from './weather-disaster';
 export const MOD_REGISTRY = [
   getCesiumIntegrationMod,
   getGlobalTrafficMod,
+  getMoonMod,
   getSatelliteTrackingMod,
   getSpaceLaunchesMod,
   getWeatherDisasterMod,

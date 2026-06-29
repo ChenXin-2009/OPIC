@@ -11,6 +11,7 @@ import { dateToJulianDay } from '@/lib/astronomy/time';
 import { FAR_VIEW_CONFIG, ORBIT_FADE_CONFIG, SATELLITE_CONFIG } from '@/lib/config/visualConfig';
 import { CAMERA_CONFIG } from '@/lib/config/cameraConfig';
 import { planetNames } from '@/lib/astronomy/names';
+import { useLunarStore } from '@/lib/store/LunarState';
 import type { SceneRefs, SceneCallbacks } from './sceneTypes';
 import * as THREE from 'three';
 
@@ -20,6 +21,7 @@ const LOD_UPDATE_INTERVAL = 3;       // LOD/网格每 3 帧更新
 const CESIUM_CHECK_INTERVAL = 1;     // Cesium 模式每帧检测（保持即时切换响应）
 const LABEL_OVERLAP_INTERVAL = 10;   // 标签重叠检测每 10 帧（从 3 帧改为 10 帧）
 const FAR_VIEW_INTERVAL = 30;        // 远景检查每 30 帧
+const LUNAR_UPDATE_INTERVAL = 60;     // 月球状态更新每 60 帧 (~1s@60fps)
 
 // 标签空间哈希网格 - 用于 O(n) 重叠检测替换 O(n²)
 const HASH_CELL_SIZE = 80; // 每个网格单元 80px
@@ -328,6 +330,14 @@ export function useSolarSystemAnimation(
     if (sceneManager) sceneManager.updateSkyboxPosition(camera.position);
 
     if (cameraController) cameraController.update(deltaTime);
+
+    // 月球天文状态更新：每 LUNAR_UPDATE_INTERVAL 帧，基于模拟时间更新月球计算状态
+    if (fc % LUNAR_UPDATE_INTERVAL === 0) {
+      const simTime = currentState.currentTime;
+      if (simTime) {
+        useLunarStore.getState().update(simTime);
+      }
+    }
 
     const earthBody = currentBodies.find((b: any) => b.name.toLowerCase() === 'earth');
     const moonBody = currentBodies.find((b: any) => b.name.toLowerCase() === 'moon');
