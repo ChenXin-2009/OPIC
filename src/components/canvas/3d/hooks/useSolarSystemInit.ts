@@ -30,6 +30,7 @@ import * as THREE from 'three';
 import { ensureError } from '@/lib/utils/errors';
 import type { SceneRefs } from './sceneTypes';
 import { logger } from '@/utils/logger';
+import { createMoonSiteMarkers } from '@/lib/3d/MoonSiteMarkers';
 
 /** Initialize the full 3D solar system scene: scene manager, camera, planets, orbits,
  * labels, satellites, exoplanets, Cesium integration, and texture loading.
@@ -425,6 +426,9 @@ export function useSolarSystemInit(
     });
 
     refs.raycasterRef.current = new Raycaster();
+
+    // 创建月球着陆点 3D 标记 (CSS2D labels)
+    createMoonSiteMarkers(scene);
 
     return { sceneManager, cameraController };
   }, [refs, props, setSceneManager, setCameraController]);

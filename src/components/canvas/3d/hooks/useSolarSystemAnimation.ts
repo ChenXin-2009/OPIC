@@ -12,6 +12,7 @@ import { FAR_VIEW_CONFIG, ORBIT_FADE_CONFIG, SATELLITE_CONFIG } from '@/lib/conf
 import { CAMERA_CONFIG } from '@/lib/config/cameraConfig';
 import { planetNames } from '@/lib/astronomy/names';
 import { useLunarStore } from '@/lib/store/LunarState';
+import { updateMoonSiteMarkers } from '@/lib/3d/MoonSiteMarkers';
 import type { SceneRefs, SceneCallbacks } from './sceneTypes';
 import * as THREE from 'three';
 
@@ -337,6 +338,13 @@ export function useSolarSystemAnimation(
       if (simTime) {
         useLunarStore.getState().update(simTime);
       }
+    }
+
+    // 更新月球着陆点标记位置
+    const moonPlanetForMarkers = refs.planetsRef.current?.get('moon');
+    if (moonPlanetForMarkers) {
+      const moonWorldPos = moonPlanetForMarkers.getMesh().position;
+      updateMoonSiteMarkers(moonWorldPos, camera.position);
     }
 
     const earthBody = currentBodies.find((b: any) => b.name.toLowerCase() === 'earth');
