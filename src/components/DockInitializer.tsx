@@ -23,6 +23,7 @@ import { SpaceLaunchWindow } from './windows/SpaceLaunchWindow';
 import { GlobalTrafficWindow } from './windows/GlobalTrafficWindow';
 import { WeatherDisasterWindow } from './windows/WeatherDisasterWindow';
 import { MoonWindow } from './windows/MoonWindow';
+import { GravityGridWindow } from './windows/GravityGridWindow';
 import { getRegistry } from '@/lib/mod-manager/core/ModRegistry';
 import { getEventBus } from '@/lib/mod-manager/core/EventBus';
 
@@ -57,6 +58,11 @@ const MOD_WINDOWS: Record<string, { component: React.ReactNode; size: { width: n
     component: <MoonWindow lang="zh" />,
     size: { width: 320, height: 480 },
     icon: '',
+  },
+  'gravity-grid': {
+    component: <GravityGridWindow lang="zh" />,
+    size: { width: 520, height: 680 },
+    icon: '🌐',
   },
 };
 

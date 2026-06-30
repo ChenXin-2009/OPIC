@@ -26,6 +26,19 @@ const GM_KM3_S2: Record<string, number> = {
   saturn: 3.7931187e7,
   uranus: 5.793939e6,
   neptune: 6.836529e6,
+  // Jupiter satellites (JPL SSD)
+  io: 5.959916033e3,
+  europa: 3.202738774e3,
+  ganymede: 9.887834453e3,
+  callisto: 7.179289361e3,
+  // Saturn satellites (JPL SSD)
+  titan: 8.978138813e3,
+  enceladus: 7.210364086e0,
+  // Uranus satellites (JPL SSD)
+  miranda: 4.319516899e0,
+  ariel: 8.346344431e1,
+  umbriel: 1.200093840e1,
+  titania: 2.292652987e2,
 };
 
 const GM_AU3_S2: Record<string, number> = Object.fromEntries(

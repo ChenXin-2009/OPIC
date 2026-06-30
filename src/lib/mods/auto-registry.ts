@@ -12,6 +12,7 @@
 // 自动导入所有MOD
 import { getCesiumIntegrationMod } from './cesium-integration';
 import { getGlobalTrafficMod } from './global-traffic';
+import { getGravityGridMod } from './gravity-grid';
 import { getMoonMod } from './moon';
 import { getSatelliteTrackingMod } from './satellite-tracking';
 import { getSpaceLaunchesMod } from './space-launches';
@@ -24,6 +25,7 @@ import { getWeatherDisasterMod } from './weather-disaster';
 export const MOD_REGISTRY = [
   getCesiumIntegrationMod,
   getGlobalTrafficMod,
+  getGravityGridMod,
   getMoonMod,
   getSatelliteTrackingMod,
   getSpaceLaunchesMod,

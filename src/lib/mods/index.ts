@@ -78,6 +78,7 @@ export async function registerCoreMods(): Promise<void> {
 // 导出各个MOD（保持向后兼容）
 export { getSatelliteTrackingMod } from './satellite-tracking';
 export { getCesiumIntegrationMod } from './cesium-integration';
+export { getGravityGridMod } from './gravity-grid';
 export { getWeatherDisasterMod } from './weather-disaster';
 export { getGlobalTrafficMod } from './global-traffic';
 export { getSpaceLaunchesMod } from './space-launches';
