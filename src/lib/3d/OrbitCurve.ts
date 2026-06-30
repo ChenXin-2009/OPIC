@@ -1,3 +1,11 @@
+/**
+ * @module 3d/OrbitCurve
+ * @description 轨道曲线 3D 渲染模块
+ *
+ * 管理行星轨道的 3D 视觉表示（线条 + 可选填充圆盘）。
+ * 支持 LOD 分辨率缩放、渐变着色、透明度控制和开普勒位置计算。
+ */
+
 import * as THREE from 'three';
 import type { OrbitalElements } from '@/lib/astronomy/orbit';
 import { ORBIT_GRADIENT_CONFIG, ORBIT_STYLE_CONFIG } from '@/lib/config/visualConfig';

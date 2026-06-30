@@ -29,13 +29,23 @@ import { OrbitLabel } from '@/lib/3d/OrbitLabel';
 import { SatelliteLayer } from '@/lib/3d/SatelliteLayer';
 import { ExoplanetRenderer } from '@/lib/3d/ExoplanetRenderer';
 
+/**
+ * SolarSystemCanvas3D 组件属性
+ */
 interface SolarSystemCanvas3DProps {
+  /** 相机距离变化回调（单位：AU） */
   onCameraDistanceChange?: (distance: number) => void;
+  /** 是否启用 Cesium 地球渲染模式 */
   cesiumEnabled?: boolean;
+  /** 地球行星对象就绪回调 */
   onEarthPlanetReady?: (earthPlanet: any) => void;
+  /** 相机控制器就绪回调 */
   onCameraReady?: (camera: any) => void;
+  /** 是否启用地球锁定模式 */
   earthLockEnabled?: boolean;
+  /** 是否启用地球光照效果 */
   earthLightEnabled?: boolean;
+  /** 初始化进度回调（阶段名称, 进度百分比, 是否完成） */
   onInitializationProgress?: (stage: string, progress: number, isComplete: boolean) => void;
 }
 

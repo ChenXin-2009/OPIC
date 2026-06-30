@@ -16,22 +16,26 @@
 
 ### 2. TypeScript 严格模式
 
-启用了增强的 TypeScript 严格模式配置：
+启用了增强的 TypeScript 严格模式配置（`tsconfig.json`）：
 
-- `noUnusedLocals`: 检测未使用的局部变量
-- `noUnusedParameters`: 检测未使用的参数
+- `strict: true` — 启用所有严格类型检查选项
 - `noImplicitReturns`: 要求所有代码路径都有返回值
 - `noFallthroughCasesInSwitch`: 防止 switch 语句穿透
-- `noUncheckedIndexedAccess`: 索引访问时添加 undefined 检查
-- `exactOptionalPropertyTypes`: 严格的可选属性类型检查
+- `noImplicitOverride`: 要求使用 override 关键字
+- `allowUnusedLabels: false`: 禁止无用标签
+- `allowUnreachableCode: false`: 禁止不可达代码
+- `forceConsistentCasingInFileNames`: 强制文件名大小写一致
+
+> 注意：`noUnusedLocals` 和 `noUnusedParameters` 当前设为 `false`，未启用。
 
 ### 3. Git Hooks
 
-配置了 pre-commit hook，在提交前自动运行：
+配置了 pre-commit hook（通过 husky + lint-staged），在提交前自动运行：
 
-- ESLint 检查
-- TypeScript 类型检查
-- 单元测试
+- ESLint 检查 + 自动修复（`eslint --fix --max-warnings 200`）
+- Prettier 格式化（`prettier --write`）
+
+> 注意：lint-staged 不包含 TypeScript 类型检查和单元测试。完整质量检查请运行 `npm run quality:check`。
 
 ## 使用方法
 

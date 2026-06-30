@@ -271,20 +271,58 @@ The full MOD runtime context (`ModContext`) provides access to all APIs:
 
 ```typescript
 interface ModContext {
+  // Identity
   id: string;
   manifest: ModManifest;
-  time: TimeAPI;
-  camera: CameraAPI;
-  celestial: CelestialAPI;
-  satellite: SatelliteAPI;
-  render: RenderAPI;
-  config: Record<string, unknown>;
+
+  // API Layer
+  api: {
+    time: TimeAPI;
+    camera: CameraAPI;
+    celestial: CelestialAPI;
+    satellite: SatelliteAPI;
+    render: RenderAPI;
+  };
+
+  // 权限检查
+  hasPermission(permission: string): boolean;
+
+  // 配置管理
+  getConfig<T = Record<string, unknown>>(): T;
+  updateConfig(updates: Record<string, unknown>): void;
+
+  // 资源监控
+  getResourceUsage(): {
+    memoryMB: number;
+    renderObjects: number;
+    eventListeners: number;
+    timers: number;
+    apiCallsPerSecond: number;
+  };
+
+  // 状态管理（沙箱隔离）
   setState(key: string, value: unknown): void;
   getState(key: string): unknown;
+
+  // 服务注册表
+  registerService<T>(id: string, implementation: T): void;
+  getService<T>(id: string): Promise<T | null>;
+
+  // 事件系统
   subscribe(event: string, handler: Function): () => void;
   emit(event: string, ...args: unknown[]): void;
   on(event: string, handler: Function): void;
   off(event: string, handler: Function): void;
+
+  // UI 扩展
+  updateDockIconBadge(iconId: string, badge: number | string): void;
+  openWindow(windowId: string): void;
+  closeWindow(windowId: string): void;
+
+  // 国际化
+  getLanguage(): 'zh' | 'en';
+
+  // 沙箱定时器（受配额限制）
   logger: Console;
   setTimeout(handler: TimerHandler, timeout?: number): number;
   setInterval(handler: TimerHandler, timeout?: number): number;

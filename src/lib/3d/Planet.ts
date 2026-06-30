@@ -77,6 +77,12 @@ import { SunVisualEnhancer } from './planet/SunVisualEnhancer';
 
 export type { PlanetConfig } from './planet/PlanetTypes';
 
+/**
+ * 3D 行星渲染类
+ *
+ * 创建和管理单个行星的 3D 网格对象，包括几何体、材质、纹理、光照效果和自转动画。
+ * 支持太阳光照、昼夜贴图渐变、土星环、太阳光晕等特殊效果。
+ */
 export class Planet {
   private mesh: THREE.Mesh | THREE.Object3D;
   private geometry: THREE.SphereGeometry | null;
@@ -107,6 +113,11 @@ export class Planet {
   private grid: PlanetGrid | null = null;
   private sunGlow: SunVisualEnhancer | null = null;
 
+  /**
+   * 创建行星实例
+   *
+   * @param config - 行星配置参数，包含名称、半径、颜色、自转周期等
+   */
   constructor(config: PlanetConfig) {
     let celestialConfig: CelestialBodyConfig | undefined;
     let bodyInfo: { name: string; color: string; radius: number; isSun?: boolean };
@@ -214,6 +225,11 @@ export class Planet {
     this.axialTiltApplied = true;
   }
 
+  /**
+   * 更新太阳位置（用于光照计算）
+   *
+   * @param sunPosition - 太阳在世界空间中的位置
+   */
   updateSunPosition(sunPosition: THREE.Vector3): void {
     if (this.isSun) return;
 
@@ -222,6 +238,9 @@ export class Planet {
     }
   }
 
+  /**
+   * 创建标记圈（用于小行星等小型天体的 CSS2D 标记）
+   */
   createMarkerCircle(): void {
     if (this.markerDiv) return;
 
@@ -251,10 +270,18 @@ export class Planet {
     this.mesh.add(this.markerObject);
   }
 
+  /**
+   * 获取标记圈的 CSS2DObject 实例
+   *
+   * @returns 标记圈对象，未创建时返回 null
+   */
   getMarkerObject(): any {
     return this.markerObject;
   }
 
+  /**
+   * 更新标记圈透明度（平滑过渡动画）
+   */
   updateMarkerOpacity(): void {
     if (!this.markerDiv) return;
 
@@ -272,18 +299,42 @@ export class Planet {
     }
   }
 
+  /**
+   * 设置标记圈目标透明度
+   *
+   * @param opacity - 目标透明度值（0-1）
+   */
   setMarkerTargetOpacity(opacity: number): void {
     this.targetOpacity = Math.max(0, Math.min(1, opacity));
   }
 
+  /**
+   * 获取当前标记圈透明度
+   *
+   * @returns 当前透明度值（0-1）
+   */
   getMarkerOpacity(): number {
     return this.currentOpacity;
   }
 
+  /**
+   * 更新行星在世界空间中的位置
+   *
+   * @param x - X 坐标（AU）
+   * @param y - Y 坐标（AU）
+   * @param z - Z 坐标（AU）
+   */
   updatePosition(x: number, y: number, z: number): void {
     this.mesh.position.set(x, y, z);
   }
 
+  /**
+   * 更新行星自转角度
+   *
+   * @param currentTimeInDays - 当前时间（自 J2000.0 起的天数）
+   * @param _timeSpeed - 时间速度倍率（未使用，保留接口兼容）
+   * @param _isPlaying - 是否正在播放（未使用，保留接口兼容）
+   */
   updateRotation(currentTimeInDays: number, _timeSpeed: number = 1, _isPlaying: boolean = true): void {
     if (this.isSun && this.material instanceof THREE.ShaderMaterial) {
       this.material.uniforms.uTime.value = currentTimeInDays * SUN_SHADER_CONFIG.animationSpeed;
@@ -312,42 +363,92 @@ export class Planet {
     this.mesh.quaternion.copy(finalQuaternion);
   }
 
+  /**
+   * 检查是否处于潮汐锁定状态
+   *
+   * @returns 始终返回 false（当前未实现潮汐锁定检测）
+   */
   getIsTidallyLocked(): boolean {
     return false;
   }
 
+  /**
+   * 获取父天体名称
+   *
+   * @returns 父天体名称，当前始终返回 null
+   */
   getParentBodyName(): string | null {
     return null;
   }
 
+  /**
+   * 获取自转轴方向
+   *
+   * @returns 自转轴单位向量（克隆）
+   */
   getRotationAxis(): THREE.Vector3 {
     return this.rotationAxis.clone();
   }
 
+  /**
+   * 获取当前自转四元数
+   *
+   * @returns 自转四元数（克隆）
+   */
   getRotationQuaternion(): THREE.Quaternion {
     return this.mesh.quaternion.clone();
   }
 
+  /**
+   * 获取轴倾角
+   *
+   * @returns 轴倾角（度）
+   */
   getAxialTilt(): number {
     return this.axialTilt;
   }
 
+  /**
+   * 设置经纬网格可见性
+   *
+   * @param visible - 是否可见
+   */
   setGridVisible(visible: boolean): void {
     if (this.grid) this.grid.setVisible(visible);
   }
 
+  /**
+   * 获取经纬网格可见性
+   *
+   * @returns 是否可见
+   */
   getGridVisible(): boolean {
     return this.grid ? this.grid.getVisible() : false;
   }
 
+  /**
+   * 根据相机距离更新经纬网格可见性
+   *
+   * @param distance - 相机距离（AU）
+   */
   updateGridVisibility(distance: number): void {
     if (this.grid) this.grid.updateVisibility(distance);
   }
 
+  /**
+   * 设置光晕遮挡体（用于太阳光晕效果）
+   *
+   * @param occluders - 遮挡体对象数组
+   */
   setGlowOccluders(occluders: THREE.Object3D[]): void {
     if (this.sunGlow) this.sunGlow.setOccluders(occluders);
   }
 
+  /**
+   * 更新太阳光晕效果
+   *
+   * @param camera - 当前摄像机
+   */
   updateGlow(camera: THREE.Camera): void {
     if (this.sunGlow) {
       this.sunGlow.mount();
@@ -355,6 +456,11 @@ export class Planet {
     }
   }
 
+  /**
+   * 根据相机距离更新 LOD（细节层次）分段数
+   *
+   * @param distance - 相机距离（AU）
+   */
   updateLOD(distance: number): void {
     const normalizedDistance = Math.max(0.1, distance / PLANET_LOD_CONFIG.transitionDistance);
     const targetSegmentsRaw = PLANET_LOD_CONFIG.baseSegments * (1 + 1 / Math.max(0.5, normalizedDistance));
@@ -387,22 +493,48 @@ export class Planet {
     }
   }
 
+  /**
+   * 获取行星的 Three.js 网格对象
+   *
+   * @returns 行星网格对象
+   */
   getMesh(): THREE.Mesh | THREE.Object3D {
     return this.mesh;
   }
 
+  /**
+   * 获取行星真实半径
+   *
+   * @returns 半径（AU）
+   */
   getRealRadius(): number {
     return this.realRadius;
   }
 
+  /**
+   * 获取行星名称
+   *
+   * @returns 小写行星名称
+   */
   getPlanetName(): string {
     return this.planetName;
   }
 
+  /**
+   * 检查是否为太阳
+   *
+   * @returns 是否为太阳
+   */
   getIsSun(): boolean {
     return this.isSun;
   }
 
+  /**
+   * 应用白天纹理
+   *
+   * @param texture - 纹理对象，传 null 清除纹理
+   * @param bodyId - 天体 ID（用于缓存管理）
+   */
   applyTexture(texture: THREE.Texture | null, bodyId: string): void {
     if (this.isSun) return;
 
@@ -423,6 +555,11 @@ export class Planet {
     }
   }
 
+  /**
+   * 应用夜晚纹理（用于昼夜贴图渐变效果）
+   *
+   * @param texture - 夜晚纹理对象
+   */
   applyNightTexture(texture: THREE.Texture | null): void {
     if (this.isSun || !texture) return;
 
@@ -434,14 +571,27 @@ export class Planet {
     }
   }
 
+  /**
+   * 检查是否已应用纹理
+   *
+   * @returns 是否已加载纹理
+   */
   hasTextureApplied(): boolean {
     return this.textureLoaded;
   }
 
+  /**
+   * 获取已应用纹理的天体 ID
+   *
+   * @returns 天体 ID，未应用纹理时返回 null
+   */
   getTextureBodyId(): string | null {
     return this.textureBodyId;
   }
 
+  /**
+   * 释放所有资源（纹理、几何体、材质、标记圈、网格、光晕等）
+   */
   dispose(): void {
     if (this.textureBodyId) {
       if (this.material instanceof THREE.ShaderMaterial) {

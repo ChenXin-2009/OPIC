@@ -12,7 +12,7 @@
 OPIC MOD 系统提供以下核心功能：
 
 - **权限系统**: 细粒度的 API 访问控制
-- **扩展点机制**: 声明式 UI 扩展(Dock 图标、窗口、命令)
+- **扩展点机制**: 声明式 UI 扩展（Dock 图标、窗口、命令）
 - **配置 Schema**: 自动生成配置 UI
 - **服务注册表**: MOD 间安全通信
 - **沙箱隔离**: 资源配额和 API 调用隔离
@@ -21,9 +21,9 @@ OPIC MOD 系统提供以下核心功能：
 
 ### 1. MOD 清单结构
 
-每个 MOD 都需要一`manifest.json` 文件来声明其元数据、权限和扩展
+每个 MOD 都需要一个 `manifest.json` 文件来声明其元数据、权限和扩展。
 
-\`\`\`json
+```json
 {
   "id": "my-awesome-mod",
   "name": "My Awesome MOD",
@@ -59,18 +59,18 @@ OPIC MOD 系统提供以下核心功能：
     "maxRenderObjects": 1000
   }
 }
-\`\`\`
+```
 
 ### 2. MOD 入口文件
 
-创建 `index.ts` 作为 MOD 的入口点:
+创建 `index.ts` 作为 MOD 的入口点：
 
-\`\`\`typescript
+```typescript
 import type { ModContext } from '@/lib/mod-manager/types';
 
 export default {
   /**
-   * MOD 启用时调
+   * MOD 启用时调用
    */
   onEnable(context: ModContext) {
     console.log('My MOD enabled!');
@@ -86,7 +86,7 @@ export default {
   },
   
   /**
-   * MOD 禁用时调
+   * MOD 禁用时调用
    */
   onDisable(context: ModContext) {
     console.log('My MOD disabled!');
@@ -94,41 +94,41 @@ export default {
   },
   
   /**
-   * 配置变更时调
+   * 配置变更时调用
    */
   onConfigChange(context: ModContext, newConfig: any) {
     console.log('Config changed:', newConfig);
   },
 };
-\`\`\`
+```
 
 ## 权限系统
 
 ### 权限声明
 
-MOD 必须在清单中声明所需的权限才能访问系API。权限格式为 \`category:action\`
+MOD 必须在清单中声明所需的权限才能访问系统 API。权限格式为 `category:action`。
 
 #### 权限类别
 
-- \`time\`: 时间系统 API
-- \`camera\`: 相机控制 API
-- \`celestial\`: 天体数据 API
-- \`satellite\`: 卫星数据 API
-- \`render\`: 渲染系统 API
-- \`network\`: 网络请求 API
-- \`storage\`: 本地存储 API
-- \`events\`: 事件系统 API
+- `time`: 时间系统 API
+- `camera`: 相机控制 API
+- `celestial`: 天体数据 API
+- `satellite`: 卫星数据 API
+- `render`: 渲染系统 API
+- `network`: 网络请求 API
+- `storage`: 本地存储 API
+- `events`: 事件系统 API
 
 #### 权限操作
 
-- \`read\`: 读取数据
-- \`write\`: 修改数据
-- \`execute\`: 执行操作
-- \`*\`: 所有操作(通配)置?
+- `read`: 读取数据
+- `write`: 修改数据
+- `execute`: 执行操作
+- `*`: 所有操作（通配符）
 
 #### 示例
 
-\`\`\`json
+```json
 {
   "permissions": [
     "time:read",           // 读取当前时间
@@ -142,17 +142,17 @@ MOD 必须在清单中声明所需的权限才能访问系API。权限格式为 
     "storage:write"        // 可选权限，用户可以撤销
   ]
 }
-\`\`\`
+```
 
 ### 权限最佳实践
 
-1. **最小权限原则?*: 只声明必需的权限。
-2. **使用可选权限**:: 对于非核心功能，使用 \`optionalPermissions\`
-3. **权限说明**: 在文档中解释为什么需要每个权限?
-4. **优雅降级**: 当可选权限被拒绝提供降级功能
+1. **最小权限原则**: 只声明必需的权限。
+2. **使用可选权限**: 对于非核心功能，使用 `optionalPermissions`。
+3. **权限说明**: 在文档中解释为什么需要每个权限。
+4. **优雅降级**: 当可选权限被拒绝时提供降级功能。
 
-\`\`\`typescript
-// 检查权限?
+```typescript
+// 检查权限
 if (context.hasPermission('network:execute')) {
   // 使用网络功能
   await fetchData();
@@ -160,15 +160,15 @@ if (context.hasPermission('network:execute')) {
   // 使用本地缓存
   useLocalCache();
 }
-\`\`\`
+```
 
-## 扩展点机制?
+## 扩展点机制
 
 ### Dock 图标扩展
 
-Dock 中添加图标，点击时执行命令
+在 Dock 中添加图标，点击时执行命令。
 
-\`\`\`json
+```json
 {
   "contributes": {
     "dockIcons": [
@@ -184,29 +184,29 @@ Dock 中添加图标，点击时执行命令
     ]
   }
 }
-\`\`\`
+```
 
 **字段说明**:
-- \`id\`: 图标唯一标识。?
-- \`icon\`: 图标 URL 或路
-- \`label\`: 英文标签
-- \`labelZh\`: 中文标签(可
-- \`order\`: 排序顺序(数字越小越靠
-- \`command\`: 点击时执行的命令 ID
-- \`badge\`: 徽章(数字或字符串,可
+- `id`: 图标唯一标识。
+- `icon`: 图标 URL 或路径。
+- `label`: 英文标签。
+- `labelZh`: 中文标签（可选）。
+- `order`: 排序顺序（数字越小越靠前）。
+- `command`: 点击时执行的命令 ID。
+- `badge`: 徽章（数字或字符串，可选）。
 
-**动态更新徽*:
+**动态更新徽章**:
 
-\`\`\`typescript
-// MOD 代码中更新徽
+```typescript
+// MOD 代码中更新徽章
 context.updateDockIconBadge('my-mod.my-icon', 10);
-\`\`\`
+```
 
 ### 窗口扩展
 
-注册自定义窗系统自动管理窗口生命周期
+注册自定义窗口，系统自动管理窗口生命周期。
 
-\`\`\`json
+```json
 {
   "contributes": {
     "windows": [
@@ -223,14 +223,14 @@ context.updateDockIconBadge('my-mod.my-icon', 10);
     ]
   }
 }
-\`\`\`
+```
 
-**MOD 中定义窗口组*:
+**MOD 中定义窗口组件**:
 
-\`\`\`typescript
+```typescript
 export default {
   onEnable(context: ModContext) {
-    // 窗口组件会自动注册?
+    // 窗口组件会自动注册
   },
   
   // 窗口组件
@@ -248,13 +248,13 @@ export default {
     context.openWindow('my-mod.my-window');
   },
 };
-\`\`\`
+```
 
 ### 命令扩展
 
-注册全局命令,可通过命令面板或快捷键触发
+注册全局命令，可通过命令面板或快捷键触发。
 
-\`\`\`json
+```json
 {
   "contributes": {
     "commands": [
@@ -269,32 +269,32 @@ export default {
     ]
   }
 }
-\`\`\`
+```
 
-**命令处理*:
+**命令处理器**:
 
-\`\`\`typescript
+```typescript
 export default {
-  // 命令处理器函
+  // 命令处理器函数
   openWindow(context: ModContext) {
     console.log('Opening window...');
     context.openWindow('my-mod.my-window');
   },
   
-  // 也可以接收参数?
+  // 也可以接收参数
   executeWithArgs(context: ModContext, arg1: string, arg2: number) {
     console.log('Args:', arg1, arg2);
   },
 };
-\`\`\`
+```
 
 ## 配置 Schema
 
-使用 JSON Schema 声明配置系统自动生成配置 UI
+使用 JSON Schema 声明配置，系统自动生成配置 UI。
 
 ### 基本示例
 
-\`\`\`json
+```json
 {
   "configSchema": {
     "type": "object",
@@ -330,27 +330,27 @@ export default {
     "required": ["apiEndpoint"]
   }
 }
-\`\`\`
+```
 
-### 支持的类?
+### 支持的类型
 
-- \`string\`: 文本输入
-- \`number\`: 数字输入
-- \`boolean\`: 开
-- \`array\`: 数组(列表)
-- \`object\`: 嵌套对象
+- `string`: 文本输入
+- `number`: 数字输入
+- `boolean`: 开关
+- `array`: 数组（列表）
+- `object`: 嵌套对象
 
 ### 验证规则
 
-- \`required\`: 必填字段
-- \`minimum\` / \`maximum\`: 数字范围
-- \`minLength\` / \`maxLength\`: 字符串长
-- \`pattern\`: 正则表达
-- \`enum\`: 枚举
+- `required`: 必填字段
+- `minimum` / `maximum`: 数字范围
+- `minLength` / `maxLength`: 字符串长度
+- `pattern`: 正则表达式
+- `enum`: 枚举
 
-### 嵌套对象和数组?
+### 嵌套对象和数组
 
-\`\`\`json
+```json
 {
   "configSchema": {
     "type": "object",
@@ -372,11 +372,11 @@ export default {
     }
   }
 }
-\`\`\`
+```
 
 ### 访问配置
 
-\`\`\`typescript
+```typescript
 export default {
   onEnable(context: ModContext) {
     const config = context.getConfig();
@@ -386,18 +386,18 @@ export default {
   
   onConfigChange(context: ModContext, newConfig: any) {
     console.log('Config updated:', newConfig);
-    // 应用新配置?
+    // 应用新配置
   },
 };
-\`\`\`
+```
 
-## 服务注册表?
+## 服务注册表
 
-MOD 可以注册服务供其MOD 调用,实现功能复用
+MOD 可以注册服务供其他 MOD 调用，实现功能复用。
 
 ### 注册服务
 
-\`\`\`json
+```json
 {
   "services": [
     {
@@ -408,9 +408,9 @@ MOD 可以注册服务供其MOD 调用,实现功能复用
     }
   ]
 }
-\`\`\`
+```
 
-\`\`\`typescript
+```typescript
 // 定义服务接口
 export interface IDataProvider {
   getData(): Promise<any>;
@@ -431,14 +431,14 @@ export default {
     });
   },
 };
-\`\`\`
+```
 
 ### 调用服务
 
-\`\`\`typescript
+```typescript
 export default {
   async onEnable(context: ModContext) {
-    // 获取其他 MOD 的服
+    // 获取其他 MOD 的服务
     const dataProvider = await context.getService<IDataProvider>(
       'other-mod.data-provider'
     );
@@ -449,37 +449,37 @@ export default {
     }
   },
 };
-\`\`\`
+```
 
-### 服务可见性?
+### 服务可见性
 
-- \`public\`: 所MOD 可访
-- \`internal\`: 仅同一作者的 MOD 可访
-- \`private\`: 仅当MOD 可访
+- `public`: 所有 MOD 可访问
+- `internal`: 仅同一作者的 MOD 可访问
+- `private`: 仅当前 MOD 可访问
 
 ### 服务权限
 
-调用服务需要声明对应的权限:
+调用服务需要声明对应的权限：
 
-\`\`\`json
+```json
 {
   "permissions": [
     "service:other-mod.data-provider"
   ]
 }
-\`\`\`
+```
 
-## API 参数?
+## API 参考
 
 ### Time API
 
-\`\`\`typescript
-// 读取时间(需time:read 权限)
+```typescript
+// 读取时间（需 time:read 权限）
 const currentTime = context.api.time.currentTime;
 const isPlaying = context.api.time.isPlaying;
 const timeSpeed = context.api.time.timeSpeed;
 
-// 修改时间(需time:write 权限)
+// 修改时间（需 time:write 权限）
 context.api.time.setCurrentTime(new Date('2024-01-01'));
 context.api.time.togglePlayPause();
 context.api.time.setTimeSpeed(10);
@@ -491,16 +491,16 @@ const unsubscribe = context.api.time.onTimeChange((time) => {
 
 // 取消订阅
 unsubscribe();
-\`\`\`
+```
 
 ### Camera API
 
-\`\`\`typescript
-// 读取相机状态(需camera:read 权限)
+```typescript
+// 读取相机状态（需 camera:read 权限）
 const position = context.api.camera.getPosition();
 const target = context.api.camera.getTarget();
 
-// 控制相机(需camera:write 权限)
+// 控制相机（需 camera:write 权限）
 context.api.camera.flyTo({
   position: [0, 0, 10000000],
   duration: 2000,
@@ -515,12 +515,12 @@ context.api.camera.lookAt({
 const unsubscribe = context.api.camera.onCameraMove((camera) => {
   console.log('Camera moved:', camera);
 });
-\`\`\`
+```
 
 ### Render API
 
-\`\`\`typescript
-// 注册渲染器(需render:write 权限)
+```typescript
+// 注册渲染器（需 render:write 权限）
 context.api.render.registerRenderer('my-renderer', (scene, camera) => {
   // 自定义渲染逻辑
   const mesh = new THREE.Mesh(geometry, material);
@@ -537,35 +537,48 @@ context.api.render.registerRenderer('my-renderer', (scene, camera) => {
   };
 });
 
-// 注销渲染器?
+// 注销渲染器
 context.api.render.unregisterRenderer('my-renderer');
 
-// 渲染回调(需render:execute 权限)
+// 渲染回调（需 render:execute 权限）
 const unsubscribe = context.api.render.onBeforeRender(() => {
   // 在渲染前执行
 });
-\`\`\`
+```
 
 ### Celestial API
 
-\`\`\`typescript
-// 获取天体数据(需celestial:read 权限)
+```typescript
+// 获取天体数据（需 celestial:read 权限）
 const planets = context.api.celestial.getPlanets();
 const earth = context.api.celestial.getPlanet('earth');
 
 // 订阅天体位置更新
 const unsubscribe = context.api.celestial.onPositionUpdate((body, position) => {
-  console.log(\`\${body} position:\`, position);
+  console.log(`${body} position:`, position);
 });
-\`\`\`
+```
+
+### Satellite API
+
+```typescript
+// 获取卫星数据（需 satellite:read 权限）
+const satellites = context.api.satellite.getSatellites();
+const tle = context.api.satellite.getTLE('ISS');
+
+// 订阅卫星位置更新
+const unsubscribe = context.api.satellite.onSatelliteUpdate((satellite) => {
+  console.log('Satellite updated:', satellite.name);
+});
+```
 
 ## 资源配额
 
-系统会限制每个 MOD 的资源使用，防止单个 MOD 影响系统性能
+系统会限制每个 MOD 的资源使用，防止单个 MOD 影响系统性能。
 
 ### 默认配额
 
-\`\`\`json
+```json
 {
   "resourceQuota": {
     "maxMemoryMB": 50,
@@ -575,40 +588,40 @@ const unsubscribe = context.api.celestial.onPositionUpdate((body, position) => {
     "maxAPICallsPerSecond": 100
   }
 }
-\`\`\`
+```
 
 ### 配额超限处理
 
-MOD 超过配额系统会抛\`QuotaExceededError\` 异常:
+MOD 超过配额时系统会抛出 `QuotaExceededError` 异常：
 
-\`\`\`typescript
+```typescript
 try {
-  // 可能超过配额的操
+  // 可能超过配额的操作
   context.api.render.registerRenderer('renderer', factory);
 } catch (error) {
   if (error instanceof QuotaExceededError) {
     console.error('Quota exceeded:', error.message);
-    // 清理一些资
+    // 清理一些资源
   }
 }
-\`\`\`
+```
 
 ### 查询配额使用情况
 
-\`\`\`typescript
+```typescript
 const usage = context.getResourceUsage();
 console.log('Memory:', usage.memoryMB, 'MB');
 console.log('Render objects:', usage.renderObjects);
 console.log('Event listeners:', usage.eventListeners);
-\`\`\`
+```
 
-## 最佳实
+## 最佳实践
 
 ### 1. 错误处理
 
-始终捕获和处理错防止 MOD 崩溃影响系统:
+始终捕获和处理错误，防止 MOD 崩溃影响系统：
 
-\`\`\`typescript
+```typescript
 export default {
   async onEnable(context: ModContext) {
     try {
@@ -619,13 +632,13 @@ export default {
     }
   },
 };
-\`\`\`
+```
 
 ### 2. 资源清理
 
-\`onDisable\` 中清理所有资
+在 `onDisable` 中清理所有资源：
 
-\`\`\`typescript
+```typescript
 export default {
   onEnable(context: ModContext) {
     this.unsubscribers = [
@@ -635,25 +648,25 @@ export default {
   },
   
   onDisable(context: ModContext) {
-    // 取消所有订
+    // 取消所有订阅
     this.unsubscribers.forEach(unsub => unsub());
     
-    // 注销渲染器?
+    // 注销渲染器
     context.api.render.unregisterRenderer('my-renderer');
     
-    // 清理定时
+    // 清理定时器
     clearInterval(this.intervalId);
   },
 };
-\`\`\`
+```
 
 ### 3. 性能优化
 
 - 避免在渲染回调中执行耗时操作
-- 使用节流(throttle)或防debounce)处理高频事件
+- 使用节流（throttle）或防抖（debounce）处理高频事件
 - 延迟加载大型资源
 
-\`\`\`typescript
+```typescript
 import { throttle } from 'lodash';
 
 export default {
@@ -666,24 +679,24 @@ export default {
     context.api.camera.onCameraMove(handleCameraMove);
   },
 };
-\`\`\`
+```
 
-### 4. 国际
+### 4. 国际化
 
-支持中英文双
+支持中英文双语：
 
-\`\`\`typescript
+```typescript
 function getLabel(context: ModContext) {
   const lang = context.getLanguage();
   return lang === 'zh' ? '中文标签' : 'English Label';
 }
-\`\`\`
+```
 
 ### 5. 类型安全
 
-使用 TypeScript 确保类型安全:
+使用 TypeScript 确保类型安全：
 
-\`\`\`typescript
+```typescript
 import type { ModContext, TimeAPI } from '@/lib/mod-manager/types';
 
 interface MyConfig {
@@ -694,54 +707,54 @@ interface MyConfig {
 export default {
   onEnable(context: ModContext) {
     const config = context.getConfig<MyConfig>();
-    // config 现在有类型提
+    // config 现在有类型提示
   },
 };
-\`\`\`
+```
 
-## 调试技
+## 调试技巧
 
-### 1. 使用控制台日
+### 1. 使用控制台日志
 
-\`\`\`typescript
+```typescript
 console.log('[MyMOD] Initializing...');
 console.warn('[MyMOD] Warning: Low memory');
 console.error('[MyMOD] Error:', error);
-\`\`\`
+```
 
 ### 2. 查看 API 调用日志
 
-在浏览器控制台中查看 MOD API 调用统计:
+在浏览器控制台中查看 MOD API 调用统计：
 
-\`\`\`javascript
-// 在浏览器控制台执
+```javascript
+// 在浏览器控制台执行
 window.__MOD_DEBUG__.getAPICallStats('my-mod');
-\`\`\`
+```
 
-### 3. 检查权限?
+### 3. 检查权限
 
-\`\`\`typescript
+```typescript
 if (!context.hasPermission('time:write')) {
   console.warn('Missing permission: time:write');
 }
-\`\`\`
+```
 
 ### 4. 监控资源使用
 
-\`\`\`typescript
+```typescript
 setInterval(() => {
   const usage = context.getResourceUsage();
   console.log('Resource usage:', usage);
 }, 5000);
-\`\`\`
+```
 
 ## 常见问题
 
-### Q: 如何处理权限被拒绝?
+### Q: 如何处理权限被拒绝？
 
-A: 捕获 \`PermissionDeniedError\` 并提供降级功能?
+A: 捕获 `PermissionDeniedError` 并提供降级功能：
 
-\`\`\`typescript
+```typescript
 try {
   context.api.time.setCurrentTime(new Date());
 } catch (error) {
@@ -749,14 +762,14 @@ try {
     console.warn('Permission denied, using read-only mode');
   }
 }
-\`\`\`
+```
 
-### Q: 如何MOD 间共享数
+### Q: 如何在 MOD 间共享数据？
 
-A: 使用服务注册表或事件系统:
+A: 使用服务注册表或事件系统：
 
-\`\`\`typescript
-// 方式 1: 服务注册表?
+```typescript
+// 方式 1: 服务注册表
 context.registerService('my-mod.data-service', {
   getData: () => sharedData,
 });
@@ -766,47 +779,42 @@ context.emit('my-mod:data-updated', newData);
 context.on('other-mod:event', (data) => {
   console.log('Received:', data);
 });
-\`\`\`
+```
 
-### Q: 如何优化渲染性能?
+### Q: 如何优化渲染性能？
 
-A: 
-1. 使用 LOD(细节层次)技
+A:
+1. 使用 LOD（细节层次）技术
 2. 批量渲染相似对象
-3. 使用 GPU 实例
+3. 使用 GPU 实例化
 4. 避免在每帧创建新对象
 
-### Q: 如何测试 MOD?
+### Q: 如何测试 MOD？
 
-A: 
-1. 使用浏览器开发者工
-2. 编写单元测试(使用 Jest)
+A:
+1. 使用浏览器开发者工具
+2. 编写单元测试（使用 Jest）
 3. 在开发环境中启用调试模式
-4. 使用 MOD 管理面板重新加载"功能
+4. 使用 MOD 管理面板重新加载功能
 
 ## 示例 MOD
 
-完整的示MOD 可以\`examples/\` 目录中找
+完整的示例 MOD 可以在 `src/lib/mods/` 目录中找到：
 
-- \`examples/simple-mod\`: 基础 MOD 示例
-- \`examples/dock-icon-mod\`: Dock 图标扩展示例
-- \`examples/window-mod\`: 自定义窗口示
-- \`examples/service-mod\`: 服务注册示例
-- \`examples/config-mod\`: 配置 Schema 示例
+- `src/lib/mods/`: 内置 MOD 实现参考
 
 ## 相关文档
 
 - [API 参考文档](./API_REFERENCE.md)
 - [迁移指南](./MIGRATION_GUIDE.md)
-- [架构设计文档](../.kiro/specs/mod-architecture-enhancement/design.md)
 
 ## 获取帮助
 
-如果遇到问题,可以:
+如果遇到问题，可以：
 
 1. 查看[常见问题](#常见问题)
 2. 阅读[API 参考文档](./API_REFERENCE.md)
-3. GitHub 上提Issue
-4. 加入开发者社区讨
+3. 在 GitHub 上提 Issue
+4. 加入开发者社区讨论
 
-祝你开发愉 🚀
+祝你开发愉快！ 🚀

@@ -15,6 +15,14 @@ const CACHE_TTL: Record<string, number> = {
   worldports:         86400_000,
 };
 
+/**
+ * 带超时的安全 fetch 封装
+ *
+ * @param url - 请求 URL
+ * @param init - fetch 初始化选项
+ * @param timeoutMs - 超时时间（毫秒），默认 9 秒
+ * @returns Response 对象
+ */
 async function safeFetch(url: string, init?: RequestInit, timeoutMs = 9000): Promise<Response> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -27,6 +35,11 @@ async function safeFetch(url: string, init?: RequestInit, timeoutMs = 9000): Pro
 
 // ── 航班：adsb.fi（完全免费，无 key，Vercel 友好）────────────────────────────
 
+/**
+ * 从 adsb.fi 获取航班数据（免费，无需 API key）
+ *
+ * @returns 航班数据数组
+ */
 async function fetchAdsbFi(): Promise<unknown[]> {
   const res = await safeFetch('https://api.adsb.fi/v1/flights', {
     headers: { 'Accept': 'application/json' },
@@ -55,6 +68,11 @@ async function fetchAdsbFi(): Promise<unknown[]> {
 // ── 航班：AviationStack 免费层（每月 100 次，备用）────────────────────────────
 // 注：免费层只有历史数据，实时需付费，这里作为最后备用
 
+/**
+ * 从 AviationEdge 获取航班数据（需要 API key，免费层每月 100 次）
+ *
+ * @returns 航班数据数组
+ */
 async function fetchAviationEdge(): Promise<unknown[]> {
   // aviation-edge.com 免费试用 key（公开演示 key，仅供测试）
   // 实际部署建议在 .env 里配置 AVIATION_EDGE_KEY
@@ -86,6 +104,11 @@ async function fetchAviationEdge(): Promise<unknown[]> {
 
 // ── 航班：OpenSky 带认证（可选，速率更高）────────────────────────────────────
 
+/**
+ * 从 OpenSky Network 获取航班数据（支持认证，速率更高）
+ *
+ * @returns 航班数据数组
+ */
 async function fetchOpenSkyAuth(): Promise<unknown[]> {
   const user = process.env.OPENSKY_USER || '';
   const pass = process.env.OPENSKY_PASS || '';
@@ -116,6 +139,11 @@ async function fetchOpenSkyAuth(): Promise<unknown[]> {
 
 // ── 港口：内置主要港口数据（完全离线，不依赖任何 API）────────────────────────
 
+/**
+ * 获取内置主要港口数据（离线数据，不依赖外部 API）
+ *
+ * @returns 港口数据数组
+ */
 function getBuiltinPorts(): unknown[] {
   return [
     // 亚洲
@@ -167,6 +195,11 @@ function getBuiltinPorts(): unknown[] {
 
 // ── 港口：尝试 NGA API，失败回退内置数据 ─────────────────────────────────────
 
+/**
+ * 从 NGA API 获取世界港口数据，失败时回退到内置数据
+ *
+ * @returns 港口数据数组
+ */
 async function fetchWorldPorts(): Promise<unknown[]> {
   try {
     const res = await safeFetch(
@@ -200,6 +233,12 @@ async function fetchWorldPorts(): Promise<unknown[]> {
 
 // ── 航班：多源瀑布（依次尝试，第一个成功即返回）─────────────────────────────
 
+/**
+ * 多源瀑布式航班数据获取（依次尝试，第一个成功即返回）
+ *
+ * @param _sourceId - 数据源标识（未使用，保留接口兼容）
+ * @returns 航班数据数组
+ */
 async function fetchFlightsCascade(_sourceId: string): Promise<unknown[]> {
   const errors: string[] = [];
 
@@ -226,6 +265,14 @@ const FETCHERS: Record<string, () => Promise<unknown[]>> = {
   worldports:         fetchWorldPorts,
 };
 
+/**
+ * GET /api/traffic?source=opensky|adsbexchange|flightradar24_free|worldports
+ *
+ * 全球交通数据代理 API，支持航班和港口数据
+ *
+ * @param request - Next.js 请求对象
+ * @returns JSON 响应，包含 data 数组和缓存状态
+ */
 export async function GET(request: NextRequest) {
   const source = request.nextUrl.searchParams.get('source');
   if (!source || !FETCHERS[source]) {

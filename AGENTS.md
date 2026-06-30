@@ -25,10 +25,20 @@ src/
 │   ├── search/             # 天体搜索
 │   ├── satellite/          # 卫星追踪 UI
 │   ├── loading/            # 加载动画
-│   └── ...                 # 其他业务组件
+│   ├── cesium/             # Cesium 地球组件
+│   ├── exoplanets/         # 系外行星组件
+│   ├── mod-manager/        # MOD 管理器 UI
+│   ├── moon/               # 月球组件
+│   ├── space-launches/     # 发射数据组件
+│   ├── weather-disaster/   # 天气/灾害组件
+│   ├── global-traffic/     # 全球交通组件
+│   ├── gravity-grid/       # 重力网格组件
+│   ├── debug/              # 调试工具
+│   ├── error-boundaries/   # 错误边界
+│   └── windows/            # 窗口组件
 ├── lib/                    # 核心业务逻辑 (无 React 依赖)
-│   ├── 3d/                 # Three.js 渲染 (camera/, player/, utils/)
-│   ├── astronomy/          # 天文计算 (轨道、时间、星表)
+│   ├── 3d/                 # Three.js 渲染 (camera/, player/, utils/, orbit-curve/)
+│   ├── astronomy/          # 天文计算 (轨道、时间、星表、历表)
 │   ├── cesium/             # Cesium 地球集成
 │   ├── config/             # 配置管理器
 │   ├── coordinates/        # 统一坐标系变换 (ICRF 锚定的 Frame Graph)
@@ -36,13 +46,31 @@ src/
 │   ├── errors/             # 基础错误类型
 │   ├── exoplanets/         # 系外行星坐标计算
 │   ├── i18n/               # 国际化
-│   ├── mod-manager/        # MOD 插件系统 (核心子系统)
+│   ├── mod-manager/        # MOD 插件系统 (核心子系统，14 个模块)
 │   ├── mods/               # 内置 MOD 实现
 │   ├── search/             # 搜索引擎
-│   ├── state/              # Zustand 状态管理
+│   ├── state/              # Zustand 状态管理 (5 个 store)
 │   ├── store/              # Zustand store hooks
 │   ├── utils/              # 数学/通用工具函数
-│   └── types/              # 共享类型定义
+│   ├── types/              # 共享类型定义
+│   ├── satellite/          # 卫星数据处理
+│   ├── accessibility/      # 无障碍支持
+│   ├── constants/          # 全局常量
+│   ├── design-system/      # 设计系统
+│   ├── documentation/      # 文档工具
+│   ├── loading/            # 加载逻辑
+│   ├── parsers/            # 数据解析器
+│   ├── performance/        # 性能监控
+│   ├── pwa/                # PWA 支持
+│   └── server/             # 服务端工具
+├── core/                   # 核心模块
+├── hooks/                  # React hooks
+├── models/                 # 数据模型
+├── reporters/              # 报告生成器
+├── validators/             # 数据验证器
+├── types/                  # 类型定义
+├── utils/                  # 通用工具函数
+├── styles/                 # 全局样式
 └── test/                   # 集成和手动测试
 ```
 
@@ -110,7 +138,11 @@ mod-manager/
 ├── service/          # 服务注册表
 ├── store/            # MOD 状态 store
 ├── utils/            # SemVer 解析、Manifest 验证
-└── ...
+├── contribution/     # 贡献点系统 (Dock/Window/Command 注册)
+├── discovery/        # MOD 自动发现
+├── performance/      # 性能监控
+├── persistence/      # 配置持久化
+└── proxy/            # API 代理层
 ```
 
 ---

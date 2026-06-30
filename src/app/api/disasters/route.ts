@@ -17,6 +17,11 @@ const CACHE_TTL: Record<string, number> = {
   reliefweb:       3600_000,
 };
 
+/**
+ * 从 USGS 获取地震数据（过去一周 M2.5+）
+ *
+ * @returns 地震事件数组
+ */
 async function fetchUSGS() {
   const res = await fetch(
     'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson',
@@ -38,6 +43,11 @@ async function fetchUSGS() {
   }));
 }
 
+/**
+ * 从 EMSC（欧洲地震中心）获取地震数据
+ *
+ * @returns 地震事件数组
+ */
 async function fetchEMSC() {
   const res = await fetch(
     'https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=100&minmagnitude=3&orderby=time',
@@ -59,6 +69,11 @@ async function fetchEMSC() {
   }));
 }
 
+/**
+ * 从 GDACS（全球灾害预警和协调系统）获取多类灾害数据
+ *
+ * @returns 灾害事件数组（地震、台风、洪水、火山、野火、干旱）
+ */
 async function fetchGDACS() {
   const url = 'https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventtypes=EQ,TC,FL,VO,WF,DR&alertlevel=Green,Orange,Red&limit=100';
   const res = await fetch(url, { next: { revalidate: 300 } });
@@ -85,6 +100,11 @@ async function fetchGDACS() {
   });
 }
 
+/**
+ * 从 NASA FIRMS 获取全球活跃火点数据
+ *
+ * @returns 野火事件数组
+ */
 async function fetchNASAFIRMS() {
   // FIRMS JSON endpoint - no key needed for basic world data
   const res = await fetch(
@@ -107,6 +127,11 @@ async function fetchNASAFIRMS() {
   }));
 }
 
+/**
+ * 从 NOAA 获取美国气象预警数据
+ *
+ * @returns 气象预警事件数组
+ */
 async function fetchNOAAWeather() {
   const res = await fetch(
     'https://api.weather.gov/alerts/active?status=actual&message_type=alert',
@@ -133,6 +158,11 @@ async function fetchNOAAWeather() {
   });
 }
 
+/**
+ * 从 NOAA 获取历史海啸事件数据
+ *
+ * @returns 海啸事件数组
+ */
 async function fetchNOAATsunami() {
   const res = await fetch(
     'https://www.ngdc.noaa.gov/hazel/hazard-service/api/v1/tsunamis/events?maxYear=2026&minYear=2020&orderBy=year',
@@ -153,6 +183,11 @@ async function fetchNOAATsunami() {
   }));
 }
 
+/**
+ * 从 ReliefWeb 获取正在进行的灾害事件数据
+ *
+ * @returns 灾害事件数组
+ */
 async function fetchReliefWeb() {
   const res = await fetch(
     'https://api.reliefweb.int/v1/disasters?appname=opic&limit=50&fields[include][]=name&fields[include][]=date&fields[include][]=country&fields[include][]=type&fields[include][]=status&filter[field]=status&filter[value]=ongoing',

@@ -15,6 +15,12 @@ const CACHE_TTL: Record<string, number> = {
   nextspaceflight:   3600_000,
 };
 
+/**
+ * 将 Launch Library 2 状态缩写映射为标准状态码
+ *
+ * @param abbrev - 状态缩写（如 'Go', 'TBD', 'Success'）
+ * @returns 标准状态码
+ */
 function mapLL2Status(abbrev: string): string {
   const map: Record<string, string> = {
     'Go': 'go', 'TBD': 'tbd', 'Success': 'success', 'Failure': 'failure',
@@ -24,6 +30,12 @@ function mapLL2Status(abbrev: string): string {
   return map[abbrev] ?? 'tbd';
 }
 
+/**
+ * 将轨道名称映射为标准轨道类型
+ *
+ * @param name - 轨道名称（如 'Low Earth Orbit', 'GEO'）
+ * @returns 标准轨道类型（LEO, MEO, GEO, GTO, SSO, ISS, TLI, HEO, Sub, Other）
+ */
 function mapOrbit(name?: string): string {
   if (!name) return 'Other';
   const n = name.toUpperCase();
@@ -39,6 +51,11 @@ function mapOrbit(name?: string): string {
   return 'Other';
 }
 
+/**
+ * 从 Launch Library 2 API 获取即将进行的发射数据
+ *
+ * @returns 发射数据数组
+ */
 async function fetchLaunchLibrary2() {
   const res = await fetch(
     'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?format=json&limit=25&mode=detailed',
@@ -89,6 +106,11 @@ async function fetchLaunchLibrary2() {
   }));
 }
 
+/**
+ * 从 SpaceX API 获取即将进行的发射数据
+ *
+ * @returns 发射数据数组
+ */
 async function fetchSpaceX() {
   const res = await fetch(
     'https://api.spacexdata.com/v5/launches/upcoming',
@@ -127,6 +149,11 @@ async function fetchSpaceX() {
   }));
 }
 
+/**
+ * 从 RocketLaunch.Live API 获取即将进行的发射数据
+ *
+ * @returns 发射数据数组
+ */
 async function fetchRocketLaunchLive() {
   const res = await fetch(
     'https://fdo.rocketlaunch.live/json/launches/next/5',
@@ -163,6 +190,11 @@ async function fetchRocketLaunchLive() {
   }));
 }
 
+/**
+ * 从 TheSpaceDevs API 获取即将进行的发射数据（列表模式）
+ *
+ * @returns 发射数据数组
+ */
 async function fetchTheSpaceDevsList() {
   const res = await fetch(
     'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?format=json&limit=10&mode=list',
@@ -193,6 +225,11 @@ async function fetchTheSpaceDevsList() {
   }));
 }
 
+/**
+ * 从 TheSpaceDevs API 获取历史发射数据
+ *
+ * @returns 发射数据数组
+ */
 async function fetchPreviousLaunches() {
   const res = await fetch(
     'https://ll.thespacedevs.com/2.3.0/launches/previous/?format=json&limit=20&mode=detailed',

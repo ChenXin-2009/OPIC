@@ -1,3 +1,11 @@
+/**
+ * @module 3d/orbit-curve/OrbitCurveGenerator
+ * @description 轨道曲线点生成器
+ *
+ * 根据开普勒轨道根数生成 3D 轨道曲线采样点。
+ * 支持岁差修正，可根据儒略日调整轨道根数。
+ */
+
 import * as THREE from 'three';
 import type { OrbitalElements } from '@/lib/astronomy/orbit';
 import { J2000_JD } from '@/lib/astronomy/utils/constants';

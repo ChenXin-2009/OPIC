@@ -24,6 +24,13 @@ import {
 import { calculateRotationAxis, CELESTIAL_BODIES } from '@/lib/types/celestialTypes';
 import type { OrbitalElements } from './types';
 
+/**
+ * 根据时间插值计算当前时刻的轨道根数
+ *
+ * @param elements - J2000.0 基准轨道根数
+ * @param T - 从 J2000.0 起算的儒略世纪数
+ * @returns 插值后的轨道根数
+ */
 function computeElementsAtTime(elements: OrbitalElements, T: number): OrbitalElements {
   return {
     ...elements,
@@ -36,6 +43,12 @@ function computeElementsAtTime(elements: OrbitalElements, T: number): OrbitalEle
   };
 }
 
+/**
+ * 获取母行星的自转轴四元数（用于卫星位置变换）
+ *
+ * @param parentKey - 母行星的 CELESTIAL_BODIES 键名
+ * @returns 自转轴四元数，母行星无极坐标数据时返回单位四元数
+ */
 function getParentAxisQuaternion(parentKey: string): THREE.Quaternion {
   const quaternion = new THREE.Quaternion();
   const parentConfig = CELESTIAL_BODIES[parentKey];
@@ -49,6 +62,14 @@ function getParentAxisQuaternion(parentKey: string): THREE.Quaternion {
   return quaternion;
 }
 
+/**
+ * 计算卫星在母行星坐标系中的位置
+ *
+ * @param sat - 卫星轨道参数（半长轴、周期、倾角、升交点经度等）
+ * @param daysSinceJ2000 - 自 J2000.0 起算的天数
+ * @param parentAxisQuaternion - 母行星自转轴四元数
+ * @returns 卫星在 RenderWorld 坐标系中的位置（AU）
+ */
 function calculateSatellitePosition(
   sat: {
     a: number;
