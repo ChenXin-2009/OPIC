@@ -89,3 +89,8 @@ desktop.ini
 
 # 测试网站（独立于项目代码）
 /website_test/
+
+# Rust WASM build artifacts
+/rust-sgp4/target/
+/rust-sgp4/pkg/
+/public/wasm/
