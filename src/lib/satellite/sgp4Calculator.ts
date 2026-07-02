@@ -53,7 +53,7 @@ export class SGP4Calculator {
   }
 
   /**
-   * 初始化Web Worker
+   * 初始化Web Worker（优先使用 WASM 版，回退 JS 版）
    */
   private initWorker(): void {
     try {

@@ -1,12 +1,13 @@
 {
   "name": "opic",
-  "version": "11.12.1",
+  "version": "11.12.2",
   "description": "A Web-based multi-scale universe visualization and astronomical data integration system - Open Integrated Cosmos",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "prebuild": "npm run generate-mods",
+    "build:wasm": "cd rust-sgp4 && cargo build --target wasm32-unknown-unknown --release && wasm-bindgen --target no-modules --out-dir pkg ./target/wasm32-unknown-unknown/release/opic_sgp4.wasm && copy /Y pkg\\opic_sgp4.js ..\\public\\wasm && copy /Y pkg\\opic_sgp4_bg.wasm ..\\public\\wasm && copy /Y pkg\\opic_sgp4.d.ts ..\\public\\wasm",
+    "prebuild": "npm run build:wasm && npm run generate-mods",
     "start": "next start",
     "lint": "eslint",
     "lint:fix": "eslint --fix",

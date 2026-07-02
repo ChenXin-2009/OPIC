@@ -59,6 +59,22 @@ function eciSwappedToRenderWorld(
   );
 }
 
+function eciSwappedToRenderWorldOut(
+  inputPos: THREE.Vector3,
+  cosG: number,
+  sinG: number,
+  out: THREE.Vector3
+): void {
+  const x = inputPos.x;
+  const y = inputPos.y;
+  const z = inputPos.z;
+  out.set(
+    x * cosG - z * sinG,
+    -x * sinG * ECI_COS_E - z * cosG * ECI_COS_E + y * ECI_SIN_E,
+    x * sinG * ECI_SIN_E + z * cosG * ECI_SIN_E + y * ECI_COS_E
+  );
+}
+
 /**
  * SatelliteLayer - 卫星图层管理器
  * 
@@ -110,6 +126,8 @@ export class SatelliteLayer {
 
   private scratchVec3 = new THREE.Vector3();
   private scratchVec3b = new THREE.Vector3();
+  private scratchRotated = new THREE.Vector3();
+  private workStateCache = new Map<number, any>();
   
   /**
    * 创建卫星图层实例
@@ -126,7 +144,7 @@ export class SatelliteLayer {
     // 轨道动力学插值使用了错误的引力常数（太阳GM而非地球GM），
     // 导致每帧插值位置偏离正确位置再被blend拽回，产生高频抖动。
     // SGP4已每2秒提供正确位置，Slerp补间足够平滑。
-    this.interpolator = new OrbitalInterpolator(false);
+    this.interpolator = new OrbitalInterpolator();
     this.performanceMonitor = PerformanceMonitor.getInstance();
     this.qualityController = new QualityController(this.performanceMonitor);
     
@@ -219,29 +237,37 @@ export class SatelliteLayer {
         const cosG = Math.cos(gmstRad);
         const sinG = Math.sin(gmstRad);
 
-        const relativePositions = new Map<number, any>();
+        // 复用 workStateCache，避免每帧分配新 Map 和对象
         interpolatedPositions.forEach((position, noradId) => {
-          const rotatedPosition = eciSwappedToRenderWorld(position, cosG, sinG);
+          eciSwappedToRenderWorldOut(position, cosG, sinG, this.scratchRotated);
 
-          const savedState = this.satelliteStates.get(noradId);
-          if (savedState) {
-            relativePositions.set(noradId, {
-              ...savedState,
-              position: rotatedPosition,
-            });
+          let workState = this.workStateCache.get(noradId);
+          if (!workState) {
+            const savedState = this.satelliteStates.get(noradId);
+            if (savedState) {
+              workState = { ...savedState, position: this.scratchRotated.clone() };
+            } else {
+              workState = { noradId, position: this.scratchRotated.clone(), orbitType: 'LEO' as any };
+            }
+            this.workStateCache.set(noradId, workState);
           } else {
-            relativePositions.set(noradId, {
-              noradId,
-              position: rotatedPosition,
-              orbitType: 'LEO' as any,
-            });
+            workState.position.copy(this.scratchRotated);
           }
         });
+
+        // 清理已移除的卫星
+        if (this.workStateCache.size !== interpolatedPositions.size) {
+          for (const id of this.workStateCache.keys()) {
+            if (!interpolatedPositions.has(id)) {
+              this.workStateCache.delete(id);
+            }
+          }
+        }
         
         // 更新渲染器：先设世界位置再传相对坐标
         this.renderer.setWorldPosition(earthPosition);
         const uploadStart = performance.now();
-        this.renderer.updatePositions(relativePositions as any);
+        this.renderer.updatePositions(this.workStateCache as any);
         this.performanceMonitor.recordGPUUpload(performance.now() - uploadStart);
         
         // 更新相机距离相关的透明度和大小

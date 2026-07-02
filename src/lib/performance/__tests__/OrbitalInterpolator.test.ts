@@ -15,15 +15,9 @@ afterEach(() => {
 
 describe('OrbitalInterpolator', () => {
   describe('constructor', () => {
-    it('should initialize with orbital dynamics enabled by default', () => {
+    it('should initialize with zero states', () => {
       const interp = new OrbitalInterpolator();
-      expect(interp.isOrbitalDynamicsEnabled()).toBe(true);
       expect(interp.getStateCount()).toBe(0);
-    });
-
-    it('should initialize with orbital dynamics disabled when passed false', () => {
-      const interp = new OrbitalInterpolator(false);
-      expect(interp.isOrbitalDynamicsEnabled()).toBe(false);
     });
   });
 
@@ -49,12 +43,6 @@ describe('OrbitalInterpolator', () => {
       expect(interp.getStateCount()).toBe(2);
     });
 
-    it('should not calculate orbital params when dynamics disabled', () => {
-      const interp = new OrbitalInterpolator(false);
-      interp.setTarget(25544, v(1, 0, 0), v(0, 1, 0), 2000);
-      const state = (interp as any).states.get(25544);
-      expect(state.orbitalParams).toBeUndefined();
-    });
   });
 
   describe('getInterpolatedPosition', () => {
@@ -75,7 +63,7 @@ describe('OrbitalInterpolator', () => {
     });
 
     it('should clamp progress to 0 when time is before start', () => {
-      const interp = new OrbitalInterpolator(false);
+      const interp = new OrbitalInterpolator();
       interp.setTarget(25544, v(0, 0, 0), v(0, 0, 0), 2000);
       Date.now = jest.fn().mockReturnValue(1000);
       const pos = interp.getInterpolatedPosition(25544, 500);
@@ -85,7 +73,7 @@ describe('OrbitalInterpolator', () => {
     });
 
     it('should clamp progress to 1 when time is after end', () => {
-      const interp = new OrbitalInterpolator(false);
+      const interp = new OrbitalInterpolator();
       interp.setTarget(25544, v(10, 0, 0), v(0, 0, 0), 2000);
       Date.now = jest.fn().mockReturnValue(1000);
       const pos = interp.getInterpolatedPosition(25544, 5000);
@@ -93,7 +81,7 @@ describe('OrbitalInterpolator', () => {
     });
 
     it('should interpolate linearly at midpoint with dynamics disabled', () => {
-      const interp = new OrbitalInterpolator(false);
+      const interp = new OrbitalInterpolator();
       Date.now = jest.fn().mockReturnValue(0);
       interp.setTarget(25544, v(0, 0, 0), v(0, 0, 0), 2000);
       Date.now = jest.fn().mockReturnValue(1000);
@@ -104,7 +92,7 @@ describe('OrbitalInterpolator', () => {
 
   describe('getInterpolatedPositions', () => {
     it('should return positions for all tracked satellites', () => {
-      const interp = new OrbitalInterpolator(false);
+      const interp = new OrbitalInterpolator();
       Date.now = jest.fn().mockReturnValue(0);
       interp.setTarget(1, v(1, 0, 0), v(0, 0, 0), 2000);
       interp.setTarget(2, v(2, 0, 0), v(0, 0, 0), 2000);
@@ -137,19 +125,9 @@ describe('OrbitalInterpolator', () => {
     });
   });
 
-  describe('setEnableOrbitalDynamics', () => {
-    it('should toggle orbital dynamics', () => {
-      const interp = new OrbitalInterpolator();
-      interp.setEnableOrbitalDynamics(false);
-      expect(interp.isOrbitalDynamicsEnabled()).toBe(false);
-      interp.setEnableOrbitalDynamics(true);
-      expect(interp.isOrbitalDynamicsEnabled()).toBe(true);
-    });
-  });
-
-  describe('slerp fallback', () => {
+  describe('slerp', () => {
     it('should handle zero-length start vector', () => {
-      const interp = new OrbitalInterpolator(false);
+      const interp = new OrbitalInterpolator();
       Date.now = jest.fn().mockReturnValue(0);
       interp.setTarget(25544, v(0, 0, 0), v(0, 0, 0), 2000);
       const pos = interp.getInterpolatedPosition(25544, 1000);
@@ -157,7 +135,7 @@ describe('OrbitalInterpolator', () => {
     });
 
     it('should handle nearly parallel vectors (small theta)', () => {
-      const interp = new OrbitalInterpolator(false);
+      const interp = new OrbitalInterpolator();
       Date.now = jest.fn().mockReturnValue(0);
       interp.setTarget(25544, v(1, 0.0001, 0), v(1, 0, 0), 2000);
       const pos = interp.getInterpolatedPosition(25544, 1000);

@@ -1,0 +1,14 @@
+D:\BIAN\OPIC\rust-sgp4\target\wasm32-unknown-unknown\release\deps\serde-3c412df78445df29.d: C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs D:\BIAN\OPIC\rust-sgp4\target\wasm32-unknown-unknown\release\build\serde-92da38fc8762f74a\out/private.rs
+
+D:\BIAN\OPIC\rust-sgp4\target\wasm32-unknown-unknown\release\deps\libserde-3c412df78445df29.rlib: C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs D:\BIAN\OPIC\rust-sgp4\target\wasm32-unknown-unknown\release\build\serde-92da38fc8762f74a\out/private.rs
+
+D:\BIAN\OPIC\rust-sgp4\target\wasm32-unknown-unknown\release\deps\libserde-3c412df78445df29.rmeta: C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs D:\BIAN\OPIC\rust-sgp4\target\wasm32-unknown-unknown\release\build\serde-92da38fc8762f74a\out/private.rs
+
+C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs:
+C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs:
+C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs:
+C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs:
+C:\Users\abc87\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs:
+D:\BIAN\OPIC\rust-sgp4\target\wasm32-unknown-unknown\release\build\serde-92da38fc8762f74a\out/private.rs:
+
+# env-dep:OUT_DIR=D:\\BIAN\\OPIC\\rust-sgp4\\target\\wasm32-unknown-unknown\\release\\build\\serde-92da38fc8762f74a\\out
