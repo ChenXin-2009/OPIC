@@ -286,7 +286,7 @@ export class SceneManager {
   }
 
   render(): void {
-    if (this.cesiumCompositeMode && this.skyboxManager.getSkybox()) {
+    if (this.cesiumCompositeMode) {
       this.renderer.autoClear = false;
       this.renderer.clear(true, true, false);
 

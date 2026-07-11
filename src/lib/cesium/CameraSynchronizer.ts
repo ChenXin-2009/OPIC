@@ -327,7 +327,10 @@ export class CameraSynchronizer {
     };
 
     // ── 2. 转换相机位置（ECEF 米 → Solar System Frame AU）────────────────────
-    const posECEF = cesiumCamera.position;
+    // 当相机通过 lookAtTransform 绑定到火箭的 ENU 参考系时，position / direction
+    // 是局部坐标。必须读取 WC（world coordinates）版本，Three.js 才能在离开
+    // Cesium 模式时获得真实世界位置，而不会被错误地拉回地球中心。
+    const posECEF = cesiumCamera.positionWC ?? cesiumCamera.position;
     const localAU = ecefToSolarSystem(posECEF);
     // 单位换算：米 → AU，再加上地球在太阳系中的位置
     const cameraSolarSystem = new THREE.Vector3(
@@ -338,8 +341,8 @@ export class CameraSynchronizer {
     threeCamera.position.copy(cameraSolarSystem);
 
     // ── 3. 转换方向和上向量（ECEF → Solar System Frame，纯方向向量无需加地球位置）
-    const dirSolar = ecefToSolarSystem(cesiumCamera.direction).normalize();
-    const upSolar  = ecefToSolarSystem(cesiumCamera.up).normalize();
+    const dirSolar = ecefToSolarSystem(cesiumCamera.directionWC ?? cesiumCamera.direction).normalize();
+    const upSolar  = ecefToSolarSystem(cesiumCamera.upWC ?? cesiumCamera.up).normalize();
 
     // ── 4. 使用 lookAt 设置相机方向 ──────────────────────────────────────────
     const target = new THREE.Vector3().addVectors(threeCamera.position, dirSolar);

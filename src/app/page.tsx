@@ -26,6 +26,7 @@ import { useModManager } from "@/hooks/useModManager";
 import WeatherDisasterOverlay from "@/components/weather-disaster/WeatherDisasterOverlay";
 import SpaceLaunchOverlay from "@/components/space-launches/SpaceLaunchOverlay";
 import GlobalTrafficOverlay from "@/components/global-traffic/GlobalTrafficOverlay";
+import SpaceFlightOverlay from "@/components/space-flight/SpaceFlightOverlay";
 import { MoonOverlay } from "@/components/moon/MoonOverlay";
 import InitializationOverlay, { type InitializationProgress } from "@/components/InitializationOverlay";
 
@@ -73,6 +74,7 @@ export default function SolarSystemPage() {
   const weatherDisasterModEnabled = useModStore((s) => s.mods['weather-disaster']?.state === 'enabled');
   const globalTrafficModEnabled = useModStore((s) => s.mods['global-traffic']?.state === 'enabled');
   const spaceLaunchesModEnabled = useModStore((s) => s.mods['space-launches']?.state === 'enabled');
+  const spaceFlightModEnabled = useModStore((s) => s.mods['space-flight']?.state === 'enabled');
 
   // cesiumEnabled 直接由用户控制，不受 MOD 限制
   const cesiumEnabled = userCesiumEnabled;
@@ -123,6 +125,7 @@ export default function SolarSystemPage() {
       {weatherDisasterModEnabled && <WeatherDisasterOverlay lang={lang} />}
       {spaceLaunchesModEnabled && <SpaceLaunchOverlay lang={lang} />}
       {globalTrafficModEnabled && <GlobalTrafficOverlay lang={lang} />}
+      {spaceFlightModEnabled && <SpaceFlightOverlay lang={lang} />}
       
       {/* 月球探索 MOD (Dock 图标触发，数据由动画循环驱动) */}
       <MoonOverlay lang={lang} />

@@ -204,7 +204,11 @@ export default function SolarSystemCanvas3D({
   React.useEffect(() => {
     cesiumEnabledRef.current = cesiumEnabled;
     if (sceneManagerRef.current) {
-      sceneManagerRef.current.setCesiumCompositeMode(cesiumEnabled);
+      // 合成模式由动画循环根据实际场景模式 (THREE_DOMINANT / CESIUM_DOMINANT) 管理。
+      // 初始场景模式为 THREE_DOMINANT，因此始终先设为 false 以保证天空盒可见。
+      // 若此处用 setCesiumCompositeMode(cesiumEnabled)，页面加载时 cesiumEnabled=true
+      // 会隐藏天空盒，而动画循环因模式未切换不会修正它。
+      sceneManagerRef.current.setCesiumCompositeMode(false);
     }
     const earthPlanet = planetsRef.current?.get('earth');
     if (earthPlanet && 'setCesiumEnabled' in earthPlanet) {

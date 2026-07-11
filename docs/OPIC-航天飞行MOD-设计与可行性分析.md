@@ -2,6 +2,8 @@
 
 > 本文档基于对 `github.com/ChenXin-2009/OPIC` 仓库当前代码（非文档描述、非泛化假设）的实际检查得出。所有引用的路径、常量、阈值均来自实际源码，标注了"已具备 ✅ / 需新建 🆕 / 需验证 ⚠️"三种状态，便于区分"已有基础"和"真正的新工作量"。
 
+> **进度更新（2026-07-11）**：本文最初用于 Phase 0 前的可行性判断；截至当前仓库状态，`CESIUM_DOMINANT` 下 Three.js 叠加层逐帧渲染已由 `test/verify-threejs-overlay.ts` 验证通过，纯 TS 飞行动力学已扩展到推力 + 大气阻力 + 变质量 + 10,000× 子步保护，`Task 1.1`–`1.6` 与 `1.9` 已完成，`Task 1.8` 已部分完成。下文中保留的"需验证 / 需新建"描述应结合这条更新理解。
+
 ---
 
 ## 0. 总体结论
@@ -42,7 +44,7 @@ earthLocal: {
 
 **🆕 需要新建的部分**：`RENDER_DOMAINS` 目前只有 `earthLocal / solarSystem / nearbyStars / galaxy / supergalactic` 五个域，**没有 `moonLocal`**。飞船抵达月球附近、执行动力下降和着陆时，需要一个以月球为中心的 RTC 域（否则月面着陆阶段会退化到用 `solarSystem` 精度渲染厘米级的着陆过程，浮点误差会很明显）。这是对现有模式的直接复制扩展，工作量不大，但必须做。
 
-### 1.2 引力常数与开普勒力学 —— ✅ 数据已具备，⚠️ 但只有"单向"能力
+### 1.2 引力常数与开普勒力学 —— ✅ 数据已具备，🟡 MVP 级双向能力已补齐
 
 `src/lib/3d/player/gravity.ts` 已经包含（数据来源 NASA JPL Planetary Fact Sheet / JPL SSD）：
 
@@ -55,10 +57,10 @@ GM_KM3_S2 = {
 
 `src/lib/astronomy/utils/kepler.ts` 与 `src/lib/astronomy/orbit/mechanics.ts` 已有 `solveKeplerEquation`、`eccentricToTrueAnomaly`、`heliocentricDistance`、`calculatePosition`。
 
-**关键限制**：这套开普勒力学是**单向**的——「已知固定轨道根数 → 计算某时刻位置」，这是画行星轨道用的（行星轨道根数不因为你的操作而改变）。火箭飞行需要的是相反且更复杂的能力：
+**进度更新**：仓库现已在 `src/lib/flight-dynamics/kepler.ts` 中补齐 `stateToElements()` / `elementsToState()`，并在 `src/lib/flight-dynamics/integrator.ts`、`flight-integrator.ts` 中落地纯 TS RK4 与带推力飞行积分器。下面这段"关键限制"主要针对当时的初始盘点，现阶段仍然成立的缺口主要是 **Phase 2 级别的边界工况与机动节点能力**：
 
-1. 状态矢量（位置+速度）↔ 轨道根数的**双向**转换（每次点火后要知道"现在在什么轨道上"，用于 UI 显示远/近拱点）——**不存在，需新建**
-2. 变推力、变质量、有阻力时的**数值积分**（不是解析开普勒轨道传播）——**完全不存在，需新建**
+1. 状态矢量（位置+速度）↔ 轨道根数的**双向**转换基础版 —— **已具备 ✅**，但还需要在圆轨道、逆行轨道、近抛物线等边界情况继续强化测试与 UI 消费链路
+2. 变推力、变质量、有阻力时的**数值积分**（不是解析开普勒轨道传播）——**已具备 ✅**，并已通过 Phase 0/1 自动化验证；后续扩展点转向 n-body、机动节点与姿态系统
 
 这是整个项目里最核心的"真空区"，详见第 3.1 节。
 
@@ -101,7 +103,7 @@ const DEFAULT_CONFIG = {
 
 **这意味着**：理论上，一枚在 `earthLocal` RTC 域里正确计算出位置的火箭网格，通过 MOD 的 `registerRenderer` 加入 Three.js 场景后，**在 `CESIUM_DOMINANT` 模式下也应该能叠加显示在真实地球影像之上**——因为 Three.js 层并没有被杀死，只是变成"嵌入元素"。这如果成立，就绕开了 1.3 节提到的"MOD 拿不到 Cesium 原生渲染接口"的问题，不需要扩展 Cesium 那一侧的 API。
 
-**⚠️ 这是本文档里最重要的一条"需验证"项**：我没有启动开发服务器做运行时验证，无法 100% 确认 `CESIUM_DOMINANT` 模式下 Three.js 叠加层是否每帧都在真实重绘（还是仅在切换瞬间保留最后一帧、之后暂停以省性能）。**强烈建议作为 Phase 0 的第一个 spike**，但验证方式不应该是"肉眼看一眼像不像叠加上了"——这种验证 AI agent 做不了，只能靠人跑一遍开发服务器亲自看，会成为整个项目里第一个、也是最隐蔽的一个"人肉阻塞点"。应该改成程序化验证：写一个最小 MOD，在 `registerRenderer` 里挂一个渲染计数器（Three.js `render()` 每被调用一次就 +1），在 `CESIUM_DOMINANT` 模式下用固定的模拟时钟推进 N 帧，断言计数器等于 N——如果计数器只在模式切换瞬间跳了一次然后不再变化，说明叠加层被冻结了，不是在真的每帧重绘。这个断言是纯数字判断，可以直接照 `test/verify-backend.ts` 的 ✓/❌ 风格写脚本跑，完全不需要打开浏览器看画面（具体方法见 3.9.2 节）。如果计数器测试通过、但仍然想确认视觉上是否真的贴合地表影像，可以再叠加一层 Playwright 无头浏览器截图 + 像素级 diff 作为次要防线，但这一层只用来发现回归，不作为唯一判据。如果最终发现叠加确实不可靠，退路是"火箭飞行期间强制锁定 `THREE_DOMINANT`"（牺牲发射阶段的真实地表影像，换取正确性），技术上不难但体验会打折扣。
+**更新（2026-07-11）**：这条风险已经由 Phase 0 Task 0.1 的程序化验证消除。`test/verify-threejs-overlay.ts` 在 `CESIUM_DOMINANT` 模式下连续推进 8 帧，确认 `render()` 调用次数 = 帧数；后续 `Task 1.6` 也已在此结论基础上落地火箭网格、尾焰与轨迹线的场景图断言脚本 `test/verify-flight-renderer.ts`。
 
 ### 1.5 现成可复用的"零件"
 

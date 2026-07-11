@@ -29,6 +29,13 @@ import {
   simulateFlightFrame,
   type StageEngine,
 } from './simulation-core';
+import {
+  clearFlightRenderSnapshot,
+  setFlightRenderSnapshot,
+} from './flight-runtime-store';
+import { getTimeAPI } from '@/lib/mod-manager/api/TimeAPI';
+import { getFlightCameraController, type FlightCameraMode } from './FlightCameraController';
+import { useSolarSystemStore } from '@/lib/state';
 
 /** 遥测数据（UI 显示用） */
 export interface Telemetry extends SimulationTelemetry {
@@ -62,6 +69,7 @@ export function useFlightSimulation() {
   const [throttle, setThrottle] = useState(100);
   const [timeScale, setTimeScale] = useState(1);
   const [isRunning, setIsRunning] = useState(false);
+  const [cameraMode, setCameraModeState] = useState<FlightCameraMode>('inertial');
 
   // 仿真状态（ref，避免重渲染）
   const flightStateRef = useRef<FlightState | null>(null);
@@ -77,9 +85,17 @@ export function useFlightSimulation() {
   const bodyRadiusRef = useRef<number>(0);
   const playerInputRef = useRef<PlayerInput | null>(null);
   const stagePressedRef = useRef(false);
+  const launchEpochMsRef = useRef<number | null>(null);
+  const isLaunchingRef = useRef(false);
 
   useEffect(() => { throttleRef.current = throttle; }, [throttle]);
   useEffect(() => { timeScaleRef.current = timeScale; }, [timeScale]);
+
+  // 将飞行时间倍率同步到全局 TimeAPI
+  // timeScale (纯倍率) → TimeAPI timeSpeed (天/秒)
+  useEffect(() => {
+    getTimeAPI().setTimeSpeed(timeScale / 86400);
+  }, [timeScale]);
 
   /** 停止仿真 */
   const stopSimulation = useCallback(() => {
@@ -88,6 +104,9 @@ export function useFlightSimulation() {
       intervalRef.current = null;
     }
     playerInputRef.current?.setEnabled(false);
+    getTimeAPI().setTimeSpeed(1 / 86400); // 重置为实时速度
+    // 释放相机锁定但保留高空标志，使终止后天空盒保持可见、用户可自由缩放
+    getFlightCameraController().releaseOnSimulationEnd();
     setIsRunning(false);
   }, []);
 
@@ -144,6 +163,20 @@ export function useFlightSimulation() {
       ended: result.ended,
       endReason: result.endReason,
     });
+    if (launchEpochMsRef.current !== null) {
+      setFlightRenderSnapshot({
+        active: true,
+        ended: result.ended,
+        positionEci: [...result.state.position] as [number, number, number],
+        velocityEci: [...result.state.velocity] as [number, number, number],
+        thrustDirectionEci: [...result.thrustDirectionEci] as [number, number, number],
+        throttlePercent: result.throttlePercent,
+        plumeActive: result.plumeActive,
+        stageIndex: result.stageIndex,
+        missionTimeS: result.state.time,
+        absoluteTimeMs: launchEpochMsRef.current + result.state.time * 1000,
+      });
+    }
 
     if (result.ended) {
       stopSimulation();
@@ -151,8 +184,17 @@ export function useFlightSimulation() {
   }, [stopSimulation]);
 
   /** 启动仿真 */
-  const launch = useCallback((vehicle: VehicleConfig, site: LaunchSite) => {
-    if (isRunning) return;
+  const launch = useCallback(async (vehicle: VehicleConfig, site: LaunchSite) => {
+    if (isRunning || isLaunchingRef.current) return;
+    isLaunchingRef.current = true;
+
+    try {
+    // 将 TerrainProvider 的椭球高同时用于物理初值和相机，确保火箭从真正
+    // 发射架地面起飞，而不是从数据库中的近似海拔起飞。
+    const launchSurface = await getFlightCameraController().getLaunchSurfaceHeight(site);
+    const resolvedSite = launchSurface.terrainResolved
+      ? { ...site, altitude: launchSurface.surfaceHeightM }
+      : site;
 
     // 初始化发动机参数
     const engines = extractStageEngines(vehicle);
@@ -164,12 +206,16 @@ export function useFlightSimulation() {
     const summary = computeVehicleSummary(vehicle);
     const initialMass = summary.totalWetMassKg;
 
-    // 从发射场获取初始位置和速度
-    const date = new Date();
-    const initialState = launchSiteToInitialState(site, date);
+    // 从太阳系 store 获取仿真时间，确保与 Cesium 时钟（驱动地球自转）使用
+    // 同一时间基准。若使用挂钟时间 new Date()，GMST 计算会与 Cesium 地球自转
+    // 不一致，导致火箭 ECEF 位置偏离发射架数千公里。
+    const simTime = useSolarSystemStore.getState().currentTime;
+    const date = simTime ? new Date(simTime.getTime()) : new Date();
+    const initialState = launchSiteToInitialState(resolvedSite, date);
+    launchEpochMsRef.current = date.getTime();
     bodyRadiusRef.current = computeMissionBodyRadius(
       initialState.position as [number, number, number],
-      site.altitude,
+      resolvedSite.altitude,
     );
 
     // 创建飞行状态
@@ -181,7 +227,8 @@ export function useFlightSimulation() {
     };
 
     vehicleConfigRef.current = vehicle;
-    launchSiteRef.current = site;
+    launchSiteRef.current = resolvedSite;
+    getFlightCameraController().startTracking(resolvedSite);
     setIsRunning(true);
     lastTickAtRef.current = Date.now();
     stagePressedRef.current = false;
@@ -189,13 +236,28 @@ export function useFlightSimulation() {
     setTelemetry({
       ...EMPTY_TELEMETRY,
       launched: true,
-      altitudeKm: site.altitude / 1000,
+      altitudeKm: resolvedSite.altitude / 1000,
       massKg: initialMass,
       currentStageName: engines[0]?.name ?? '-',
+    });
+    setFlightRenderSnapshot({
+      active: true,
+      ended: false,
+      positionEci: [...initialState.position] as [number, number, number],
+      velocityEci: [...initialState.velocity] as [number, number, number],
+      thrustDirectionEci: [1, 0, 0],
+      throttlePercent: throttleRef.current,
+      plumeActive: false,
+      stageIndex: 0,
+      missionTimeS: 0,
+      absoluteTimeMs: date.getTime(),
     });
 
     // 启动仿真循环
     intervalRef.current = setInterval(tick, UI_INTERVAL);
+    } finally {
+      isLaunchingRef.current = false;
+    }
   }, [isRunning, tick]);
 
   /** 中止任务 */
@@ -203,8 +265,17 @@ export function useFlightSimulation() {
     stopSimulation();
     flightStateRef.current = null;
     lastTickAtRef.current = null;
+    launchEpochMsRef.current = null;
+    clearFlightRenderSnapshot();
+    getFlightCameraController().stopTracking();
     setTelemetry(EMPTY_TELEMETRY);
+    setCameraModeState('inertial');
   }, [stopSimulation]);
+
+  const setCameraMode = useCallback((mode: FlightCameraMode) => {
+    setCameraModeState(mode);
+    getFlightCameraController().setMode(mode);
+  }, []);
 
   /** 手动分级分离 */
   const separateStage = useCallback(() => {
@@ -225,6 +296,9 @@ export function useFlightSimulation() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       playerInputRef.current?.dispose();
       playerInputRef.current = null;
+      clearFlightRenderSnapshot();
+      getFlightCameraController().stopTracking();
+      getTimeAPI().setTimeSpeed(1 / 86400); // 卸载时重置时间速度
     };
   }, []);
 
@@ -235,6 +309,8 @@ export function useFlightSimulation() {
     timeScale,
     setTimeScale,
     isRunning,
+    cameraMode,
+    setCameraMode,
     launch,
     abort,
     separateStage,

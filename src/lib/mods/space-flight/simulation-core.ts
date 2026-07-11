@@ -68,6 +68,8 @@ export interface SimulationFrameResult {
   engines: StageEngine[];
   stageIndex: number;
   throttlePercent: number;
+  thrustDirectionEci: [number, number, number];
+  plumeActive: boolean;
   telemetry: SimulationTelemetry;
   maxQ: number;
   ended: boolean;
@@ -279,6 +281,8 @@ export function simulateFlightFrame(input: SimulationFrameInput): SimulationFram
   let remainingFrameSeconds = frameSimSeconds;
   let ended = false;
   let endReason: string | undefined;
+  let lastThrustDirection = [...controlCommand.thrustDirection] as [number, number, number];
+  let plumeActive = false;
 
   while (remainingFrameSeconds > 1e-9 && !ended) {
     const engine = engines[stageIdx];
@@ -329,6 +333,9 @@ export function simulateFlightFrame(input: SimulationFrameInput): SimulationFram
         crossSectionAreaM2: control.crossSectionAreaM2,
       };
     }
+
+    lastThrustDirection = [...control.thrustDirection] as [number, number, number];
+    plumeActive = control.throttle > 0 && control.thrustN > 0 && remainingPropellant > 1e-6;
 
     const flow = massFlowRate(control);
     const burnLimitedStepSeconds = flow > 0
@@ -392,6 +399,8 @@ export function simulateFlightFrame(input: SimulationFrameInput): SimulationFram
     engines,
     stageIndex: stageIdx,
     throttlePercent,
+    thrustDirectionEci: lastThrustDirection,
+    plumeActive,
     telemetry: buildTelemetry(current, engines, stageIdx, throttlePercent, maxQ, input.bodyRadiusM),
     maxQ,
     ended,

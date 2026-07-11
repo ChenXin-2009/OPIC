@@ -141,6 +141,14 @@ export class SkyboxManager {
   }
 
   updateOpacity(cameraDistance: number, cesiumCompositeMode: boolean): void {
+    // Cesium 主导时 Three.js canvas 必须完全透明，才能让底层地球、大气和雾
+    // 正确透出；天空盒即使是黑色也会把 Cesium 画面整个盖住。
+    if (cesiumCompositeMode) {
+      if (this.skybox) this.skybox.visible = false;
+      if (this.fallbackStarfield) this.fallbackStarfield.visible = false;
+      return;
+    }
+
     const fadeEnd = 0.7 * 63241.077;
     let targetOpacity = 1;
     if (cameraDistance < SCALE_VIEW_CONFIG.milkyWayBackgroundFadeStart) {
@@ -168,13 +176,16 @@ export class SkyboxManager {
     }
   }
 
-  setCesiumMode(_enabled: boolean): void {
+  setCesiumMode(enabled: boolean): void {
     if (this.skybox) {
-      this.skybox.visible = true;
+      this.skybox.visible = !enabled;
       const mat = this.skybox.material as THREE.MeshBasicMaterial;
       mat.depthTest = false;
-      mat.transparent = false;
+      mat.transparent = enabled;
       mat.opacity = 1.0;
+    }
+    if (this.fallbackStarfield) {
+      this.fallbackStarfield.visible = !enabled;
     }
   }
 

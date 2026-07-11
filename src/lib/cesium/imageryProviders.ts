@@ -127,7 +127,10 @@ export const IMAGERY_SOURCES: ImagerySourceDef[] = [
       // - Cesium 自动显示 attribution（"Powered by Esri" + 数据来源）
       return new Cesium.UrlTemplateImageryProvider({
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        maximumLevel: 19,
+        // Esri 在部分区域的 L18/L19 会返回带 “Map data not yet available” 的
+        // 占位瓦片（HTTP 仍为 200，Cesium 无法自动判为失败并回退父瓦片）。
+        // 限定到全球稳定覆盖的 L17，确保始终显示可用的父级影像。
+        maximumLevel: 17,
         credit: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       });
     },

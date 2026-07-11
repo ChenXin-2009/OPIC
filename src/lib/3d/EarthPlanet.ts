@@ -147,7 +147,56 @@ export class EarthPlanet extends Planet {
    */
   setCesiumNativeCameraMode(enabled: boolean): void {
     this.cesiumNativeCameraMode = enabled;
-    console.log(`[EarthPlanet] Cesium native camera mode: ${enabled}`);
+    // 进入 Cesium 主导时切到 depth-only 材质；退出时恢复原始纹理材质。
+    // 这保证 Three.js 主导下地球网格有颜色可见，Cesium 主导下透明让 Cesium 透出。
+    if (enabled) {
+      this.applyDepthOnlyMaterial();
+    } else {
+      this.restorePlanetMaterial();
+    }
+  }
+
+  /**
+   * 恢复 Planet 球体原始材质（从 depth-only 切回纹理），不隐藏 Cesium canvas。
+   * 用于从 Cesium 主导切换到 Three.js 主导时恢复地球可见性。
+   */
+  restorePlanetMaterial(): void {
+    const mesh = this.getMesh();
+    if (!(mesh instanceof THREE.Mesh)) return;
+    if (this.originalMaterial) {
+      mesh.material = this.originalMaterial;
+    }
+    mesh.renderOrder = 0;
+    mesh.visible = true;
+  }
+
+  /**
+   * 切换到 depth-only 材质（Cesium 主导时使用）。
+   * 地球区域透明（colorWrite 为零），只写深度，让 Cesium canvas 从下层透出。
+   */
+  private applyDepthOnlyMaterial(): void {
+    const mesh = this.getMesh();
+    if (!(mesh instanceof THREE.Mesh)) return;
+    // 保存原始材质（仅首次）
+    if (!this.originalMaterial) {
+      this.originalMaterial = mesh.material as THREE.Material;
+    }
+    // 如果已经是 depth-only 就不重复创建
+    if (mesh.material !== this.originalMaterial) return;
+    const depthOnlyMat = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      depthWrite: true,
+      side: THREE.FrontSide,
+      blending: THREE.CustomBlending,
+      blendEquation: THREE.AddEquation,
+      blendSrc: THREE.ZeroFactor,
+      blendDst: THREE.ZeroFactor,
+      blendSrcAlpha: THREE.ZeroFactor,
+      blendDstAlpha: THREE.ZeroFactor,
+    });
+    mesh.renderOrder = 0;
+    mesh.material = depthOnlyMat;
   }
   
   /**

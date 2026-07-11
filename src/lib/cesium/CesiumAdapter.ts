@@ -239,6 +239,10 @@ export class CesiumAdapter {
     // 配置 Globe
     this.viewer.scene.globe.maximumScreenSpaceError = this.config.maximumScreenSpaceError ?? 2;
     this.viewer.scene.globe.tileCacheSize = this.config.maximumNumberOfLoadedTiles ?? 1000;
+    // 在高层瓦片尚未就绪时保留已加载的祖先瓦片，避免近地时出现
+    // “Map data not yet available” 的空白替代画面。
+    this.viewer.scene.globe.preloadAncestors = true;
+    this.viewer.scene.globe.preloadSiblings = false;
     // 初始化自适应 LOD 基准值
     this._currentAdaptiveSSE = this.config.maximumScreenSpaceError ?? 2;
     
@@ -381,7 +385,11 @@ export class CesiumAdapter {
     const maxSSE = this.config.tilesetMaximumScreenSpaceError ?? 16;
 
     const token = Cesium.Ion.defaultAccessToken;
-    console.log('[CesiumAdapter] Ion token set:', !!token, 'token length:', token?.length ?? 0);
+    if (!token) {
+      this.log('warn', `[CesiumAdapter] Skipping optional 3D Tiles asset ${assetId}: no Cesium Ion token`);
+      this.viewer.scene.globe.show = true;
+      return;
+    }
     this.log('info', `[CesiumAdapter] Loading 3D Tiles from ion asset ${assetId} (token set: ${!!token})...`);
 
     Cesium.IonResource.fromAssetId(assetId, {
@@ -402,7 +410,8 @@ export class CesiumAdapter {
       })
       .catch((error: unknown) => {
         this.log('error', `[CesiumAdapter] Tileset load failed for asset ${assetId}: ${(error as any)?.message || 'unknown'}`);
-        console.error(`[CesiumAdapter] 3D Tiles initialization failed:`, error);
+        // 月球/火星 3D Tiles 是增强功能；网络、令牌或资产权限失败时回退到 globe，
+        // 不抛出 Next.js Console Error，也不影响地球与航天飞行 MOD。
         this.viewer.scene.globe.show = true;
       });
   }
@@ -472,8 +481,9 @@ export class CesiumAdapter {
       this._lastCesiumRenderTime = now;
     }
     
-    try {
-      const startTime = performance.now();
+      try {
+        const startTime = performance.now();
+        this.updateNativeCameraFrustum();
       
       // 渲染 Cesium 场景到 Canvas
       this.viewer.render();
@@ -499,6 +509,7 @@ export class CesiumAdapter {
     if (!this.isAvailable) return;
     
     try {
+      this.updateNativeCameraFrustum();
       this.viewer.render();
       this._lastCesiumRenderTime = performance.now();
     } catch (error) {
@@ -713,6 +724,18 @@ export class CesiumAdapter {
    *
    * @param altitudeMeters - 相机到地球表面的高度（米）
    */
+  /**
+   * Cesium 原生相机不会经过 Three.js → Cesium 的同步路径，因此需要在渲染前
+   * 独立收紧其近裁剪面。否则默认 frustum 会在贴地平视时裁掉近处地形。
+   */
+  private updateNativeCameraFrustum(): void {
+    if (!this.viewer?.camera?.frustum || !(this.viewer.camera.frustum instanceof Cesium.PerspectiveFrustum)) return;
+    const cartographic = Cesium.Cartographic.fromCartesian(this.viewer.camera.positionWC ?? this.viewer.camera.position);
+    const altitude = Math.max(0, cartographic.height);
+    this.viewer.camera.frustum.near = Math.max(0.05, Math.min(500, altitude * 0.0001));
+    this.viewer.camera.frustum.far = Math.max(20_000_000, altitude * 100);
+  }
+
   private updateAdaptiveLOD(altitudeMeters: number): void {
     if (!this.config.enableAdaptiveLOD) return;
     
@@ -990,12 +1013,10 @@ export class CesiumAdapter {
     this.cesiumCanvas.style.pointerEvents = enabled ? 'auto' : 'none';
     this.container.style.pointerEvents = enabled ? 'auto' : 'none';
     
-    // 当启用原生相机时，确保 Cesium canvas 在上层以接收事件
-    if (enabled) {
-      this.container.style.zIndex = '2'; // 提升到 Three.js canvas 之上
-    } else {
-      this.container.style.zIndex = '0'; // 恢复到底层
-    }
+    // Three.js 必须始终在 Cesium 上方，才能将火箭/轨迹作为透明叠加层画在
+    // 不透明地球之上。原生相机交互靠 Three.js canvas 的 pointer-events:none
+    // 穿透到下层 Cesium，而不是靠提高 Cesium 的 z-index；否则火箭会被地球盖住。
+    this.container.style.zIndex = '0';
   }
 
   /**

@@ -15,6 +15,8 @@ import { useLunarStore } from '@/lib/store/LunarState';
 import { updateMoonSiteMarkers } from '@/lib/3d/MoonSiteMarkers';
 import type { SceneRefs, SceneCallbacks } from './sceneTypes';
 import { executeThreeOverlayFrame } from './renderFramePipeline';
+import { getFlightCameraController } from '@/lib/mods/space-flight/FlightCameraController';
+import { getInterpolatedFlightRenderSnapshot } from '@/lib/mods/space-flight/flight-runtime-store';
 import * as THREE from 'three';
 
 const LABEL_UPDATE_INTERVAL = 3;
@@ -24,6 +26,7 @@ const CESIUM_CHECK_INTERVAL = 1;     // Cesium 模式每帧检测（保持即时
 const LABEL_OVERLAP_INTERVAL = 10;   // 标签重叠检测每 10 帧（从 3 帧改为 10 帧）
 const FAR_VIEW_INTERVAL = 30;        // 远景检查每 30 帧
 const LUNAR_UPDATE_INTERVAL = 60;     // 月球状态更新每 60 帧 (~1s@60fps)
+const METERS_PER_AU = 149_597_870_700;
 
 // 标签空间哈希网格 - 用于 O(n) 重叠检测替换 O(n²)
 const HASH_CELL_SIZE = 80; // 每个网格单元 80px
@@ -409,11 +412,21 @@ export function useSolarSystemAnimation(
       // Earth 是否需要 CESIUM（使用 SceneModeManager 滞回）
       const earthNeedsCam = distToEarth < (activeBody === 'earth' ? earthExitAU : earthEntryAU);
 
-      // CESIUM 模式激活条件：Earth、Moon 或 Mars 任意一者需要
-      const wantsCesium = earthNeedsCam || moonNeedsCam || marsNeedsCam;
-
       // Search navigation override: force Earth Cesium mode when flying to a place
-      const cesiumOverride = !!(window as any).__cesiumModeOverride;
+      const cesiumOverride = !!(window as any).__cesiumModeOverride
+        || !!(window as any).__spaceFlightCesiumCameraActive;
+
+      // 火箭离开大气层后设置的高空标志：强制切回 Three.js 主导，
+      // 恢复天空盒、太阳和星空。Cesium 近地追踪此时已由 FlightCameraController 解除。
+      const flightHighAltitude = !!(window as any).__spaceFlightHighAltitude;
+
+      // 强制聚焦本身就是 Cesium 模式需求。若仅修改 newTargetBody 而不把 override
+      // 计入 wantsCesium，下一帧会错误地关闭原生相机，随后 Three.js 又覆写飞行路径。
+      const wantsCesium = (earthNeedsCam || moonNeedsCam || marsNeedsCam || cesiumOverride) && !flightHighAltitude;
+
+      // 飞行相机只写 Cesium 原生相机；紧接着本帧的 Cesium → Three.js 同步会
+      // 将同一套视图给透明火箭叠加层，避免两个渲染层各自跟随而产生跳变。
+      getFlightCameraController().update(getInterpolatedFlightRenderSnapshot());
 
       if (sceneManager) {
         const sceneModeManager = sceneManager.getSceneModeManager();
@@ -436,7 +449,7 @@ export function useSolarSystemAnimation(
         }
 
         // If search navigation override is active, force Earth Cesium mode
-        if (cesiumOverride) {
+        if (cesiumOverride && !flightHighAltitude) {
           newTargetBody = 'earth';
         }
 
@@ -458,6 +471,7 @@ export function useSolarSystemAnimation(
           if (newTargetBody === null) {
             // 退出 CESIUM 模式
             sceneModeManager.switchMode(SceneMode.THREE_DOMINANT);
+            sceneManager.setCesiumCompositeMode(false);
             activeCesiumBodyRef.current = null;
             if (cameraController) {
               const controls = cameraController.getControls();
@@ -465,8 +479,11 @@ export function useSolarSystemAnimation(
               const ctrlAny = controls as any;
               if (ctrlAny._sphericalDelta) ctrlAny._sphericalDelta.set(0, 0, 0);
               if (ctrlAny._panOffset) ctrlAny._panOffset.set(0, 0, 0);
-              controls.update();
+              // 先 syncStateFromCamera 刷新 OrbitControls 内部球坐标，
+              // 再调 update()。否则 Cesium 期间过时的球坐标会在 update() 中
+              // 把相机拉回旧位置，造成跳跃。
               cameraController.syncStateFromCamera();
+              controls.update();
             }
             const renderer = sceneManager.getRenderer();
             renderer.domElement.style.pointerEvents = 'auto';
@@ -474,6 +491,7 @@ export function useSolarSystemAnimation(
             // 首次进入 CESIUM 模式
             activeCesiumBodyRef.current = newTargetBody;
             sceneModeManager.switchMode(SceneMode.CESIUM_DOMINANT);
+            sceneManager.setCesiumCompositeMode(true);
             if (cameraController) cameraController.getControls().enabled = false;
             const renderer = sceneManager.getRenderer();
             renderer.domElement.style.pointerEvents = 'none';
@@ -562,8 +580,16 @@ export function useSolarSystemAnimation(
       let near: number;
       let far: number;
       if (distToSurface < 0.1) {
-        near = Math.max(distToCenter * 0.0001, 1e-9);
-        far = Math.max(maxDistance, EARTH_RADIUS_AU * 100, 1e6);
+        // near 必须按“距地表高度”而非“距地心距离”计算。旧公式在地表给出
+        // 约 637m 的近裁剪面，会切掉近地地形和火箭；Three.js 叠加层保持
+        // 0.5m–100m，Cesium 自身仍使用 5cm 近裁剪面渲染地形。
+        near = Math.max(
+          0.5 / METERS_PER_AU,
+          Math.min(100 / METERS_PER_AU, distToSurface * 0.001),
+        );
+        // Cesium 主导时 Three.js 只需覆盖地球局部叠加层，收紧 far 可显著改善
+        // 深度精度，避免 depth-only 地球在近平视角产生空白裁切。
+        far = Math.max(distToCenter + 0.0005, 0.001);
       } else {
         near = 0.01;
         far = Math.max(maxDistance, 1e6);

@@ -195,6 +195,8 @@ export function useSolarSystemInit(
             requestTerrainWaterMask: false,  // 禁用水面遮罩，节省 GPU 带宽
             terrainExaggeration: 1.0,        // 不夸大，真实比例
             terrainExaggerationRelativeHeight: 0,
+            // 航天飞行 MOD 需要直接驱动地球原生相机并采样当前 TerrainProvider。
+            exposeViewerToWindow: true,
             enableAdaptiveLOD: true,          // 海拔自适应 LOD
             adaptiveLODMinQuality: 16,        // 近地表最低精度
             adaptiveLODMaxQuality: 2,         // 高空最高精度
