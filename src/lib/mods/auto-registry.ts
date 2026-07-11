@@ -3,8 +3,8 @@
  * 
  * ⚠️ 此文件由脚本自动生成，请勿手动编辑！
  * 
- * 生成时间: 2026-07-02T04:07:44.223Z
- * MOD数量: 7
+ * 生成时间: 2026-07-11T08:04:53.812Z
+ * MOD数量: 8
  * 
  * 要重新生成此文件，运行: npm run generate-mods
  */
@@ -15,6 +15,7 @@ import { getGlobalTrafficMod } from './global-traffic';
 import { getGravityGridMod } from './gravity-grid';
 import { getMoonMod } from './moon';
 import { getSatelliteTrackingMod } from './satellite-tracking';
+import { getSpaceFlightMod } from './space-flight';
 import { getSpaceLaunchesMod } from './space-launches';
 import { getWeatherDisasterMod } from './weather-disaster';
 
@@ -28,6 +29,7 @@ export const MOD_REGISTRY = [
   getGravityGridMod,
   getMoonMod,
   getSatelliteTrackingMod,
+  getSpaceFlightMod,
   getSpaceLaunchesMod,
   getWeatherDisasterMod,
 ] as const;

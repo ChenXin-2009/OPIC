@@ -6,7 +6,6 @@ import { useSatelliteStore } from '@/lib/store/useSatelliteStore';
 import { useExoplanetStore } from '@/lib/store/useExoplanetStore';
 import { useEarthControlStore } from '@/lib/state/EarthControlStore';
 import { useModStore } from '@/lib/mod-manager/store';
-import { getRenderAPI } from '@/lib/mod-manager/api/RenderAPI';
 import { SceneMode } from '@/lib/3d/SceneModeManager';
 import { dateToJulianDay } from '@/lib/astronomy/time';
 import { FAR_VIEW_CONFIG, ORBIT_FADE_CONFIG, SATELLITE_CONFIG } from '@/lib/config/visualConfig';
@@ -15,6 +14,7 @@ import { planetNames } from '@/lib/astronomy/names';
 import { useLunarStore } from '@/lib/store/LunarState';
 import { updateMoonSiteMarkers } from '@/lib/3d/MoonSiteMarkers';
 import type { SceneRefs, SceneCallbacks } from './sceneTypes';
+import { executeThreeOverlayFrame } from './renderFramePipeline';
 import * as THREE from 'three';
 
 const LABEL_UPDATE_INTERVAL = 3;
@@ -828,12 +828,11 @@ export function useSolarSystemAnimation(
 
     if (callbacks.onCameraDistanceChange) callbacks.onCameraDistanceChange(distanceToSun);
 
-    getRenderAPI()._executeBeforeRender();
-
-    if (sceneManager) {
-      sceneManager.render();
-      if (labelRenderer) labelRenderer.render(sceneManager.getScene(), camera);
-    }
+    executeThreeOverlayFrame({
+      sceneManager,
+      camera,
+      labelRenderer,
+    });
 
     refs.animationFrameRef.current = requestAnimationFrame(animateRef.current!);
   }, [refs, callbacks]);

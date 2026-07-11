@@ -24,6 +24,7 @@ import { GlobalTrafficWindow } from './windows/GlobalTrafficWindow';
 import { WeatherDisasterWindow } from './windows/WeatherDisasterWindow';
 import { MoonWindow } from './windows/MoonWindow';
 import { GravityGridWindow } from './windows/GravityGridWindow';
+import { SpaceFlightWindow } from './windows/SpaceFlightWindow';
 import { getRegistry } from '@/lib/mod-manager/core/ModRegistry';
 import { getEventBus } from '@/lib/mod-manager/core/EventBus';
 
@@ -63,6 +64,11 @@ const MOD_WINDOWS: Record<string, { component: React.ReactNode; size: { width: n
     component: <GravityGridWindow lang="zh" />,
     size: { width: 520, height: 680 },
     icon: '🌐',
+  },
+  'space-flight': {
+    component: <SpaceFlightWindow lang="zh" />,
+    size: { width: 520, height: 680 },
+    icon: '🚀',
   },
 };
 

@@ -1,0 +1,57 @@
+import type { ModManifest } from '@/lib/mod-manager/types';
+
+export const spaceFlightManifest: ModManifest = {
+  id: 'space-flight',
+  version: '0.1.0',
+  name: 'Space Flight',
+  nameZh: '航天飞行',
+  description: 'Build multi-stage rockets, launch into orbit, and fly through space. Includes vehicle builder, mission control, and flight rendering.',
+  descriptionZh: '搭建多级火箭、发射入轨、太空飞行。包含载具搭建器、任务控制与飞行渲染。',
+  author: 'OPIC',
+  entryPoint: 'onLoad',
+  hasConfig: false,
+  defaultEnabled: false,
+  icon: '🚀',
+  apiVersion: '1.0.0',
+  permissions: [
+    'render:read',
+    'render:write',
+    'render:execute',
+    'camera:read',
+    'celestial:read',
+    'time:read',
+    'time:write',
+    'events:*',
+    'storage:write',
+  ],
+  resourceQuota: {
+    maxRenderObjects: 5000,
+    maxMemoryMB: 100,
+    maxEventListeners: 50,
+    maxTimers: 10,
+  },
+  contributes: {
+    dockIcons: [{
+      id: 'space-flight-icon',
+      icon: '🚀',
+      label: 'Space Flight',
+      labelZh: '航天飞行',
+      command: 'space-flight.toggle',
+    }],
+    windows: [{
+      id: 'space-flight-window',
+      title: 'Space Flight',
+      titleZh: '航天飞行',
+      component: 'SpaceFlightWindow',
+      defaultSize: { width: 520, height: 680 },
+      resizable: true,
+      minimizable: true,
+    }],
+    commands: [{
+      id: 'toggle',
+      title: 'Toggle Space Flight',
+      titleZh: '切换航天飞行',
+      handler: 'handleToggle',
+    }],
+  },
+};

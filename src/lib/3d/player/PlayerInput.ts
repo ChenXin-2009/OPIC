@@ -25,6 +25,7 @@ export interface PlayerInputState {
   pitch: number;
   roll: number;
   boost: boolean;
+  stage: boolean;
 }
 
 function isTextInputTarget(target: EventTarget | null): boolean {
@@ -92,6 +93,7 @@ export class PlayerInput {
         pitch: 0,
         roll: 0,
         boost: false,
+        stage: false,
       };
     }
 
@@ -102,8 +104,9 @@ export class PlayerInput {
     const pitch = (this.keys.has('ArrowUp') ? 1 : 0) + (this.keys.has('ArrowDown') ? -1 : 0);
     const roll = (this.keys.has('KeyE') ? 1 : 0) + (this.keys.has('KeyQ') ? -1 : 0);
     const boost = this.keys.has('ShiftLeft') || this.keys.has('ShiftRight');
+    const stage = this.keys.has('Space');
 
-    return { thrust, strafe, lift, yaw, pitch, roll, boost };
+    return { thrust, strafe, lift, yaw, pitch, roll, boost, stage };
   }
 
   dispose() {

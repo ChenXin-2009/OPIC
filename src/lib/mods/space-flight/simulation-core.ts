@@ -1,0 +1,415 @@
+/**
+ * @module mods/space-flight/simulation-core
+ * @description 航天飞行窗口的纯函数仿真核心
+ *
+ * 将 React hook 里的数值推进逻辑抽离出来，方便：
+ * - 稳定修复时间推进 / 分级 / 触地问题
+ * - 为发射流程补自动化回归测试
+ * - 让 UI 层只负责状态持有与展示
+ */
+
+import type { PlayerInputState } from '@/lib/3d/player/PlayerInput';
+import {
+  EARTH_FORCE_MODEL,
+  EARTH_RADIUS_M,
+  earthAtmosphereDensity,
+  massFlowRate,
+  mapPlayerInputToFlightControl,
+  rk4FlightStep,
+  stateToElements,
+  vecMagnitude,
+  vecScale,
+  type ControlInput,
+  type FlightState,
+} from '@/lib/flight-dynamics';
+import {
+  computeVehicleSummary,
+  getPart,
+  type VehicleConfig,
+} from '@/lib/data/rocket-parts';
+
+export interface StageEngine {
+  name: string;
+  thrustN: number;
+  ispS: number;
+  propellantMassKg: number;
+  dryMassKg: number;
+  propellantConsumed: number;
+}
+
+export interface SimulationTelemetry {
+  altitudeKm: number;
+  speedMs: number;
+  apogeeKm: number;
+  perigeeKm: number;
+  fuelPercent: number;
+  currentStage: number;
+  currentStageName: string;
+  stageBurnTimeRemaining: number;
+  missionTime: number;
+  maxQ: number;
+  massKg: number;
+}
+
+export interface SimulationFrameInput {
+  state: FlightState;
+  engines: StageEngine[];
+  stageIndex: number;
+  throttlePercent: number;
+  timeScale: number;
+  realElapsedMs: number;
+  maxQ: number;
+  bodyRadiusM: number;
+  playerInput: PlayerInputState;
+}
+
+export interface SimulationFrameResult {
+  state: FlightState;
+  engines: StageEngine[];
+  stageIndex: number;
+  throttlePercent: number;
+  telemetry: SimulationTelemetry;
+  maxQ: number;
+  ended: boolean;
+  endReason?: string;
+}
+
+const MU = 3.986004418e14;
+const MAX_SUBSTEP_SECONDS = 0.25;
+const GRAVITY_TURN_ALT = 10_000;
+const GRAVITY_TURN_END = 80_000;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function cloneState(state: FlightState): FlightState {
+  return {
+    position: [...state.position] as [number, number, number],
+    velocity: [...state.velocity] as [number, number, number],
+    mass: state.mass,
+    time: state.time,
+  };
+}
+
+function surfaceClampedState(state: FlightState, bodyRadiusM: number): FlightState {
+  const rMag = vecMagnitude(state.position);
+  if (rMag < 1e-6) {
+    return {
+      position: [bodyRadiusM, 0, 0],
+      velocity: [0, 0, 0],
+      mass: state.mass,
+      time: state.time,
+    };
+  }
+
+  return {
+    position: vecScale(state.position, bodyRadiusM / rMag) as [number, number, number],
+    velocity: [0, 0, 0],
+    mass: state.mass,
+    time: state.time,
+  };
+}
+
+function getAltitudeM(state: FlightState, bodyRadiusM: number): number {
+  return vecMagnitude(state.position) - bodyRadiusM;
+}
+
+export function computeMissionBodyRadius(
+  initialPosition: readonly [number, number, number],
+  launchAltitudeM: number,
+): number {
+  return vecMagnitude(initialPosition) - launchAltitudeM;
+}
+
+export function getAutoThrustDirection(
+  state: FlightState,
+  bodyRadiusM: number,
+): [number, number, number] {
+  const rMag = vecMagnitude(state.position);
+  const altitude = rMag - bodyRadiusM;
+
+  if (altitude < GRAVITY_TURN_ALT) {
+    return vecScale(state.position, 1 / rMag) as [number, number, number];
+  }
+
+  const vMag = vecMagnitude(state.velocity);
+  if (vMag < 1) {
+    return vecScale(state.position, 1 / rMag) as [number, number, number];
+  }
+
+  const prograde = vecScale(state.velocity, 1 / vMag);
+  const radial = vecScale(state.position, 1 / rMag);
+  const t = Math.min(1, (altitude - GRAVITY_TURN_ALT) / (GRAVITY_TURN_END - GRAVITY_TURN_ALT));
+  return [
+    radial[0] * (1 - t) + prograde[0] * t,
+    radial[1] * (1 - t) + prograde[1] * t,
+    radial[2] * (1 - t) + prograde[2] * t,
+  ];
+}
+
+export function extractStageEngines(config: VehicleConfig): StageEngine[] {
+  const summary = computeVehicleSummary(config);
+  return config.stages.map((stage, i) => {
+    const stageSummary = summary.stages[i];
+    let dryMass = 0;
+    let propellant = 0;
+
+    for (const inst of stage.parts) {
+      const part = getPart(inst.partId);
+      const count = inst.count ?? 1;
+      dryMass += part.dryMassKg * count;
+      if (part.propellantMassKg) {
+        propellant += part.propellantMassKg * count;
+      }
+    }
+
+    return {
+      name: stage.name,
+      thrustN: stageSummary.thrustN,
+      ispS: stageSummary.ispS,
+      propellantMassKg: propellant,
+      dryMassKg: dryMass,
+      propellantConsumed: 0,
+    };
+  });
+}
+
+export function separateStage(
+  state: FlightState,
+  engines: StageEngine[],
+  stageIndex: number,
+): { state: FlightState; stageIndex: number } {
+  if (stageIndex >= engines.length - 1) {
+    return { state, stageIndex };
+  }
+
+  return {
+    state: {
+      ...state,
+      mass: Math.max(0, state.mass - engines[stageIndex].dryMassKg),
+    },
+    stageIndex: stageIndex + 1,
+  };
+}
+
+export function buildTelemetry(
+  state: FlightState,
+  engines: StageEngine[],
+  stageIdx: number,
+  throttlePercent: number,
+  maxQ: number,
+  bodyRadiusM: number,
+): SimulationTelemetry {
+  const altitude = getAltitudeM(state, bodyRadiusM);
+  const vMag = vecMagnitude(state.velocity);
+
+  let apogee = 0;
+  let perigee = 0;
+  try {
+    const elements = stateToElements(
+      { position: state.position, velocity: state.velocity, time: state.time },
+      MU,
+    );
+
+    if (Number.isFinite(elements.semiMajorAxis) && Number.isFinite(elements.eccentricity)) {
+      apogee = clamp(
+        elements.semiMajorAxis * (1 + elements.eccentricity) - bodyRadiusM,
+        0,
+        Number.MAX_SAFE_INTEGER,
+      );
+      perigee = clamp(
+        elements.semiMajorAxis * (1 - elements.eccentricity) - bodyRadiusM,
+        0,
+        Number.MAX_SAFE_INTEGER,
+      );
+    }
+  } catch {
+    // 保持 0，避免在 UI 中出现 NaN / Infinity
+  }
+
+  const currentEngine = engines[stageIdx];
+  const remainingPropellant = currentEngine
+    ? Math.max(0, currentEngine.propellantMassKg - currentEngine.propellantConsumed)
+    : 0;
+
+  const fuelPercent = currentEngine && currentEngine.propellantMassKg > 0
+    ? clamp((remainingPropellant / currentEngine.propellantMassKg) * 100, 0, 100)
+    : 0;
+
+  const throttleFraction = clamp(throttlePercent / 100, 0, 1);
+  const mFlow = currentEngine && currentEngine.ispS > 0
+    ? (throttleFraction * currentEngine.thrustN) / (currentEngine.ispS * 9.80665)
+    : 0;
+  const burnTimeRemaining = mFlow > 0 ? remainingPropellant / mFlow : 0;
+
+  return {
+    altitudeKm: altitude / 1000,
+    speedMs: vMag,
+    apogeeKm: apogee / 1000,
+    perigeeKm: perigee / 1000,
+    fuelPercent,
+    currentStage: stageIdx,
+    currentStageName: currentEngine?.name ?? '-',
+    stageBurnTimeRemaining: burnTimeRemaining,
+    missionTime: state.time,
+    maxQ,
+    massKg: state.mass,
+  };
+}
+
+export function simulateFlightFrame(input: SimulationFrameInput): SimulationFrameResult {
+  const engines = input.engines.map((engine) => ({ ...engine }));
+  let current = cloneState(input.state);
+  let stageIdx = input.stageIndex;
+  let maxQ = input.maxQ;
+
+  const realElapsedSeconds = Math.max(0.001, input.realElapsedMs / 1000);
+  const frameSimSeconds = realElapsedSeconds * Math.max(1, input.timeScale);
+  const controlCommand = mapPlayerInputToFlightControl(
+    input.playerInput,
+    input.throttlePercent,
+    realElapsedSeconds,
+    getAutoThrustDirection(current, input.bodyRadiusM),
+    current.position,
+  );
+
+  let throttlePercent = controlCommand.throttlePercent;
+  let stageRequested = controlCommand.stageRequested;
+  let remainingFrameSeconds = frameSimSeconds;
+  let ended = false;
+  let endReason: string | undefined;
+
+  while (remainingFrameSeconds > 1e-9 && !ended) {
+    const engine = engines[stageIdx];
+    if (!engine) {
+      break;
+    }
+
+    if (stageRequested) {
+      const separated = separateStage(current, engines, stageIdx);
+      current = separated.state;
+      stageIdx = separated.stageIndex;
+      stageRequested = false;
+      continue;
+    }
+
+    const remainingPropellant = Math.max(0, engine.propellantMassKg - engine.propellantConsumed);
+    if (remainingPropellant <= 1e-6 && stageIdx < engines.length - 1) {
+      const separated = separateStage(current, engines, stageIdx);
+      current = separated.state;
+      stageIdx = separated.stageIndex;
+      continue;
+    }
+
+    const subStepSecondsBase = Math.min(remainingFrameSeconds, MAX_SUBSTEP_SECONDS);
+    const guidedDirection = mapPlayerInputToFlightControl(
+      input.playerInput,
+      throttlePercent,
+      0,
+      getAutoThrustDirection(current, input.bodyRadiusM),
+      current.position,
+    ).thrustDirection;
+    let control: ControlInput = {
+      throttle: clamp(throttlePercent / 100, 0, 1),
+      thrustDirection: guidedDirection,
+      thrustN: engine.thrustN,
+      ispS: engine.ispS,
+      dragCoefficient: 0.2,
+      crossSectionAreaM2: 3.14,
+    };
+
+    if (remainingPropellant <= 1e-6 || control.throttle <= 0) {
+      control = {
+        throttle: 0,
+        thrustDirection: control.thrustDirection,
+        thrustN: 0,
+        ispS: 0,
+        dragCoefficient: control.dragCoefficient,
+        crossSectionAreaM2: control.crossSectionAreaM2,
+      };
+    }
+
+    const flow = massFlowRate(control);
+    const burnLimitedStepSeconds = flow > 0
+      ? Math.min(subStepSecondsBase, remainingPropellant / flow)
+      : subStepSecondsBase;
+    const stepSeconds = Math.max(1e-4, burnLimitedStepSeconds);
+
+    const next = rk4FlightStep(
+      current,
+      control,
+      {
+        ...EARTH_FORCE_MODEL,
+        bodyRadius: input.bodyRadiusM,
+      },
+      stepSeconds,
+    );
+
+    if (flow > 0) {
+      engine.propellantConsumed = clamp(
+        engine.propellantConsumed + flow * stepSeconds,
+        0,
+        engine.propellantMassKg,
+      );
+    }
+
+    const nextAltitude = getAltitudeM(next, input.bodyRadiusM);
+    if (nextAltitude <= 0) {
+      current = surfaceClampedState(next, input.bodyRadiusM);
+      ended = true;
+      endReason = '坠毁';
+      break;
+    }
+
+    current = next;
+    remainingFrameSeconds -= stepSeconds;
+
+    const density = earthAtmosphereDensity(getAltitudeM(current, input.bodyRadiusM));
+    const speed = vecMagnitude(current.velocity);
+    const q = density > 0 ? 0.5 * density * speed * speed : 0;
+    if (q > maxQ) {
+      maxQ = q;
+    }
+
+    try {
+      const elements = stateToElements(
+        { position: current.position, velocity: current.velocity, time: current.time },
+        MU,
+      );
+      const perigee = elements.semiMajorAxis * (1 - elements.eccentricity) - input.bodyRadiusM;
+      if (perigee > 100_000 && current.time > 300) {
+        ended = true;
+        endReason = '入轨成功';
+      }
+    } catch {
+      // 忽略，继续飞行
+    }
+  }
+
+  return {
+    state: current,
+    engines,
+    stageIndex: stageIdx,
+    throttlePercent,
+    telemetry: buildTelemetry(current, engines, stageIdx, throttlePercent, maxQ, input.bodyRadiusM),
+    maxQ,
+    ended,
+    endReason,
+  };
+}
+
+export function defaultPlayerInputState(): PlayerInputState {
+  return {
+    thrust: 0,
+    strafe: 0,
+    lift: 0,
+    yaw: 0,
+    pitch: 0,
+    roll: 0,
+    boost: false,
+    stage: false,
+  };
+}
+
+export const DEFAULT_BODY_RADIUS_M = EARTH_RADIUS_M;

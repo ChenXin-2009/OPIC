@@ -83,6 +83,7 @@ export { getWeatherDisasterMod } from './weather-disaster';
 export { getGlobalTrafficMod } from './global-traffic';
 export { getSpaceLaunchesMod } from './space-launches';
 export { getMoonMod } from './moon';
+export { getSpaceFlightMod } from './space-flight';
 
 
 // 导出注册表工具
