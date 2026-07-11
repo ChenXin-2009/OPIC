@@ -14,7 +14,7 @@ export const satelliteTrackingManifest: ModManifest = {
   author: 'OPIC',
   entryPoint: 'onLoad',
   hasConfig: true,
-  defaultEnabled: true,
+  defaultEnabled: false,
   icon: '📡',
   apiVersion: '1.0.0',
   

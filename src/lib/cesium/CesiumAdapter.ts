@@ -202,7 +202,8 @@ export class CesiumAdapter {
       
       // 透明背景：在构造时禁用 skyBox（必须在构造时传入，事后 show=false 不够）
       skyBox: false,
-      skyAtmosphere: false,
+      // skyAtmosphere 使用默认值（创建 SkyAtmosphere 对象，后续隐藏天空穹顶，
+      // 仅用于 globe.showGroundAtmosphere 的大气散射计算）
       
       // 渲染配置
       scene3DOnly: true,
@@ -256,12 +257,17 @@ export class CesiumAdapter {
     this.terrainManager = new CesiumTerrainManager(this.viewer, this.config, (level, message) => this.log(level, message));
     this.terrainManager.configure();
     
-    // 禁用大气效果（由 Three.js 场景控制）
+    // 隐藏太阳和月亮（由 Three.js 场景控制）
     if (this.viewer.scene.sun) {
       this.viewer.scene.sun.show = false;
     }
     if (this.viewer.scene.moon) {
       this.viewer.scene.moon.show = false;
+    }
+
+    // 显示 Cesium 天空穹顶（大气散射视觉增强）
+    if (this.viewer.scene.skyAtmosphere) {
+      this.viewer.scene.skyAtmosphere.show = true;
     }
     
     // 透明背景关键设置：
@@ -269,8 +275,8 @@ export class CesiumAdapter {
     this.viewer.scene.highDynamicRange = false;
     // 2. 背景色设为透明
     this.viewer.scene.backgroundColor = Cesium.Color.TRANSPARENT;
-    // 3. 禁用地面大气层（会渲染到背景区域）
-    this.viewer.scene.globe.showGroundAtmosphere = false;
+    // 3. 启用 Cesium 地面大气散射（地球边缘大气辉光 + 地平线雾化）
+    this.viewer.scene.globe.showGroundAtmosphere = true;
     // 4. globe.baseColor 控制无瓦片区域底色，设为透明
     this.viewer.scene.globe.baseColor = Cesium.Color.TRANSPARENT;
     
@@ -307,7 +313,7 @@ export class CesiumAdapter {
     // 场景级光照：确保 3D Tiles 瓦片集（月球、火星）也收到方向光
     // scene.light 默认为 SunLight，跟随时钟太阳方向
     if (this.viewer.scene.light) {
-      this.viewer.scene.light.intensity = 1.2; // 略微增强，补偿无大气散射
+      this.viewer.scene.light.intensity = 1.0;
     }
     
     // 获取 Cesium 内部创建的 canvas

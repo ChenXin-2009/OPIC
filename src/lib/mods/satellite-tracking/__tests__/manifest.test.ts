@@ -6,7 +6,7 @@ describe('satelliteTrackingManifest', () => {
     expect(satelliteTrackingManifest.version).toBe('2.0.0');
     expect(satelliteTrackingManifest.name).toBe('Satellite Tracking');
     expect(satelliteTrackingManifest.entryPoint).toBe('onLoad');
-    expect(satelliteTrackingManifest.defaultEnabled).toBe(true);
+    expect(satelliteTrackingManifest.defaultEnabled).toBe(false);
     expect(satelliteTrackingManifest.hasConfig).toBe(true);
     expect(satelliteTrackingManifest.apiVersion).toBe('1.0.0');
   });
