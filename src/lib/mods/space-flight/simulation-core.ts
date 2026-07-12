@@ -28,51 +28,103 @@ import {
   type VehicleConfig,
 } from '@/lib/data/rocket-parts';
 
+/**
+ * 单级发动机的运行时快照。
+ * 记录了发动机的设计参数以及在仿真过程中已消耗的推进剂质量。
+ */
 export interface StageEngine {
+  /** 发动机/级名称 */
   name: string;
+  /** 真空推力，单位牛 */
   thrustN: number;
+  /** 比冲，单位秒 */
   ispS: number;
+  /** 推进剂总质量，单位千克 */
   propellantMassKg: number;
+  /** 结构干质量，单位千克 */
   dryMassKg: number;
+  /** 已消耗的推进剂质量，单位千克 */
   propellantConsumed: number;
 }
 
+/**
+ * 仿真遥测数据快照。
+ * 每次帧推进后生成，供 UI 层展示高度、速度、燃料等关键飞行参数。
+ */
 export interface SimulationTelemetry {
+  /** 当前海拔，单位千米 */
   altitudeKm: number;
+  /** 当前速率，单位米/秒 */
   speedMs: number;
+  /** 轨道远地点高度，单位千米（亚轨道时为 0） */
   apogeeKm: number;
+  /** 轨道近地点高度，单位千米（亚轨道时为 0） */
   perigeeKm: number;
+  /** 当前级燃料剩余百分比，范围 0–100 */
   fuelPercent: number;
+  /** 当前级序号（0 为第一级） */
   currentStage: number;
+  /** 当前级名称 */
   currentStageName: string;
+  /** 当前级预计剩余燃烧时间，单位秒 */
   stageBurnTimeRemaining: number;
+  /** 任务经过时间，单位秒 */
   missionTime: number;
+  /** 最大动压，单位 Pa */
   maxQ: number;
+  /** 飞行器当前总质量，单位千克 */
   massKg: number;
 }
 
+/**
+ * 单帧仿真所需的全部输入参数。
+ * 包含当前飞行状态、发动机配置、玩家输入和时间缩放因子。
+ */
 export interface SimulationFrameInput {
+  /** 当前飞行状态（位置、速度、质量、时间） */
   state: FlightState;
+  /** 各级发动机快照数组 */
   engines: StageEngine[];
+  /** 当前工作级序号 */
   stageIndex: number;
+  /** 油门百分比（玩家设定），范围 0–100 */
   throttlePercent: number;
+  /** 时间缩放倍率（1 = 实时，2 = 两倍速，依此类推） */
   timeScale: number;
+  /** 真实经过时间，单位毫秒 */
   realElapsedMs: number;
+  /** 当前最大动压记录，单位 Pa */
   maxQ: number;
+  /** 天体半径，单位米 */
   bodyRadiusM: number;
+  /** 玩家输入状态（键盘/手柄） */
   playerInput: PlayerInputState;
 }
 
+/**
+ * 单帧仿真的输出结果。
+ * 包含推进后的飞行状态、发动机消耗、遥测数据以及任务结束标记。
+ */
 export interface SimulationFrameResult {
+  /** 推进后的飞行状态 */
   state: FlightState;
+  /** 推进后各级发动机快照（已扣除消耗） */
   engines: StageEngine[];
+  /** 推进后的当前级序号 */
   stageIndex: number;
+  /** 本帧最终应用的油门百分比 */
   throttlePercent: number;
+  /** 本帧实际应用的推力方向单位矢量（ECI 坐标系） */
   thrustDirectionEci: [number, number, number];
+  /** 是否处于喷焰状态（有推力且推进剂充足） */
   plumeActive: boolean;
+  /** 本帧遥测数据 */
   telemetry: SimulationTelemetry;
+  /** 累计最大动压，单位 Pa */
   maxQ: number;
+  /** 任务是否在本帧结束后终止 */
   ended: boolean;
+  /** 任务终止原因（如 "坠毁"、"入轨成功"），仅在 ended 为 true 时存在 */
   endReason?: string;
 }
 
@@ -117,6 +169,13 @@ function getAltitudeM(state: FlightState, bodyRadiusM: number): number {
   return vecMagnitude(state.position) - bodyRadiusM;
 }
 
+/**
+ * 根据初始位置矢量和发射海拔计算天体半径。
+ * 初始位置到地心的距离减去发射海拔即得到天体表面半径。
+ * @param initialPosition - 初始位置 ECI 矢量 [x, y, z]，单位米
+ * @param launchAltitudeM - 发射场海拔高度，单位米
+ * @returns 天体半径，单位米
+ */
 export function computeMissionBodyRadius(
   initialPosition: readonly [number, number, number],
   launchAltitudeM: number,
@@ -124,6 +183,15 @@ export function computeMissionBodyRadius(
   return vecMagnitude(initialPosition) - launchAltitudeM;
 }
 
+/**
+ * 根据当前飞行状态自动计算推力方向，实现重力转弯。
+ * - 低空段（< 10 km）：沿径向（垂直向上）推力
+ * - 高空段（> 80 km）：完全沿顺向（速度方向）推力
+ * - 中间段：在径向与顺向之间线性插值
+ * @param state - 当前飞行状态
+ * @param bodyRadiusM - 天体半径，单位米
+ * @returns 推力方向单位矢量 [x, y, z]（ECI 坐标系）
+ */
 export function getAutoThrustDirection(
   state: FlightState,
   bodyRadiusM: number,
@@ -150,6 +218,13 @@ export function getAutoThrustDirection(
   ];
 }
 
+/**
+ * 从飞行器配置中提取各级发动机的快照信息。
+ * 遍历配置中的每一级和每个部件，汇总推力和比冲，计算干质量和推进剂质量。
+ * @param config - 完整飞行器配置（各分级及部件列表）
+ * @returns 各级发动机快照数组，长度与 config.stages 一致
+ * @throws 当引用不存在的部件 ID 时由 getPart 隐式抛出
+ */
 export function extractStageEngines(config: VehicleConfig): StageEngine[] {
   const summary = computeVehicleSummary(config);
   return config.stages.map((stage, i) => {
@@ -177,6 +252,15 @@ export function extractStageEngines(config: VehicleConfig): StageEngine[] {
   });
 }
 
+/**
+ * 执行级间分离。
+ * 丢弃当前级的干质量，并将级序号推进到下一级。
+ * 如果已是最后一级则无操作。
+ * @param state - 分离前的飞行状态
+ * @param engines - 各级发动机快照数组
+ * @param stageIndex - 当前级序号
+ * @returns 分离后的状态（质量已扣除本级干质量）和新的级序号
+ */
 export function separateStage(
   state: FlightState,
   engines: StageEngine[],
@@ -195,6 +279,18 @@ export function separateStage(
   };
 }
 
+/**
+ * 根据当前飞行状态和发动机信息构建遥测数据快照。
+ * 计算海拔、速率、轨道根数（远/近地点）、燃料百分比、剩余燃烧时间等。
+ * 当轨道根数计算失败时（如亚轨道或数值不稳定），远/近地点保持为 0。
+ * @param state - 当前飞行状态
+ * @param engines - 各级发动机快照数组
+ * @param stageIdx - 当前级序号
+ * @param throttlePercent - 当前油门百分比
+ * @param maxQ - 累计最大动压
+ * @param bodyRadiusM - 天体半径，单位米
+ * @returns 结构化的遥测数据对象
+ */
 export function buildTelemetry(
   state: FlightState,
   engines: StageEngine[],
@@ -260,6 +356,14 @@ export function buildTelemetry(
   };
 }
 
+/**
+ * 执行一帧飞行仿真推进。
+ * 在给定的帧时间内使用子步进积分（RK4）推进飞行状态，处理推进剂消耗、
+ * 级间分离、重力转弯引导、大气阻力、动压计算以及任务终止判定（坠毁/入轨）。
+ * @param input - 单帧仿真输入参数（状态、发动机、玩家输入、时间缩放等）
+ * @returns 推进后的完整帧结果（状态、遥测、结束标记等）
+ * @throws 当下层积分器或质量流计算遇到无效输入时可能抛出异常
+ */
 export function simulateFlightFrame(input: SimulationFrameInput): SimulationFrameResult {
   const engines = input.engines.map((engine) => ({ ...engine }));
   let current = cloneState(input.state);
@@ -408,6 +512,11 @@ export function simulateFlightFrame(input: SimulationFrameInput): SimulationFram
   };
 }
 
+/**
+ * 生成默认（归零）的玩家输入状态。
+ * 所有模拟轴输出为 0，按钮为 false，适用于仿真启动前的初始状态。
+ * @returns 全零/全禁用的玩家输入快照
+ */
 export function defaultPlayerInputState(): PlayerInputState {
   return {
     thrust: 0,
@@ -421,4 +530,8 @@ export function defaultPlayerInputState(): PlayerInputState {
   };
 }
 
+/**
+ * 默认天体半径，取地球平均半径。
+ * 在不指定具体天体时作为回退值使用。
+ */
 export const DEFAULT_BODY_RADIUS_M = EARTH_RADIUS_M;

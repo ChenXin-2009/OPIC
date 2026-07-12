@@ -50,6 +50,15 @@
 |------|------|
 | [LANIAKEA_DATA_LIMITATIONS.md](./LANIAKEA_DATA_LIMITATIONS.md) | Laniakea 超星系团数据限制 |
 
+### 航天飞行 MOD
+
+| 文档 | 说明 |
+|------|------|
+| [OPIC-航天飞行MOD-设计与可行性分析.md](./OPIC-航天飞行MOD-设计与可行性分析.md) | 航天飞行 MOD 设计与技术可行性分析 |
+| [OPIC-航天飞行MOD-任务流程.md](./OPIC-航天飞行MOD-任务流程.md) | 航天飞行 MOD 完整任务分解 (Phase 0–4) |
+| [OPIC-航天飞行MOD-Phase0-报告.md](./OPIC-航天飞行MOD-Phase0-报告.md) | Phase 0 验证结果（叠加渲染 + RK4 积分器） |
+| [OPIC-航天飞行MOD-文档审核修改报告.md](./OPIC-航天飞行MOD-文档审核修改报告.md) | 文档审计与修订报告 |
+
 ## MOD 系统文档
 
 | 文档 | 说明 |

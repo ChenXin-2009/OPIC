@@ -30,11 +30,21 @@ interface SatelliteRecord {
   cachedState?: SatelliteState;
 }
 
-/**
- * SGP4计算器类
- * 负责卫星位置计算、轨道轨迹生成和坐标系转换
- */
-export class SGP4Calculator {
+  /**
+   * SGP4计算器类
+   * 
+   * 负责卫星位置计算、轨道轨迹生成和坐标系转换。
+   * 内部使用 Web Worker 执行 SGP4 算法，避免阻塞主线程。
+   * 支持批量计算、TLECache 缓存以及 ECI→Three.js 坐标系转换。
+   *
+   * @example
+   * ```ts
+   * const calc = new SGP4Calculator();
+   * calc.updateTLECache(tles);
+   * const states = await calc.calculatePositions([25544]);
+   * ```
+   */
+  export class SGP4Calculator {
   private worker: Worker | null = null;
   private tleCache: Map<number, SatelliteRecord> = new Map();
   private pendingRequests: Map<number, {
@@ -218,7 +228,11 @@ export class SGP4Calculator {
   }
 
   /**
-   * 更新TLE缓存
+   * 更新 TLE 缓存
+   *
+   * 将 TLE 数据存入内部缓存，供后续 calculatePositions / calculateOrbit 使用。
+   *
+   * @param tles - TLE 数据数组，每项包含卫星的轨道根数和元信息
    */
   updateTLECache(tles: TLEData[]): void {
     tles.forEach(tle => {
@@ -231,10 +245,14 @@ export class SGP4Calculator {
 
   /**
    * 批量计算卫星位置
-   * 
-   * @param noradIds 要计算的卫星NORAD ID数组
-   * @param julianDate Julian日期(可选,默认当前时间)
-   * @returns 卫星状态Map
+   *
+   * 按自适应批次大小向 Worker 分发计算任务，结果自动经过 ECI→Three.js 坐标转换，
+   * 并附带轨道参数 (OrbitalElements) 和轨道类型分类。
+   *
+   * @param noradIds - 要计算的卫星 NORAD ID 数组
+   * @param julianDate - 儒略日（可选，默认当前时间）
+   * @returns 卫星状态 Map，key 为 NORAD ID，value 为 SatelliteState
+   * @throws 当 Worker 未初始化时抛出错误
    */
   async calculatePositions(
     noradIds: number[],
@@ -342,12 +360,15 @@ export class SGP4Calculator {
 
   /**
    * 计算单颗卫星的轨道轨迹
-   * 
-   * @param noradId 卫星NORAD ID
-   * @param startTime 起始时间(毫秒时间戳)
-   * @param duration 持续时间(秒)
-   * @param steps 计算步数
-   * @returns 轨道点数组
+   *
+   * 生成指定卫星在给定时间段内的轨道轨迹点，结果已转换为 Three.js 坐标系。
+   *
+   * @param noradId - 卫星 NORAD ID
+   * @param startTime - 起始时间（毫秒时间戳）
+   * @param _duration - 持续时间（秒，当前未使用，预留参数）
+   * @param steps - 计算步数（默认 100）
+   * @returns 轨道轨迹点数组（Three.js Vector3，单位 AU）
+   * @throws 当 Worker 未初始化时抛出错误
    */
   async calculateOrbit(
     noradId: number,
@@ -398,13 +419,18 @@ export class SGP4Calculator {
 
   /**
    * 获取缓存的卫星状态
+   *
+   * @param noradId - 卫星 NORAD ID
+   * @returns 缓存的卫星状态，若未缓存则返回 undefined
    */
   getCachedState(noradId: number): SatelliteState | undefined {
     return this.tleCache.get(noradId)?.cachedState;
   }
 
   /**
-   * 清除缓存
+   * 清除 TLE 缓存
+   *
+   * 移除所有已缓存的 TLE 数据和卫星状态，下次计算时需重新提供 TLE。
    */
   clearCache(): void {
     this.tleCache.clear();
@@ -412,6 +438,9 @@ export class SGP4Calculator {
 
   /**
    * 清理资源
+   *
+   * 终止 Web Worker、清空 TLE 缓存和待处理请求队列。
+   * 方法调用后当前实例不应再被使用。
    */
   dispose(): void {
     if (this.worker) {

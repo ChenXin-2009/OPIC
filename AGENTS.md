@@ -29,6 +29,7 @@ src/
 │   ├── exoplanets/         # 系外行星组件
 │   ├── mod-manager/        # MOD 管理器 UI
 │   ├── moon/               # 月球组件
+│   ├── space-flight/       # 航天飞行 UI
 │   ├── space-launches/     # 发射数据组件
 │   ├── weather-disaster/   # 天气/灾害组件
 │   ├── global-traffic/     # 全球交通组件
@@ -44,6 +45,7 @@ src/
 │   ├── coordinates/        # 统一坐标系变换 (ICRF 锚定的 Frame Graph)
 │   ├── data/               # 宇宙数据加载器
 │   ├── errors/             # 基础错误类型
+│   ├── flight-dynamics/    # 飞行动力学 (RK4积分器/大气/推力/火箭方程)
 │   ├── exoplanets/         # 系外行星坐标计算
 │   ├── i18n/               # 国际化
 │   ├── mod-manager/        # MOD 插件系统 (核心子系统，14 个模块)
@@ -176,7 +178,30 @@ describe('math', () => {
 
 ### 覆盖率
 
-当前 Jest 配置的覆盖率阈值为 7%（全局），实际覆盖率约 19%（行）。
+当前 Jest 配置的覆盖率阈值为 7%（全局），实际覆盖率：
+- Lines: 41.76%, Statements: 41.22%, Branches: 29.66%, Functions: 46.41%
+- 195 suites (3 skipped), 3301 tests (35 skipped), 0 failures
+- TypeScript 编译：无错误
+
+#### 已实现 100% 行覆盖率的模块
+- `lib/astronomy/time.ts` — 儒略日/日期转换
+- `lib/coordinates/frames/teme.ts` — TEME 坐标变换
+- `lib/data/universe-data-parsers.ts` — 宇宙二进制数据解析
+- `lib/search/SearchEngine.ts` — 搜索引擎
+- `lib/mod-manager/proxy/APIProxyFactory.ts` (99.43%)
+- `lib/astronomy/orbit/ephemeris-integration.ts` (98.71%)
+- `lib/store/useSatelliteStore.ts` (97.36%)
+
+#### 待覆盖的高难度模块（含 Three.js/异步/复杂 mock）
+- `lib/3d/` 下绝大多数 Three.js 渲染器（0%）
+- `lib/mod-manager/core/ModLifecycle.ts`（0%）— 复杂链式调用
+- `lib/mod-manager/discovery/ModDiscovery.ts`（0%）— 文件系统
+- `lib/mods/space-flight/useFlightSimulation.ts`（0%）— React hook
+- `lib/astronomy/ephemeris/manager.ts`（43.5%）— 异步加载 + window 事件
+- `lib/mod-manager/init.ts`（63.5%）— 模块级导入图复杂
+- `lib/accessibility/keyboard-nav.ts`（59.9%）— DOM 重
+- `lib/server/celestrakClient.ts`（67%）— fetch + 重试逻辑
+- `lib/i18n/locale-manager.ts`（75.9%）— 国际化
 
 ---
 

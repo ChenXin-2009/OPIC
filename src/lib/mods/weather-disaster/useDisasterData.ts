@@ -1,11 +1,27 @@
 /**
  * 气象灾害监测 - 数据获取 Hook（通过 Next.js API 路由代理）
+ *
+ * 提供对 USGS、GDACS、NASA FIRMS、NOAA 等多源灾害数据的统一获取、
+ * 自动轮询和状态管理。内部使用 useRef 维护定时器和数据缓存，
+ * 避免不必要的重渲染。
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ensureError } from '@/lib/utils/errors';
 import type { DisasterPoint } from './DisasterRenderer';
 
+/**
+ * 气象灾害数据源标识
+ *
+ * 支持的数据源类型：
+ * - usgs_earthquake: 美国地质调查局地震数据
+ * - emsc_earthquake: 欧洲地中海地震中心数据
+ * - gdacs: 全球灾害预警与协调系统
+ * - nasa_firms: NASA 火灾信息与资源管理系统
+ * - noaa_weather: 美国国家海洋和大气管理局气象数据
+ * - noaa_tsunami: NOAA 海啸预警数据
+ * - reliefweb: ReliefWeb 人道主义灾害报告
+ */
 export type DataSourceId =
   | 'usgs_earthquake'
   | 'emsc_earthquake'
@@ -15,11 +31,21 @@ export type DataSourceId =
   | 'noaa_tsunami'
   | 'reliefweb';
 
+/**
+ * 数据源运行时状态
+ *
+ * 跟踪单个灾害数据源的加载、错误和最近一次获取结果。
+ */
 export interface SourceState {
+  /** 数据源 ID */
   id: DataSourceId;
+  /** 是否正在加载 */
   loading: boolean;
+  /** 错误信息（无错误时为 null） */
   error: string | null;
+  /** 最后成功更新时间戳（毫秒，未更新时为 null） */
   lastUpdated: number | null;
+  /** 当前灾害事件数量 */
   count: number;
 }
 
@@ -33,6 +59,20 @@ const UPDATE_INTERVALS: Record<DataSourceId, number> = {
   reliefweb:       3600_000,
 };
 
+/**
+ * 灾害数据获取 Hook
+ *
+ * 根据启用的数据源列表自动发起 fetch 请求，按各数据源的预定义间隔轮询，
+ * 并合并所有来源的灾害事件点。支持动态增删数据源。
+ *
+ * @param enabledSources - 启用的数据源 ID 数组，变化时会自动重启对应定时器
+ * @returns 包含以下属性的对象：
+ *   - `states` - 各数据源的运行时状态映射
+ *   - `allPoints` - 合并后的所有灾害事件点数组
+ *   - `totalLoading` - 是否有任一数据源正在加载
+ *   - `totalCount` - 灾害事件总数
+ *   - `refetch` - 手动触发指定数据源重新获取
+ */
 export function useDisasterData(enabledSources: DataSourceId[]) {
   const [states, setStates] = useState<Record<string, SourceState>>({});
   const [allPoints, setAllPoints] = useState<DisasterPoint[]>([]);

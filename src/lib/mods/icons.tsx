@@ -38,6 +38,26 @@ export const WeatherDisasterIcon = () => (
   </svg>
 );
 
+export const GravityGridIcon = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m8-9h1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" />
+    <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+  </svg>
+);
+
+export const MoonIcon = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+  </svg>
+);
+
+export const SpaceFlightIcon = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15l2-4m-4 0l2 4" />
+  </svg>
+);
+
 // MOD 图标映射
 export const MOD_ICONS: Record<string, React.ReactNode> = {
   'satellite-tracking': <SatelliteIcon />,
@@ -45,4 +65,7 @@ export const MOD_ICONS: Record<string, React.ReactNode> = {
   'global-traffic': <GlobalTrafficIcon />,
   'space-launches': <SpaceLaunchIcon />,
   'weather-disaster': <WeatherDisasterIcon />,
+  'gravity-grid': <GravityGridIcon />,
+  'moon': <MoonIcon />,
+  'space-flight': <SpaceFlightIcon />,
 };

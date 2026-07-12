@@ -365,3 +365,68 @@ describe('时间加速子步保护', () => {
     console.log(`  大气段高加速后位置模长: ${rMag.toFixed(0)} m (轨道衰减属正常物理行为)`);
   });
 });
+
+// ---------------------------------------------------------------------------
+// 6. 边缘情况：propagateFlight
+// ---------------------------------------------------------------------------
+
+describe('propagateFlight 边缘情况', () => {
+  it('步数超过上限时抛出错误', () => {
+    const state0 = circularFlightState(400, 5000);
+    expect(() => propagateFlight(state0, {
+      dt: 1,
+      duration: 1_000_001,
+      config: EARTH_FORCE_MODEL,
+      getControl: () => noThrustControl(),
+      maxSteps: 1_000_000,
+    })).toThrow('超过上限');
+  });
+
+  it('getControl 返回 null 时停止积分', () => {
+    const state0 = circularFlightState(400, 5000);
+    const result = propagateFlight(state0, {
+      dt: 1,
+      duration: 100,
+      config: EARTH_FORCE_MODEL,
+      getControl: () => null,
+    });
+    expect(result).toEqual(state0);
+  });
+
+  it('onStep 返回 false 时提前终止', () => {
+    const state0 = circularFlightState(400, 5000);
+    const result = propagateFlight(state0, {
+      dt: 1,
+      duration: 100,
+      config: EARTH_FORCE_MODEL,
+      getControl: () => noThrustControl(),
+      onStep: () => false,
+    });
+    // 第一步执行后就终止
+    expect(result.time).toBeLessThanOrEqual(1);
+  });
+
+  it('remainder 步被正确积分', () => {
+    const state0 = circularFlightState(400, 5000);
+    const result = propagateFlight(state0, {
+      dt: 10,
+      duration: 25,
+      config: EARTH_FORCE_MODEL,
+      getControl: () => noThrustControl(),
+    });
+    // 2 个满步 (10s) + 1 个余步 (5s) = 25s
+    expect(result.time).toBeCloseTo(25, 4);
+  });
+});
+
+describe('propagateFlightWithSubsteps 边缘情况', () => {
+  it('燃料耗尽后自动归零推力', () => {
+    const state0 = circularFlightState(400, 10); // 质量很小
+    const control = progradeThrustControl(state0, 1_000_000, 300, 1.0);
+    // 单步就能耗尽燃料
+    const result = propagateFlightWithSubsteps(state0, control, EARTH_FORCE_MODEL, 30, 10);
+    // 质量应为 0 或接近 0（不会负）
+    expect(result.mass).toBeGreaterThanOrEqual(0);
+    expect(Number.isFinite(vecMagnitude(result.position))).toBe(true);
+  });
+});

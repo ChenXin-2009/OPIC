@@ -27,6 +27,9 @@ export const GIGAPARSEC_TO_AU = PARSEC_TO_AU * 1e9;
 
 /**
  * 光年转天文单位
+ *
+ * @param lightYears - 光年数值
+ * @returns 对应的天文单位（AU）数值
  */
 export function lightYearsToAU(lightYears: number): number {
   return lightYears * LIGHT_YEAR_TO_AU;
@@ -34,6 +37,9 @@ export function lightYearsToAU(lightYears: number): number {
 
 /**
  * 秒差距转天文单位
+ *
+ * @param parsecs - 秒差距数值
+ * @returns 对应的天文单位（AU）数值
  */
 export function parsecsToAU(parsecs: number): number {
   return parsecs * PARSEC_TO_AU;
@@ -41,6 +47,9 @@ export function parsecsToAU(parsecs: number): number {
 
 /**
  * 百万秒差距转天文单位
+ *
+ * @param megaparsecs - 百万秒差距数值
+ * @returns 对应的天文单位（AU）数值
  */
 export function megaparsecsToAU(megaparsecs: number): number {
   return megaparsecs * MEGAPARSEC_TO_AU;
@@ -48,6 +57,9 @@ export function megaparsecsToAU(megaparsecs: number): number {
 
 /**
  * 天文单位转光年
+ *
+ * @param au - 天文单位（AU）数值
+ * @returns 对应的光年数值
  */
 export function auToLightYears(au: number): number {
   return au / LIGHT_YEAR_TO_AU;
@@ -55,6 +67,9 @@ export function auToLightYears(au: number): number {
 
 /**
  * 天文单位转秒差距
+ *
+ * @param au - 天文单位（AU）数值
+ * @returns 对应的秒差距数值
  */
 export function auToParsecs(au: number): number {
   return au / PARSEC_TO_AU;
@@ -62,6 +77,9 @@ export function auToParsecs(au: number): number {
 
 /**
  * 天文单位转百万秒差距
+ *
+ * @param au - 天文单位（AU）数值
+ * @returns 对应的百万秒差距数值
  */
 export function auToMegaparsecs(au: number): number {
   return au / MEGAPARSEC_TO_AU;

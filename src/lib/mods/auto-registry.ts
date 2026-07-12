@@ -35,7 +35,9 @@ export const MOD_REGISTRY = [
 ] as const;
 
 /**
- * 获取所有注册的MOD
+ * 获取所有注册的 MOD 实例。
+ * 遍历注册表中的工厂函数并依次调用，加载失败的 MOD 会被过滤掉。
+ * @returns 已成功初始化的 MOD 实例数组，每个元素是解析后的 Mod 对象
  */
 export function getAllRegisteredMods() {
   return MOD_REGISTRY.map(getModFn => {
@@ -49,14 +51,17 @@ export function getAllRegisteredMods() {
 }
 
 /**
- * 获取MOD数量
+ * 获取注册表中的 MOD 总数（包含可能加载失败的条目）。
+ * @returns 注册在 MOD_REGISTRY 中的工厂函数个数
  */
 export function getModCount(): number {
   return MOD_REGISTRY.length;
 }
 
 /**
- * 获取MOD列表信息
+ * 获取所有已成功加载的 MOD 精简摘要列表。
+ * 每个条目包含 MOD 的元信息（id、名称、版本、描述），不包含运行时实例。
+ * @returns 由已加载 MOD 的 manifest 元数据组成的数组
  */
 export function getModList() {
   return getAllRegisteredMods().map(mod => ({

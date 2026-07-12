@@ -1,6 +1,6 @@
 {
   "name": "opic",
-  "version": "11.15.1",
+  "version": "11.15.2",
   "description": "A Web-based multi-scale universe visualization and astronomical data integration system - Open Integrated Cosmos",
   "private": true,
   "scripts": {
@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@cesium/engine": "^23.0.1",
+    "@mimo-ai/mimocode-windows-x64-baseline": "^0.1.5",
     "@types/cesium": "^1.67.14",
     "@vercel/analytics": "^1.5.0",
     "@vercel/og": "^0.11.1",

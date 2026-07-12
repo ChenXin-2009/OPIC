@@ -5,24 +5,52 @@
 
 import * as THREE from 'three';
 
+/**
+ * 发射任务 / 发射场数据点
+ *
+ * 描述一次航天发射任务的基本信息、状态和轨道参数，供 LaunchRenderer 绘制使用。
+ */
 export interface LaunchPoint {
+  /** 发射任务唯一标识 */
   id: string;
+  /** 任务名称 */
   name: string;
+  /** 发射场名称 */
   siteName: string;
+  /** 发射场纬度 */
   lat: number;
+  /** 发射场经度 */
   lon: number;
+  /** 发射状态（如 'go', 'in_flight', 'success', 'failure' 等） */
   status: string;
+  /** 发射窗口时间（ISO 字符串） */
   net: string;
+  /** 运载火箭名称 */
   vehicleName: string;
+  /** 目标轨道类型（如 'LEO', 'GEO', 'SSO'，可选） */
   orbitType?: string;
+  /** 目标轨道高度（km，可选） */
   orbitAltitude?: number;
+  /** 目标轨道倾角（度，可选） */
   orbitInclination?: number;
+  /** 是否为已过去的历史任务 */
   isPast: boolean;
 }
 
 // 地球半径（Three.js 场景单位 = AU），与 TrafficRenderer / DisasterRenderer 保持一致
 const EARTH_RADIUS = 0.0000426;
 
+/**
+ * 经纬度转 Three.js 三维坐标
+ *
+ * 使用球坐标变换将地理经纬度转换为三维空间中的坐标点。
+ * 坐标系统约定：Y 轴向上，XZ 平面为赤道面。
+ *
+ * @param lat - 纬度（度）
+ * @param lon - 经度（度）
+ * @param radius - 球面半径（默认略大于地球半径，单位 AU）
+ * @returns Three.js 三维向量
+ */
 function latLonToVec3(lat: number, lon: number, radius = EARTH_RADIUS * 1.01): THREE.Vector3 {
   const phi   = (90 - lat) * (Math.PI / 180);
   const theta = (lon + 180) * (Math.PI / 180);
@@ -57,6 +85,14 @@ const ORBIT_COLOR: Record<string, string> = {
   Other: '#666666',
 };
 
+/**
+ * 商业航天发射追踪 - Three.js 渲染器
+ *
+ * 在 3D 场景中绘制发射场标记点、发射弧线和轨道插入点。
+ * 支持脉冲动画环（活跃/即将发射任务）和状态/轨道类型颜色映射。
+ *
+ * 生命周期：constructor → updatePoints (可多次调用) → tick (每帧) → dispose
+ */
 export class LaunchRenderer {
   private group: THREE.Group;
   private sitePoints: THREE.Points | null = null;
@@ -64,6 +100,11 @@ export class LaunchRenderer {
   private pulseRings: THREE.Mesh[] = [];
   private pulseTime = 0;
 
+  /**
+   * 构造 LaunchRenderer
+   *
+   * 创建顶层 Group（SpaceLaunchLayer, renderOrder=10）和发射弧线子 Group（LaunchArcs）。
+   */
   constructor() {
     this.group = new THREE.Group();
     this.group.name = 'SpaceLaunchLayer';
@@ -74,19 +115,52 @@ export class LaunchRenderer {
     this.group.add(this.arcGroup);
   }
 
+  /**
+   * 获取顶层 Group 对象
+   *
+   * @returns 包含所有发射场景元素的 Three.js Group
+   */
   getGroup(): THREE.Group { return this.group; }
 
-  /** 每帧同步地球公转位置，与 TrafficRenderer 保持一致 */
+  /**
+   * 每帧同步地球公转位置
+   *
+   * 与 TrafficRenderer / DisasterRenderer 保持一致的接口。
+   *
+   * @param x - 地球 X 坐标（AU）
+   * @param y - 地球 Y 坐标（AU）
+   * @param z - 地球 Z 坐标（AU）
+   */
   setEarthPosition(x: number, y: number, z: number): void {
     this.group.position.set(x, y, z);
   }
 
-  /** 同步地球完整变换（位置 + 旋转四元数），使标记点跟随地球自转 */
+  /**
+   * 同步地球完整变换（位置 + 旋转四元数）
+   *
+   * 使发射场标记点跟随地球自转，适用于地球模型在场景中旋转的场景。
+   *
+   * @param x - 地球 X 坐标（AU）
+   * @param y - 地球 Y 坐标（AU）
+   * @param z - 地球 Z 坐标（AU）
+   * @param quaternion - 地球旋转四元数
+   */
   setEarthTransform(x: number, y: number, z: number, quaternion: THREE.Quaternion): void {
     this.group.position.set(x, y, z);
     this.group.quaternion.copy(quaternion);
   }
 
+  /**
+   * 更新所有发射场景图元
+   *
+   * 清除旧数据后重新绘制：
+   * 1. 发射场位置标记点（按状态着色）
+   * 2. 活跃/即将发射任务的脉冲环动画
+   * 3. 飞行中任务的轨道弧线 + 轨道插入点
+   *
+   * @param points - 发射任务/发射场数据点数组
+   * @param opacity - 全局透明度（默认 0.9）
+   */
   updatePoints(points: LaunchPoint[], opacity = 0.9): void {
     this.clearAll();
     if (!points.length) return;
@@ -218,6 +292,14 @@ export class LaunchRenderer {
     this.arcGroup.add(dot);
   }
 
+  /**
+   * 每帧更新脉冲环动画
+   *
+   * 对活跃发射任务的脉冲环执行缩放和透明度脉冲效果。
+   * 应在场景渲染循环中每帧调用。
+   *
+   * @param delta - 距上一帧的时间差（秒）
+   */
   tick(delta: number): void {
     this.pulseTime += delta;
     for (const ring of this.pulseRings) {
@@ -228,6 +310,13 @@ export class LaunchRenderer {
     }
   }
 
+  /**
+   * 全局设置透明度
+   *
+   * 同时影响发射场标记点、轨道弧线和脉冲环的透明度。
+   *
+   * @param opacity - 透明度值 [0, 1]
+   */
   setOpacity(opacity: number): void {
     if (this.sitePoints) {
       (this.sitePoints.material as THREE.PointsMaterial).opacity = opacity;
@@ -261,5 +350,11 @@ export class LaunchRenderer {
     this.pulseRings = [];
   }
 
+  /**
+   * 释放所有 Three.js 资源
+   *
+   * 清除所有图元并释放几何体、材质对象。
+   * 调用后实例不应再被使用。
+   */
   dispose(): void { this.clearAll(); }
 }

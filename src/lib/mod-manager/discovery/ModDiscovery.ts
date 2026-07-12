@@ -112,7 +112,7 @@ export class ModDiscovery {
       console.warn(
         `[ModDiscovery] 检测到 ${invalid.length} 个无效的MOD配置:\n` +
         invalid.map(p => `  - ${p} (文件不存在或无法加载)`).join('\n') +
-        '\n建议从 mods.config.json 中移除这些条目'
+        '\n建议删除这些文件夹或运行 npm run generate-mods 重新生成注册表'
       );
     }
     

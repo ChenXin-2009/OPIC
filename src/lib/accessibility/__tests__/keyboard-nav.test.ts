@@ -6,6 +6,7 @@ import {
   enableFocusTrap,
   disableFocusTrap,
 } from '../keyboard-nav';
+import defaultExport from '../keyboard-nav';
 
 let manager: KeyboardNavigationManager;
 
@@ -32,6 +33,11 @@ describe('KeyboardNavigationManager singleton', () => {
     const b = KeyboardNavigationManager.getInstance();
     expect(a).toBe(b);
   });
+
+  it('should export default as the singleton', () => {
+    expect(defaultExport).toBe(keyboardNavigationManager);
+    expect(defaultExport).toBe(KeyboardNavigationManager.getInstance());
+  });
 });
 
 describe('initialize / destroy', () => {
@@ -53,6 +59,13 @@ describe('initialize / destroy', () => {
 
   it('should not destroy when not initialized', () => {
     expect(() => manager.destroy()).not.toThrow();
+  });
+
+  it('should register keydown listener on document via addEventListener', () => {
+    const spy = jest.spyOn(document, 'addEventListener');
+    manager.initialize();
+    expect(spy).toHaveBeenCalledWith('keydown', expect.any(Function));
+    spy.mockRestore();
   });
 });
 
@@ -94,6 +107,55 @@ describe('keyboard event handling', () => {
     document.dispatchEvent(evt);
     expect(spy).toHaveBeenCalled();
   });
+
+  it('should match shortcut with ctrl modifier', () => {
+    const action = jest.fn();
+    manager.initialize();
+    (manager as any).shortcuts.clear();
+    manager.registerShortcut('ctrl-s', { key: 's', ctrl: true, description: 'Save', action });
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true, bubbles: true }));
+    expect(action).toHaveBeenCalled();
+  });
+
+  it('should not match shortcut when ctrl modifier is required but not pressed', () => {
+    const action = jest.fn();
+    manager.initialize();
+    (manager as any).shortcuts.clear();
+    manager.registerShortcut('ctrl-s', { key: 's', ctrl: true, description: 'Save', action });
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: false, bubbles: true }));
+    expect(action).not.toHaveBeenCalled();
+  });
+
+  it('should match shortcut with shift modifier', () => {
+    const action = jest.fn();
+    manager.initialize();
+    (manager as any).shortcuts.clear();
+    manager.registerShortcut('shift-p', { key: 'p', shift: true, description: 'P', action });
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', shiftKey: true, bubbles: true }));
+    expect(action).toHaveBeenCalled();
+  });
+
+  it('should match shortcut with alt modifier', () => {
+    const action = jest.fn();
+    manager.initialize();
+    (manager as any).shortcuts.clear();
+    manager.registerShortcut('alt-x', { key: 'x', alt: true, description: 'X', action });
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'x', altKey: true, bubbles: true }));
+    expect(action).toHaveBeenCalled();
+  });
+
+  it('should catch errors in shortcut action and log them', () => {
+    const action = jest.fn().mockImplementation(() => { throw new Error('oops'); });
+    manager.initialize();
+    (manager as any).shortcuts.clear();
+    manager.registerShortcut('faulty', { key: 'f', description: 'Faulty', action });
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', bubbles: true }));
+    }).not.toThrow();
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
 });
 
 describe('focus trap', () => {
@@ -114,6 +176,37 @@ describe('focus trap', () => {
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
   });
+
+  it('should cycle focus forward with Tab in focus trap', () => {
+    manager.initialize();
+    const container = document.createElement('div');
+    container.innerHTML = `<button id="first">A</button><button id="second">B</button><button id="last">C</button>`;
+    document.body.appendChild(container);
+    manager.enableFocusTrap(container);
+    expect(document.activeElement!.id).toBe('first');
+    container.querySelector('#last')!.focus();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    expect(document.activeElement!.id).toBe('first');
+  });
+
+  it('should cycle focus backward with Shift+Tab in focus trap', () => {
+    manager.initialize();
+    const container = document.createElement('div');
+    container.innerHTML = `<button id="first">A</button><button id="second">B</button><button id="last">C</button>`;
+    document.body.appendChild(container);
+    manager.enableFocusTrap(container);
+    expect(document.activeElement!.id).toBe('first');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }));
+    expect(document.activeElement!.id).toBe('last');
+  });
+
+  it('should not cycle when trap is not set', () => {
+    manager.initialize();
+    document.body.innerHTML = `<button id="first">A</button><button id="second">B</button>`;
+    document.querySelector('#first')!.focus();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    expect(() => manager.disableFocusTrap()).not.toThrow();
+  });
 });
 
 describe('focusNext / focusPrevious / focusFirst / focusLast', () => {
@@ -123,6 +216,30 @@ describe('focusNext / focusPrevious / focusFirst / focusLast', () => {
     expect(document.activeElement!.id).toBe('a');
     manager.focusLast();
     expect(document.activeElement!.id).toBe('a');
+  });
+
+  it('should navigate forward with focusNext', () => {
+    document.body.innerHTML = `<button id="a">A</button><button id="b">B</button><button id="c">C</button>`;
+    manager.focusFirst();
+    expect(document.activeElement!.id).toBe('a');
+    manager.focusNext();
+    expect(document.activeElement!.id).toBe('b');
+    manager.focusNext();
+    expect(document.activeElement!.id).toBe('c');
+    manager.focusNext();
+    expect(document.activeElement!.id).toBe('a');
+  });
+
+  it('should navigate backward with focusPrevious', () => {
+    document.body.innerHTML = `<button id="a">A</button><button id="b">B</button><button id="c">C</button>`;
+    manager.focusLast();
+    expect(document.activeElement!.id).toBe('c');
+    manager.focusPrevious();
+    expect(document.activeElement!.id).toBe('b');
+    manager.focusPrevious();
+    expect(document.activeElement!.id).toBe('a');
+    manager.focusPrevious();
+    expect(document.activeElement!.id).toBe('c');
   });
 });
 

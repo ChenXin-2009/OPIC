@@ -29,9 +29,16 @@
 import { TLEData, SatelliteCategory } from '@/lib/types/satellite';
 
 /**
- * 格式化错误类
+ * TLE 格式化错误类
+ *
+ * 在 TLE 格式化/验证过程中抛出，携带错误字段与原始值以便调试。
  */
 export class TLEFormatterError extends Error {
+  /**
+   * @param message - 错误描述
+   * @param field - 导致错误的字段名（可选）
+   * @param value - 导致错误的原始值（可选）
+   */
   constructor(
     message: string,
     public readonly field?: string,

@@ -86,23 +86,13 @@ export function getMyNewMod() {
 }
 ```
 
-#### 3. 添加到配置文件
+#### 3. 重新生成自动注册表
 
-编辑 `src/lib/mods/mods.config.json`:
-
-```json
-{
-  "mods": [
-    "satellite-tracking",
-    "cesium-integration",
-    "weather-disaster",
-    "global-traffic",
-    "space-launches",
-    "my-new-mod"  // 添加这一行
-  ],
-  "autoLoad": true
-}
+```bash
+npm run generate-mods
 ```
+
+此脚本会扫描 `src/lib/mods/` 下所有子目录，自动生成 `auto-registry.ts`。
 
 #### 4. 重启应用
 

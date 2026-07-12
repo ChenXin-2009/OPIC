@@ -89,23 +89,13 @@ export function getMyAwesomeMod() {
 }
 ```
 
-#### 步骤 3: 注册到配置文件
+#### 步骤 3: 重新生成自动注册表
 
-编辑 `src/lib/mods/mods.config.json`：
-
-```json
-{
-  "mods": [
-    "satellite-tracking",
-    "cesium-integration",
-    "weather-disaster",
-    "global-traffic",
-    "space-launches",
-    "my-awesome-mod"  // 添加这一行
-  ],
-  "autoLoad": true
-}
+```bash
+npm run generate-mods
 ```
+
+此脚本会扫描 `src/lib/mods/` 下所有子目录，自动生成 `auto-registry.ts`。
 
 #### 步骤 4: 重启应用
 
@@ -128,28 +118,16 @@ npm run dev
 
 ### 方法一：完全删除（推荐）
 
-#### 步骤 1: 从配置文件中移除
-
-编辑 `src/lib/mods/mods.config.json`，删除对应的行：
-
-```json
-{
-  "mods": [
-    "satellite-tracking",
-    "cesium-integration",
-    "weather-disaster",
-    "global-traffic",
-    "space-launches"
-    // "my-awesome-mod"  // 删除这一行
-  ],
-  "autoLoad": true
-}
-```
-
-#### 步骤 2: 删除 MOD 文件夹
+#### 步骤 1: 删除 MOD 文件夹
 
 ```bash
 rm -rf src/lib/mods/my-awesome-mod
+```
+
+#### 步骤 2: 重新生成自动注册表
+
+```bash
+npm run generate-mods
 ```
 
 #### 步骤 3: 重启应用
@@ -158,62 +136,23 @@ rm -rf src/lib/mods/my-awesome-mod
 npm run dev
 ```
 
-### 方法二：只删除文件夹（系统会自动处理）
+### 方法二：只删除文件夹（系统构建时会报错）
 
-如果你只删除了 MOD 文件夹但忘记更新配置文件：
-
-```bash
-rm -rf src/lib/mods/my-awesome-mod
-```
-
-**系统行为：**
-
-1. ✅ 系统会检测到 MOD 文件不存在
-2. ✅ 自动跳过该 MOD 的加载
-3. ✅ 在控制台显示警告信息：
+如果只删除文件夹但忘记重新生成注册表，TypeScript 构建会报错（因为 `auto-registry.ts` 仍然引用了不存在的模块）：
 
 ```
-[ModDiscovery] 跳过无法加载的MOD: my-awesome-mod
-[MODs] 发现 1 个无效的MOD配置，将被跳过:
-  - my-awesome-mod
-[MODs] 核心MOD注册完成: 5个成功, 1个跳过
+Error: Cannot find module './my-awesome-mod'
 ```
 
-4. ✅ 其他 MOD 正常加载和运行
-5. ⚠️ 建议：手动从 `mods.config.json` 中移除该条目
-
-**优点：**
-- 不会导致应用崩溃
-- 其他 MOD 不受影响
-- 清晰的错误提示
-
-**缺点：**
-- 每次启动都会显示警告
-- 配置文件不干净
+**解决方法：** 运行 `npm run generate-mods` 重新生成注册表。
 
 ## 临时禁用 MOD
 
-如果你想临时禁用某个 MOD 而不删除它：
+### 方法一：修改 manifest 中的 defaultEnabled
 
-### 方法一：从配置中注释掉
+将 `defaultEnabled` 设为 `false`，重启后 MOD 默认不会启用，但用户可通过 MOD 管理界面手动启用。
 
-编辑 `src/lib/mods/mods.config.json`：
-
-```json
-{
-  "mods": [
-    "satellite-tracking",
-    "cesium-integration",
-    "weather-disaster",
-    "global-traffic",
-    "space-launches"
-    // "my-awesome-mod"  // 临时禁用
-  ],
-  "autoLoad": true
-}
-```
-
-### 方法二：使用 MOD 管理界面（如果已实现）
+### 方法二：使用 MOD 管理界面
 
 在应用中打开 MOD 管理面板，点击禁用按钮。
 
@@ -253,15 +192,15 @@ npm run dev
 
 **可能原因：**
 1. MOD 文件夹不存在
-2. MOD 文件夹名与配置不匹配
+2. MOD 导出函数名不符合命名约定
 3. MOD 代码有语法错误
 4. 缺少必需的导出函数
 
 **解决方法：**
 1. 检查文件夹路径是否正确
-2. 检查 `mods.config.json` 中的路径
+2. 运行 `npm run generate-mods` 检查生成是否有错误
 3. 检查 TypeScript 编译错误
-4. 确保导出了 `get*Mod` 函数
+4. 确保导出了 `get*Mod` 函数（命名格式：`getYourModNameMod`）
 
 ### 问题 2: MOD 加载但不工作
 
@@ -370,31 +309,31 @@ onDisable: async (context: ModContext) => {
 }
 ```
 
-## 配置文件参考
+## 自动注册表参考
 
-### mods.config.json 完整示例
+### auto-registry.ts 结构
 
-```json
-{
-  "mods": [
-    "satellite-tracking",
-    "cesium-integration",
-    "weather-disaster",
-    "global-traffic",
-    "space-launches",
-    "my-custom-mod-1",
-    "my-custom-mod-2"
-  ],
-  "autoLoad": true
-}
+自动生成的 `src/lib/mods/auto-registry.ts` 包含所有已发现的 MOD：
+
+```typescript
+// 自动导入所有MOD
+import { getCesiumIntegrationMod } from './cesium-integration';
+import { getSpaceFlightMod } from './space-flight';
+// ... 所有 MOD 的导入
+
+export const MOD_REGISTRY = [
+  getCesiumIntegrationMod,
+  getSpaceFlightMod,
+  // ... 所有 MOD 的注册
+] as const;
 ```
 
-### 字段说明
+### 重新生成命令
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `mods` | string[] | MOD 路径列表（相对于 `src/lib/mods/`） |
-| `autoLoad` | boolean | 是否自动加载所有 MOD |
+```bash
+npm run generate-mods    # 手动重新生成
+npm run build            # 构建时自动生成（prebuild 钩子）
+```
 
 ## 相关文档
 
@@ -407,9 +346,9 @@ onDisable: async (context: ModContext) => {
 
 现在你已经了解了如何：
 
-✅ 添加新 MOD - 创建文件夹 → 编写代码 → 添加到配置 → 重启
-✅ 删除 MOD - 从配置移除 → 删除文件夹 → 重启（或只删除文件夹，系统会自动跳过）
-✅ 临时禁用 MOD - 从配置注释掉 → 重启
+✅ 添加新 MOD - 创建文件夹 → 编写代码 → `npm run generate-mods` → 重启
+✅ 删除 MOD - 删除文件夹 → `npm run generate-mods` → 重启
+✅ 临时禁用 MOD - 通过 MOD 管理界面或修改 manifest.ts 中的 `defaultEnabled`
 ✅ 更新 MOD - 修改代码 → 更新版本号 → 重启
 ✅ 故障排查 - 查看控制台日志，检查配置和代码
 
