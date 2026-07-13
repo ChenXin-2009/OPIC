@@ -16,6 +16,8 @@ export const satelliteTrackingManifest: ModManifest = {
   hasConfig: true,
   defaultEnabled: false,
   icon: '📡',
+  iconImage: '/mods/satellite-tracking/icon.webp',
+  screenshots: ['/mods/satellite-tracking/screenshot-1.jpg', '/mods/satellite-tracking/screenshot-2.jpg', '/mods/satellite-tracking/screenshot-3.jpg'],
   apiVersion: '1.0.0',
   
   // 新架构：权限声明

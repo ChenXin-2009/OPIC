@@ -94,3 +94,6 @@ desktop.ini
 /rust-sgp4/target/
 /rust-sgp4/pkg/
 /public/wasm/
+
+# Rust mod-editor build artifacts
+/src/lib/mods/mod-editor/target/

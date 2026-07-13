@@ -17,6 +17,8 @@ export const globalTrafficManifest: ModManifest = {
   configComponent: 'GlobalTrafficConfig',
   defaultEnabled: false,
   icon: '🚢',
+  iconImage: '/mods/global-traffic/icon.webp',
+  screenshots: ['/mods/global-traffic/screenshot-1.jpg', '/mods/global-traffic/screenshot-2.jpg', '/mods/global-traffic/screenshot-3.jpg'],
   apiVersion: '1.0.0',
   
   // 新架构：权限声明

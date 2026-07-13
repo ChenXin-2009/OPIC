@@ -6,10 +6,11 @@
  * 提供MOD管理的完整UI界面。
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useModManager } from '@/hooks/useModManager';
+import { MOD_ICONS } from '@/lib/mods/icons';
 
-import { ModConfigPanel } from './ModConfigPanel';
+import { ModDetailPanel } from './ModDetailPanel';
 import { ModPerformancePanel } from './ModPerformancePanel';
 
 interface ModManagerPanelProps {
@@ -60,6 +61,7 @@ export const ModManagerPanel: React.FC<ModManagerPanelProps> = ({
   const [selectedModId, setSelectedModId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'mods' | 'performance'>('mods');
   const [filterState, setFilterState] = useState<'all' | 'enabled' | 'disabled'>('all');
+  const [failedIcons, setFailedIcons] = useState<Set<string>>(new Set());
 
   const t = getTranslations(lang);
 
@@ -84,6 +86,10 @@ export const ModManagerPanel: React.FC<ModManagerPanelProps> = ({
       console.error('切换MOD状态失败:', err);
     }
   };
+
+  const handleIconError = useCallback((modId: string) => {
+    setFailedIcons(prev => new Set(prev).add(modId));
+  }, []);
 
   // 过滤MOD列表
   const filteredModIds = Object.keys(mods).filter(modId => {
@@ -190,6 +196,7 @@ export const ModManagerPanel: React.FC<ModManagerPanelProps> = ({
                     filteredModIds.map((modId) => {
                       const entry = mods[modId];
                       const isEnabled = entry.state === 'enabled';
+                      const SvgIcon = MOD_ICONS[modId];
                       return (
                         <div
                           key={modId}
@@ -202,6 +209,17 @@ export const ModManagerPanel: React.FC<ModManagerPanelProps> = ({
                         >
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                                {entry.manifest.iconImage && !failedIcons.has(modId) ? (
+                                  <img src={entry.manifest.iconImage} alt="" className="w-8 h-8 rounded-lg object-cover" onError={() => handleIconError(modId)} />
+                                ) : SvgIcon ? (
+                                  <div className="text-white/80">{SvgIcon}</div>
+                                ) : entry.manifest.icon ? (
+                                  <span className="text-lg">{entry.manifest.icon}</span>
+                                ) : (
+                                  <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                )}
+                              </div>
                               <h3 className="font-medium text-white text-lg">
                                 {lang === 'zh' ? (entry.manifest.nameZh || entry.manifest.name) : entry.manifest.name}
                               </h3>
@@ -275,10 +293,10 @@ export const ModManagerPanel: React.FC<ModManagerPanelProps> = ({
                 </div>
               </div>
 
-              {/* 右侧：配置面板 */}
+              {/* 右侧：详情面板 */}
               {selectedModId && (
-                <div className="w-80 flex-shrink-0">
-                  <ModConfigPanel
+                <div className="w-[420px] flex-shrink-0">
+                  <ModDetailPanel
                     modId={selectedModId}
                     onClose={() => setSelectedModId(null)}
                     lang={lang}

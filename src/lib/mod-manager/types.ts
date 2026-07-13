@@ -70,6 +70,8 @@ export interface ModManifest {
   hasConfig?: boolean;     // 是否有配置UI
   configComponent?: string; // 配置组件名
   icon?: string;           // 图标URL或标识符
+  iconImage?: string;      // 图标图片路径（public/mods/<id>/icon.webp）
+  screenshots?: string[];  // 效果图路径（最多3张，1280x720 jpg）
   
   // 默认启用
   defaultEnabled?: boolean; // 是否默认启用

@@ -16,6 +16,8 @@ export const moonManifest: ModManifest = {
   hasConfig: false,
   defaultEnabled: false,
   icon: '',
+  iconImage: '/mods/moon/icon.webp',
+  screenshots: ['/mods/moon/screenshot-1.jpg', '/mods/moon/screenshot-2.jpg', '/mods/moon/screenshot-3.jpg'],
   apiVersion: '1.0.0',
   permissions: [
     'render:read',

@@ -12,6 +12,8 @@ export const spaceFlightManifest: ModManifest = {
   hasConfig: false,
   defaultEnabled: false,
   icon: '🚀',
+  iconImage: '/mods/space-flight/icon.webp',
+  screenshots: ['/mods/space-flight/screenshot-1.jpg', '/mods/space-flight/screenshot-2.jpg', '/mods/space-flight/screenshot-3.jpg'],
   apiVersion: '1.0.0',
   permissions: [
     'render:read',

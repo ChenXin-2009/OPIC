@@ -16,6 +16,8 @@ export const cesiumIntegrationManifest: ModManifest = {
   hasConfig: true,
   defaultEnabled: true,
   icon: '🌍',
+  iconImage: '/mods/cesium-integration/icon.webp',
+  screenshots: ['/mods/cesium-integration/screenshot-1.jpg', '/mods/cesium-integration/screenshot-2.jpg', '/mods/cesium-integration/screenshot-3.jpg'],
   apiVersion: '1.0.0',
   
   // 新架构：权限声明

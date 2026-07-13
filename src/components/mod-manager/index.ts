@@ -8,6 +8,9 @@ export type { ModListProps } from './ModList';
 export { ModConfigPanel } from './ModConfigPanel';
 export type { ModConfigPanelProps } from './ModConfigPanel';
 
+export { ModDetailPanel } from './ModDetailPanel';
+export type { ModDetailPanelProps } from './ModDetailPanel';
+
 export { ModPerformancePanel } from './ModPerformancePanel';
 export type { ModPerformancePanelProps } from './ModPerformancePanel';
 

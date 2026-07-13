@@ -12,6 +12,8 @@ export const gravityGridManifest: ModManifest = {
   hasConfig: true,
   defaultEnabled: false,
   icon: '🌐',
+  iconImage: '/mods/gravity-grid/icon.webp',
+  screenshots: ['/mods/gravity-grid/screenshot-1.jpg', '/mods/gravity-grid/screenshot-2.jpg', '/mods/gravity-grid/screenshot-3.jpg'],
   apiVersion: '1.0.0',
   permissions: [
     'render:read',

@@ -16,6 +16,8 @@ export const spaceLaunchesManifest: ModManifest = {
   hasConfig: true,
   defaultEnabled: false,
   icon: '🚀',
+  iconImage: '/mods/space-launches/icon.webp',
+  screenshots: ['/mods/space-launches/screenshot-1.jpg', '/mods/space-launches/screenshot-2.jpg', '/mods/space-launches/screenshot-3.jpg'],
   apiVersion: '1.0.0',
   
   // 新架构：权限声明

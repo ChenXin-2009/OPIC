@@ -16,6 +16,8 @@ export const weatherDisasterManifest: ModManifest = {
   hasConfig: true,
   defaultEnabled: false,
   icon: '🌪️',
+  iconImage: '/mods/weather-disaster/icon.webp',
+  screenshots: ['/mods/weather-disaster/screenshot-1.jpg', '/mods/weather-disaster/screenshot-2.jpg', '/mods/weather-disaster/screenshot-3.jpg'],
   apiVersion: '1.0.0',
   
   // 新架构：权限声明

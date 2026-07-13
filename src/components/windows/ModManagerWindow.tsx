@@ -8,7 +8,8 @@
 
 import { useState } from 'react';
 import { useModManager } from '@/hooks/useModManager';
-import { ModConfigPanel } from '../mod-manager/ModConfigPanel';
+import { MOD_ICONS } from '@/lib/mods/icons';
+import { ModDetailPanel } from '../mod-manager/ModDetailPanel';
 import { ModPerformancePanel } from '../mod-manager/ModPerformancePanel';
 
 interface ModManagerWindowProps {
@@ -148,6 +149,7 @@ export function ModManagerWindow({ lang = 'zh' }: ModManagerWindowProps) {
                   filteredModIds.map((modId) => {
                     const entry = mods[modId];
                     const isEnabled = entry.state === 'enabled';
+                    const SvgIcon = MOD_ICONS[modId];
                     return (
                       <div
                         key={modId}
@@ -160,6 +162,15 @@ export function ModManagerWindow({ lang = 'zh' }: ModManagerWindowProps) {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                              {entry.manifest.iconImage ? (
+                                <img src={entry.manifest.iconImage} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                              ) : SvgIcon ? (
+                                <div className="text-white/80">{SvgIcon}</div>
+                              ) : entry.manifest.icon ? (
+                                <span className="text-lg">{entry.manifest.icon}</span>
+                              ) : null}
+                            </div>
                             <h3 className="font-semibold text-white text-base">
                               {lang === 'zh' ? (entry.manifest.nameZh || entry.manifest.name) : entry.manifest.name}
                             </h3>
@@ -233,10 +244,10 @@ export function ModManagerWindow({ lang = 'zh' }: ModManagerWindowProps) {
               </div>
             </div>
 
-            {/* 右侧：配置面板 */}
+            {/* 右侧：详情面板 */}
             {selectedModId && (
-              <div className="w-80 flex-shrink-0">
-                <ModConfigPanel
+              <div className="w-[420px] flex-shrink-0">
+                <ModDetailPanel
                   modId={selectedModId}
                   onClose={() => setSelectedModId(null)}
                   lang={lang}
