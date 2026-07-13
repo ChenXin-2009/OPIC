@@ -1,6 +1,6 @@
 # OPIC 航天飞行 MOD：可行性评估、技术难点与实施方案
 
-> 本文档基于对 `github.com/ChenXin-2009/OPIC` 仓库当前代码（非文档描述、非泛化假设）的实际检查得出。所有引用的路径、常量、阈值均来自实际源码，标注了"已具备 ✅ / 需新建 🆕 / 需验证 ⚠️"三种状态，便于区分"已有基础"和"真正的新工作量"。
+> 本文档基于对 `github.com/ChenXin-2009/OPIC` 仓库当前代码（非文档描述、非泛化假设）的实际检查得出。所有引用的路径、常量、阈值均来自实际源码，标注了"已具备  / 需新建  / 需验证 "三种状态，便于区分"已有基础"和"真正的新工作量"。
 
 > **进度更新（2026-07-11）**：本文最初用于 Phase 0 前的可行性判断；截至当前仓库状态，`CESIUM_DOMINANT` 下 Three.js 叠加层逐帧渲染已由 `test/verify-threejs-overlay.ts` 验证通过，纯 TS 飞行动力学已扩展到推力 + 大气阻力 + 变质量 + 10,000× 子步保护，`Task 1.1`–`1.6` 与 `1.9` 已完成，`Task 1.8` 已部分完成。下文中保留的"需验证 / 需新建"描述应结合这条更新理解。
 
@@ -18,17 +18,17 @@
 
 ## 1. OPIC 现有基础设施盘点（这是本文档区别于通用方案的核心部分）
 
-### 1.1 坐标系与参考系 —— ✅ 基本就绪，且是近期刚审计加固过的
+### 1.1 坐标系与参考系 ——  基本就绪，且是近期刚审计加固过的
 
-`docs/coordinates/COORDINATE_SYSTEM_ALIGNMENT_PLAN.md`（审计版 v2，2026-06-19）和对应的 `IMPLEMENTATION_PROGRESS.md` 显示，OPIC 已经建立了一套明确的 **Frame Graph**，并且 8 个阶段中 7 个已经 ✅ 完成、112/112 个坐标测试通过：
+`docs/coordinates/COORDINATE_SYSTEM_ALIGNMENT_PLAN.md`（审计版 v2，2026-06-19）和对应的 `IMPLEMENTATION_PROGRESS.md` 显示，OPIC 已经建立了一套明确的 **Frame Graph**，并且 8 个阶段中 7 个已经  完成、112/112 个坐标测试通过：
 
 | 组件 | 路径 | 状态 |
 |---|---|---|
-| RenderWorld 定义（J2000 黄道，单位 AU） | `src/lib/coordinates/frames/ecliptic.ts` | ✅ 往返误差 < 1e-12 AU，37 个测试 |
-| Cesium ICRF↔ECEF 桥接 | `src/lib/cesium/CameraSynchronizer.ts`（`computeIcrfToFixedMatrix`） | ✅ 唯一权威路径 |
-| 卫星 TEME 帧 | `src/lib/coordinates/frames/teme.ts` | ✅ |
-| RTC（Relative-To-Center）精度模式 | `src/lib/coordinates/scale/render-domain.ts` | ✅ `earthLocal` 域已定义 |
-| 多体高精度星历（JPL DE440） | `src/lib/astronomy/ephemeris/` | ✅ 27 个天体，manager/interpolator/chunk-loader 齐全 |
+| RenderWorld 定义（J2000 黄道，单位 AU） | `src/lib/coordinates/frames/ecliptic.ts` |  往返误差 < 1e-12 AU，37 个测试 |
+| Cesium ICRF↔ECEF 桥接 | `src/lib/cesium/CameraSynchronizer.ts`（`computeIcrfToFixedMatrix`） |  唯一权威路径 |
+| 卫星 TEME 帧 | `src/lib/coordinates/frames/teme.ts` |  |
+| RTC（Relative-To-Center）精度模式 | `src/lib/coordinates/scale/render-domain.ts` |  `earthLocal` 域已定义 |
+| 多体高精度星历（JPL DE440） | `src/lib/astronomy/ephemeris/` |  27 个天体，manager/interpolator/chunk-loader 齐全 |
 
 **这对火箭 MOD 意味着什么**：飞船在地心惯性系下的位置、速度，最终都要转换到 RenderWorld 才能渲染——这条转换链路已经存在且经过测试，不需要重新发明。`render-domain.ts` 里已经定义了 `earthLocal` 渲染域：
 
@@ -42,9 +42,9 @@ earthLocal: {
 
 这正是火箭在近地/地月转移阶段做物理积分应该使用的坐标系约定（地心惯性系，米为单位，RTC 方式渲染）——卫星渲染器已经用这套模式跑了很久，直接复用同一模式即可，不需要重新设计精度方案。
 
-**🆕 需要新建的部分**：`RENDER_DOMAINS` 目前只有 `earthLocal / solarSystem / nearbyStars / galaxy / supergalactic` 五个域，**没有 `moonLocal`**。飞船抵达月球附近、执行动力下降和着陆时，需要一个以月球为中心的 RTC 域（否则月面着陆阶段会退化到用 `solarSystem` 精度渲染厘米级的着陆过程，浮点误差会很明显）。这是对现有模式的直接复制扩展，工作量不大，但必须做。
+** 需要新建的部分**：`RENDER_DOMAINS` 目前只有 `earthLocal / solarSystem / nearbyStars / galaxy / supergalactic` 五个域，**没有 `moonLocal`**。飞船抵达月球附近、执行动力下降和着陆时，需要一个以月球为中心的 RTC 域（否则月面着陆阶段会退化到用 `solarSystem` 精度渲染厘米级的着陆过程，浮点误差会很明显）。这是对现有模式的直接复制扩展，工作量不大，但必须做。
 
-### 1.2 引力常数与开普勒力学 —— ✅ 数据已具备，🟡 MVP 级双向能力已补齐
+### 1.2 引力常数与开普勒力学 ——  数据已具备， MVP 级双向能力已补齐
 
 `src/lib/3d/player/gravity.ts` 已经包含（数据来源 NASA JPL Planetary Fact Sheet / JPL SSD）：
 
@@ -59,12 +59,12 @@ GM_KM3_S2 = {
 
 **进度更新**：仓库现已在 `src/lib/flight-dynamics/kepler.ts` 中补齐 `stateToElements()` / `elementsToState()`，并在 `src/lib/flight-dynamics/integrator.ts`、`flight-integrator.ts` 中落地纯 TS RK4 与带推力飞行积分器。下面这段"关键限制"主要针对当时的初始盘点，现阶段仍然成立的缺口主要是 **Phase 2 级别的边界工况与机动节点能力**：
 
-1. 状态矢量（位置+速度）↔ 轨道根数的**双向**转换基础版 —— **已具备 ✅**，但还需要在圆轨道、逆行轨道、近抛物线等边界情况继续强化测试与 UI 消费链路
-2. 变推力、变质量、有阻力时的**数值积分**（不是解析开普勒轨道传播）——**已具备 ✅**，并已通过 Phase 0/1 自动化验证；后续扩展点转向 n-body、机动节点与姿态系统
+1. 状态矢量（位置+速度）↔ 轨道根数的**双向**转换基础版 —— **已具备 **，但还需要在圆轨道、逆行轨道、近抛物线等边界情况继续强化测试与 UI 消费链路
+2. 变推力、变质量、有阻力时的**数值积分**（不是解析开普勒轨道传播）——**已具备 **，并已通过 Phase 0/1 自动化验证；后续扩展点转向 n-body、机动节点与姿态系统
 
 这是整个项目里最核心的"真空区"，详见第 3.1 节。
 
-### 1.3 MOD 插件系统 —— ✅ 能力远超"加个可视化图层"的预期
+### 1.3 MOD 插件系统 ——  能力远超"加个可视化图层"的预期
 
 `src/lib/mod-manager/`（14 个子模块，`AGENTS.md` 有清单）提供的能力，经过实际读取 `RenderAPI.ts` 类型定义和 `gravity-grid` 这个**已上线 MOD** 的源码验证：
 
@@ -80,7 +80,7 @@ GM_KM3_S2 = {
 
 **具体数字**：默认配额 `maxRenderObjects: 1000`、`maxMemoryMB: 50`，但 manifest 里的 `resourceQuota` 字段可以覆盖默认值（类型定义在 `mod-manager/types.ts:136`）。一枚多级火箭 + 部件网格 + 轨迹线 + 碎片，超过 1000 个渲染对象是有可能的（尤其是轨迹预测线用大量点段渲染时），需要在 manifest 里显式声明更高配额，这是**支持的**，不是障碍。
 
-**⚠️ 需要验证/新建的缺口**：
+** 需要验证/新建的缺口**：
 - `context.render.onBeforeRender(callback: () => void)` **不传 deltaTime**，物理循环需要自己维护时钟（工作量很小，但要注意）。
 - `CameraAPI`（`mod-manager/types.ts:292`）的真实签名是 `cameraDistance / viewOffset / zoom / centerOnPlanet(name) / onCameraChange`——是一个"围绕命名天体的距离-偏移-缩放"模型，**不支持自由 6 自由度跟随任意动态对象**。`centerOnPlanet` 只接受天体名字，飞船不是天体。这意味着火箭的"追踪镜头"大概率要绕过高层 CameraAPI，直接操作 `context.render.getCamera()` 拿到的原始 `THREE.Camera`（`gravity-grid` 已经证明这条路径可行）。**这是一个文档（`MOD_DEVELOPMENT_GUIDE.md` 里写的 `flyTo`/`lookAt`/`getPosition`/`getTarget`）与实际代码不一致的地方**——那些方法在真实的 `CameraAPI` 接口里不存在，设计时不要依赖文档描述，以 `types.ts` 为准。
 - `CesiumLayerOptions.type` 只有 `'imagery' | 'terrain'` 两种，**MOD 系统没有暴露 Cesium 原生 Entity/Primitive 接口**，也没有 `getCesiumViewer()`。见 1.4 节，这个缺口有绕过方案。
@@ -114,7 +114,7 @@ const DEFAULT_CONFIG = {
 | 引力场计算的真实先例 | `src/lib/mods/gravity-grid/GravityFieldCalculator.ts` | 已经在做"读取多天体位置、求和引力效应"这件事，是多体引力仿真在这个代码库里的第一个真实先例 |
 | Rust→WASM→Worker 的完整范式 | `rust-sgp4/`（`Cargo.toml` + `lib.rs`）+ `public/wasm/opic_sgp4_*` + `public/workers/sgp4.*.worker.js` | 见 3.1 节，新的物理引擎 crate 直接照抄这个范式 |
 | "自由飞行"输入映射（WASD→推力/平移/偏航/俯仰/横滚/加速） | `src/lib/3d/player/PlayerInput.ts` | 已提供可复用的输入状态采集层，但**目前没有任何消费者**（搜索确认它没被任何控制器/物理循环调用）；更适合作为火箭控制适配层的输入来源，而不是原样直接充当火箭控制方案 |
-| 程序化验证脚本范式 | `test/verify-backend.ts` 等（`✓`/`❌` 结构化输出，AI agent 可直接跑脚本读退出信息，不需要看截图） | 与你在其他项目中强调的"新功能必须有非视觉、程序化反馈"的架构约束完全一致，第 3.9 节会具体展开怎么把这个约束落到火箭物理引擎上 |
+| 程序化验证脚本范式 | `test/verify-backend.ts` 等（``/`` 结构化输出，AI agent 可直接跑脚本读退出信息，不需要看截图） | 与你在其他项目中强调的"新功能必须有非视觉、程序化反馈"的架构约束完全一致，第 3.9 节会具体展开怎么把这个约束落到火箭物理引擎上 |
 | 属性测试库已在依赖中 | `package.json` → `fast-check ^4.4.0`（devDependencies） | 非常适合验证物理不变量（能量守恒、角动量守恒），见 3.9 节 |
 
 ### 1.6 明确不存在、需要从零建的部分
@@ -255,7 +255,7 @@ Manifest 需要的权限大致是 `render:*`、`camera:read`、`celestial:read`�
 - **已知任务基准**：例如给定霍曼转移的解析 Δv 公式结果，验证数值积分器执行同样机动后达到的目标轨道参数是否吻合
 - **单帧步进上限测试**：验证高倍时间加速（10×/100×/10,000×）时子步数有上限、不会因为单帧算太多步导致掉帧或数值爆炸——这是最初版本里提到的"时间加速摧毁数值积分"风险点的直接对应测试
 
-这套脚本可以让 AI agent 在不启动浏览器、不用肉眼看画面的情况下，直接用 `✓`/`❌` 输出判断"这次物理引擎改动有没有破坏轨道力学正确性"。
+这套脚本可以让 AI agent 在不启动浏览器、不用肉眼看画面的情况下，直接用 ``/`` 输出判断"这次物理引擎改动有没有破坏轨道力学正确性"。
 
 #### 3.9.2 视觉/渲染正确性——把"看起来对"转换成"场景图数值断言"
 
@@ -319,7 +319,7 @@ flowchart TB
 
 | 阶段 | 目标 | 关键交付物 | 验收关注点 |
 |---|---|---|---|
-| **Phase 0：验证型 Spike** | 排除最大的两个未知数 | ① 用渲染计数器 + 场景图数值断言（3.9.2 节）程序化验证 `CESIUM_DOMINANT` 模式下 Three.js 叠加渲染是否每帧更新，不依赖人眼确认；② 纯 TS 写一个最小二体 RK4 积分器，配套 `verify-flight-dynamics.ts` 的解析解回归测试（3.9.1 节），跑通"发射→入轨"最简流程，用 `✓`/`❌` 脚本验证数值方法本身没问题 | 两项验证都应产出可被 AI agent 直接读取退出码/输出的脚本，而不需要人跑开发服务器看画面；同时明确后续渲染方案是否需要走"强制锁定 Three 模式"的退路 |
+| **Phase 0：验证型 Spike** | 排除最大的两个未知数 | ① 用渲染计数器 + 场景图数值断言（3.9.2 节）程序化验证 `CESIUM_DOMINANT` 模式下 Three.js 叠加渲染是否每帧更新，不依赖人眼确认；② 纯 TS 写一个最小二体 RK4 积分器，配套 `verify-flight-dynamics.ts` 的解析解回归测试（3.9.1 节），跑通"发射→入轨"最简流程，用 ``/`` 脚本验证数值方法本身没问题 | 两项验证都应产出可被 AI agent 直接读取退出码/输出的脚本，而不需要人跑开发服务器看画面；同时明确后续渲染方案是否需要走"强制锁定 Three 模式"的退路 |
 | **Phase 1：地球发射入轨（MVP）** | 从选定发射场起飞，进入稳定地球轨道 | 发射场静态数据库（仿照 `lunar-sites.ts` 模式）、精简部件目录（5-10 个部件）、纯 TS 二体+阻力积分器、极简搭建器（部件堆叠，非拖拽）、基础遥测 HUD、`verify-flight-dynamics.ts` 验证脚本（3.9.1 节）、场景图数值断言脚本验证载具渲染位置与发射场测绘坐标吻合（3.9.2 节） | 应作为第一个完整可玩、可独立验收的功能边界；验收标准以 3.9 节的自动化断言为主，人工体验确认作为最后一道低频关卡 |
 | **Phase 2：轨道机动** | 机动节点（顺行/逆行/法向/径向）、轨道根数实时显示 | 状态矢量↔轨道根数转换（3.1 节提到的缺口）、机动节点 UI | 重点关注轨道参数双向转换精度、机动节点预览与执行结果的一致性 |
 | **Phase 3：地月转移与登月** | 从地球轨道飞到月球并着陆 | n-body 积分（复用现有星历，3.2 节）、`moonLocal` RTC 域、动力下降物理、复用 `lunar-sites.ts`/`MoonSiteMarkers.ts` 做目标选择与落点打分 | 重点关注地月域切换连续性、近月渲染精度，以及落点评分闭环是否完整 |

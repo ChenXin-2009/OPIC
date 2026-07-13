@@ -566,4 +566,4 @@ mod-validate ./my-mod-migrated
 - \`examples/migration/after/\`: 迁移后的 MOD
 - \`examples/migration/diff.md\`: 详细的变更对照?
 
-祝你迁移顺利! 🚀
+祝你迁移顺利! 

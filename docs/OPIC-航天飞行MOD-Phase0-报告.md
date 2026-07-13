@@ -8,12 +8,12 @@
 
 ## 一、执行摘要
 
-Phase 0 的两项验证型 Spike **全部通过**，排除了设计文档中标记 ⚠️ 的两个最大未知数。
+Phase 0 的两项验证型 Spike **全部通过**，排除了设计文档中标记  的两个最大未知数。
 
 | 验证项 | 风险编号 | 结果 | 关键数据 |
 |--------|---------|------|---------|
-| Three.js 叠加层逐帧渲染（CESIUM_DOMINANT 模式） | R1 🔴 | ✅ 通过 | 8 帧连续渲染，计数器 = 帧数 |
-| RK4 定步长二体积分器精度 | R2 🟡 | ✅ 通过 | 圆轨道误差 0.00 m，能量守恒 0.000008% |
+| Three.js 叠加层逐帧渲染（CESIUM_DOMINANT 模式） | R1  |  通过 | 8 帧连续渲染，计数器 = 帧数 |
+| RK4 定步长二体积分器精度 | R2  |  通过 | 圆轨道误差 0.00 m，能量守恒 0.000008% |
 
 **结论：值得进入 Phase 1。** 渲染方案走叠加路径（无需退路），积分器方案用纯 TS RK4 即可满足 MVP 精度需求。
 
@@ -34,12 +34,12 @@ Phase 0 的两项验证型 Spike **全部通过**，排除了设计文档中标�
 ### 2.2 验证结果
 
 ```
-✓ 场景模式已切换到 CESIUM_DOMINANT
-✓ pre-render 回调连续执行 8 次
-✓ Three.js 场景渲染连续执行 8 次
-✓ 标签渲染连续执行 8 次
-✓ 验证过程中场景模式保持在 CESIUM_DOMINANT
-✓ 验证通过
+ 场景模式已切换到 CESIUM_DOMINANT
+ pre-render 回调连续执行 8 次
+ Three.js 场景渲染连续执行 8 次
+ 标签渲染连续执行 8 次
+ 验证过程中场景模式保持在 CESIUM_DOMINANT
+ 验证通过
 ```
 
 **退出码：0（通过）**
@@ -64,10 +64,10 @@ flight-renderer MOD 的完整骨架将在 Phase 1 Task 1.6 中创建，届时会
 
 | 文件 | 状态 | 说明 |
 |------|------|------|
-| `src/components/canvas/3d/hooks/renderFramePipeline.ts` | 🆕 新建 | 帧管线模块 |
-| `src/components/canvas/3d/hooks/__tests__/renderFramePipeline.test.ts` | 🆕 新建 | Jest 单元测试 |
-| `src/components/canvas/3d/hooks/useSolarSystemAnimation.ts` | 📝 修改 | 改用 `executeThreeOverlayFrame()` |
-| `test/verify-threejs-overlay.ts` | 🆕 新建 | 独立验证脚本 |
+| `src/components/canvas/3d/hooks/renderFramePipeline.ts` |  新建 | 帧管线模块 |
+| `src/components/canvas/3d/hooks/__tests__/renderFramePipeline.test.ts` |  新建 | Jest 单元测试 |
+| `src/components/canvas/3d/hooks/useSolarSystemAnimation.ts` |  修改 | 改用 `executeThreeOverlayFrame()` |
+| `test/verify-threejs-overlay.ts` |  新建 | 独立验证脚本 |
 
 ---
 
@@ -99,47 +99,47 @@ flight-renderer MOD 的完整骨架将在 Phase 1 Task 1.6 中创建，届时会
 ```
 [测试] 圆形轨道 1/4 周期 vs 解析解 (误差 < 100m)
     位置误差: 0.00 m
-  ✓ 通过
+   通过
 
 [测试] 圆形轨道完整周期回归 (误差 < 200m)
     回归误差: 0.02 m
-  ✓ 通过
+   通过
 
 [测试] ISS 倾角圆轨道 1/2 周期 vs 解析解 (误差 < 150m)
     位置误差: 0.01 m
-  ✓ 通过
+   通过
 
 [测试] 椭圆轨道完整周期回归 (误差 < 500m)
     回归误差: 50.42 m
-  ✓ 通过
+   通过
 
 [测试] GTO 高偏心率轨道 1/4 周期 vs 解析解 (误差 < 2000m)
     位置误差: 3.37 m, e=0.7303
-  ✓ 通过
+   通过
 
 [测试] 比机械能守恒 (±5%)
     t=10776s 能量误差: 0.000008%
     t=43105s 能量误差: 0.000002%
-  ✓ 通过
+   通过
 
 [测试] 比角动量守恒 (相对误差 < 1e-6)
     t=5668s 角动量误差: 1.459e-11
-  ✓ 通过
+   通过
 
 [测试] 10× 时间加速不发散 (能量误差 < 1%)
     能量误差: 0.0003%
-  ✓ 通过
+   通过
 
 [测试] fast-check: 随机轨道积分不发散
     50 次随机全部通过
-  ✓ 通过
+   通过
 
 [测试] fast-check: 解析解往返一致性 (误差 < 1e-6 m)
     30 次随机全部通过
-  ✓ 通过
+   通过
 
 结果: 10 通过 / 0 失败 / 10 总计
-✓ 验证通过
+ 验证通过
 ```
 
 **退出码：0（通过）**
@@ -167,12 +167,12 @@ RK4 在 10 秒步长下的圆轨道精度达到**亚毫米级**；椭圆轨道�
 
 | 文件 | 状态 | 说明 |
 |------|------|------|
-| `src/lib/flight-dynamics/state.ts` | 🆕 新建 | 状态矢量 + Vec3 运算 |
-| `src/lib/flight-dynamics/integrator.ts` | 🆕 新建 | RK4 核心 |
-| `src/lib/flight-dynamics/kepler.ts` | 🆕 新建 | 解析开普勒传播器 |
-| `src/lib/flight-dynamics/index.ts` | 🆕 新建 | barrel 导出 |
-| `src/lib/flight-dynamics/__tests__/integrator.test.ts` | 🆕 新建 | Jest 测试（11 用例） |
-| `test/verify-flight-dynamics.ts` | 🆕 新建 | 独立验证脚本 |
+| `src/lib/flight-dynamics/state.ts` |  新建 | 状态矢量 + Vec3 运算 |
+| `src/lib/flight-dynamics/integrator.ts` |  新建 | RK4 核心 |
+| `src/lib/flight-dynamics/kepler.ts` |  新建 | 解析开普勒传播器 |
+| `src/lib/flight-dynamics/index.ts` |  新建 | barrel 导出 |
+| `src/lib/flight-dynamics/__tests__/integrator.test.ts` |  新建 | Jest 测试（11 用例） |
+| `test/verify-flight-dynamics.ts` |  新建 | 独立验证脚本 |
 
 ---
 
@@ -214,8 +214,8 @@ RK4 在 10 秒步长下的圆轨道精度达到**亚毫米级**；椭圆轨道�
 
 | 风险编号 | 原严重程度 | 更新后状态 | 说明 |
 |---------|-----------|-----------|------|
-| R1 | 🔴 高 | ✅ 已消除 | 叠加层逐帧渲染验证通过 |
-| R2 | 🟡 中 | 🟢 低（已验证） | 10× 与 10,000× 时间加速验证均已通过；子步拆分保护已落地 |
+| R1 |  高 |  已消除 | 叠加层逐帧渲染验证通过 |
+| R2 |  中 |  低（已验证） | 10× 与 10,000× 时间加速验证均已通过；子步拆分保护已落地 |
 | R3-R8 | 不变 | 待验证 | 在对应 Phase 处理 |
 
 ---
@@ -224,15 +224,15 @@ RK4 在 10 秒步长下的圆轨道精度达到**亚毫米级**；椭圆轨道�
 
 截至 2026-07-11 当前仓库进展如下：
 
-- ✅ `Task 1.1`：发射场静态数据库
-- ✅ `Task 1.2`：部件数据模型与精简部件目录
-- ✅ `Task 1.3`：飞行动力学核心扩展（推力 + 大气阻力 + 变质量 + 子步保护）
-- ✅ `Task 1.4`：飞行控制器（`PlayerInput` 适配层）
-- ✅ `Task 1.5`：极简搭建器 UI（以集成式 `SpaceFlightWindow` 落地）
-- ✅ `Task 1.6`：飞行渲染层（火箭网格 + 尾焰 + 轨迹线）
-- ✅ `Task 1.7`：追踪相机系统（V 键切换，CameraController 跟踪基础设施复用）
-- ✅ `Task 1.8`：TimeAPI 桥接（`useEffect` 监听 `timeScale` → `getTimeAPI().setTimeSpeed()`，stop/abort/unmount 时重置实时速度）
-- ✅ `Task 1.9`：飞行动力学 / 飞行渲染自动化验证脚本
+-  `Task 1.1`：发射场静态数据库
+-  `Task 1.2`：部件数据模型与精简部件目录
+-  `Task 1.3`：飞行动力学核心扩展（推力 + 大气阻力 + 变质量 + 子步保护）
+-  `Task 1.4`：飞行控制器（`PlayerInput` 适配层）
+-  `Task 1.5`：极简搭建器 UI（以集成式 `SpaceFlightWindow` 落地）
+-  `Task 1.6`：飞行渲染层（火箭网格 + 尾焰 + 轨迹线）
+-  `Task 1.7`：追踪相机系统（V 键切换，CameraController 跟踪基础设施复用）
+-  `Task 1.8`：TimeAPI 桥接（`useEffect` 监听 `timeScale` → `getTimeAPI().setTimeSpeed()`，stop/abort/unmount 时重置实时速度）
+-  `Task 1.9`：飞行动力学 / 飞行渲染自动化验证脚本
 
 接下来的优先任务：
 

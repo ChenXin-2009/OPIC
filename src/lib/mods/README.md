@@ -2,7 +2,7 @@
 
 这个目录包含所有的MOD模组。系统会自动发现并加载这里的所有MOD。
 
-## 🚀 快速开始
+##  快速开始
 
 ### 添加新MOD
 
@@ -31,7 +31,7 @@
 2. 运行 `npm run generate-mods`
 3. 重启应用
 
-## 📁 MOD结构
+##  MOD结构
 
 ```
 my-mod/
@@ -53,7 +53,7 @@ export const myModManifest: ModManifest = {
   version: '1.0.0',
   description: 'My awesome mod',
   author: 'Your Name',
-  icon: '🎯',
+  icon: '',
   defaultEnabled: false,
 };
 ```
@@ -77,7 +77,7 @@ export function getMyModMod() {
 }
 ```
 
-## 🔧 自动发现机制
+##  自动发现机制
 
 系统使用自动扫描脚本发现MOD：
 
@@ -91,7 +91,7 @@ export function getMyModMod() {
 - `npm run generate-mods` - 手动重新生成注册表
 - `npm run build` - 构建时自动生成注册表（prebuild钩子）
 
-## 📝 命名约定
+##  命名约定
 
 - **文件夹名**：kebab-case（例如：`my-new-mod`）
 - **导出函数**：camelCase + Mod（例如：`getMyNewModMod()`）
@@ -101,19 +101,19 @@ export function getMyModMod() {
 - `satellite-tracking` → `getSatelliteTrackingMod()`
 - `my-new-mod` → `getMyNewModMod()`
 
-## ⚠️ 重要提示
+##  重要提示
 
 1. **不要编辑 `auto-registry.ts`** - 这是自动生成的文件
 2. **添加MOD后运行生成脚本** - 否则不会被识别
 3. **需要重启应用** - 目前不支持热加载
 4. **遵循命名约定** - 确保导出函数名正确
 
-## 📚 更多文档
+##  更多文档
 
 - [MOD自动发现详细文档](../../../docs/MOD_AUTO_DISCOVERY.md)
 - [MOD开发指南](../../../docs/MOD_DEVELOPMENT_GUIDE.md)
 - [MOD管理指南](../../../docs/MOD_MANAGEMENT_GUIDE.md)
 
-## 🎯 当前已注册的MOD
+##  当前已注册的MOD
 
 运行 `npm run generate-mods` 查看所有已发现的MOD。

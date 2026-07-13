@@ -78,6 +78,12 @@
 | [TESTING_GUIDE.md](./TESTING_GUIDE.md) | **测试指南**（运行 / 编写 / Mock / 覆盖率） |
 | [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | **部署指南**（环境变量 / Vercel / Docker / 自托管） |
 
+## 外部参考
+
+| 目录 | 说明 |
+|------|------|
+| [references/](./references/README.md) | 从互联网下载的外部资料存档（论文、API 文档、参考项目分析） |
+
 ## 子系统文档
 
 | 文档 | 说明 |

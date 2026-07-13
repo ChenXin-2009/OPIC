@@ -18,12 +18,12 @@ OPIC 支持多种地球表面影像源，包括免费的 ESRI、OpenStreetMap、
 
 | 地图源 | 说明 | 是否免费 | 最高缩放级别 |
 |--------|------|----------|--------------|
-| **ESRI World Imagery** | 高分辨率卫星影像 | ✅ 是 | 19 |
-| **Bing Maps** | Microsoft 卫星影像 | ⚠️ 需要 Cesium Ion Token | 19 |
-| **OpenStreetMap** | 开源街道地图 | ✅ 是 | 19 |
-| **ESRI World Street** | 详细街道和地名 | ✅ 是 | 19 |
-| **CartoDB Dark** | 深色背景地图 | ✅ 是 | 19 |
-| **ESRI National Geographic** | 国家地理风格 | ✅ 是 | 16 |
+| **ESRI World Imagery** | 高分辨率卫星影像 |  是 | 19 |
+| **Bing Maps** | Microsoft 卫星影像 |  需要 Cesium Ion Token | 19 |
+| **OpenStreetMap** | 开源街道地图 |  是 | 19 |
+| **ESRI World Street** | 详细街道和地名 |  是 | 19 |
+| **CartoDB Dark** | 深色背景地图 |  是 | 19 |
+| **ESRI National Geographic** | 国家地理风格 |  是 | 16 |
 
 ### NASA GIBS 实时卫星图层
 
@@ -46,10 +46,10 @@ OPIC 支持多种地球表面影像源，包括免费的 ESRI、OpenStreetMap、
 
 根据 ESRI 官方文档（2011年公告，至今仍然有效）：
 
-- ✅ **免费使用**：商业和非商业用途均可
-- ✅ **高使用限额**：每年 5000 万次瓦片请求
-- ✅ **无需注册**：直接使用，无需账号
-- ✅ **稳定可靠**：ESRI 官方维护
+-  **免费使用**：商业和非商业用途均可
+-  **高使用限额**：每年 5000 万次瓦片请求
+-  **无需注册**：直接使用，无需账号
+-  **稳定可靠**：ESRI 官方维护
 
 **实际使用建议**：
 - 对于大多数个人项目和中小型应用，5000万次/年的限额足够使用
@@ -73,21 +73,21 @@ OPIC 支持多种地球表面影像源，包括免费的 ESRI、OpenStreetMap、
 
 | 特性 | ESRI World Imagery | Bing Maps |
 |------|-------------------|-----------|
-| **是否免费** | ✅ 完全免费 | ⚠️ 需要 Cesium Ion Token |
-| **需要 API Key** | ❌ 不需要 | ✅ 需要 |
+| **是否免费** |  完全免费 |  需要 Cesium Ion Token |
+| **需要 API Key** |  不需要 |  需要 |
 | **使用限额** | 5000万次/年 | 5万次/月（免费计划） |
-| **注册要求** | ❌ 无需注册 | ✅ 需要注册 Cesium Ion |
+| **注册要求** |  无需注册 |  需要注册 Cesium Ion |
 | **最高缩放级别** | 19 | 19 |
-| **稳定性** | ✅ 非常稳定 | ⚠️ 依赖 Cesium Ion 服务 |
+| **稳定性** |  非常稳定 |  依赖 Cesium Ion 服务 |
 
 ### 推荐使用场景
 
 **ESRI World Imagery 适合**：
-- ✅ 个人项目
-- ✅ 开源项目
-- ✅ 商业应用（中小规模）
-- ✅ 教育和研究
-- ✅ 政府应用
+-  个人项目
+-  开源项目
+-  商业应用（中小规模）
+-  教育和研究
+-  政府应用
 
 **如果需要更高限额**：
 - 考虑联系 ESRI 获取企业许可
@@ -103,10 +103,10 @@ Bing Maps 通过 **Cesium Ion** 服务提供，需要满足以下条件：
 
 如果出现 "Network error" 或加载失败，通常是因为：
 
-- ❌ 未配置 Cesium Ion Token（使用默认 token 可能已失效）
-- ❌ Token 的免费限额已用尽
-- ❌ Token 权限不足（需要订阅付费计划）
-- ❌ 网络连接问题
+-  未配置 Cesium Ion Token（使用默认 token 可能已失效）
+-  Token 的免费限额已用尽
+-  Token 权限不足（需要订阅付费计划）
+-  网络连接问题
 
 ### 如何配置 Cesium Ion Token
 
@@ -153,9 +153,9 @@ npm run dev
 
 **无需任何配置**，直接使用：
 
-- ✅ **ESRI World Imagery**（默认）- 高分辨率卫星影像
-- ✅ **OpenStreetMap** - 街道地图
-- ✅ **CartoDB Dark** - 深色主题地图
+-  **ESRI World Imagery**（默认）- 高分辨率卫星影像
+-  **OpenStreetMap** - 街道地图
+-  **CartoDB Dark** - 深色主题地图
 
 ### 方案 2：使用 Bing Maps
 
@@ -198,11 +198,11 @@ cesiumExtension.setImageryProvider(provider);
 
 ### Bing Maps 加载失败
 
-**错误信息**：`⚠ 加载失败: Bing Maps（Network error）`
+**错误信息**：` 加载失败: Bing Maps（Network error）`
 
 **解决方案**：
 
-1. ✅ **推荐**：切换到 ESRI World Imagery（免费、稳定）
+1.  **推荐**：切换到 ESRI World Imagery（免费、稳定）
 2. 配置有效的 Cesium Ion Token
 3. 检查 token 限额是否用尽
 4. 检查网络连接
@@ -238,6 +238,8 @@ cesiumExtension.setImageryProvider(provider);
 - `.env.example` - 环境变量示例
 
 ## 参考链接
+
+> 从互联网下载的外部参考材料归档在 [`docs/references/`](./references/README.md)。
 
 - [Cesium Ion 官网](https://cesium.com/platform/cesium-ion/)
 - [Cesium Ion Token 管理](https://ion.cesium.com/tokens)

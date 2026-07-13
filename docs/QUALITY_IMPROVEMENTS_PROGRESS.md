@@ -5,26 +5,26 @@
 
 ---
 
-## ✅ 已完成的任务
+##  已完成的任务
 
-### 1. Spec 文档创建 ✓
+### 1. Spec 文档创建 
 **文件**: `.kiro/specs/project-quality-improvements.md`
 - 详细定义了8个核心改进任务
 - 明确了优先级和时间估算
 - 制定了实施计划和验收标准
 
-### 2. 错误边界系统 ✓ (任务2 - P0)
+### 2. 错误边界系统  (任务2 - P0)
 **文件**:
 - `src/components/ErrorBoundary.tsx` - 通用错误边界
 - `src/components/CesiumErrorBoundary.tsx` - Cesium专用错误边界
 
 **功能**:
-- ✅ 捕获组件树错误，防止整个应用崩溃
-- ✅ 友好的降级 UI
-- ✅ 重试功能
-- ✅ 开发/生产环境区分显示
-- ✅ 错误日志记录
-- ✅ 特定场景的错误处理（WebGL、Cesium、网络）
+-  捕获组件树错误，防止整个应用崩溃
+-  友好的降级 UI
+-  重试功能
+-  开发/生产环境区分显示
+-  错误日志记录
+-  特定场景的错误处理（WebGL、Cesium、网络）
 
 **使用方法**:
 ```tsx
@@ -39,17 +39,17 @@
 </CesiumErrorBoundary>
 ```
 
-### 3. 性能监控系统 ✓ (任务3 - P0)
+### 3. 性能监控系统  (任务3 - P0)
 **文件**:
 - `src/lib/performance/PerformanceMonitor.ts` - 性能监控核心
 
 **功能**:
-- ✅ FPS 实时监控和统计
-- ✅ 内存使用追踪（Chrome/Edge）
-- ✅ 自定义性能标记和测量
-- ✅ 性能指标订阅机制
-- ✅ 性能报告生成
-- ✅ 单例模式，全局访问
+-  FPS 实时监控和统计
+-  内存使用追踪（Chrome/Edge）
+-  自定义性能标记和测量
+-  性能指标订阅机制
+-  性能报告生成
+-  单例模式，全局访问
 
 **使用方法**:
 ```typescript
@@ -76,7 +76,7 @@ const unsubscribe = performanceMonitor.subscribe((metrics) => {
 
 ---
 
-## 📋 待完成的任务
+##  待完成的任务
 
 ### 任务 4: 开发体验工具优化 (P1)
 **状态**: 未开始  
@@ -158,12 +158,12 @@ const unsubscribe = performanceMonitor.subscribe((metrics) => {
 
 ---
 
-## 🎯 下一步行动
+##  下一步行动
 
 ### 立即执行（今天）
-1. ✅ ~~创建 Spec 文档~~
-2. ✅ ~~实现错误边界系统~~
-3. ✅ ~~实现性能监控系统~~
+1.  ~~创建 Spec 文档~~
+2.  ~~实现错误边界系统~~
+3.  ~~实现性能监控系统~~
 4. **→ 配置开发体验工具（任务4）**
 
 ### 本周内完成
@@ -181,7 +181,7 @@ const unsubscribe = performanceMonitor.subscribe((metrics) => {
 
 ---
 
-## 📊 整体进度
+##  整体进度
 
 **总任务数**: 8  
 **已完成**: 2 (25%)  
@@ -194,16 +194,16 @@ const unsubscribe = performanceMonitor.subscribe((metrics) => {
 
 ---
 
-## 📝 注意事项
+##  注意事项
 
-### ⚠️ 避免冲突的文件
+###  避免冲突的文件
 根据用户要求，以下文件和目录不要修改：
 - `src/test-setup/setup.ts`
 - `jest.config.js` (测试相关配置)
 - `package.json` 中的 `test` 相关脚本
 - 不要清理空目录或删除代码
 
-### 🔄 集成点
+###  集成点
 
 **错误边界需要集成的位置**:
 - [ ] `src/app/layout.tsx` - 根布局
@@ -219,7 +219,7 @@ const unsubscribe = performanceMonitor.subscribe((metrics) => {
 
 ---
 
-## 🎨 使用示例
+##  使用示例
 
 ### 在 layout.tsx 中添加错误边界
 
@@ -261,7 +261,7 @@ performanceMonitor.setObjectCount(scene.children.length);
 
 ---
 
-## 📚 相关文档
+##  相关文档
 
 - [Spec 文档](../.kiro/specs/project-quality-improvements.md) - 完整的任务规格说明
 <!-- 代码注释改进总结文档已不存在，此处保留占位 -->

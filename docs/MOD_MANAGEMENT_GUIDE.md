@@ -44,7 +44,7 @@ export const myAwesomeModManifest: ModManifest = {
   contributes: {
     dockIcons: [{
       id: 'my-icon',
-      icon: '🚀',
+      icon: '',
       label: 'My MOD',
       command: 'my-awesome-mod.open'
     }],
@@ -112,7 +112,7 @@ npm run dev
 [My Awesome MOD] 已启用
 ```
 
-✅ 完成！你的 MOD 现在已经运行了。
+ 完成！你的 MOD 现在已经运行了。
 
 ## 删除 MOD
 
@@ -276,10 +276,10 @@ contributes: {
 只声明必需的权限：
 
 ```typescript
-// ❌ 不好 - 请求过多权限
+//  不好 - 请求过多权限
 permissions: ['*:*']
 
-// ✅ 好 - 只请求需要的权限
+//  好 - 只请求需要的权限
 permissions: ['time:read', 'render:write']
 ```
 
@@ -346,10 +346,10 @@ npm run build            # 构建时自动生成（prebuild 钩子）
 
 现在你已经了解了如何：
 
-✅ 添加新 MOD - 创建文件夹 → 编写代码 → `npm run generate-mods` → 重启
-✅ 删除 MOD - 删除文件夹 → `npm run generate-mods` → 重启
-✅ 临时禁用 MOD - 通过 MOD 管理界面或修改 manifest.ts 中的 `defaultEnabled`
-✅ 更新 MOD - 修改代码 → 更新版本号 → 重启
-✅ 故障排查 - 查看控制台日志，检查配置和代码
+ 添加新 MOD - 创建文件夹 → 编写代码 → `npm run generate-mods` → 重启
+ 删除 MOD - 删除文件夹 → `npm run generate-mods` → 重启
+ 临时禁用 MOD - 通过 MOD 管理界面或修改 manifest.ts 中的 `defaultEnabled`
+ 更新 MOD - 修改代码 → 更新版本号 → 重启
+ 故障排查 - 查看控制台日志，检查配置和代码
 
 系统现在具有容错能力，即使配置中的某些 MOD 不存在，其他 MOD 也能正常工作！

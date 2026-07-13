@@ -45,13 +45,13 @@
 
 ## Phase 0：验证型 Spike
 
-> **目标**：排除文档中标记 ⚠️ 的两个最大未知数。两项验证都应产出可被 AI Agent 直接读取退出码/输出的脚本。这一步也决定后续渲染方案是否需要走"强制锁定 THREE 模式"的退路。
+> **目标**：排除文档中标记  的两个最大未知数。两项验证都应产出可被 AI Agent 直接读取退出码/输出的脚本。这一步也决定后续渲染方案是否需要走"强制锁定 THREE 模式"的退路。
 
 ---
 
 ### Task 0.1：CESIUM_DOMINANT 模式下 Three.js 叠加渲染是否每帧更新的程序化验证
 
-**状态**：✅ 已完成
+**状态**： 已完成
 
 **描述**：
 
@@ -59,23 +59,23 @@
 
 **验收标准**：
 
-- [x] 脚本 `test/verify-threejs-overlay.ts` 输出 ✓/❌，可直接读退出码判断
+- [x] 脚本 `test/verify-threejs-overlay.ts` 输出 /，可直接读退出码判断
 - [x] 确认 `CESIUM_DOMINANT` 模式下 `render()` 每帧都被调用（计数器 = 帧数）
 - [x] 若失败 → 在文档中记录"退路方案：火箭飞行期间强制锁定 `THREE_DOMINANT`"（已在 Phase 0 报告中明确；本次验证通过，无需启用）
 
 **依赖**：无（纯 spike）
 
 **关键文件**：
-- 🆕 `test/verify-threejs-overlay.ts`
-- 🆕 `src/lib/mods/flight-renderer/`（最小骨架）
+-  `test/verify-threejs-overlay.ts`
+-  `src/lib/mods/flight-renderer/`（最小骨架）
 
-**风险**：⚠️ 最高优先级——这是文档第 1.4 节最重要的待验证项。
+**风险**： 最高优先级——这是文档第 1.4 节最重要的待验证项。
 
 ---
 
 ### Task 0.2：纯 TS 最小二体 RK4 积分器 + 解析解回归测试
 
-**状态**：✅ 已完成
+**状态**： 已完成
 
 **描述**：
 
@@ -86,14 +86,14 @@
 - [x] 给定纯引力、无推力的初始状态（圆形/椭圆轨道），积分若干轨道周期后，与解析二体公式算出的位置误差在容差内收敛
 - [x] 守恒量测试：纯引力滑行时机械能 ±5% 容差内守恒、角动量在浮点误差范围内守恒
 - [x] 属性测试（用 `fast-check`）：随机初始状态不触发数值发散
-- [x] 脚本 `test/verify-flight-dynamics.ts` 输出 ✓/❌，AI Agent 可直接读退出码判断
+- [x] 脚本 `test/verify-flight-dynamics.ts` 输出 /，AI Agent 可直接读退出码判断
 
 **依赖**：复用 `src/lib/3d/player/gravity.ts` 的 GM 常数表；最小二体版本不要求接入 `ephemeris`，中心天体可先按固定引力源处理
 
 **关键文件**：
-- 🆕 `src/lib/flight-dynamics/integrator.ts`（RK4 核心）
-- 🆕 `src/lib/flight-dynamics/state.ts`（状态矢量数据类型）
-- 🆕 `test/verify-flight-dynamics.ts`
+-  `src/lib/flight-dynamics/integrator.ts`（RK4 核心）
+-  `src/lib/flight-dynamics/state.ts`（状态矢量数据类型）
+-  `test/verify-flight-dynamics.ts`
 
 **风险**：中——积分器本身是标准数值方法，风险在于步长选择和容差调优。
 
@@ -101,7 +101,7 @@
 
 ### Task 0.3：Phase 0 推进决策报告
 
-**状态**：✅ 已完成
+**状态**： 已完成
 
 **描述**：基于 Task 0.1 和 0.2 的结果，生成一份推进决策报告，明确：
 - 渲染方案：叠加可行 → 用叠加；不可行 → 走"强制锁定 THREE 模式"退路
@@ -111,7 +111,7 @@
 **依赖**：Task 0.1 + 0.2 完成
 
 **关键文件**：
-- 🆕 `docs/OPIC-航天飞行MOD-Phase0-报告.md`
+-  `docs/OPIC-航天飞行MOD-Phase0-报告.md`
 
 ---
 
@@ -123,7 +123,7 @@
 
 ### Task 1.1：发射场静态数据库
 
-**状态**：✅ 已完成
+**状态**： 已完成
 
 **描述**：仿照 `src/lib/astronomy/lunar-sites.ts` 的模式，创建发射场数据文件，包含经纬度、海拔、名称等信息。
 
@@ -136,14 +136,14 @@
 **依赖**：复用 `src/lib/coordinates/` 坐标变换链
 
 **关键文件**：
-- 🆕 `src/lib/data/launch-sites.ts`
-- ✅ 参考 `src/lib/astronomy/lunar-sites.ts` 的数据模式
+-  `src/lib/data/launch-sites.ts`
+-  参考 `src/lib/astronomy/lunar-sites.ts` 的数据模式
 
 ---
 
 ### Task 1.2：部件数据模型与精简部件目录
 
-**状态**：✅ 已完成
+**状态**： 已完成
 
 **描述**：定义 `RocketPart` 类型（参考文档 3.4 节），创建 5–10 个基础部件（发动机、燃料罐、分离器、指令舱、结构件）。
 
@@ -157,15 +157,15 @@
 **依赖**：无
 
 **关键文件**：
-- 🆕 `src/lib/data/rocket-parts/types.ts`
-- 🆕 `src/lib/data/rocket-parts/catalog.ts`
-- 🆕 `src/lib/data/rocket-parts/__tests__/delta-v.test.ts`
+-  `src/lib/data/rocket-parts/types.ts`
+-  `src/lib/data/rocket-parts/catalog.ts`
+-  `src/lib/data/rocket-parts/__tests__/delta-v.test.ts`
 
 ---
 
 ### Task 1.3：飞行动力学核心（纯 TS 二体 + 大气阻力积分器）
 
-**状态**：✅ 已完成
+**状态**： 已完成
 
 **描述**：在 Phase 0 Task 0.2 的最小积分器基础上扩展：加入推力项、变质量（火箭方程）、大气阻力（指数大气模型，仅海拔 < 100 km 启用）。维持 `earthLocal` 域中进行积分。
 
@@ -180,17 +180,17 @@
 **依赖**：Task 0.2（Phase 0 验证通过）、Task 1.1（发射场坐标）、Task 1.2（部件模型）
 
 **关键文件**：
-- 📝 `src/lib/flight-dynamics/integrator.ts`（扩展）
-- 🆕 `src/lib/flight-dynamics/forces.ts`（引力 + 推力 + 阻力项）
-- 🆕 `src/lib/flight-dynamics/atmosphere.ts`（指数大气模型）
-- 🆕 `src/lib/flight-dynamics/rocket-equation.ts`（质量/Δv 计算）
-- 📝 `test/verify-flight-dynamics.ts`（扩展测试用例）
+-  `src/lib/flight-dynamics/integrator.ts`（扩展）
+-  `src/lib/flight-dynamics/forces.ts`（引力 + 推力 + 阻力项）
+-  `src/lib/flight-dynamics/atmosphere.ts`（指数大气模型）
+-  `src/lib/flight-dynamics/rocket-equation.ts`（质量/Δv 计算）
+-  `test/verify-flight-dynamics.ts`（扩展测试用例）
 
 ---
 
 ### Task 1.4：飞行控制器（接线 PlayerInput.ts）
 
-**状态**：✅ 已完成
+**状态**： 已完成
 
 **描述**：将 `src/lib/3d/player/PlayerInput.ts`（目前无消费者）接到新的飞行控制器上，但以"适配层"方式复用现有输入状态，而不是假设其现有语义已经等同于火箭控制。控制器需要把 `yaw/pitch/roll`、`thrust` 和 `boost` 状态重新解释为火箭姿态与节流控制，并补上分级触发。
 
@@ -207,14 +207,14 @@
 **依赖**：Task 1.3（积分器支持变推力控制）
 
 **关键文件**：
-- 🆕 `src/lib/flight-dynamics/flight-controller.ts`
-- 📝 复用 `src/lib/3d/player/PlayerInput.ts`（无需修改，只需消费）
+-  `src/lib/flight-dynamics/flight-controller.ts`
+-  复用 `src/lib/3d/player/PlayerInput.ts`（无需修改，只需消费）
 
 ---
 
 ### Task 1.5：极简搭建器 UI（部件堆叠，非拖拽）
 
-**状态**：✅ 已完成（以集成式 `SpaceFlightWindow` 落地，尚未拆分为独立 `vehicle-builder` MOD）
+**状态**： 已完成（以集成式 `SpaceFlightWindow` 落地，尚未拆分为独立 `vehicle-builder` MOD）
 
 **描述**：利用 MOD 系统的窗口注册能力，创建一个可以"从部件列表选择 → 加入当前载具 → 实时显示预估 Δv/推重比/总质量"的搭建器。第一版不做拖拽吸附，用列表堆叠方式。
 
@@ -229,15 +229,15 @@
 **依赖**：Task 1.2（部件数据模型）、复用 MOD 系统 `contributes.windows` 注册机制
 
 **关键文件**：
-- 🆕 `src/lib/mods/vehicle-builder/index.ts`
-- 🆕 `src/lib/mods/vehicle-builder/VehicleBuilderWindow.tsx`
-- 🆕 `src/lib/mods/vehicle-builder/VehicleConfig.ts`
+-  `src/lib/mods/vehicle-builder/index.ts`
+-  `src/lib/mods/vehicle-builder/VehicleBuilderWindow.tsx`
+-  `src/lib/mods/vehicle-builder/VehicleConfig.ts`
 
 ---
 
 ### Task 1.6：飞行渲染层（火箭网格 + 尾焰 + 轨迹线）
 
-**状态**：✅ 已完成（渲染类位于 `src/lib/mods/flight-renderer/`，通过 `SpaceFlightOverlay` 接到现有集成窗口架构）
+**状态**： 已完成（渲染类位于 `src/lib/mods/flight-renderer/`，通过 `SpaceFlightOverlay` 接到现有集成窗口架构）
 
 **描述**：利用 MOD 系统 `context.render` 的 Three.js 原始访问能力，创建一个渲染层，将物理引擎吐出的状态矢量渲染为简单火箭网格、发动机尾焰粒子、和飞行轨迹线。
 
@@ -247,22 +247,22 @@
 - [x] 尾焰在发动机点火时显示（方向沿推力矢量反方向），分级分离时尾焰随级切换
 - [x] 轨迹线随飞行实时追加点（最多保留 N 个点，超过自动裁剪）
 - [x] 场景图数值断言验证载具的 `getWorldPosition()` 在发射场坐标误差 < 1 m（见 3.9.2 节）
-- [x] 脚本 `test/verify-flight-renderer.ts` 可输出 ✓/❌
+- [x] 脚本 `test/verify-flight-renderer.ts` 可输出 /
 
 **依赖**：Task 1.3（积分器输出状态矢量）、Task 1.4（飞行控制器）、Task 0.1（验证叠加渲染方案）
 
 **关键文件**：
-- 🆕 `src/lib/mods/flight-renderer/index.ts`
-- 🆕 `src/lib/mods/flight-renderer/RocketRenderer.ts`
-- 🆕 `src/lib/mods/flight-renderer/PlumeRenderer.ts`
-- 🆕 `src/lib/mods/flight-renderer/TrajectoryRenderer.ts`
-- 🆕 `test/verify-flight-renderer.ts`
+-  `src/lib/mods/flight-renderer/index.ts`
+-  `src/lib/mods/flight-renderer/RocketRenderer.ts`
+-  `src/lib/mods/flight-renderer/PlumeRenderer.ts`
+-  `src/lib/mods/flight-renderer/TrajectoryRenderer.ts`
+-  `test/verify-flight-renderer.ts`
 
 ---
 
 ### Task 1.7：追踪相机系统
 
-**状态**：⬜ 未开始
+**状态**： 未开始
 
 **描述**：绕过高层 `CameraAPI`（只支持命名天体），直接用 CameraController 实现第三人称跟随 + 自由环绕的追踪相机。
 
@@ -278,7 +278,7 @@
 
 ### Task 1.8：基础遥测 HUD + 任务控制窗口
 
-**状态**：✅ 已完成
+**状态**： 已完成
 
 **描述**：创建飞行中的遥测显示窗口（高度、速度、轨道信息、燃料、节流状态）和基本任务控制（发射/中止/时间加速）。
 
@@ -292,16 +292,16 @@
 **依赖**：Task 1.3（积分器）、Task 1.4（飞行控制器）、Task 1.1（发射场）
 
 **关键文件**：
-- 🆕 `src/lib/mods/mission-control/index.ts`
-- 🆕 `src/lib/mods/mission-control/MissionControlWindow.tsx`
-- 🆕 `src/lib/mods/mission-control/TelemetryDisplay.tsx`
-- 📝 `src/lib/mods/space-flight/useFlightSimulation.ts` — TimeAPI 桥接（`timeScale → setTimeSpeed`）
+-  `src/lib/mods/mission-control/index.ts`
+-  `src/lib/mods/mission-control/MissionControlWindow.tsx`
+-  `src/lib/mods/mission-control/TelemetryDisplay.tsx`
+-  `src/lib/mods/space-flight/useFlightSimulation.ts` — TimeAPI 桥接（`timeScale → setTimeSpeed`）
 
 ---
 
 ### Task 1.9：Phase 1 自动化验证脚本完整版
 
-**状态**：✅ 已完成
+**状态**： 已完成
 
 **描述**：整合 Phase 0 + Phase 1 产生的所有验证脚本，确保可以作为 CI 的一部分运行。
 
@@ -309,20 +309,20 @@
 
 - [x] `test/verify-flight-dynamics.ts`：覆盖二体回归、守恒量属性测试、已知任务基准、时间加速上限测试
 - [x] `test/verify-flight-renderer.ts`：覆盖载具位置与发射场坐标吻合、轨迹线点数上限
-- [x] 两条脚本均可在无头环境下运行，输出 ✓/❌
+- [x] 两条脚本均可在无头环境下运行，输出 /
 - [x] 所有测试通过
 
 **依赖**：Task 1.3, 1.6
 
 **关键文件**：
-- 📝 `test/verify-flight-dynamics.ts`（扩展）
-- 🆕 `test/verify-flight-renderer.ts`
+-  `test/verify-flight-dynamics.ts`（扩展）
+-  `test/verify-flight-renderer.ts`
 
 ---
 
 ### Task 1.10：Phase 1 集成与交付
 
-**状态**：🟡 自动化验收完成，待人工体验确认
+**状态**： 自动化验收完成，待人工体验确认
 
 **描述**：将 vehicle-builder、flight-dynamics-core、flight-renderer、mission-control 串联起来，完成"选发射场 → 搭建火箭 → 发射 → 入轨"的端到端流程。
 
@@ -331,7 +331,7 @@
 - [x] 从搭建器构建一枚两级火箭 → 选择一个发射场 → 点击发射 → 火箭上升穿越大气 → 进入稳定椭圆轨道（SpaceFlightWindow 集成式窗口已串联全部子系统）
 - [x] 全流程中 HUD 遥测数据与物理积分器一致（Task 1.9 验证通过：15/15 dynamics + 3/3 renderer）
 - [x] 追踪相机正确跟随（TrackingCamera V 键切换，复用 CameraController 跟踪基础设施）
-- [x] 自动化验证脚本全部通过（Task 1.9：verify-flight-dynamics 15/15, verify-flight-renderer 3/3, verify-threejs-overlay ✅）
+- [x] 自动化验证脚本全部通过（Task 1.9：verify-flight-dynamics 15/15, verify-flight-renderer 3/3, verify-threejs-overlay ）
 - [ ] 人工体验确认（仅作为最后一道低频关卡——见 3.9.3 节）
 
 **依赖**：Task 1.1–1.9 全部完成
@@ -358,8 +358,8 @@
 **依赖**：复用 `src/lib/3d/player/gravity.ts` 的 GM 常数表
 
 **关键文件**：
-- 🆕 `src/lib/flight-dynamics/orbital-elements.ts`
-- 🆕 `src/lib/flight-dynamics/__tests__/orbital-elements.test.ts`
+-  `src/lib/flight-dynamics/orbital-elements.ts`
+-  `src/lib/flight-dynamics/__tests__/orbital-elements.test.ts`
 
 ---
 
@@ -377,8 +377,8 @@
 **依赖**：Task 2.1（轨道根数转换，用于"机动前/后轨道"差异比对）
 
 **关键文件**：
-- 🆕 `src/lib/flight-dynamics/maneuver.ts`
-- 🆕 `src/lib/flight-dynamics/__tests__/maneuver.test.ts`
+-  `src/lib/flight-dynamics/maneuver.ts`
+-  `src/lib/flight-dynamics/__tests__/maneuver.test.ts`
 
 ---
 
@@ -395,8 +395,8 @@
 **依赖**：Task 1.8（遥测 HUD 基础）、Task 2.1（轨道根数转换）
 
 **关键文件**：
-- 📝 `src/lib/mods/mission-control/TelemetryDisplay.tsx`（扩展）
-- 🆕 `src/lib/mods/flight-renderer/OrbitPreviewRenderer.ts`
+-  `src/lib/mods/mission-control/TelemetryDisplay.tsx`（扩展）
+-  `src/lib/mods/flight-renderer/OrbitPreviewRenderer.ts`
 
 ---
 
@@ -414,7 +414,7 @@
 **依赖**：Task 2.2（机动节点系统）、Task 2.3（轨道显示）
 
 **关键文件**：
-- 🆕 `src/lib/mods/mission-control/ManeuverEditor.tsx`
+-  `src/lib/mods/mission-control/ManeuverEditor.tsx`
 
 ---
 
@@ -432,8 +432,8 @@
 **依赖**：Task 1.4（飞行控制器）
 
 **关键文件**：
-- 🆕 `src/lib/flight-dynamics/sas.ts`
-- 📝 `src/lib/flight-dynamics/flight-controller.ts`（集成 SAS）
+-  `src/lib/flight-dynamics/sas.ts`
+-  `src/lib/flight-dynamics/flight-controller.ts`（集成 SAS）
 
 ---
 
@@ -453,12 +453,12 @@
 - [ ] 远程飞行（地月转移）不丢失精度
 - [ ] 验证脚本新增：地月空间中纯滑行时能量/角动量守恒；与 Patched Conics 近似解对比偏差在可接受范围
 
-**依赖**：Task 1.3（二体积分器基础）、✅ 复用 `src/lib/astronomy/ephemeris/`
+**依赖**：Task 1.3（二体积分器基础）、 复用 `src/lib/astronomy/ephemeris/`
 
 **关键文件**：
-- 📝 `src/lib/flight-dynamics/integrator.ts`（从二体升级为 n-body）
-- 📝 `src/lib/flight-dynamics/forces.ts`（引力项从单源升级为多源）
-- 📝 `test/verify-flight-dynamics.ts`（新增 n-body 测试）
+-  `src/lib/flight-dynamics/integrator.ts`（从二体升级为 n-body）
+-  `src/lib/flight-dynamics/forces.ts`（引力项从单源升级为多源）
+-  `test/verify-flight-dynamics.ts`（新增 n-body 测试）
 
 ---
 
@@ -473,11 +473,11 @@
 - [ ] 月面附近的渲染精度满足厘米级着陆需求（场景图数值断言验证）
 - [ ] 坐标测试用例覆盖地月域间转换
 
-**依赖**：✅ 参考 `src/lib/coordinates/scale/render-domain.ts` 现有实现模式
+**依赖**： 参考 `src/lib/coordinates/scale/render-domain.ts` 现有实现模式
 
 **关键文件**：
-- 📝 `src/lib/coordinates/scale/render-domain.ts`（新增 `moonLocal`）
-- 🆕 `src/lib/coordinates/__tests__/moonLocal.test.ts`
+-  `src/lib/coordinates/scale/render-domain.ts`（新增 `moonLocal`）
+-  `src/lib/coordinates/__tests__/moonLocal.test.ts`
 
 ---
 
@@ -492,11 +492,11 @@
 - [ ] 着陆判定条件：垂直速度 < 阈值（如 < 5 m/s）、水平速度 < 阈值（如 < 2 m/s）→ "成功着陆"；超出阈值为"硬着陆/坠毁"
 - [ ] 着陆后飞船网格的 `getWorldPosition()` 应对应月面坐标（场景图数值断言，误差 < 着陆腿长度）
 
-**依赖**：Task 3.1（n-body 积分器）、Task 3.2（moonLocal 域）、⚠️ 月面高度基准来源需明确；MVP 可先使用参考椭球/平均半径模型
+**依赖**：Task 3.1（n-body 积分器）、Task 3.2（moonLocal 域）、 月面高度基准来源需明确；MVP 可先使用参考椭球/平均半径模型
 
 **关键文件**：
-- 📝 `src/lib/flight-dynamics/integrator.ts`（新增着陆检测）
-- 🆕 `src/lib/flight-dynamics/landing.ts`
+-  `src/lib/flight-dynamics/integrator.ts`（新增着陆检测）
+-  `src/lib/flight-dynamics/landing.ts`
 
 ---
 
@@ -511,12 +511,12 @@
 - [ ] 着陆后自动计算：与目标点的距离偏差（米）、垂直/水平速度、综合评分（A–F）
 - [ ] 评分规则可配置（偏差阈值、速度阈值）
 
-**依赖**：Task 3.3（动力下降物理）、✅ `lunar-sites.ts`、✅ `MoonSiteMarkers.ts`
+**依赖**：Task 3.3（动力下降物理）、 `lunar-sites.ts`、 `MoonSiteMarkers.ts`
 
 **关键文件**：
-- 🆕 `src/lib/flight-dynamics/landing-score.ts`
-- 📝 `src/lib/mods/mission-control/`（新增着陆目标选择面板）
-- 🆕 `src/lib/mods/flight-renderer/LandingTargetMarker.ts`
+-  `src/lib/flight-dynamics/landing-score.ts`
+-  `src/lib/mods/mission-control/`（新增着陆目标选择面板）
+-  `src/lib/mods/flight-renderer/LandingTargetMarker.ts`
 
 ---
 
@@ -554,13 +554,13 @@
 - [ ] 与纯 TS 版本输出一致性测试（相同输入 → 相同输出，误差 < 1e-10）
 - [ ] 性能对比基准：10,000× 时间加速下单帧物理计算 < 5 ms
 
-**依赖**：✅ 参考 `rust-sgp4/` 完整范式
+**依赖**： 参考 `rust-sgp4/` 完整范式
 
 **关键文件**：
-- 🆕 `rust-flight-dynamics/Cargo.toml`
-- 🆕 `rust-flight-dynamics/src/lib.rs`
-- 🆕 `public/workers/flight-dynamics.wasm.worker.js`
-- 📝 `src/lib/flight-dynamics/`（新增 WASM 桥接层）
+-  `rust-flight-dynamics/Cargo.toml`
+-  `rust-flight-dynamics/src/lib.rs`
+-  `public/workers/flight-dynamics.wasm.worker.js`
+-  `src/lib/flight-dynamics/`（新增 WASM 桥接层）
 
 ---
 
@@ -578,9 +578,9 @@
 **依赖**：Task 3.1（n-body 积分器，已支持多天体引力源）
 
 **关键文件**：
-- 🆕 `src/lib/data/mars-sites.ts`
-- 📝 `src/lib/coordinates/scale/render-domain.ts`（新增 `marsLocal`）
-- 📝 `src/lib/flight-dynamics/atmosphere.ts`（新增火星大气参数）
+-  `src/lib/data/mars-sites.ts`
+-  `src/lib/coordinates/scale/render-domain.ts`（新增 `marsLocal`）
+-  `src/lib/flight-dynamics/atmosphere.ts`（新增火星大气参数）
 
 ---
 
@@ -597,8 +597,8 @@
 **依赖**：Task 1.2（部件模型基础）
 
 **关键文件**：
-- 📝 `src/lib/data/rocket-parts/catalog.ts`（扩展）
-- 🆕 `src/lib/flight-dynamics/failure-detection.ts`
+-  `src/lib/data/rocket-parts/catalog.ts`（扩展）
+-  `src/lib/flight-dynamics/failure-detection.ts`
 
 ---
 
@@ -615,8 +615,8 @@
 **依赖**：Task 1.3（大气阻力模型）、Task 3.1（n-body 积分器）
 
 **关键文件**：
-- 📝 `src/lib/flight-dynamics/atmosphere.ts`（新增再入加热计算）
-- 🆕 `src/lib/data/rocket-parts/parachute.ts`
+-  `src/lib/flight-dynamics/atmosphere.ts`（新增再入加热计算）
+-  `src/lib/data/rocket-parts/parachute.ts`
 
 ---
 
@@ -634,9 +634,9 @@
 **依赖**：Task 1.6（渲染层就绪）
 
 **关键文件**：
-- 🆕 `test/visual-regression/`
-- 🆕 `test/visual-regression/golden/`
-- 🆕 `test/visual-regression/screenshot-test.ts`
+-  `test/visual-regression/`
+-  `test/visual-regression/golden/`
+-  `test/visual-regression/screenshot-test.ts`
 
 ---
 
@@ -687,14 +687,14 @@
 
 | 风险编号 | 风险描述 | 对应 Task | 严重程度 | 缓解措施 |
 |---------|---------|----------|---------|---------|
-| R1 | `CESIUM_DOMINANT` 模式下 Three.js 叠加层不每帧更新 | Task 0.1 | 🔴 高 | 退路：强制锁定 `THREE_DOMINANT` |
-| R2 | RK4 定步长在 10,000× 时间加速下发散 | Task 0.2, 1.3 | 🟡 中 | 自适应步长 RK45 作为备选；单帧子步数上限保护 |
-| R3 | CameraAPI 文档与实际类型定义不一致 | Task 1.7 | 🟡 中 | 以 `types.ts` 为准，直接操作 `THREE.Camera` 绕过 |
-| R4 | MOD 默认配额不够（轨迹线 + 部件网格） | Task 1.6 | 🟢 低 | manifest 中显式声明更高的 `maxRenderObjects` |
-| R5 | 搭建器 UI 交互复杂度被低估 | Task 1.5 | 🟡 中 | Phase 1 做最简堆叠模式，拖拽放 Phase 4 |
-| R6 | n-body 积分器地月转移段精度不足 | Task 3.1 | 🟡 中 | 自适应步长 + 与 Patched Conics 基准对比验证 |
-| R7 | moonLocal 域与地月空间坐标过渡有跳变 | Task 3.2 | 🟢 低 | 参照 `earthLocal` 已验证的 RTC 模式，增加过渡区间测试 |
-| R8 | AI Agent 无法独立验收视觉效果导致人工阻塞 | Task 1.9, 4.5 | 🟡 中 | 按 3.9 节：场景图断言 > 截图 diff > 人工抽查 |
+| R1 | `CESIUM_DOMINANT` 模式下 Three.js 叠加层不每帧更新 | Task 0.1 |  高 | 退路：强制锁定 `THREE_DOMINANT` |
+| R2 | RK4 定步长在 10,000× 时间加速下发散 | Task 0.2, 1.3 |  中 | 自适应步长 RK45 作为备选；单帧子步数上限保护 |
+| R3 | CameraAPI 文档与实际类型定义不一致 | Task 1.7 |  中 | 以 `types.ts` 为准，直接操作 `THREE.Camera` 绕过 |
+| R4 | MOD 默认配额不够（轨迹线 + 部件网格） | Task 1.6 |  低 | manifest 中显式声明更高的 `maxRenderObjects` |
+| R5 | 搭建器 UI 交互复杂度被低估 | Task 1.5 |  中 | Phase 1 做最简堆叠模式，拖拽放 Phase 4 |
+| R6 | n-body 积分器地月转移段精度不足 | Task 3.1 |  中 | 自适应步长 + 与 Patched Conics 基准对比验证 |
+| R7 | moonLocal 域与地月空间坐标过渡有跳变 | Task 3.2 |  低 | 参照 `earthLocal` 已验证的 RTC 模式，增加过渡区间测试 |
+| R8 | AI Agent 无法独立验收视觉效果导致人工阻塞 | Task 1.9, 4.5 |  中 | 按 3.9 节：场景图断言 > 截图 diff > 人工抽查 |
 
 ---
 

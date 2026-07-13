@@ -45,18 +45,18 @@ Cosmicflows-3 数据集（我们使用的 Laniakea 数据源）并不是全天�
 
 **是的，这是科学准确的**。我们的可视化忠实地反映了真实的观测数据：
 
-✅ 使用真实的 Cosmicflows-3 数据集
-✅ 精确的坐标转换（使用 astropy）
-✅ 保持观测限制和数据缺失
-✅ 不添加虚假数据来"填充"空白区域
+ 使用真实的 Cosmicflows-3 数据集
+ 精确的坐标转换（使用 astropy）
+ 保持观测限制和数据缺失
+ 不添加虚假数据来"填充"空白区域
 
 ## 为什么不填充其他区域？
 
 我们可以使用程序化生成来填充未观测的区域，但这会：
 
-❌ 降低科学准确性
-❌ 混淆真实数据和模拟数据
-❌ 给用户错误的印象
+ 降低科学准确性
+ 混淆真实数据和模拟数据
+ 给用户错误的印象
 
 我们选择**只显示真实观测数据**，即使这意味着可视化看起来不对称。
 
@@ -92,6 +92,8 @@ Cosmicflows-3 数据集（我们使用的 Laniakea 数据源）并不是全天�
 
 ## 参考文献
 
+> 从互联网下载的外部参考材料归档在 [`docs/references/`](./references/README.md)。
+
 1. Tully, R. B., et al. (2014). "The Laniakea supercluster of galaxies". Nature, 513, 71-73
 2. Tully, R. B., et al. (2016). "Cosmicflows-3". AJ, 152, 50
 3. Kraan-Korteweg, R. C., & Lahav, O. (2000). "Galaxies behind the Milky Way and the Great Attractor". A&ARv, 10, 211
@@ -99,9 +101,9 @@ Cosmicflows-3 数据集（我们使用的 Laniakea 数据源）并不是全天�
 ## 结论
 
 Laniakea 可视化看起来"不完整"是因为：
-- ✅ 这是真实的观测数据
-- ✅ 天文观测有固有的限制
-- ✅ 我们选择科学准确性而不是视觉完整性
+-  这是真实的观测数据
+-  天文观测有固有的限制
+-  我们选择科学准确性而不是视觉完整性
 
 这正是真实天文学的样子 - 不完美，但真实。
 

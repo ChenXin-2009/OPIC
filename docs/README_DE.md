@@ -226,6 +226,12 @@ opic/
 └── docs/                      # Projektdokumentation
 ```
 
+## Externe Referenzen
+
+| Verzeichnis | Beschreibung |
+|-------------|-------------|
+| [references/](./references/README.md) | Archiv externer Ressourcen aus dem Internet (Paper, API-Dokumentation, Referenzprojektanalysen) |
+
 ## Entwicklung
 
 ```bash

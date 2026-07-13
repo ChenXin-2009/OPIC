@@ -352,5 +352,7 @@ export default function Home() {
 
 ## 参考资料
 
+> 从互联网下载的外部参考材料归档在 [`docs/references/`](./references/README.md)。
+
 - [技术文档](./UNIVERSE_VISUALIZATION.md)
 - [集成指南（英文）](../README_EN.md)

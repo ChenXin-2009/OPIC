@@ -374,6 +374,8 @@ NASA Exoplanet Archive 的 host `ra`、`dec`、`sy_dist` 可用于宿主星位�
 
 ## 8. 参考资料
 
+> 从互联网下载的外部参考材料归档在 [`docs/references/`](../references/README.md)。
+
 - CesiumJS Transforms API：`computeIcrfToFixedMatrix`、`computeTemeToPseudoFixedMatrix`
   https://cesium.com/learn/cesiumjs/ref-doc/Transforms.html
 - NAIF SPICE Frames Required Reading：J2000、ICRF、frame definitions

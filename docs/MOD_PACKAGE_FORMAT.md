@@ -55,10 +55,10 @@ my-awesome-mod.zip
 
 | 字段 | 类型 | 必需 | 说明 |
 |------|------|------|------|
-| `id` | string | ✅ | MOD 唯一标识符，建议使用 kebab-case |
-| `name` | string | ✅ | MOD 显示名称 |
-| `version` | string | ✅ | MOD 版本号，遵循语义化版本 |
-| `apiVersion` | string | ✅ | 需要的 API 版本 |
+| `id` | string |  | MOD 唯一标识符，建议使用 kebab-case |
+| `name` | string |  | MOD 显示名称 |
+| `version` | string |  | MOD 版本号，遵循语义化版本 |
+| `apiVersion` | string |  | 需要的 API 版本 |
 | `description` | string | 推荐 | MOD 描述 |
 | `author` | string | 推荐 | 作者信息 |
 | `license` | string | 推荐 | 许可证类型 |
@@ -100,7 +100,7 @@ MOD 的功能声明和配置。
     "dockIcons": [
       {
         "id": "my-icon",
-        "icon": "🚀",
+        "icon": "",
         "label": "My MOD",
         "command": "my-awesome-mod.open",
         "badge": 0
@@ -354,7 +354,7 @@ async function createZip() {
   const content = await zip.generateAsync({ type: 'nodebuffer' });
   fs.writeFileSync('my-awesome-mod.zip', content);
   
-  console.log('✓ 包创建成功: my-awesome-mod.zip');
+  console.log(' 包创建成功: my-awesome-mod.zip');
 }
 
 createZip().catch(console.error);
@@ -364,36 +364,36 @@ createZip().catch(console.error);
 
 ### 1. 包大小优化
 
-- ✅ 压缩和混淆代码
-- ✅ 移除未使用的依赖
-- ✅ 使用 WebP 格式的图片
-- ✅ 懒加载大型资源
-- ❌ 不要包含 node_modules
-- ❌ 不要包含源代码和测试文件
+-  压缩和混淆代码
+-  移除未使用的依赖
+-  使用 WebP 格式的图片
+-  懒加载大型资源
+-  不要包含 node_modules
+-  不要包含源代码和测试文件
 
 ### 2. 安全性
 
-- ✅ 始终签名发布的包
-- ✅ 使用 HTTPS 分发包
-- ✅ 定期更新依赖
-- ✅ 遵循最小权限原则
-- ❌ 不要在代码中硬编码密钥
+-  始终签名发布的包
+-  使用 HTTPS 分发包
+-  定期更新依赖
+-  遵循最小权限原则
+-  不要在代码中硬编码密钥
 
 ### 3. 兼容性
 
-- ✅ 明确声明 API 版本
-- ✅ 测试多个系统版本
-- ✅ 提供迁移指南
-- ✅ 保持向后兼容性
-- ❌ 不要使用实验性 API
+-  明确声明 API 版本
+-  测试多个系统版本
+-  提供迁移指南
+-  保持向后兼容性
+-  不要使用实验性 API
 
 ### 4. 文档
 
-- ✅ 提供详细的 README
-- ✅ 包含使用示例
-- ✅ 说明权限用途
-- ✅ 提供更新日志
-- ❌ 不要假设用户了解技术细节
+-  提供详细的 README
+-  包含使用示例
+-  说明权限用途
+-  提供更新日志
+-  不要假设用户了解技术细节
 
 ## 分发渠道
 

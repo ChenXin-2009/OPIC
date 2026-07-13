@@ -47,7 +47,7 @@ export const manifest: ModManifest = {
   contributes: {
     dockIcons: [{
       id: 'my-icon',
-      icon: '🚀',
+      icon: '',
       label: 'My MOD',
       command: 'my-new-mod.open'
     }],
@@ -164,9 +164,9 @@ discovery.onDownloadProgress('https://example.com/mods/my-mod.zip', (progress) =
 
 系统使用语义化版本规则检查兼容性:
 
-- **Major 版本必须匹配**: MOD 需要 v2.x.x,系统是 v1.x.x → ❌ 不兼容
-- **Minor 版本向后兼容**: MOD 需要 v1.2.x,系统是 v1.3.x → ✅ 兼容
-- **Patch 版本向后兼容**: MOD 需要 v1.2.3,系统是 v1.2.5 → ✅ 兼容
+- **Major 版本必须匹配**: MOD 需要 v2.x.x,系统是 v1.x.x →  不兼容
+- **Minor 版本向后兼容**: MOD 需要 v1.2.x,系统是 v1.3.x →  兼容
+- **Patch 版本向后兼容**: MOD 需要 v1.2.3,系统是 v1.2.5 →  兼容
 
 ### 依赖管理
 
@@ -201,14 +201,14 @@ URL 加载包含以下安全措施:
 
 ### 当前状态
 
-✅ **已实现**:
+ **已实现**:
 - 类型定义和接口
 - 包验证器 (PackageValidator)
 - 版本兼容性检查器 (VersionChecker)
 - 下载和进度报告
 - 依赖检查逻辑
 
-⏳ **待实现** (需要额外的库):
+ **待实现** (需要额外的库):
 - ZIP 解压 (需要 JSZip)
 - 数字签名验证 (需要 Web Crypto API 集成)
 - 沙箱代码执行 (需要 iframe 或 Web Worker)
@@ -218,11 +218,11 @@ URL 加载包含以下安全措施:
 
 | 特性 | 本地配置加载 | URL 远程加载 |
 |------|------------|------------|
-| 开发便利性 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| 分发便利性 | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| 安全性 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| 版本管理 | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| 依赖管理 | ⭐⭐ | ⭐⭐⭐⭐⭐ |
+| 开发便利性 |  |  |
+| 分发便利性 |  |  |
+| 安全性 |  |  |
+| 版本管理 |  |  |
+| 依赖管理 |  |  |
 | 适用场景 | 内置 MOD、开发测试 | 第三方 MOD、生产分发 |
 
 ## 注意事项

@@ -44,7 +44,7 @@ export const myNewModManifest: ModManifest = {
   description: 'A new mod',
   descriptionZh: '一个新的模组',
   author: 'Your Name',
-  icon: '🎯',
+  icon: '',
   defaultEnabled: false,
   
   // 声明需要的权限
@@ -58,7 +58,7 @@ export const myNewModManifest: ModManifest = {
     dockIcons: [
       {
         id: 'my-new-mod-icon',
-        icon: '🎯',
+        icon: '',
         label: 'My New Mod',
         labelZh: '我的新模组',
         command: 'my-new-mod.toggle',
@@ -155,15 +155,15 @@ npm run generate-mods
 
 输出示例：
 ```
-🔍 扫描MOD目录...
-✓ 发现MOD: satellite-tracking
-✓ 发现MOD: cesium-integration
-✓ 发现MOD: weather-disaster
-✓ 发现MOD: global-traffic
-✓ 发现MOD: space-launches
-✓ 发现MOD: my-new-mod
+ 扫描MOD目录...
+ 发现MOD: satellite-tracking
+ 发现MOD: cesium-integration
+ 发现MOD: weather-disaster
+ 发现MOD: global-traffic
+ 发现MOD: space-launches
+ 发现MOD: my-new-mod
 
-✅ 发现 6 个MOD
+ 发现 6 个MOD
 ```
 
 ## 技术细节
@@ -196,7 +196,7 @@ my-mod/
 - MOD注册表数组
 - 辅助函数（获取MOD列表、数量等）
 
-**⚠️ 不要手动编辑此文件！** 它会在每次运行 `npm run generate-mods` 时重新生成。
+** 不要手动编辑此文件！** 它会在每次运行 `npm run generate-mods` 时重新生成。
 
 ### 构建流程
 
@@ -218,12 +218,12 @@ npm run generate-mods
 
 | 特性 | VSCode | 当前实现 | 说明 |
 |------|--------|----------|------|
-| 自动发现 | ✅ | ✅ | 扫描文件夹自动发现 |
-| 无需配置 | ✅ | ✅ | 不需要手动配置列表 |
-| 运行时加载 | ✅ | ⚠️ | 需要重启应用 |
-| 热更新 | ✅ | ❌ | 暂不支持 |
-| 独立打包 | ✅ | ❌ | MOD与核心一起打包 |
-| 市场安装 | ✅ | ❌ | 暂不支持 |
+| 自动发现 |  |  | 扫描文件夹自动发现 |
+| 无需配置 |  |  | 不需要手动配置列表 |
+| 运行时加载 |  |  | 需要重启应用 |
+| 热更新 |  |  | 暂不支持 |
+| 独立打包 |  |  | MOD与核心一起打包 |
+| 市场安装 |  |  | 暂不支持 |
 
 ## 优势
 

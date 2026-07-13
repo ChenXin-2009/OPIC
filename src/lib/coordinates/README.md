@@ -43,10 +43,10 @@ Z = north ecliptic pole
 
 ### 禁止的模式
 
-- ❌ 不要在物理层假设 Three.js Y-up 就是"上方"（Three.js Y!=黄道北极，Z 才是）
-- ❌ 不要在物理数据上做 `(x, z, -y)` 这类私有轴映射（应集中在帧变换函数中）
-- ❌ 不要用固定度数（如 `rotationX(66.56°)`）做"补偿旋转"（应使用 `frames/ecliptic.ts` 的函数）
-- ❌ 不要将 ECEF/ITRF 与 ICRF/赤道惯性系混为一谈（它们差一个 Earth Rotation Angle）
+-  不要在物理层假设 Three.js Y-up 就是"上方"（Three.js Y!=黄道北极，Z 才是）
+-  不要在物理数据上做 `(x, z, -y)` 这类私有轴映射（应集中在帧变换函数中）
+-  不要用固定度数（如 `rotationX(66.56°)`）做"补偿旋转"（应使用 `frames/ecliptic.ts` 的函数）
+-  不要将 ECEF/ITRF 与 ICRF/赤道惯性系混为一谈（它们差一个 Earth Rotation Angle）
 
 ---
 
